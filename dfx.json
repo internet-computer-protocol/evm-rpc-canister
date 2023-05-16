@@ -1,0 +1,10 @@
+{
+  "canisters": {
+    "iceth": {
+      "candid": "iceth.did",
+      "type": "rust",
+      "package": "iceth"
+    }
+  },
+  "version": 1
+}
