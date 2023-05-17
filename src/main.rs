@@ -29,6 +29,8 @@ const INGRESS_MESSAGE_BYTE_RECEIVED_COST: u128 = 2_000u128;
 const HTTP_OUTCALL_REQUEST_COST: u128 = 400_000_000u128;
 const HTTP_OUTCALL_BYTE_RECEIEVED_COST: u128 = 100_000u128;
 
+const MINIMUM_WITHDRAWAL_CYCLES: u128 = 1_000_000_000u128;
+
 const STRING_STORABLE_MAX_SIZE: u32 = 100;
 const WASM_PAGE_SIZE: u64 = 65536;
 
@@ -219,7 +221,7 @@ thread_local! {
         StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(2)))));
 }
 
-#[derive(CandidType)]
+#[derive(CandidType, Debug)]
 enum EthRpcError {
     NoPermission,
     TooFewCycles(String),
@@ -461,6 +463,21 @@ fn unregister_provider(provider_id: u64) {
     });
 }
 
+#[ic_cdk::query(guard = "is_authorized_register_provider")]
+#[candid_method(query)]
+fn get_owed_cycles(provider_id: u64) -> u128 {
+    let provider = PROVIDERS.with(|p| {
+        p.borrow()
+            .get(&provider_id)
+            .ok_or(EthRpcError::ProviderNotFound)
+    });
+    let provider = provider.expect("Provider not found");
+    if ic_cdk::caller() != provider.owner {
+        ic_cdk::trap("Not owner");
+    }
+    provider.cycles_owed
+}
+
 #[derive(CandidType)]
 struct DepositCyclesArgs {
     canister_id: Principal,
@@ -468,9 +485,43 @@ struct DepositCyclesArgs {
 
 #[ic_cdk::update(guard = "is_authorized_register_provider")]
 #[candid_method]
-async fn withdraw_owned_cycles(canister_id: Principal) {
-    let args = DepositCyclesArgs { canister_id };
-    match ic_cdk::call(Principal::management_canister(), "deposit_cycles", (args,)).await {
+async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
+    let provider = PROVIDERS.with(|p| {
+        p.borrow()
+            .get(&provider_id)
+            .ok_or(EthRpcError::ProviderNotFound)
+    });
+    let provider = provider.expect("Provider not found");
+    if ic_cdk::caller() != provider.owner {
+        ic_cdk::trap("Not owner");
+    }
+    let amount = provider.cycles_owed;
+    if amount < MINIMUM_WITHDRAWAL_CYCLES {
+        ic_cdk::trap("Too few cycles to withdraw");
+    }
+    PROVIDERS.with(|p| {
+        p.borrow_mut().insert(
+            provider_id,
+            Provider {
+                provider_id,
+                owner: provider.owner,
+                chain_id: provider.chain_id,
+                service_url: provider.service_url,
+                api_key: provider.api_key,
+                cycles_per_call: provider.cycles_per_call,
+                cycles_per_message_byte: provider.cycles_per_message_byte,
+                cycles_owed: 0,
+            },
+        )
+    });
+    match ic_cdk::api::call::call_with_payment128(
+        Principal::management_canister(),
+        "deposit_cycles",
+        (DepositCyclesArgs { canister_id },),
+        amount,
+    )
+    .await
+    {
         Ok(()) => (),
         Err(e) => ic_cdk::trap(&format!("failed to deposit_cycles: {:?}", e)),
     };
