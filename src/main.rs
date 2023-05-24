@@ -1,13 +1,10 @@
 use candid::{candid_method, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_log::{declare_log_buffer, log};
-use ic_canisters_http_types::{
-    HttpRequest as IcHttpRequest, HttpResponse as IcHttpResponse, HttpResponseBuilder,
-};
+use ic_canister_serve::{serve_logs, serve_metrics};
 use ic_cdk::api::management_canister::http_request::{
     http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
     HttpResponse, TransformArgs, TransformContext,
 };
-use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 #[cfg(not(target_arch = "wasm32"))]
 use ic_stable_structures::file_mem::FileMemory;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
@@ -583,13 +580,20 @@ fn to_principal(principal: &str) -> Principal {
 }
 
 #[ic_cdk::query]
-fn http_request(request: IcHttpRequest) -> IcHttpResponse {
-    match request.path() {
+fn http_request(request: CanisterHttpRequestArgument) -> HttpResponse {
+    let path = match request.url.find('?') {
+        None => &request.url[..],
+        Some(index) => &request.url[..index],
+    };
+
+    match path {
         "/metrics" => serve_metrics(encode_metrics),
-        "/logs" => serve_logs_v2(request, &INFO, &ERROR),
-        "/log/info" => serve_logs(&INFO),
-        "/log/error" => serve_logs(&ERROR),
-        _ => HttpResponseBuilder::not_found().build(),
+        "/logs" => serve_logs(request, &INFO, &ERROR),
+        _ => HttpResponse {
+            status: 404.into(),
+            body: "not_found".into(),
+            ..Default::default()
+        },
     }
 }
 

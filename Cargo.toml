@@ -6,17 +6,15 @@ authors = ["John Plevyak <jplevyak@gmail.com>"]
 readme = "README.md"
 edition = "2021"
 
-# TODO: move all deep-linked crates out and into crates.io
 [dependencies]
 candid = "0.8"
-ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "d7c7abd7bdb0620635acd1c145e870a7da86a5e3" }
-ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "d7c7abd7bdb0620635acd1c145e870a7da86a5e3" }
+ic-canister-log = "0.1.0"
+ic-canister-serve = "0.1.0"
 ic-certified-map = "0.3"
 ic-cdk = "0.7"
 ic-cdk-macros = "0.6"
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
-ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "d7c7abd7bdb0620635acd1c145e870a7da86a5e3" }
 json5 = "0.4"
 num = "0.4"
 num-traits = "0.2"
