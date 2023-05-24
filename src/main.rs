@@ -488,7 +488,7 @@ async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
             .get(&provider_id)
             .ok_or(EthRpcError::ProviderNotFound)
     });
-    let provider = provider.expect("Provider not found");
+    let mut provider = provider.expect("Provider not found");
     if ic_cdk::caller() != provider.owner {
         ic_cdk::trap("Not owner");
     }
@@ -497,20 +497,8 @@ async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
         ic_cdk::trap("Too few cycles to withdraw");
     }
     PROVIDERS.with(|p| {
-        p.borrow_mut().insert(
-            provider_id,
-            Provider {
-                provider_id,
-                owner: provider.owner,
-                chain_id: provider.chain_id,
-                service_url: provider.service_url,
-                api_key: provider.api_key,
-                cycles_per_call: provider.cycles_per_call,
-                cycles_per_message_byte: provider.cycles_per_message_byte,
-                cycles_owed: 0,
-            },
-        )
-    });
+        provider.cycles_owed = 0;
+        p.borrow_mut().insert(provider_id, provider)});
     match ic_cdk::api::call::call_with_payment128(
         Principal::management_canister(),
         "deposit_cycles",
@@ -520,6 +508,7 @@ async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
     .await
     {
         Ok(()) => (),
+        // Note: cycles are not refunded (would that be exploitable?).
         Err(e) => ic_cdk::trap(&format!("failed to deposit_cycles: {:?}", e)),
     };
 }
