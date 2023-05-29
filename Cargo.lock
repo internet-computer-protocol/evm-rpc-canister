@@ -365,7 +365,7 @@ checksum = "74e080508c567329c309251484328d51c34eb615d876bbaa3b26ca20637f1fbd"
 dependencies = [
  "by_address",
  "ic-canister-log",
- "ic-cdk",
+ "ic-cdk 0.7.4",
  "ic-metrics-encoder",
  "maplit",
  "priority-queue",
@@ -378,6 +378,19 @@ name = "ic-cdk"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9beb0bf1dcd0639c313630e34aa547a2b19450ddf1969c176e13225ef3b29048"
+dependencies = [
+ "candid",
+ "ic-cdk-macros",
+ "ic0",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
+name = "ic-cdk"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "401ddc246ab0d80e5e0bd2c926c6a0feef7b82ddbed81f1e752784c4aac58928"
 dependencies = [
  "candid",
  "ic-cdk-macros",
@@ -425,9 +438,9 @@ checksum = "0c0c68bf2fb590e3c3b4e0719383fb2cdceb308cd62df9fef571323b418f7e1c"
 
 [[package]]
 name = "ic0"
-version = "0.18.9"
+version = "0.18.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "978b91fc78de9d2eb0144db717839cde3b35470199ea51aca362cb6310e93dfd"
+checksum = "187fa0cecf46628330b7a390a1a65fb0637ea00d3a1121aa847ecbebc0f3ff79"
 
 [[package]]
 name = "iceth"
@@ -436,7 +449,7 @@ dependencies = [
  "candid",
  "ic-canister-log",
  "ic-canister-serve",
- "ic-cdk",
+ "ic-cdk 0.8.0",
  "ic-cdk-macros",
  "ic-certified-map",
  "ic-metrics-encoder",
