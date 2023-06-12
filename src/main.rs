@@ -25,6 +25,7 @@ const INGRESS_MESSAGE_RECEIVED_COST: u128 = 1_200_000u128;
 const INGRESS_MESSAGE_BYTE_RECEIVED_COST: u128 = 2_000u128;
 const HTTP_OUTCALL_REQUEST_COST: u128 = 400_000_000u128;
 const HTTP_OUTCALL_BYTE_RECEIEVED_COST: u128 = 100_000u128;
+const SUBNET_SIZE: u128 = 13; // App subnet
 
 const MINIMUM_WITHDRAWAL_CYCLES: u128 = 1_000_000_000u128;
 
@@ -397,9 +398,10 @@ fn json_rpc_provider_cycles_cost(
     provider_cycles_per_call: u64,
     provider_cycles_per_message_byte: u64,
 ) -> u128 {
-    provider_cycles_per_call as u128
+    let base_cost = provider_cycles_per_call as u128
         + provider_cycles_per_message_byte as u128
-        + json_rpc_payload.len() as u128
+        + json_rpc_payload.len() as u128;
+    base_cost * SUBNET_SIZE / 13
 }
 
 #[ic_cdk::query]
@@ -498,7 +500,8 @@ async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
     }
     PROVIDERS.with(|p| {
         provider.cycles_owed = 0;
-        p.borrow_mut().insert(provider_id, provider)});
+        p.borrow_mut().insert(provider_id, provider)
+    });
     match ic_cdk::api::call::call_with_payment128(
         Principal::management_canister(),
         "deposit_cycles",
