@@ -8,10 +8,11 @@ edition = "2021"
 
 [dependencies]
 candid = "0.8"
-ic-canister-log = "0.1.0"
-ic-canister-serve = "0.1.0"
+ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "323bb2ceda477a6f7d13ab007c47935824b63150" }
+ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "323bb2ceda477a6f7d13ab007c47935824b63150" }
+ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "323bb2ceda477a6f7d13ab007c47935824b63150" }
 ic-certified-map = "0.3"
-ic-cdk = "0.7"
+ic-cdk = "0.9"
 ic-cdk-macros = "0.6"
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
@@ -22,7 +23,7 @@ num-derive = "0.3"
 serde = "1"
 serde_bytes = "0.11"
 serde_cbor = "0.11"
-sha2 = "^0.10"
+sha2 = "0.10"
 url = "2.4"
 
 [profile.release]
