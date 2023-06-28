@@ -107,6 +107,7 @@ enum Auth {
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 struct Metadata {
     next_provider_id: u64,
+    open_rpc_access: bool,
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
@@ -533,6 +534,11 @@ fn transform(args: TransformArgs) -> HttpResponse {
 #[ic_cdk_macros::init]
 fn init() {
     initialize();
+    METADATA.with(|m| {
+        let mut metadata = m.borrow().get().clone();
+        metadata.open_rpc_access = OPEN_RPC_ACCESS;
+        m.borrow_mut().set(metadata.clone()).unwrap();
+    });
 }
 
 #[ic_cdk_macros::post_upgrade]
@@ -635,14 +641,15 @@ fn authorize(principal: Principal, auth: Auth) {
 }
 
 #[ic_cdk_macros::query(guard = "is_authorized")]
-#[candid_method]
+#[candid_method(query)]
 fn get_authorized(auth: Auth) -> Vec<String> {
     AUTH.with(|a| {
         let mut result = Vec::new();
         for (k, v) in a.borrow().iter() {
             if v & (1 << (auth.clone() as u32)) != 0 {
-            result.push(k.0.to_string());
-        }}
+                result.push(k.0.to_string());
+            }
+        }
         result
     })
 }
@@ -676,7 +683,7 @@ fn is_authorized_register_provider() -> Result<(), String> {
 }
 
 fn authorized(auth: Auth) -> bool {
-    if auth == Auth::Rpc && OPEN_RPC_ACCESS {
+    if auth == Auth::Rpc || METADATA.with(|m| m.borrow().get().open_rpc_access) {
         return true;
     }
     let caller = PrincipalStorable(ic_cdk::caller());
@@ -689,7 +696,16 @@ fn authorized(auth: Auth) -> bool {
     })
 }
 
-/// Encode the metrics in a format that can be understood by Prometheus.
+#[ic_cdk_macros::update(guard = "is_authorized")]
+#[candid_method]
+fn set_open_rpc_access(open_rpc_access: bool) {
+    METADATA.with(|m| {
+        let mut metadata = m.borrow().get().clone();
+        metadata.open_rpc_access = open_rpc_access;
+        m.borrow_mut().set(metadata.clone()).unwrap();
+    });
+}
+
 fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> std::io::Result<()> {
     w.encode_gauge(
         "canister_version",

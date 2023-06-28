@@ -1,4 +1,4 @@
-type Auth = variant { Rpc; RegisterProvider; Admin; FreeRpc; };
+type Auth = variant { Rpc; RegisterProvider; FreeRpc; Admin; };
 type EthRpcResult = variant {
   Ok: blob;
   Err : opt variant {
@@ -30,6 +30,7 @@ service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
   get_authorized : (Auth) -> (vec text) query;
+  set_open_rpc_access : (bool) -> ();
   json_rpc_request: (json_rpc_payload: text, service_url: text, max_response_bytes: nat64) -> (EthRpcResult);
   json_rpc_provider_request: (json_rpc_payload: text, provider_id: nat64, max_response_bytes: nat64) -> (EthRpcResult);
   get_providers: () -> (vec RegisteredProvider) query;
