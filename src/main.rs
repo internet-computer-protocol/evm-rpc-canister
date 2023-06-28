@@ -706,6 +706,12 @@ fn set_open_rpc_access(open_rpc_access: bool) {
     });
 }
 
+#[ic_cdk_macros::query(guard = "is_authorized")]
+#[candid_method(query)]
+fn get_open_rpc_access() -> bool {
+    METADATA.with(|m| m.borrow().get().open_rpc_access)
+}
+
 fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> std::io::Result<()> {
     w.encode_gauge(
         "canister_version",
