@@ -1,10 +1,12 @@
 use candid::{candid_method, CandidType, Decode, Deserialize, Encode, Principal};
+use ic_canister_log::{declare_log_buffer, log};
+use ic_canisters_http_types::{
+    HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
+};
 use ic_cdk::api::management_canister::http_request::{
     http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
     HttpResponse, TransformArgs, TransformContext,
 };
-use ic_canister_log::{declare_log_buffer, log};
-use ic_canisters_http_types::{HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder};
 use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 #[cfg(not(target_arch = "wasm32"))]
 use ic_stable_structures::file_mem::FileMemory;
@@ -96,10 +98,10 @@ struct Metrics {
 
 #[derive(Clone, Debug, PartialEq, CandidType, FromPrimitive, Deserialize)]
 enum Auth {
-    Admin = 1,
-    Rpc = 2,
-    RegisterProvider = 3,
-    FreeRpc = 4,
+    Admin,
+    Rpc,
+    RegisterProvider,
+    FreeRpc,
 }
 
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
@@ -326,10 +328,10 @@ async fn json_rpc_request_internal(
             &json_rpc_payload,
             provider.cycles_per_call,
             provider.cycles_per_message_byte,
-            ),
+        ),
     };
-    let cost = json_rpc_cycles_cost(&json_rpc_payload, &service_url, max_response_bytes)
-        + provider_cost;
+    let cost =
+        json_rpc_cycles_cost(&json_rpc_payload, &service_url, max_response_bytes) + provider_cost;
     if !authorized(Auth::FreeRpc) {
         if cycles_available < cost {
             return Err(EthRpcError::TooFewCycles(format!(
@@ -536,11 +538,6 @@ fn init() {
 #[ic_cdk_macros::post_upgrade]
 fn post_upgrade() {
     initialize();
-    // Remove these lines when ic_cdk::api::is_controller is supported.
-    authorize(ic_cdk::caller(), Auth::Admin);
-    authorize(ic_cdk::caller(), Auth::RegisterProvider);
-    authorize(ic_cdk::caller(), Auth::Rpc);
-    authorize(ic_cdk::caller(), Auth::FreeRpc);
     stable_authorize(ic_cdk::caller());
 }
 
@@ -585,9 +582,7 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
 
 fn is_stable_authorized() -> Result<(), String> {
     AUTH_STABLE.with(|a| {
-        if
-        // ic_cdk::api::is_controller(&ic_cdk::caller()) ||  // Add when this is supported.
-        a.borrow().contains(&ic_cdk::caller()) {
+        if ic_cdk::api::is_controller(&ic_cdk::caller()) || a.borrow().contains(&ic_cdk::caller()) {
             Ok(())
         } else {
             Err("You are not stable authorized".to_string())
@@ -632,17 +627,27 @@ fn authorize(principal: Principal, auth: Auth) {
         let mut auth_map = a.borrow_mut();
         let principal = PrincipalStorable(principal);
         if let Some(v) = auth_map.get(&principal) {
-            auth_map.insert(principal, v | (auth as u32));
+            auth_map.insert(principal, v | (1 << (auth as u32)));
         } else {
-            auth_map.insert(principal, auth as u32);
+            auth_map.insert(principal, 1 << (auth as u32));
+        }
+    });
+}
+
+#[ic_cdk_macros::update(guard = "is_authorized")]
+#[candid_method]
+fn deauthorize(principal: Principal, auth: Auth) {
+    AUTH.with(|a| {
+        let mut auth_map = a.borrow_mut();
+        let principal = PrincipalStorable(principal);
+        if let Some(v) = auth_map.get(&principal) {
+            auth_map.insert(principal, v & !(1 << (auth as u32)));
         }
     });
 }
 
 fn is_authorized() -> Result<(), String> {
-    if
-    // ic_cdk::api::is_controller(&ic_cdk::caller()) || // Add when this is supported.
-    authorized(Auth::Admin) {
+    if ic_cdk::api::is_controller(&ic_cdk::caller()) || authorized(Auth::Admin) {
         Ok(())
     } else {
         Err("You are not authorized".to_string())
@@ -650,9 +655,7 @@ fn is_authorized() -> Result<(), String> {
 }
 
 fn is_authorized_register_provider() -> Result<(), String> {
-    if
-    // ic_cdk::api::is_controller(&ic_cdk::caller()) || // Add when this is supported.
-    authorized(Auth::RegisterProvider) {
+    if ic_cdk::api::is_controller(&ic_cdk::caller()) || authorized(Auth::RegisterProvider) {
         Ok(())
     } else {
         Err("You are not authorized".to_string())
@@ -666,7 +669,7 @@ fn authorized(auth: Auth) -> bool {
     let caller = PrincipalStorable(ic_cdk::caller());
     AUTH.with(|a| {
         if let Some(v) = a.borrow().get(&caller) {
-            (v & (auth as u32)) != 0
+            (v & (1 << (auth as u32))) != 0
         } else {
             false
         }
