@@ -29,6 +29,7 @@ type RegisterProvider = record {
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
+  get_authorized : (Auth) -> (vec text) query;
   json_rpc_request: (json_rpc_payload: text, service_url: text, max_response_bytes: nat64) -> (EthRpcResult);
   json_rpc_provider_request: (json_rpc_payload: text, provider_id: nat64, max_response_bytes: nat64) -> (EthRpcResult);
   get_providers: () -> (vec RegisteredProvider) query;

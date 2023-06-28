@@ -634,6 +634,19 @@ fn authorize(principal: Principal, auth: Auth) {
     });
 }
 
+#[ic_cdk_macros::query(guard = "is_authorized")]
+#[candid_method]
+fn get_authorized(auth: Auth) -> Vec<String> {
+    AUTH.with(|a| {
+        let mut result = Vec::new();
+        for (k, v) in a.borrow().iter() {
+            if v & (1 << (auth.clone() as u32)) != 0 {
+            result.push(k.0.to_string());
+        }}
+        result
+    })
+}
+
 #[ic_cdk_macros::update(guard = "is_authorized")]
 #[candid_method]
 fn deauthorize(principal: Principal, auth: Auth) {
