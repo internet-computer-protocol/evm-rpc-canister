@@ -96,12 +96,13 @@ struct Metrics {
     json_rpc_host_requests: HashMap<String, u64>,
 }
 
+// These need to be powers of two so that they can be used as bit fields.
 #[derive(Clone, Debug, PartialEq, CandidType, FromPrimitive, Deserialize)]
 enum Auth {
-    Admin,
-    Rpc,
-    RegisterProvider,
-    FreeRpc,
+    Admin = 0b0001,
+    Rpc = 0b0010,
+    RegisterProvider = 0b0100,
+    FreeRpc = 0b1000,
 }
 
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
@@ -633,9 +634,9 @@ fn authorize(principal: Principal, auth: Auth) {
         let mut auth_map = a.borrow_mut();
         let principal = PrincipalStorable(principal);
         if let Some(v) = auth_map.get(&principal) {
-            auth_map.insert(principal, v | (1 << (auth as u32)));
+            auth_map.insert(principal, v | (auth as u32));
         } else {
-            auth_map.insert(principal, 1 << (auth as u32));
+            auth_map.insert(principal, auth as u32);
         }
     });
 }
@@ -646,7 +647,7 @@ fn get_authorized(auth: Auth) -> Vec<String> {
     AUTH.with(|a| {
         let mut result = Vec::new();
         for (k, v) in a.borrow().iter() {
-            if v & (1 << (auth.clone() as u32)) != 0 {
+            if v & (auth.clone() as u32) != 0 {
                 result.push(k.0.to_string());
             }
         }
@@ -661,7 +662,7 @@ fn deauthorize(principal: Principal, auth: Auth) {
         let mut auth_map = a.borrow_mut();
         let principal = PrincipalStorable(principal);
         if let Some(v) = auth_map.get(&principal) {
-            auth_map.insert(principal, v & !(1 << (auth as u32)));
+            auth_map.insert(principal, v & !(auth as u32));
         }
     });
 }
@@ -689,7 +690,7 @@ fn authorized(auth: Auth) -> bool {
     let caller = PrincipalStorable(ic_cdk::caller());
     AUTH.with(|a| {
         if let Some(v) = a.borrow().get(&caller) {
-            (v & (1 << (auth as u32))) != 0
+            (v & (auth as u32)) != 0
         } else {
             false
         }

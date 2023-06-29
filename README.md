@@ -49,3 +49,12 @@ dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic
 dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 iceth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://cloudflare-eth.com",1000)'
 dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 iceth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://ethereum.publicnode.com",1000)'
 ```
+
+### authorization
+
+```bash
+PRINCIPAL=$( dfx identity get-principal )
+dfx canister call iceth authorize "(principal \"$PRINCIPAL\", variant { Rpc })"
+dfx canister call iceth get_authorized '(variant { Rpc })'
+dfx canister call iceth deauthorize "(principal \"$PRINCIPAL\", variant { Rpc })"
+```
