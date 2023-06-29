@@ -77,3 +77,7 @@ Registered API keys are available to IC nodes in plaintext.  While the canister 
 ### Registered API providers should be aware that their costs are *per-call* which is per node in the subnet
 
 Application subnets have some number of nodes (typically 13), so a `json_rpc_request` call will result in 13 HTTP outcalls using the registered API key.  API providers should be aware of this when accounting for costs, rate and operation limits.
+
+### Signed Transactions should be Signed Securely
+
+This canister takes pre-signed transactions e.g. for `eth_sendRawTransaction` and these should be signed in a secure way, for example using Threshold ECDSA or by signing the transaction in a secure manner offline.  In any case, private keys should not be stored in canisters because canister memory is (currently) not private from node providers.
