@@ -107,6 +107,7 @@ enum Auth {
 
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 struct Metadata {
+    nodes_in_subnet: u32,
     next_provider_id: u64,
     open_rpc_access: bool,
 }
@@ -403,10 +404,10 @@ fn json_rpc_provider_cycles_cost(
     provider_cycles_per_call: u64,
     provider_cycles_per_message_byte: u64,
 ) -> u128 {
+    let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
     let base_cost = provider_cycles_per_call as u128
-        + provider_cycles_per_message_byte as u128
-        * json_rpc_payload.len() as u128;
-    base_cost * SUBNET_SIZE / 13
+        + provider_cycles_per_message_byte as u128 * json_rpc_payload.len() as u128;
+    base_cost * SUBNET_SIZE / (nodes_in_subnet as u128)
 }
 
 #[ic_cdk::query]
@@ -533,10 +534,11 @@ fn transform(args: TransformArgs) -> HttpResponse {
 }
 
 #[ic_cdk_macros::init]
-fn init() {
+fn init(nodes_in_subnet: u32) {
     initialize();
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
+        metadata.nodes_in_subnet = nodes_in_subnet;
         metadata.open_rpc_access = OPEN_RPC_ACCESS;
         m.borrow_mut().set(metadata).unwrap();
     });

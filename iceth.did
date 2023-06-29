@@ -26,7 +26,7 @@ type RegisterProvider = record {
   cycles_per_call: nat64;
   cycles_per_message_byte: nat64;
 };
-service : {
+service : (nat32) -> {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
   get_authorized : (Auth) -> (vec text) query;
