@@ -404,7 +404,7 @@ fn json_rpc_provider_cycles_cost(
 ) -> u128 {
     let base_cost = provider_cycles_per_call as u128
         + provider_cycles_per_message_byte as u128
-        + json_rpc_payload.len() as u128;
+        * json_rpc_payload.len() as u128;
     base_cost * SUBNET_SIZE / 13
 }
 
