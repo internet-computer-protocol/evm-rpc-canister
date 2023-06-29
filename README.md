@@ -72,4 +72,4 @@ dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) 
 
 ### API Keys are stored in the Canister
 
-Registered API keys are available to IC nodes in plaintext.  While the canister memory is not exposed generallly to users, it is available to node providers and to canister controllers.  In the future features such as SEV-SNP will enable privacy of canister memory, but until we have those features the API keys should not be considered to be entirely safe from leakage and potential misuse.
+Registered API keys are available to IC nodes in plaintext.  While the canister memory is not exposed generallly to users, it is available to node providers and to canister controllers.  In the future features such as SEV-SNP will enable privacy of canister memory, but until we have those features the API keys should not be considered to be entirely safe from leakage and potential misuse. API key providers should limit the scope of their API keys and monitor usage detect any misuse.
