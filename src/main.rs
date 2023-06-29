@@ -537,7 +537,7 @@ fn init() {
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.open_rpc_access = OPEN_RPC_ACCESS;
-        m.borrow_mut().set(metadata.clone()).unwrap();
+        m.borrow_mut().set(metadata).unwrap();
     });
 }
 
@@ -702,7 +702,7 @@ fn set_open_rpc_access(open_rpc_access: bool) {
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.open_rpc_access = open_rpc_access;
-        m.borrow_mut().set(metadata.clone()).unwrap();
+        m.borrow_mut().set(metadata).unwrap();
     });
 }
 
