@@ -67,3 +67,9 @@ dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) 
 dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 iceth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://ethereum.publicnode.com",1000)'
 ```
 
+
+## Caveats
+
+### API Keys are stored in the Canister
+
+Registered API keys are available to IC nodes in plaintext.  While the canister memory is not exposed generallly to users, it is available to node providers and to canister controllers.  In the future features such as SEV-SNP will enable privacy of canister memory, but until we have those features the API keys should not be considered to be entirely safe from leakage and potential misuse.
