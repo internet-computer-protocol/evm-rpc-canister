@@ -21,14 +21,13 @@ use std::cell::RefCell;
 use std::collections::hash_set::HashSet;
 use std::collections::HashMap;
 #[cfg(not(target_arch = "wasm32"))]
-use std::fs::File;
 
 const INGRESS_OVERHEAD_BYTES: u128 = 100;
 const INGRESS_MESSAGE_RECEIVED_COST: u128 = 1_200_000u128;
 const INGRESS_MESSAGE_BYTE_RECEIVED_COST: u128 = 2_000u128;
 const HTTP_OUTCALL_REQUEST_COST: u128 = 400_000_000u128;
 const HTTP_OUTCALL_BYTE_RECEIEVED_COST: u128 = 100_000u128;
-const SUBNET_SIZE: u128 = 13; // App subnet
+const BASE_SUBNET_SIZE: u128 = 13; // App subnet
 
 const MINIMUM_WITHDRAWAL_CYCLES: u128 = 1_000_000_000u128;
 
@@ -212,7 +211,7 @@ thread_local! {
     // Stable static data: this is preserved when the canister is upgraded.
     #[cfg(not(target_arch = "wasm32"))]
     static MEMORY_MANAGER: RefCell<MemoryManager<FileMemory>> =
-        RefCell::new(MemoryManager::init(FileMemory::new(File::open("stable_memory.bin").unwrap())));
+        RefCell::new(MemoryManager::init(FileMemory::new(std::fs::OpenOptions::new().read(true).write(true).create(true).open("stable_memory.bin").unwrap())));
     #[cfg(target_arch = "wasm32")]
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
@@ -391,12 +390,14 @@ fn json_rpc_cycles_cost(
     service_url: &str,
     max_response_bytes: u64,
 ) -> u128 {
+    let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
     let ingress_bytes =
         (json_rpc_payload.len() + service_url.len()) as u128 + INGRESS_OVERHEAD_BYTES;
-    INGRESS_MESSAGE_RECEIVED_COST
+    let base_cost = INGRESS_MESSAGE_RECEIVED_COST
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
         + HTTP_OUTCALL_REQUEST_COST
-        + HTTP_OUTCALL_BYTE_RECEIEVED_COST * (ingress_bytes + max_response_bytes as u128)
+        + HTTP_OUTCALL_BYTE_RECEIEVED_COST * (ingress_bytes + max_response_bytes as u128);
+    base_cost * (nodes_in_subnet as u128) / BASE_SUBNET_SIZE
 }
 
 fn json_rpc_provider_cycles_cost(
@@ -407,7 +408,7 @@ fn json_rpc_provider_cycles_cost(
     let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
     let base_cost = provider_cycles_per_call as u128
         + provider_cycles_per_message_byte as u128 * json_rpc_payload.len() as u128;
-    base_cost * SUBNET_SIZE / (nodes_in_subnet as u128)
+    base_cost * (nodes_in_subnet as u128)
 }
 
 #[ic_cdk::query]
@@ -786,6 +787,12 @@ fn check_candid_interface() {
 
 #[test]
 fn check_json_rpc_cycles_cost() {
+    METADATA.with(|m| {
+        let mut metadata = m.borrow().get().clone();
+        metadata.nodes_in_subnet = 13;
+        m.borrow_mut().set(metadata).unwrap();
+    });
+
     let base_cost = json_rpc_cycles_cost(
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
         "https://cloudflare-eth.com",
@@ -802,4 +809,27 @@ fn check_json_rpc_cycles_cost() {
         base_cost + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_BYTE_RECEIEVED_COST),
         base_cost_s10
     )
+}
+
+#[test]
+fn check_json_rpc_provider_cycles_cost() {
+    METADATA.with(|m| {
+        let mut metadata = m.borrow().get().clone();
+        metadata.nodes_in_subnet = 13;
+        m.borrow_mut().set(metadata).unwrap();
+    });
+
+    let base_cost = json_rpc_provider_cycles_cost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
+        0,
+        2,
+    );
+    let s10 = "0123456789";
+    let base_cost_s10 = json_rpc_provider_cycles_cost(
+        &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
+            + s10),
+        1000,
+        2,
+    );
+    assert_eq!(base_cost + (10 * 2 + 1000) * 13, base_cost_s10)
 }
