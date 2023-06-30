@@ -84,7 +84,7 @@ This canister takes pre-signed transactions e.g. for `eth_sendRawTransaction` an
 
 ### JSON is not validated
 
-This canister does not validate the JSON passed to the ETH service.  Registered API key providers should be aware of this in case the back end service is vulnerable to a bad JSON/request body.
+This canister does not validate the JSON passed to the ETH service.  Registered API key providers should be aware of this in case the back end service is vulnerable to a bad JSON/request body.  Registered API providers should be aware that there are methods in the ETH RPC API specification which give access to the ETH node keys.  Public service providers tend to block these, but registered API providers should ensure that they are not giving access to private keys or other proviledged operations.
 
 ### Requests sent to service providers are subject to the service providers privacy policy
 
