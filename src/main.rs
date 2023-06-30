@@ -308,7 +308,7 @@ async fn json_rpc_request_internal(
     provider: Option<Provider>,
 ) -> Result<Vec<u8>, EthRpcError> {
     inc_metric!(json_rpc_requests);
-    if !authorized(Auth::Rpc) {
+    if !is_authorized(Auth::Rpc) {
         inc_metric!(json_rpc_request_err_no_permission);
         return Err(EthRpcError::NoPermission);
     }
@@ -333,7 +333,7 @@ async fn json_rpc_request_internal(
     };
     let cost =
         json_rpc_cycles_cost(&json_rpc_payload, &service_url, max_response_bytes) + provider_cost;
-    if !authorized(Auth::FreeRpc) {
+    if !is_authorized(Auth::FreeRpc) {
         if cycles_available < cost {
             return Err(EthRpcError::TooFewCycles(format!(
                 "requires {} cycles, got {} cycles",
@@ -459,7 +459,7 @@ fn register_provider(provider: RegisterProvider) {
 fn unregister_provider(provider_id: u64) {
     PROVIDERS.with(|p| {
         if let Some(provider) = p.borrow().get(&provider_id) {
-            if provider.owner == ic_cdk::caller() || authorized(Auth::Admin) {
+            if provider.owner == ic_cdk::caller() || is_authorized(Auth::Admin) {
                 p.borrow_mut().remove(&provider_id);
             } else {
                 ic_cdk::trap("Not authorized");
@@ -629,7 +629,7 @@ fn stable_write(offset: u64, buffer: Vec<u8>) {
     ic_cdk::api::stable::stable64_write(offset, buffer.as_slice());
 }
 
-#[ic_cdk_macros::update(guard = "is_authorized")]
+#[ic_cdk_macros::update(guard = "is_authorized_admin")]
 #[candid_method]
 fn authorize(principal: Principal, auth: Auth) {
     AUTH.with(|a| {
@@ -643,7 +643,7 @@ fn authorize(principal: Principal, auth: Auth) {
     });
 }
 
-#[ic_cdk_macros::query(guard = "is_authorized")]
+#[ic_cdk_macros::query(guard = "is_authorized_admin")]
 #[candid_method(query)]
 fn get_authorized(auth: Auth) -> Vec<String> {
     AUTH.with(|a| {
@@ -657,7 +657,7 @@ fn get_authorized(auth: Auth) -> Vec<String> {
     })
 }
 
-#[ic_cdk_macros::update(guard = "is_authorized")]
+#[ic_cdk_macros::update(guard = "is_authorized_admin")]
 #[candid_method]
 fn deauthorize(principal: Principal, auth: Auth) {
     AUTH.with(|a| {
@@ -669,8 +669,8 @@ fn deauthorize(principal: Principal, auth: Auth) {
     });
 }
 
-fn is_authorized() -> Result<(), String> {
-    if ic_cdk::api::is_controller(&ic_cdk::caller()) || authorized(Auth::Admin) {
+fn is_authorized_admin() -> Result<(), String> {
+    if is_authorized(Auth::Admin) {
         Ok(())
     } else {
         Err("You are not authorized".to_string())
@@ -678,20 +678,24 @@ fn is_authorized() -> Result<(), String> {
 }
 
 fn is_authorized_register_provider() -> Result<(), String> {
-    if ic_cdk::api::is_controller(&ic_cdk::caller()) || authorized(Auth::RegisterProvider) {
+    if is_authorized(Auth::RegisterProvider) {
         Ok(())
     } else {
         Err("You are not authorized".to_string())
     }
 }
 
-fn authorized(auth: Auth) -> bool {
-    if auth == Auth::Rpc || METADATA.with(|m| m.borrow().get().open_rpc_access) {
+fn is_authorized(auth: Auth) -> bool {
+    ic_cdk::api::is_controller(&ic_cdk::caller())
+        || is_authorized_principal(&ic_cdk::caller(), auth)
+}
+
+fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {
+    if auth == Auth::Rpc && METADATA.with(|m| m.borrow().get().open_rpc_access) {
         return true;
     }
-    let caller = PrincipalStorable(ic_cdk::caller());
     AUTH.with(|a| {
-        if let Some(v) = a.borrow().get(&caller) {
+        if let Some(v) = a.borrow().get(&PrincipalStorable(*principal)) {
             (v & (auth as u32)) != 0
         } else {
             false
@@ -699,7 +703,7 @@ fn authorized(auth: Auth) -> bool {
     })
 }
 
-#[ic_cdk_macros::update(guard = "is_authorized")]
+#[ic_cdk_macros::update(guard = "is_authorized_admin")]
 #[candid_method]
 fn set_open_rpc_access(open_rpc_access: bool) {
     METADATA.with(|m| {
@@ -709,7 +713,7 @@ fn set_open_rpc_access(open_rpc_access: bool) {
     });
 }
 
-#[ic_cdk_macros::query(guard = "is_authorized")]
+#[ic_cdk_macros::query(guard = "is_authorized_admin")]
 #[candid_method(query)]
 fn get_open_rpc_access() -> bool {
     METADATA.with(|m| m.borrow().get().open_rpc_access)
@@ -831,4 +835,23 @@ fn check_json_rpc_provider_cycles_cost() {
         2,
     );
     assert_eq!(base_cost + (10 * 2 + 1000) * 13, base_cost_s10)
+}
+
+#[test]
+fn check_authorization() {
+    let principal1 = Principal::from_text(
+        "k5dlc-ijshq-lsyre-qvvpq-2bnxr-pb26c-ag3sc-t6zo5-rdavy-recje-zqe".to_string(),
+    )
+    .unwrap();
+    let principal2 =
+        Principal::from_text("yxhtl-jlpgx-wqnzc-ysego-h6yqe-3zwfo-o3grn-gvuhm-nz3kv-ainub-6ae")
+            .unwrap();
+    assert!(!is_authorized_principal(&principal1, Auth::Rpc));
+    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
+    authorize(principal1, Auth::Rpc);
+    assert!(is_authorized_principal(&principal1, Auth::Rpc));
+    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
+    deauthorize(principal1, Auth::Rpc);
+    assert!(!is_authorized_principal(&principal1, Auth::Rpc));
+    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
 }
