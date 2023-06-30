@@ -20,7 +20,6 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::hash_set::HashSet;
 use std::collections::HashMap;
-#[cfg(not(target_arch = "wasm32"))]
 
 const INGRESS_OVERHEAD_BYTES: u128 = 100;
 const INGRESS_MESSAGE_RECEIVED_COST: u128 = 1_200_000u128;
