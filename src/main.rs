@@ -43,7 +43,7 @@ const INITIAL_SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
     "eth-mainnet.blastapi.io",
     "ethereumnodelight.app.runonflux.io",
     "eth.nownodes.io",
-    "rpc.ankr.com/eth_goerli",
+    "rpc.ankr.com",
     "mainnet.infura.io",
     "eth.getblock.io",
     "rpc.kriptonio.com",

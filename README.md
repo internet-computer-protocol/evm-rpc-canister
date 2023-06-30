@@ -81,3 +81,11 @@ Application subnets have some number of nodes (typically 13), so a `json_rpc_req
 ### Signed Transactions should be Signed Securely
 
 This canister takes pre-signed transactions e.g. for `eth_sendRawTransaction` and these should be signed in a secure way, for example using Threshold ECDSA or by signing the transaction in a secure manner offline.  In any case, private keys should not be stored in canisters because canister memory is (currently) not private from node providers.
+
+### JSON is not validated
+
+This canister does not validate the JSON passed to the ETH service.  Registered API key providers should be aware of this in case the back end service is vulnerable to a bad JSON/request body.
+
+### Requests sent to service providers are subject to the service providers privacy policy
+
+Users should be aware of the privacy policy of the service provider to which their requests are sent as some service providers have stronger privacy guarantees.
