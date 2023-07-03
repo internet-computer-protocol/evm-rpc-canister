@@ -522,8 +522,27 @@ async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
     .await
     {
         Ok(()) => (),
-        // Note: cycles are not refunded (would that be exploitable?).
-        Err(e) => ic_cdk::trap(&format!("failed to deposit_cycles: {:?}", e)),
+        e => {
+            // Refund on failure to send cycles.
+            log!(
+                INFO,
+                "Unable to send {} cycles to {} for provider {}: {:?}",
+                amount,
+                canister_id,
+                provider_id,
+                e
+            );
+            let provider = PROVIDERS.with(|p| {
+                p.borrow()
+                    .get(&provider_id)
+                    .ok_or(EthRpcError::ProviderNotFound)
+            });
+            let mut provider = provider.expect("Provider not found during refund, cycles lost.");
+            PROVIDERS.with(|p| {
+                provider.cycles_owed += amount;
+                p.borrow_mut().insert(provider_id, provider)
+            });
+        }
     };
 }
 
