@@ -431,6 +431,11 @@ fn get_providers() -> Vec<RegisteredProvider> {
 #[ic_cdk::update(guard = "is_authorized_register_provider")]
 #[candid_method]
 fn register_provider(provider: RegisterProvider) {
+    let parsed_url = url::Url::parse(&provider.service_url).expect("unable to parse service_url");
+    let host = parsed_url.host_str().expect("service_url host missing");
+    if SERVICE_HOSTS_ALLOWLIST.with(|a| !a.borrow().contains(&host)) {
+        ic_cdk::trap("service_url host not allowed");
+    }
     let provider_id = METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.next_provider_id += 1;
