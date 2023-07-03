@@ -89,3 +89,7 @@ This canister does not validate the JSON passed to the ETH service.  Registered 
 ### Requests sent to service providers are subject to the service providers privacy policy
 
 Users should be aware of the privacy policy of the service provider to which their requests are sent as some service providers have stronger privacy guarantees.
+
+### Idempotency issues because of one HTTP outcalls per node in the subnet
+
+HTTP outcalls result in one HTTP outcall per node in the subnet and the results are then combined after filtering through a Transform function.  Some ETH RPC calls may not be idempotent or may vary which will cause the call to be reported as a failure as there will be no consensus on the result.  In particular `json_rpc_provider_cycles_cost` may be accepted only once and subsequent calls may result in a duplicate error.  Furthermore this behavior may differ by service provider.  Users should be aware of this  and use appropriate caution and/or a different or modified solution.
