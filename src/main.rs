@@ -807,7 +807,7 @@ fn check_candid_interface() {
 
     service_compatible(
         CandidSource::Text(&new_interface),
-        CandidSource::File(Path::new("iceth.did")),
+        CandidSource::File(Path::new("ic_eth.did")),
     )
     .unwrap();
 }

@@ -1,7 +1,8 @@
-# IC Eth
-ETH for the IC.
+# IC 🔗 ETH (Canister)
 
-The IC Eth project realizes a canister smart contract for the Internet Computer blockchain that offers the Ethereum JSON RPC API as an [on-chain API](./iceth-API.md). Requests received on this API by the canister are forwarded to Web2 Ethereum *JSON RPC API services* like [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) using [HTTPS outcalls](https://internetcomputer.org/docs/current/developer-docs/integrations/http_requests/). This way, the canister acts as a *proxy* to the Web2 world of Ethereum API nodes and simplifies the access to Ethereum JSON RPC API services for canisters. The JSON RPC API exposed by this canister allows a canister smart contract to do much of what a regular Ethereum dApp in the Web2 world could do, e.g., to arbitrarily interact with the Ethereum network, e.g., by querying the state of Ethereum smart contracts or submitting raw transactions to Ethereum.
+> #### Interact with the [Ethereum](https://ethereum.org/) blockchain from the [Internet Computer](https://internetcomputer.org/).
+
+The IC Eth project realizes a canister smart contract for the Internet Computer blockchain that offers the Ethereum JSON RPC API as an [on-chain API](./API.md). Requests received on this API by the canister are forwarded to Web2 Ethereum *JSON RPC API services* like [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) using [HTTPS outcalls](https://internetcomputer.org/docs/current/developer-docs/integrations/http_requests/). This way, the canister acts as a *proxy* to the Web2 world of Ethereum API nodes and simplifies the access to Ethereum JSON RPC API services for canisters. The JSON RPC API exposed by this canister allows a canister smart contract to do much of what a regular Ethereum dApp in the Web2 world could do, e.g., to arbitrarily interact with the Ethereum network, e.g., by querying the state of Ethereum smart contracts or submitting raw transactions to Ethereum.
 
 This canister provides a convenient, yet effective, connection between the Internet Computer and the Ethereum network. For interactions that involve value transfer, such as in the context of X-chain asset transfers, multiple Web2 JSON RPC providers can be queried by a client to increase the assurance of correctness of the answer. This is a decision on the security model that is left to the client.
 
@@ -20,7 +21,7 @@ At least the following deployment scenarios are supported by the API of this can
 **Note**
 The canister has been designed to connect to the Ethereum blockchain from the Internet Computer, however, the canister may also be useful to connect to other EVM blockchains that support the same JSON RPC API and follow standards of Ethereum.
 
-The API of the canister is specified through a [Candid interface specification](./iceth.did). Detailed API documentation is available [here](./iceth-API.md).
+The API of the canister is specified through a [Candid interface specification](./ic_eth.did). Detailed API documentation is available [here](./API.md).
 
 ## Build
 
@@ -41,30 +42,30 @@ scripts/docker-build
 The deployment takes a single argument which is the size of the subnet as the cost of an HTTP outcall is proportional to the number of nodes.
 
 ```bash
-dfx deploy iceth --argument '(13)'
+dfx deploy ic_eth --argument '(13)'
 ```
 
 ### authorization
 
 ```bash
 PRINCIPAL=$( dfx identity get-principal )
-dfx canister call iceth authorize "(principal \"$PRINCIPAL\", variant { Rpc })"
-dfx canister call iceth get_authorized '(variant { Rpc })'
-dfx canister call iceth deauthorize "(principal \"$PRINCIPAL\", variant { Rpc })"
+dfx canister call ic_eth authorize "(principal \"$PRINCIPAL\", variant { Rpc })"
+dfx canister call ic_eth get_authorized '(variant { Rpc })'
+dfx canister call ic_eth deauthorize "(principal \"$PRINCIPAL\", variant { Rpc })"
 ```
 
 ### local ethereum rpc calls
 ```bash
-dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 iceth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://cloudflare-eth.com",1000)'
-dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 iceth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://ethereum.publicnode.com",1000)'
-dfx canister call iceth register_provider '(record { chain_id=1; service_url="https://cloudflare-eth.com"; api_key="/v1/mainnet"; cycles_per_call=10; cycles_per_message_byte=1; })'
-dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 iceth json_rpc_provider_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",0,1000)'
+dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://cloudflare-eth.com",1000)'
+dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://ethereum.publicnode.com",1000)'
+dfx canister call ic_eth register_provider '(record { chain_id=1; service_url="https://cloudflare-eth.com"; api_key="/v1/mainnet"; cycles_per_call=10; cycles_per_message_byte=1; })'
+dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth json_rpc_provider_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",0,1000)'
 ```
 
 ### mainnet ethereum rpc calls
 ```bash
-dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 iceth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://cloudflare-eth.com",1000)'
-dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 iceth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://ethereum.publicnode.com",1000)'
+dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 ic_eth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://cloudflare-eth.com",1000)'
+dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 ic_eth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://ethereum.publicnode.com",1000)'
 ```
 
 

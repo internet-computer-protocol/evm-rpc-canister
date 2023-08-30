@@ -16,15 +16,17 @@
 
 Register a new *provider* for a Web2-based *service*.
 
-    type RegisterProvider = record {
-        chain_id: nat64;
-        service_url: text;
-        api_key: text;
-        cycles_per_call: nat64;
-        cycles_per_message_byte: nat64;
-    };
+```candid
+type RegisterProvider = record {
+    chain_id: nat64;
+    service_url: text;
+    api_key: text;
+    cycles_per_call: nat64;
+    cycles_per_message_byte: nat64;
+};
 
-    register_provider: (RegisterProvider) -> ();
+register_provider: (RegisterProvider) -> ();
+```
 
 The `RegisterProvider` record defines the details about the service to register, including the API key for the service.
 * `chain_id`: The id of the Ethereum chain this provider allows to connect to. The ids refer to the chain ids as defined for EVM-compatible blockchains, see, e.g., [ChainList](https://chainlist.org/?testnets=true).
@@ -39,16 +41,18 @@ The cycles charged can, for example, be used by the entity providing the API key
 
 Returns a list of currently registered `RegisteredProvider` entries of the canister.
 
-    type RegisteredProvider = record {
-        provider_id: nat64;
-        owner: principal;
-        chain_id: nat64;
-        service_url: text;
-        cycles_per_call: nat64;
-        cycles_per_message_byte: nat64;
-    };
+```candid
+type RegisteredProvider = record {
+    provider_id: nat64;
+    owner: principal;
+    chain_id: nat64;
+    service_url: text;
+    cycles_per_call: nat64;
+    cycles_per_message_byte: nat64;
+};
 
-    get_providers: () -> (vec RegisteredProvider) query;
+get_providers: () -> (vec RegisteredProvider) query;
+```
 
 `vec RegisteredProvider` is a list of providers, each of which represents one provider that has been registered with the canister and corresponds to a registration of an API key for a specific external API service and chain id. A provider entry also contains the cycles price for using this provider, in addition to what is charged for the canister services.
 
@@ -87,7 +91,9 @@ Make a request to a Web2 Ethereum node using a registered provider for a JSON RP
 
 Unregister a provider from the canister. Only the owner of the provider or an admin principal is authorized to perform this action.
 
-    unregister_provider: (provider_id: nat64) -> () ;
+```candid
+unregister_provider: (provider_id: nat64) -> ();
+```
 
 The `provider_id` for the provider to be unregistered is the only parameter required.
 
@@ -95,9 +101,11 @@ The `provider_id` for the provider to be unregistered is the only parameter requ
 
 Used for authorizing a principal for certain classes of actions as defined through `Auth`.
 
-    authorize : (principal, Auth) -> ();
+```candid
+authorize : (principal, Auth) -> ();
 
-    type Auth = variant { Rpc; RegisterProvider; Admin };
+type Auth = variant { Rpc; RegisterProvider; Admin };
+```
 
 The `Auth` variant defines the following cases:
 * `Rpc`: Governs access control to the RPC methods.

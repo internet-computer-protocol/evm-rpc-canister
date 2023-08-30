@@ -1,8 +1,8 @@
 [package]
-name = "iceth"
+name = "ic_eth"
 version = "0.1.0"
 description = "Ethereum on IC."
-authors = ["John Plevyak <jplevyak@gmail.com>"]
+authors = ["DFINITY Foundation"]
 readme = "README.md"
 edition = "2021"
 

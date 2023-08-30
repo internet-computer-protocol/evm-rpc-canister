@@ -1,9 +1,9 @@
 {
   "canisters": {
-    "iceth": {
-      "candid": "iceth.did",
+    "ic_eth": {
+      "candid": "ic_eth.did",
       "type": "rust",
-      "package": "iceth"
+      "package": "ic_eth"
     }
   },
   "version": 1
