@@ -1,4 +1,4 @@
-# IC Eth API
+# IC 🔗 ETH (Canister API)
 
 ## Overview
 
