@@ -1,42 +1,42 @@
-type Auth = variant { Rpc; RegisterProvider; FreeRpc; Admin; };
-type EthRpcResult = variant {
-  Ok: blob;
-  Err : opt variant {
-    NoPermission;
-    TooFewCycles : text;
-    ServiceUrlParseError;
-    ServiceUrlHostMissing;
-    ServiceUrlHostNotAllowed;
-    ProviderNotFound;
-    HttpRequestError : record { code: nat32; message: text };
-  }
-};
-type RegisteredProvider = record {
-  provider_id: nat64;
-  owner: principal;
-  chain_id: nat64;
-  service_url: text;
-  cycles_per_call: nat64;
-  cycles_per_message_byte: nat64;
+type Auth = variant { Rpc; RegisterProvider; FreeRpc; Admin };
+type EthRpcError = variant {
+  ServiceUrlHostNotAllowed;
+  HttpRequestError : record { code : nat32; message : text };
+  TooFewCycles : text;
+  ServiceUrlParseError;
+  ServiceUrlHostMissing;
+  ProviderNotFound;
+  NoPermission;
 };
 type RegisterProvider = record {
-  chain_id: nat64;
-  service_url: text;
-  api_key: text;
-  cycles_per_call: nat64;
-  cycles_per_message_byte: nat64;
+  service_url : text;
+  api_key : text;
+  cycles_per_message_byte : nat64;
+  chain_id : nat64;
+  cycles_per_call : nat64;
 };
-service : (nat32) -> {
+type RegisteredProvider = record {
+  service_url : text;
+  owner : principal;
+  provider_id : nat64;
+  cycles_per_message_byte : nat64;
+  chain_id : nat64;
+  cycles_per_call : nat64;
+};
+type Result = variant { Ok : vec nat8; Err : EthRpcError };
+service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
   get_authorized : (Auth) -> (vec text) query;
-  set_open_rpc_access : (bool) -> ();
+  get_nodes_in_subnet : () -> (nat32) query;
   get_open_rpc_access : () -> (bool) query;
-  json_rpc_request: (json_rpc_payload: text, service_url: text, max_response_bytes: nat64) -> (EthRpcResult);
-  json_rpc_provider_request: (json_rpc_payload: text, provider_id: nat64, max_response_bytes: nat64) -> (EthRpcResult);
-  get_providers: () -> (vec RegisteredProvider) query;
-  register_provider: (RegisterProvider) -> ();
-  unregister_provider: (provider_id: nat64) -> ();
-  get_owed_cycles : (provider_id: nat64) -> (nat) query;
-  withdraw_owed_cycles : (provider_id: nat64, target_canister_id: principal) -> ();
+  get_owed_cycles : (nat64) -> (nat) query;
+  get_providers : () -> (vec RegisteredProvider) query;
+  json_rpc_provider_request : (text, nat64, nat64) -> (Result);
+  json_rpc_request : (text, text, nat64) -> (Result);
+  register_provider : (RegisterProvider) -> ();
+  set_nodes_in_subnet : (nat32) -> ();
+  set_open_rpc_access : (bool) -> ();
+  unregister_provider : (nat64) -> ();
+  withdraw_owed_cycles : (nat64, principal) -> ();
 }
