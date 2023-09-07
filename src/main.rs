@@ -74,7 +74,7 @@ const AUTHORIZED_ADMIN: &[&str] = &[];
 
 type AllowlistSet = HashSet<&'static &'static str>;
 
-#[allow(unused)] // Some compiler quirk causes this to be reported as unused.
+// #[allow(unused)]
 #[cfg(not(target_arch = "wasm32"))]
 type Memory = VirtualMemory<FileMemory>;
 #[cfg(target_arch = "wasm32")]
@@ -428,7 +428,7 @@ fn get_providers() -> Vec<RegisteredProvider> {
     })
 }
 
-#[ic_cdk::update(guard = "is_authorized_register_provider")]
+#[ic_cdk::update(guard = "require_register_provider")]
 #[candid_method]
 fn register_provider(provider: RegisterProvider) {
     let parsed_url = url::Url::parse(&provider.service_url).expect("unable to parse service_url");
@@ -459,7 +459,7 @@ fn register_provider(provider: RegisterProvider) {
     });
 }
 
-#[ic_cdk::update(guard = "is_authorized_register_provider")]
+#[ic_cdk::update(guard = "require_register_provider")]
 #[candid_method]
 fn unregister_provider(provider_id: u64) {
     PROVIDERS.with(|p| {
@@ -473,7 +473,7 @@ fn unregister_provider(provider_id: u64) {
     });
 }
 
-#[ic_cdk::query(guard = "is_authorized_register_provider")]
+#[ic_cdk::query(guard = "require_register_provider")]
 #[candid_method(query)]
 fn get_owed_cycles(provider_id: u64) -> u128 {
     let provider = PROVIDERS.with(|p| {
@@ -493,7 +493,7 @@ struct DepositCyclesArgs {
     canister_id: Principal,
 }
 
-#[ic_cdk::update(guard = "is_authorized_register_provider")]
+#[ic_cdk::update(guard = "require_register_provider")]
 #[candid_method]
 async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
     let provider = PROVIDERS.with(|p| {
@@ -653,7 +653,7 @@ fn stable_write(offset: u64, buffer: Vec<u8>) {
     ic_cdk::api::stable::stable64_write(offset, buffer.as_slice());
 }
 
-#[ic_cdk_macros::update(guard = "is_authorized_admin")]
+#[ic_cdk_macros::update(guard = "require_admin")]
 #[candid_method]
 fn authorize(principal: Principal, auth: Auth) {
     AUTH.with(|a| {
@@ -667,7 +667,7 @@ fn authorize(principal: Principal, auth: Auth) {
     });
 }
 
-#[ic_cdk_macros::query(guard = "is_authorized_admin")]
+#[ic_cdk_macros::query(guard = "require_admin")]
 #[candid_method(query)]
 fn get_authorized(auth: Auth) -> Vec<String> {
     AUTH.with(|a| {
@@ -681,7 +681,7 @@ fn get_authorized(auth: Auth) -> Vec<String> {
     })
 }
 
-#[ic_cdk_macros::update(guard = "is_authorized_admin")]
+#[ic_cdk_macros::update(guard = "require_admin")]
 #[candid_method]
 fn deauthorize(principal: Principal, auth: Auth) {
     AUTH.with(|a| {
@@ -693,7 +693,7 @@ fn deauthorize(principal: Principal, auth: Auth) {
     });
 }
 
-fn is_authorized_admin() -> Result<(), String> {
+fn require_admin() -> Result<(), String> {
     if is_authorized(Auth::Admin) {
         Ok(())
     } else {
@@ -701,7 +701,7 @@ fn is_authorized_admin() -> Result<(), String> {
     }
 }
 
-fn is_authorized_register_provider() -> Result<(), String> {
+fn require_register_provider() -> Result<(), String> {
     if is_authorized(Auth::RegisterProvider) {
         Ok(())
     } else {
@@ -727,7 +727,7 @@ fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {
     })
 }
 
-#[ic_cdk_macros::update(guard = "is_authorized_admin")]
+#[ic_cdk_macros::update(guard = "require_admin")]
 #[candid_method]
 fn set_open_rpc_access(open_rpc_access: bool) {
     METADATA.with(|m| {
@@ -737,7 +737,7 @@ fn set_open_rpc_access(open_rpc_access: bool) {
     });
 }
 
-#[ic_cdk_macros::query(guard = "is_authorized_admin")]
+#[ic_cdk_macros::query(guard = "require_admin")]
 #[candid_method(query)]
 fn get_open_rpc_access() -> bool {
     METADATA.with(|m| m.borrow().get().open_rpc_access)
