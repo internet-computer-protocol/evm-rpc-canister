@@ -72,6 +72,8 @@ const FREE_RPC_ALLOWLIST: &[&str] = &[];
 // Principals who have Admin authorization.
 const AUTHORIZED_ADMIN: &[&str] = &[];
 
+const DEFAULT_NODES_IN_SUBNET: u32 = 13;
+
 type AllowlistSet = HashSet<&'static &'static str>;
 
 // #[allow(unused)]
@@ -558,11 +560,11 @@ fn transform(args: TransformArgs) -> HttpResponse {
 }
 
 #[ic_cdk_macros::init]
-fn init(nodes_in_subnet: u32) {
+fn init() {
     initialize();
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = nodes_in_subnet;
+        metadata.nodes_in_subnet = DEFAULT_NODES_IN_SUBNET;
         metadata.open_rpc_access = OPEN_RPC_ACCESS;
         m.borrow_mut().set(metadata).unwrap();
     });
@@ -741,6 +743,22 @@ fn set_open_rpc_access(open_rpc_access: bool) {
 #[candid_method(query)]
 fn get_open_rpc_access() -> bool {
     METADATA.with(|m| m.borrow().get().open_rpc_access)
+}
+
+#[ic_cdk_macros::update(guard = "require_admin")]
+#[candid_method]
+fn set_nodes_in_subnet(nodes_in_subnet: u32) {
+    METADATA.with(|m| {
+        let mut metadata = m.borrow().get().clone();
+        metadata.nodes_in_subnet = nodes_in_subnet;
+        m.borrow_mut().set(metadata).unwrap();
+    });
+}
+
+#[ic_cdk_macros::query(guard = "require_admin")]
+#[candid_method(query)]
+fn get_nodes_in_subnet() -> u32 {
+    METADATA.with(|m| m.borrow().get().nodes_in_subnet)
 }
 
 fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> std::io::Result<()> {
