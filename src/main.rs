@@ -463,6 +463,21 @@ fn register_provider(provider: RegisterProvider) {
 
 #[ic_cdk::update(guard = "require_register_provider")]
 #[candid_method]
+fn update_provider_api_key(provider_id: u64, api_key: String) {
+    PROVIDERS.with(|p| match p.borrow_mut().get(&provider_id) {
+        Some(mut provider) => {
+            if provider.owner != ic_cdk::caller() && !is_authorized(Auth::Admin) {
+                ic_cdk::trap("Provider owner != caller");
+            }
+            provider.api_key = api_key;
+            p.borrow_mut().insert(provider_id, provider);
+        }
+        None => ic_cdk::trap("Provider not found"),
+    });
+}
+
+#[ic_cdk::update(guard = "require_register_provider")]
+#[candid_method]
 fn unregister_provider(provider_id: u64) {
     PROVIDERS.with(|p| {
         if let Some(provider) = p.borrow().get(&provider_id) {
