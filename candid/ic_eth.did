@@ -38,5 +38,6 @@ service : {
   set_nodes_in_subnet : (nat32) -> ();
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> ();
+  update_provider_api_key : (nat64, text) -> ();
   withdraw_owed_cycles : (nat64, principal) -> ();
 }
