@@ -1,7 +1,7 @@
 {
   "canisters": {
     "ic_eth": {
-      "candid": "ic_eth.did",
+      "candid": "candid/ic_eth.did",
       "type": "rust",
       "package": "ic_eth"
     }
