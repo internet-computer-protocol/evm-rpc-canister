@@ -212,7 +212,7 @@ thread_local! {
     // Stable static data: this is preserved when the canister is upgraded.
     #[cfg(not(target_arch = "wasm32"))]
     static MEMORY_MANAGER: RefCell<MemoryManager<FileMemory>> =
-        RefCell::new(MemoryManager::init(FileMemory::new(std::fs::OpenOptions::new().read(true).write(true).create(true).open("stable_memory.bin").unwrap())));
+        RefCell::new(MemoryManager::init(FileMemory::new(std::fs::OpenOptions::new().read(true).write(true).create(true).open("target/test_stable_memory.bin").unwrap())));
     #[cfg(target_arch = "wasm32")]
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
@@ -825,7 +825,7 @@ fn check_candid_interface() {
 
     service_compatible(
         CandidSource::Text(&new_interface),
-        CandidSource::File(Path::new("ic_eth.did")),
+        CandidSource::File(Path::new("candid/ic_eth.did")),
     )
     .unwrap();
 }
