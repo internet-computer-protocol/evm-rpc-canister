@@ -2,15 +2,54 @@
 
 > #### Interact with the [Ethereum](https://ethereum.org/) blockchain from the [Internet Computer](https://internetcomputer.org/).
 
-IC 🔗 ETH is an Internet Computer canister smart contract that makes it possible to communicate with the Ethereum blockchain using an [on-chain API](./API.md). Requests received on this API by the canister are forwarded to Web2 Ethereum *JSON RPC API services* like [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) using [HTTPS outcalls](https://internetcomputer.org/docs/current/developer-docs/integrations/http_requests/). This way, the canister acts as a *proxy* to the Web2 world of Ethereum API nodes and simplifies the access to Ethereum JSON RPC API services for canisters. The JSON RPC API exposed by this canister allows a canister smart contract to do much of what a regular Ethereum dApp in the Web2 world could do, e.g., to arbitrarily interact with the Ethereum network, e.g., by querying the state of Ethereum smart contracts or submitting raw transactions to Ethereum.
+## Overview
 
-This canister provides a convenient, yet effective, connection between the Internet Computer and the Ethereum network. For interactions that involve value transfer, such as in the context of X-chain asset transfers, multiple Web2 JSON RPC providers can be queried by a client to increase the assurance of correctness of the answer. This is a decision on the security model that is left to the client.
+IC 🔗 ETH is an Internet Computer canister smart contract that makes it possible to communicate with the Ethereum blockchain using an [on-chain API](./API.md). Requests received on this API by the canister are forwarded to Web2 Ethereum *JSON RPC API services* like [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) using [HTTPS outcalls](https://internetcomputer.org/docs/current/developer-docs/integrations/http_requests/). This way, the canister acts as a proxy to the Web2 world of Ethereum API nodes and simplifies the access to Ethereum JSON RPC API services for canisters. The JSON RPC API exposed by this canister allows a canister smart contract to do much of what a regular Ethereum dApp in the Web2 world could do, e.g., by querying the state of Ethereum smart contracts or submitting raw transactions to Ethereum.
+
+## Quick Start
+
+Add the following to your `dfx.json` config file:
+
+```json
+{
+  "canisters": {
+    "ic_eth": {
+      "type": "custom",
+      "candid": "https://github.com/internet-computer-protocol/ic-eth-rpc/releases/latest/download/ic_eth.did",
+      "wasm": "https://github.com/internet-computer-protocol/ic-eth-rpc/releases/latest/download/ic_eth_dev.wasm.gz",
+      "remote": {
+        "id": {
+          "ic": "TODO: deploy canister"
+        }
+      },
+      "frontend": {}
+    }
+  }
+}
+```
+
+Run the following commands to run the canister in your local environment:
+
+```sh
+# Start the local replica
+dfx start --background
+
+# Deploy the `ic_eth` canister
+dfx deploy ic_eth
+
+# Call the `eth_gasPrice` JSON-RPC method
+dfx canister call ic_eth json_rpc_request '("https://cloudflare-eth.com/v1/mainnet", "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}", 2048)' --wallet $(dfx identity get-wallet) --with-cycles 600000000
+```
+
+## How it Works
+
+This canister provides a connection between the Internet Computer and the Ethereum network. For interactions that involve value transfer, such as in the context of cross-chain asset transfers, multiple Web2 JSON RPC providers can be queried by a client to increase the assurance of correctness of the answer. This is a decision on the security model that is left to the client.
 
 Authorized principals are permitted to register, update, and de-register so-called *providers*, each of which defines a registered API key for a specific Web2 JSON API service for a given chain id. It furthermore defines the cycles price to be paid when using this provider.
 
-This canister's API can be used in two different modalities depending on the use case:
+This canister's API can be used in two different ways depending on the use case:
 * *Registered API key:* Client canisters use the canister's RPC API such that canister-registered API keys are used to interact with the Web2 API provider. This has the advantage that the maintainer of the client does not need to manage their own API keys with RPC providers, but simply uses the one registered in the canister.
-* *Client-provided API key:* Client canisters can provide their own API key with calls, e.g., to use API providers for which there are no registered providers available. This also helps reduce the quota usage for quota-limited API keys. The API providers to be used this way need to be on an allowlist of the canister.
+* *Client-provided API key:* Client canisters can provide their own API key with calls, e.g., to use APIs for which there are no registered providers available. This also helps reduce the quota usage for quota-limited API keys. The API providers to be used this way need to be on an allowlist of the canister.
 This gives the canister great flexibility of how it can be used in different deployment scenarios.
 
 At least the following deployment scenarios are supported by the API of this canister:
@@ -23,38 +62,32 @@ The canister has been designed to connect to the Ethereum blockchain from the In
 
 The API of the canister is specified through a [Candid interface specification](./ic_eth.did). Detailed API documentation is available [here](./API.md).
 
-## Build
+## Contributing
 
-### DFX
-```bash
-dfx build
-```
+Run the following commands to set up a local development environment:
 
-### Docker (reproducable)
 ```bash
-scripts/docker-build
+# Clone the repository
+git clone https://github.com/internet-computer-protocol/ic-eth-rpc
+cd ic-eth-rpc
+
+# Deploy to the local replica
+dfx start --background
+dfx deploy
 ```
 
 ## Examples
 
-### deploy
-
-The deployment takes a single argument which is the size of the subnet as the cost of an HTTP outcall is proportional to the number of nodes.
+### Authorization
 
 ```bash
-dfx deploy ic_eth --argument '(13)'
-```
-
-### authorization
-
-```bash
-PRINCIPAL=$( dfx identity get-principal )
+PRINCIPAL=$(dfx identity get-principal)
 dfx canister call ic_eth authorize "(principal \"$PRINCIPAL\", variant { Rpc })"
 dfx canister call ic_eth get_authorized '(variant { Rpc })'
 dfx canister call ic_eth deauthorize "(principal \"$PRINCIPAL\", variant { Rpc })"
 ```
 
-### local ethereum rpc calls
+### Local Ethereum RPC calls
 ```bash
 dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://cloudflare-eth.com",1000)'
 dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://ethereum.publicnode.com",1000)'
@@ -62,22 +95,21 @@ dfx canister call ic_eth register_provider '(record { chain_id=1; service_url="h
 dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth json_rpc_provider_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",0,1000)'
 ```
 
-### mainnet ethereum rpc calls
+### Mainnet Ethereum RPC calls
 ```bash
 dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 ic_eth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://cloudflare-eth.com",1000)'
 dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 ic_eth json_rpc_request '("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}","https://ethereum.publicnode.com",1000)'
 ```
 
-
 ## Caveats
 
 ### API Keys are stored in the Canister
 
-Registered API keys are available to IC nodes in plaintext.  While the canister memory is not exposed generallly to users, it is available to node providers and to canister controllers.  In the future features such as SEV-SNP will enable privacy of canister memory, but until we have those features the API keys should not be considered to be entirely safe from leakage and potential misuse. API key providers should limit the scope of their API keys and monitor usage detect any misuse.
+Registered API keys are available to IC nodes in plaintext.  While the canister memory is not exposed generallly to users, it is available to node providers and to canister controllers.  In the future features such as SEV-SNP will enable privacy of canister memory, but until we have those features the API keys should not be considered to be entirely safe from leakage and potential misuse. API key providers should limit the scope of their API keys and monitor usage to detect any misuse.
 
 ### Registered API providers should be aware that each API call will result in one service provider call per node in the subnet and that costs (and payment) is scaled accordingly
 
-Application subnets have some number of nodes (typically 13), so a `json_rpc_request` call will result in 13 HTTP outcalls using the registered API key.  API providers should be aware of this when considering rate and operation limits.
+Application subnets have some number of nodes (typically 13), so a `json_rpc_request` call will result in 13 HTTP outcalls using the registered API key. API providers should be aware of this when considering rate and operation limits.
 
 ### Signed Transactions should be Signed Securely
 
