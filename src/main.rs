@@ -63,7 +63,8 @@ const INITIAL_SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
 // Static permissions. The canister creator is also authorized for all permissions.
 
 // Principals allowed to send JSON RPCs.
-const OPEN_RPC_ACCESS: bool = true;
+const DEFAULT_NODES_IN_SUBNET: u32 = 13;
+const DEFAULT_OPEN_RPC_ACCESS: bool = true;
 const RPC_ALLOWLIST: &[&str] = &[];
 // Principals allowed to registry API keys.
 const REGISTER_PROVIDER_ALLOWLIST: &[&str] = &[];
@@ -71,8 +72,6 @@ const REGISTER_PROVIDER_ALLOWLIST: &[&str] = &[];
 const FREE_RPC_ALLOWLIST: &[&str] = &[];
 // Principals who have Admin authorization.
 const AUTHORIZED_ADMIN: &[&str] = &[];
-
-const DEFAULT_NODES_IN_SUBNET: u32 = 13;
 
 type AllowlistSet = HashSet<&'static &'static str>;
 
@@ -273,8 +272,8 @@ macro_rules! get_metric {
 #[ic_cdk_macros::update]
 #[candid_method]
 async fn json_rpc_request(
-    json_rpc_payload: String,
     service_url: String,
+    json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<Vec<u8>, EthRpcError> {
     json_rpc_request_internal(json_rpc_payload, service_url, max_response_bytes, None).await
@@ -283,8 +282,8 @@ async fn json_rpc_request(
 #[ic_cdk_macros::update]
 #[candid_method]
 async fn json_rpc_provider_request(
-    json_rpc_payload: String,
     provider_id: u64,
+    json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<Vec<u8>, EthRpcError> {
     let provider = PROVIDERS.with(|p| {
@@ -580,7 +579,7 @@ fn init() {
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.nodes_in_subnet = DEFAULT_NODES_IN_SUBNET;
-        metadata.open_rpc_access = OPEN_RPC_ACCESS;
+        metadata.open_rpc_access = DEFAULT_OPEN_RPC_ACCESS;
         m.borrow_mut().set(metadata).unwrap();
     });
 }
