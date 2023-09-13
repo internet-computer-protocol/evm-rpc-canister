@@ -86,6 +86,26 @@ Make a request to a Web2 Ethereum node using a registered provider for a JSON RP
 * `max_response_bytes`: See `request`.
 * `EthRpcResult`: See `request`.
 
+### `request_cost`
+
+Calculate the cost of sending a request with the given input arguments.
+
+    request_cost: (service_url: text, json_rpc_payload: text, max_response_bytes: nat64) -> (nat) query;
+
+* `service_url`: The URL of the service, including any API key if required for access-protected services.
+* `json_rpc_payload`: See `request`.
+* `max_response_bytes`: See `request`.
+
+### `provider_request_cost`
+
+Calculate the cost of sending a request with the given input arguments.
+
+    provider_request_cost: (provider_id: nat64, json_rpc_payload: text, max_response_bytes: nat64) -> (nat) query;
+
+* `provider_id`: The id of the registered provider to be used for this call. This uniquely identifies a provider registered with the canister.
+* `json_rpc_payload`: See `request_cost`.
+* `max_response_bytes`: See `request_cost`.
+
 ### `unregister_provider`
 
 Unregister a provider from the canister. Only the owner of the provider or an admin principal is authorized to perform this action.
