@@ -304,14 +304,14 @@ async fn provider_request(
 #[query]
 #[candid_method]
 fn cycles_cost(service_url: String, json_rpc_payload: String, max_response_bytes: u64) -> u128 {
-    json_rpc_cycles_cost_(&json_rpc_payload, &service_url, max_response_bytes)
+    get_cycles_cost(&json_rpc_payload, &service_url, max_response_bytes)
 }
 
 #[query]
 #[candid_method]
 fn provider_cycles_cost(provider_id: u64, json_rpc_payload: String) -> Option<u128> {
     let provider = PROVIDERS.with(|p| p.borrow().get(&provider_id))?;
-    Some(json_rpc_provider_cycles_cost_(
+    Some(get_provider_cycles_cost(
         &json_rpc_payload,
         provider.cycles_per_call,
         provider.cycles_per_message_byte,
@@ -342,14 +342,13 @@ async fn request_internal(
     }
     let provider_cost = match &provider {
         None => 0,
-        Some(provider) => json_rpc_provider_cycles_cost_(
+        Some(provider) => get_provider_cycles_cost(
             &json_rpc_payload,
             provider.cycles_per_call,
             provider.cycles_per_message_byte,
         ),
     };
-    let cost =
-        json_rpc_cycles_cost_(&json_rpc_payload, &service_url, max_response_bytes) + provider_cost;
+    let cost = get_cycles_cost(&json_rpc_payload, &service_url, max_response_bytes) + provider_cost;
     if !is_authorized(Auth::FreeRpc) {
         if cycles_available < cost {
             return Err(EthRpcError::TooFewCycles(format!(
@@ -403,11 +402,7 @@ async fn request_internal(
     }
 }
 
-fn json_rpc_cycles_cost_(
-    json_rpc_payload: &str,
-    service_url: &str,
-    max_response_bytes: u64,
-) -> u128 {
+fn get_cycles_cost(json_rpc_payload: &str, service_url: &str, max_response_bytes: u64) -> u128 {
     let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
     let ingress_bytes =
         (json_rpc_payload.len() + service_url.len()) as u128 + INGRESS_OVERHEAD_BYTES;
@@ -418,7 +413,7 @@ fn json_rpc_cycles_cost_(
     base_cost * (nodes_in_subnet as u128) / BASE_SUBNET_SIZE
 }
 
-fn json_rpc_provider_cycles_cost_(
+fn get_provider_cycles_cost(
     json_rpc_payload: &str,
     provider_cycles_per_call: u64,
     provider_cycles_per_message_byte: u64,
@@ -868,13 +863,13 @@ fn check_json_rpc_cycles_cost() {
         m.borrow_mut().set(metadata).unwrap();
     });
 
-    let base_cost = json_rpc_cycles_cost_(
+    let base_cost = get_cycles_cost(
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
         "https://cloudflare-eth.com",
         1000,
     );
     let s10 = "0123456789";
-    let base_cost_s10 = json_rpc_cycles_cost_(
+    let base_cost_s10 = get_cycles_cost(
         &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
             + s10),
         "https://cloudflare-eth.com",
@@ -894,13 +889,13 @@ fn check_json_rpc_provider_cycles_cost() {
         m.borrow_mut().set(metadata).unwrap();
     });
 
-    let base_cost = json_rpc_provider_cycles_cost_(
+    let base_cost = get_provider_cycles_cost(
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
         0,
         2,
     );
     let s10 = "0123456789";
-    let base_cost_s10 = json_rpc_provider_cycles_cost_(
+    let base_cost_s10 = get_provider_cycles_cost(
         &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
             + s10),
         1000,
