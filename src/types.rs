@@ -5,7 +5,7 @@ use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::{BoundedStorable, Storable};
 use std::borrow::Cow;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
 
@@ -126,3 +126,16 @@ impl BoundedStorable for Provider {
     const MAX_SIZE: u32 = 256; // A reasonable limit.
     const IS_FIXED_SIZE: bool = false;
 }
+
+#[derive(CandidType, Debug)]
+pub enum EthRpcError {
+    NoPermission,
+    TooFewCycles(String),
+    ServiceUrlParseError,
+    ServiceUrlHostMissing,
+    ServiceUrlHostNotAllowed,
+    ProviderNotFound,
+    HttpRequestError { code: u32, message: String },
+}
+
+pub type AllowlistSet = HashSet<&'static &'static str>;

@@ -22,87 +22,14 @@ use std::collections::hash_set::HashSet;
 extern crate num_derive;
 
 mod constants;
+mod memory;
+mod metrics;
 mod types;
 
-use constants::*;
-use types::*;
-
-type AllowlistSet = HashSet<&'static &'static str>;
-
-#[cfg(not(target_arch = "wasm32"))]
-type Memory = VirtualMemory<FileMemory>;
-#[cfg(target_arch = "wasm32")]
-type Memory = VirtualMemory<DefaultMemoryImpl>;
-
-declare_log_buffer!(name = INFO, capacity = 1000);
-declare_log_buffer!(name = ERROR, capacity = 1000);
-
-thread_local! {
-    // Transient static data: this is reset when the canister is upgraded.
-    static METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
-    static SERVICE_HOSTS_ALLOWLIST: RefCell<AllowlistSet> = RefCell::new(AllowlistSet::new());
-    static AUTH_STABLE: RefCell<HashSet<Principal>> = RefCell::new(HashSet::<Principal>::new());
-
-    // Stable static data: this is preserved when the canister is upgraded.
-    #[cfg(not(target_arch = "wasm32"))]
-    static MEMORY_MANAGER: RefCell<MemoryManager<FileMemory>> =
-        RefCell::new(MemoryManager::init(FileMemory::new(std::fs::OpenOptions::new().read(true).write(true).create(true).open("target/test_stable_memory.bin").unwrap())));
-    #[cfg(target_arch = "wasm32")]
-    static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
-        RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-    static METADATA: RefCell<Cell<Metadata, Memory>> = RefCell::new(Cell::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(0))),
-            <Metadata>::default()).unwrap());
-    static AUTH: RefCell<StableBTreeMap<PrincipalStorable, u32, Memory>> = RefCell::new(
-        StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(1)))));
-    static PROVIDERS: RefCell<StableBTreeMap<u64, Provider, Memory>> = RefCell::new(
-        StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(2)))));
-}
-
-#[derive(CandidType, Debug)]
-enum EthRpcError {
-    NoPermission,
-    TooFewCycles(String),
-    ServiceUrlParseError,
-    ServiceUrlHostMissing,
-    ServiceUrlHostNotAllowed,
-    ProviderNotFound,
-    HttpRequestError { code: u32, message: String },
-}
-
-#[macro_export]
-macro_rules! inc_metric {
-    ($metric:ident) => {{
-        METRICS.with(|m| m.borrow_mut().$metric += 1);
-    }};
-}
-
-#[macro_export]
-macro_rules! inc_metric_entry {
-    ($metric:ident, $entry:expr) => {{
-        METRICS.with(|m| {
-            m.borrow_mut()
-                .$metric
-                .entry($entry.clone())
-                .and_modify(|counter| *counter += 1)
-                .or_insert(1);
-        });
-    }};
-}
-
-#[macro_export]
-macro_rules! add_metric {
-    ($metric:ident, $value:expr) => {{
-        METRICS.with(|m| m.borrow_mut().$metric += $value);
-    }};
-}
-
-#[macro_export]
-macro_rules! get_metric {
-    ($metric:ident) => {{
-        METRICS.with(|m| m.borrow().$metric)
-    }};
-}
+use crate::constants::*;
+use crate::memory::*;
+// use crate::metrics::*;
+use crate::types::*;
 
 #[update]
 #[candid_method]
