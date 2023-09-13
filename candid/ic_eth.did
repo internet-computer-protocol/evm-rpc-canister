@@ -34,7 +34,7 @@ service : {
   get_providers : () -> (vec RegisteredProvider) query;
   json_rpc_provider_request : (nat64, text, nat64) -> (Result);
   json_rpc_request : (text, text, nat64) -> (Result);
-  register_provider : (RegisterProvider) -> ();
+  register_provider : (RegisterProvider) -> (nat64);
   set_nodes_in_subnet : (nat32) -> ();
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> ();
