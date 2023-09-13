@@ -1,5 +1,4 @@
 use ic_canister_log::log;
-
 use ic_cdk::api::management_canister::http_request::{
     http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
     TransformContext,
