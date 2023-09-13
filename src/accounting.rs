@@ -1,7 +1,11 @@
 use crate::*;
 
 /// Get the baseline cost of sending a JSON-RPC request using HTTP outcalls.
-pub fn get_cycles_cost(json_rpc_payload: &str, service_url: &str, max_response_bytes: u64) -> u128 {
+pub fn get_request_cost(
+    json_rpc_payload: &str,
+    service_url: &str,
+    max_response_bytes: u64,
+) -> u128 {
     let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
     let ingress_bytes =
         (json_rpc_payload.len() + service_url.len()) as u128 + INGRESS_OVERHEAD_BYTES;
@@ -13,7 +17,7 @@ pub fn get_cycles_cost(json_rpc_payload: &str, service_url: &str, max_response_b
 }
 
 /// Get the additional cost for calling a registered JSON-RPC provider.
-pub fn get_provider_cycles_cost(
+pub fn get_provider_cost(
     json_rpc_payload: &str,
     provider_cycles_per_call: u64,
     provider_cycles_per_message_byte: u64,
@@ -32,13 +36,13 @@ fn test_cycles_cost() {
         m.borrow_mut().set(metadata).unwrap();
     });
 
-    let base_cost = get_cycles_cost(
+    let base_cost = get_request_cost(
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
         "https://cloudflare-eth.com",
         1000,
     );
     let s10 = "0123456789";
-    let base_cost_s10 = get_cycles_cost(
+    let base_cost_s10 = get_request_cost(
         &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
             + s10),
         "https://cloudflare-eth.com",
@@ -58,13 +62,13 @@ fn test_provider_cycles_cost() {
         m.borrow_mut().set(metadata).unwrap();
     });
 
-    let base_cost = get_provider_cycles_cost(
+    let base_cost = get_provider_cost(
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
         0,
         2,
     );
     let s10 = "0123456789";
-    let base_cost_s10 = get_provider_cycles_cost(
+    let base_cost_s10 = get_provider_cost(
         &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
             + s10),
         1000,

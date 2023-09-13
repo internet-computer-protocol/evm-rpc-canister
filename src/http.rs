@@ -30,13 +30,13 @@ pub async fn do_http_request(
     }
     let provider_cost = match &provider {
         None => 0,
-        Some(provider) => get_provider_cycles_cost(
+        Some(provider) => get_provider_cost(
             &json_rpc_payload,
             provider.cycles_per_call,
             provider.cycles_per_message_byte,
         ),
     };
-    let cost = get_cycles_cost(&json_rpc_payload, &service_url, max_response_bytes) + provider_cost;
+    let cost = get_request_cost(&json_rpc_payload, &service_url, max_response_bytes) + provider_cost;
     if !is_authorized(Auth::FreeRpc) {
         if cycles_available < cost {
             return Err(EthRpcError::TooFewCycles(format!(
