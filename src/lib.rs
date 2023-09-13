@@ -8,7 +8,7 @@ mod auth;
 mod constants;
 mod memory;
 mod metrics;
-mod request;
+mod http;
 mod types;
 mod util;
 
@@ -17,6 +17,6 @@ pub use crate::auth::*;
 pub use crate::constants::*;
 pub use crate::memory::*;
 pub use crate::metrics::*;
-pub use crate::request::*;
+pub use crate::http::*;
 pub use crate::types::*;
 pub use crate::util::*;
