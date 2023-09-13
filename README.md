@@ -38,7 +38,7 @@ dfx start --background
 dfx deploy ic_eth
 
 # Call the `eth_gasPrice` JSON-RPC method
-dfx canister call ic_eth json_rpc_request '("https://cloudflare-eth.com/v1/mainnet", "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}", 2048)' --wallet $(dfx identity get-wallet) --with-cycles 600000000
+dfx canister call ic_eth request '("https://cloudflare-eth.com/v1/mainnet", "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}", 2048)' --wallet $(dfx identity get-wallet) --with-cycles 600000000
 ```
 
 ## How it Works
@@ -89,16 +89,16 @@ dfx canister call ic_eth deauthorize "(principal \"$PRINCIPAL\", variant { Rpc }
 
 ### Local Ethereum RPC calls
 ```bash
-dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth json_rpc_request '("https://cloudflare-eth.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
-dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth json_rpc_request '("https://ethereum.publicnode.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
+dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth request '("https://cloudflare-eth.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
+dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth request '("https://ethereum.publicnode.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
 dfx canister call ic_eth register_provider '(record { chain_id=1; service_url="https://cloudflare-eth.com"; api_key="/v1/mainnet"; cycles_per_call=10; cycles_per_message_byte=1; })'
 dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth json_rpc_provider_request '(0,"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
 ```
 
 ### Mainnet Ethereum RPC calls
 ```bash
-dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 ic_eth json_rpc_request '("https://cloudflare-eth.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
-dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 ic_eth json_rpc_request '("https://ethereum.publicnode.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
+dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 ic_eth request '("https://cloudflare-eth.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
+dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 ic_eth request '("https://ethereum.publicnode.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
 ```
 
 ## Caveats
@@ -109,7 +109,7 @@ Registered API keys are available to IC nodes in plaintext.  While the canister 
 
 ### Registered API providers should be aware that each API call will result in one service provider call per node in the subnet and that costs (and payment) is scaled accordingly
 
-Application subnets have some number of nodes (typically 13), so a `json_rpc_request` call will result in 13 HTTP outcalls using the registered API key. API providers should be aware of this when considering rate and operation limits.
+Application subnets have some number of nodes (typically 13), so a `request` call will result in 13 HTTP outcalls using the registered API key. API providers should be aware of this when considering rate and operation limits.
 
 ### Signed Transactions should be Signed Securely
 

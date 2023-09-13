@@ -76,7 +76,6 @@ const AUTHORIZED_ADMIN: &[&str] = &[];
 
 type AllowlistSet = HashSet<&'static &'static str>;
 
-// #[allow(unused)]
 #[cfg(not(target_arch = "wasm32"))]
 type Memory = VirtualMemory<FileMemory>;
 #[cfg(target_arch = "wasm32")]
@@ -87,12 +86,12 @@ declare_log_buffer!(name = ERROR, capacity = 1000);
 
 #[derive(Default)]
 struct Metrics {
-    json_rpc_requests: u64,
-    json_rpc_request_cycles_charged: u128,
-    json_rpc_request_cycles_refunded: u128,
-    json_rpc_request_err_no_permission: u64,
-    json_rpc_request_err_service_url_host_not_allowed: u64,
-    json_rpc_request_err_http_request_error: u64,
+    requests: u64,
+    request_cycles_charged: u128,
+    request_cycles_refunded: u128,
+    request_err_no_permission: u64,
+    request_err_service_url_host_not_allowed: u64,
+    request_err_http: u64,
     json_rpc_host_requests: HashMap<String, u64>,
 }
 
@@ -277,7 +276,7 @@ async fn request(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<Vec<u8>, EthRpcError> {
-    json_rpc_request_internal(json_rpc_payload, service_url, max_response_bytes, None).await
+    request_internal(json_rpc_payload, service_url, max_response_bytes, None).await
 }
 
 #[update]
@@ -293,7 +292,7 @@ async fn provider_request(
             .ok_or(EthRpcError::ProviderNotFound)
     })?;
     let service_url = provider.service_url.clone() + &provider.api_key;
-    json_rpc_request_internal(
+    request_internal(
         json_rpc_payload,
         service_url,
         max_response_bytes,
@@ -319,15 +318,15 @@ fn provider_cycles_cost(provider_id: u64, json_rpc_payload: String) -> Option<u1
     ))
 }
 
-async fn json_rpc_request_internal(
+async fn request_internal(
     json_rpc_payload: String,
     service_url: String,
     max_response_bytes: u64,
     provider: Option<Provider>,
 ) -> Result<Vec<u8>, EthRpcError> {
-    inc_metric!(json_rpc_requests);
+    inc_metric!(requests);
     if !is_authorized(Auth::Rpc) {
-        inc_metric!(json_rpc_request_err_no_permission);
+        inc_metric!(request_err_no_permission);
         return Err(EthRpcError::NoPermission);
     }
     let cycles_available = ic_cdk::api::call::msg_cycles_available128();
@@ -338,7 +337,7 @@ async fn json_rpc_request_internal(
         .to_string();
     if SERVICE_HOSTS_ALLOWLIST.with(|a| !a.borrow().contains(&host.as_str())) {
         log!(INFO, "host not allowed {}", host);
-        inc_metric!(json_rpc_request_err_service_url_host_not_allowed);
+        inc_metric!(request_err_service_url_host_not_allowed);
         return Err(EthRpcError::ServiceUrlHostNotAllowed);
     }
     let provider_cost = match &provider {
@@ -367,8 +366,8 @@ async fn json_rpc_request_internal(
                     .expect("unable to update Provider");
             });
         }
-        add_metric!(json_rpc_request_cycles_charged, cost);
-        add_metric!(json_rpc_request_cycles_refunded, cycles_available - cost);
+        add_metric!(request_cycles_charged, cost);
+        add_metric!(request_cycles_refunded, cycles_available - cost);
     }
     inc_metric_entry!(json_rpc_host_requests, host);
     let request_headers = vec![
@@ -395,7 +394,7 @@ async fn json_rpc_request_internal(
     match make_http_request(request, cost).await {
         Ok((result,)) => Ok(result.body),
         Err((r, m)) => {
-            inc_metric!(json_rpc_request_err_http_request_error);
+            inc_metric!(request_err_http);
             Err(EthRpcError::HttpRequestError {
                 code: r as u32,
                 message: m,
@@ -804,19 +803,19 @@ fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> std::i
         "Size of the stable memory allocated by this canister measured in 64K Wasm pages.",
     )?;
     w.encode_counter(
-        "json_rpc_requests",
-        get_metric!(json_rpc_requests) as f64,
-        "Number of json_rpc_request() calls.",
+        "requests",
+        get_metric!(requests) as f64,
+        "Number of request() calls.",
     )?;
     w.encode_counter(
-        "json_rpc_request_cycles_charged",
-        get_metric!(json_rpc_request_cycles_charged) as f64,
-        "Cycles charged by json_rpc_request() calls.",
+        "request_cycles_charged",
+        get_metric!(request_cycles_charged) as f64,
+        "Cycles charged by request() calls.",
     )?;
     w.encode_counter(
-        "json_rpc_request_cycles_refunded",
-        get_metric!(json_rpc_request_cycles_refunded) as f64,
-        "Cycles refunded by json_rpc_request() calls.",
+        "request_cycles_refunded",
+        get_metric!(request_cycles_refunded) as f64,
+        "Cycles refunded by request() calls.",
     )?;
     METRICS.with(|m| {
         m.borrow()
@@ -825,7 +824,7 @@ fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> std::i
             .map(|(k, v)| {
                 w.counter_vec(
                     "json_rpc_host_requests",
-                    "Number of json_rpc_request() calls to a service host.",
+                    "Number of request() calls to a service host.",
                 )
                 .and_then(|m| m.value(&[("host", k)], *v as f64))
                 .and(Ok(()))

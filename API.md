@@ -65,11 +65,11 @@ get_providers: () -> (vec RegisteredProvider) query;
 
 Clients of this canister need to select a provider that matches w.r.t. the `chain_id` the network they intend to connect to. If multiple providers are available for a given `chain_id`, the per-message or per-byte price or the entity behind the provider (this can be inferred from the `service_url`) may be factors to choose a suitable provider.
 
-### json_rpc_request
+### request
 
 Make a request to a Web2 Ethereum node using the caller's URL to an openly available JSON RPC API service, or the caller's URL including an API key for an access-protected API provider. No registered API key of the canister is used in this scenario.
 
-    json_rpc_request: (service_url: text, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
+    request: (service_url: text, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
 
 * `service_url`: The URL of the service, including any API key if required for access-protected services.
 * `json_rpc_payload`: The payload for the JSON RPC request, in compliance with the [JSON RPC specification](https://www.jsonrpc.org/specification).
@@ -83,9 +83,9 @@ Make a request to a Web2 Ethereum node using a registered provider for a JSON RP
     json_rpc_provider_request: (provider_id: nat64, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
 
 * `provider_id`: The id of the registered provider to be used for this call. This uniquely identifies a provider registered with the canister.
-* `json_rpc_payload`: See `json_rpc_request`.
-* `max_response_bytes`: See `json_rpc_request`.
-* `EthRpcResult`: See `json_rpc_request`.
+* `json_rpc_payload`: See `request`.
+* `max_response_bytes`: See `request`.
+* `EthRpcResult`: See `request`.
 
 ### unregister_provider
 
