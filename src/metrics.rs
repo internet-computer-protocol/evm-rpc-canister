@@ -73,6 +73,5 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             .find(|e| e.is_err())
             .unwrap_or(Ok(()))
     })?;
-
     Ok(())
 }
