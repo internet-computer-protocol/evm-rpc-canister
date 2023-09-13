@@ -337,8 +337,7 @@ async fn json_rpc_request_internal(
     if !is_authorized(Auth::FreeRpc) {
         if cycles_available < cost {
             return Err(EthRpcError::TooFewCycles(format!(
-                "requires {} cycles, got {} cycles",
-                cost, cycles_available
+                "requires {cost} cycles, got {cycles_available} cycles",
             )));
         }
         ic_cdk::api::call::msg_cycles_accept128(cost);
@@ -611,10 +610,7 @@ fn initialize() {
 fn to_principal(principal: &str) -> Principal {
     match Principal::from_text(principal) {
         Ok(p) => p,
-        Err(e) => ic_cdk::trap(&format!(
-            "failed to convert Principal {} {:?}",
-            principal, e
-        )),
+        Err(e) => ic_cdk::trap(&format!("failed to convert Principal {principal} {e:?}",)),
     }
 }
 
