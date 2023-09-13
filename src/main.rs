@@ -43,13 +43,13 @@ async fn provider_request(
 
 #[query]
 #[candid_method]
-fn cycles_cost(service_url: String, json_rpc_payload: String, max_response_bytes: u64) -> u128 {
+fn request_cost(service_url: String, json_rpc_payload: String, max_response_bytes: u64) -> u128 {
     get_cycles_cost(&json_rpc_payload, &service_url, max_response_bytes)
 }
 
 #[query]
 #[candid_method]
-fn provider_cycles_cost(provider_id: u64, json_rpc_payload: String) -> Option<u128> {
+fn provider_request_cost(provider_id: u64, json_rpc_payload: String) -> Option<u128> {
     let provider = PROVIDERS.with(|p| p.borrow().get(&provider_id))?;
     Some(get_provider_cycles_cost(
         &json_rpc_payload,
