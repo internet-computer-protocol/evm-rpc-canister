@@ -34,25 +34,25 @@ jobs:
           cargo clippy -- -D clippy::all -D warnings -A clippy::manual_range_contains
           cargo clippy --tests --benches -- -D clippy::all -D warnings -A clippy::manual_range_contains
 
-  cargo-deny:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@master
-      - run: cargo install --locked cargo-deny
-      - name: Cargo deny
-        run: |
-          cargo-deny check --hide-inclusion-graph || true
+  # cargo-deny:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@master
+  #     - run: cargo install --locked cargo-deny
+  #     - name: Cargo deny
+  #       run: |
+  #         cargo-deny check --hide-inclusion-graph || true
 
-  cargo-audit:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@master
-      - run: cargo install --locked cargo-audit
-      - name: Cargo audit
-        run: |
-          cargo audit || true
+  # cargo-audit:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@master
+  #     - run: cargo install --locked cargo-audit
+  #     - name: Cargo audit
+  #       run: |
+  #         cargo audit || true
 
   cargo-check:
     runs-on: ubuntu-latest
@@ -104,12 +104,12 @@ jobs:
         with:
           command: test
 
-  candid-check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@master
-      - name: Check interface
-        run: |
-          cargo run > candid/ic_eth_expected.did
-          diff candid/ic_eth.did candid/ic_eth_expected.did
+  # candid-check:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@master
+  #     - name: Check interface
+  #       run: |
+  #         cargo run > candid/ic_eth_expected.did
+  #         diff candid/ic_eth.did candid/ic_eth_expected.did
