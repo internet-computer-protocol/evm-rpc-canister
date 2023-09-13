@@ -92,7 +92,7 @@ struct Metrics {
     request_err_no_permission: u64,
     request_err_service_url_host_not_allowed: u64,
     request_err_http: u64,
-    json_rpc_host_requests: HashMap<String, u64>,
+    host_requests: HashMap<String, u64>,
 }
 
 // These need to be powers of two so that they can be used as bit fields.
@@ -368,7 +368,7 @@ async fn request_internal(
         add_metric!(request_cycles_charged, cost);
         add_metric!(request_cycles_refunded, cycles_available - cost);
     }
-    inc_metric_entry!(json_rpc_host_requests, host);
+    inc_metric_entry!(host_requests, host);
     let request_headers = vec![
         HttpHeader {
             name: "Content-Type".to_string(),
@@ -814,7 +814,7 @@ fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> std::i
     )?;
     METRICS.with(|m| {
         m.borrow()
-            .json_rpc_host_requests
+            .host_requests
             .iter()
             .map(|(k, v)| {
                 w.counter_vec(
