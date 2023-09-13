@@ -221,7 +221,7 @@ fn transform(args: TransformArgs) -> HttpResponse {
     }
 }
 
-#[ic_cdk_macros::init]
+#[ic_cdk::init]
 fn init() {
     initialize();
     METADATA.with(|m| {
@@ -232,35 +232,10 @@ fn init() {
     });
 }
 
-#[ic_cdk_macros::post_upgrade]
+#[ic_cdk::post_upgrade]
 fn post_upgrade() {
     initialize();
     stable_authorize(ic_cdk::caller());
-}
-
-fn initialize() {
-    SERVICE_HOSTS_ALLOWLIST
-        .with(|a| (*a.borrow_mut()) = AllowlistSet::from_iter(INITIAL_SERVICE_HOSTS_ALLOWLIST));
-
-    for principal in RPC_ALLOWLIST.iter() {
-        authorize(to_principal(principal), Auth::Rpc);
-    }
-    for principal in REGISTER_PROVIDER_ALLOWLIST.iter() {
-        authorize(to_principal(principal), Auth::RegisterProvider);
-    }
-    for principal in FREE_RPC_ALLOWLIST.iter() {
-        authorize(to_principal(principal), Auth::FreeRpc);
-    }
-    for principal in AUTHORIZED_ADMIN.iter() {
-        authorize(to_principal(principal), Auth::Admin);
-    }
-}
-
-fn to_principal(principal: &str) -> Principal {
-    match Principal::from_text(principal) {
-        Ok(p) => p,
-        Err(e) => ic_cdk::trap(&format!("failed to convert Principal {principal} {e:?}",)),
-    }
 }
 
 #[query]
@@ -360,6 +335,31 @@ fn set_nodes_in_subnet(nodes_in_subnet: u32) {
 #[candid_method(query)]
 fn get_nodes_in_subnet() -> u32 {
     METADATA.with(|m| m.borrow().get().nodes_in_subnet)
+}
+
+fn initialize() {
+    SERVICE_HOSTS_ALLOWLIST
+        .with(|a| (*a.borrow_mut()) = AllowlistSet::from_iter(INITIAL_SERVICE_HOSTS_ALLOWLIST));
+
+    for principal in RPC_ALLOWLIST.iter() {
+        authorize(to_principal(principal), Auth::Rpc);
+    }
+    for principal in REGISTER_PROVIDER_ALLOWLIST.iter() {
+        authorize(to_principal(principal), Auth::RegisterProvider);
+    }
+    for principal in FREE_RPC_ALLOWLIST.iter() {
+        authorize(to_principal(principal), Auth::FreeRpc);
+    }
+    for principal in AUTHORIZED_ADMIN.iter() {
+        authorize(to_principal(principal), Auth::Admin);
+    }
+}
+
+fn to_principal(principal: &str) -> Principal {
+    match Principal::from_text(principal) {
+        Ok(p) => p,
+        Err(e) => ic_cdk::trap(&format!("failed to convert Principal {principal} {e:?}",)),
+    }
 }
 
 #[cfg(not(any(target_arch = "wasm32", test)))]
