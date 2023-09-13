@@ -430,7 +430,7 @@ fn get_providers() -> Vec<RegisteredProvider> {
 
 #[ic_cdk::update(guard = "require_register_provider")]
 #[candid_method]
-fn register_provider(provider: RegisterProvider) {
+fn register_provider(provider: RegisterProvider) -> u64 {
     let parsed_url = url::Url::parse(&provider.service_url).expect("unable to parse service_url");
     let host = parsed_url.host_str().expect("service_url host missing");
     if SERVICE_HOSTS_ALLOWLIST.with(|a| !a.borrow().contains(&host)) {
@@ -457,6 +457,7 @@ fn register_provider(provider: RegisterProvider) {
             },
         )
     });
+    provider_id
 }
 
 #[ic_cdk::update(guard = "require_register_provider")]
