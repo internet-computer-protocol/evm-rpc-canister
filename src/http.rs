@@ -7,7 +7,7 @@ use ic_cdk::api::management_canister::http_request::{
 
 use crate::*;
 
-pub async fn do_request(
+pub async fn do_http_request(
     json_rpc_payload: String,
     service_url: String,
     max_response_bytes: u64,
