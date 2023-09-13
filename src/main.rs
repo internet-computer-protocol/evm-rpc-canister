@@ -895,10 +895,9 @@ fn check_json_rpc_provider_cycles_cost() {
 
 #[test]
 fn check_authorization() {
-    let principal1 = Principal::from_text(
-        "k5dlc-ijshq-lsyre-qvvpq-2bnxr-pb26c-ag3sc-t6zo5-rdavy-recje-zqe".to_string(),
-    )
-    .unwrap();
+    let principal1 =
+        Principal::from_text("k5dlc-ijshq-lsyre-qvvpq-2bnxr-pb26c-ag3sc-t6zo5-rdavy-recje-zqe")
+            .unwrap();
     let principal2 =
         Principal::from_text("yxhtl-jlpgx-wqnzc-ysego-h6yqe-3zwfo-o3grn-gvuhm-nz3kv-ainub-6ae")
             .unwrap();
