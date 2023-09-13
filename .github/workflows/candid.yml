@@ -1,0 +1,21 @@
+name: Rust
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+    paths-ignore:
+      - 'README.md'
+jobs:
+  check-candid:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Check interface
+        run: |
+          cargo run > candid/ic_eth_expected.did
+          diff candid/ic_eth.did candid/ic_eth_expected.did
