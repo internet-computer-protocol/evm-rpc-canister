@@ -3,10 +3,11 @@
 ## Terminology
 
 * `service`: A Web2 service such as [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) that offers access to the Ethereum JSON RPC API through HTTP. Note that also other EVM-compatible chains may be covered by such a JSON RPC API.
-* `chain id`: An EVM network identifier (`0x1` for the Ethereum mainnet). 
+* `network`: An EVM blockchain such as the Ethereum mainnet or Sepolia testnet.
+* `chain id`: An EVM network identifier (e.g. `0x1` for the Ethereum mainnet, `0xaa36a7` for the Sepolia testnet). 
 * `provider`: A provider is registered in the canister and allows for connecting to a specific JSON-RPC service. Each chain id for a particular service requires a different provider and typically requires a different API key. Multiple providers can be registered for a service / chain id combination.
 
-View this [reference site](https://chainlist.org/) for a list of available chain ids and services. 
+View this [reference site](https://chainlist.org/) for a list of available networks and services. 
 
 ## Methods
 
