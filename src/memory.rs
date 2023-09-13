@@ -1,14 +1,6 @@
-use candid::{candid_method, CandidType, Principal};
-use ic_canister_log::{declare_log_buffer, log};
-use ic_canisters_http_types::{
-    HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
-};
-use ic_cdk::api::management_canister::http_request::{
-    http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
-    HttpResponse, TransformArgs, TransformContext,
-};
-use ic_cdk::{query, update};
-use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
+use candid::Principal;
+use ic_canister_log::declare_log_buffer;
+
 #[cfg(not(target_arch = "wasm32"))]
 use ic_stable_structures::file_mem::FileMemory;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};

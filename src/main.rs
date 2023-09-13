@@ -1,5 +1,5 @@
 use candid::{candid_method, CandidType, Principal};
-use ic_canister_log::{declare_log_buffer, log};
+use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
@@ -9,14 +9,9 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use ic_cdk::{query, update};
 use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
-#[cfg(not(target_arch = "wasm32"))]
-use ic_stable_structures::file_mem::FileMemory;
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
+
 #[cfg(target_arch = "wasm32")]
 use ic_stable_structures::DefaultMemoryImpl;
-use ic_stable_structures::{Cell, StableBTreeMap};
-use std::cell::RefCell;
-use std::collections::hash_set::HashSet;
 
 #[macro_use]
 extern crate num_derive;
