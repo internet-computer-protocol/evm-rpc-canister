@@ -67,3 +67,21 @@ pub fn do_deauthorize(principal: Principal, auth: Auth) {
         }
     });
 }
+
+#[test]
+fn test_authorization() {
+    let principal1 =
+        Principal::from_text("k5dlc-ijshq-lsyre-qvvpq-2bnxr-pb26c-ag3sc-t6zo5-rdavy-recje-zqe")
+            .unwrap();
+    let principal2 =
+        Principal::from_text("yxhtl-jlpgx-wqnzc-ysego-h6yqe-3zwfo-o3grn-gvuhm-nz3kv-ainub-6ae")
+            .unwrap();
+    assert!(!is_authorized_principal(&principal1, Auth::Rpc));
+    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
+    do_authorize(principal1, Auth::Rpc);
+    assert!(is_authorized_principal(&principal1, Auth::Rpc));
+    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
+    do_deauthorize(principal1, Auth::Rpc);
+    assert!(!is_authorized_principal(&principal1, Auth::Rpc));
+    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
+}

@@ -21,3 +21,52 @@ pub fn get_provider_cycles_cost(
         + provider_cycles_per_message_byte as u128 * json_rpc_payload.len() as u128;
     base_cost * (nodes_in_subnet as u128)
 }
+
+#[test]
+fn test_cycles_cost() {
+    METADATA.with(|m| {
+        let mut metadata = m.borrow().get().clone();
+        metadata.nodes_in_subnet = 13;
+        m.borrow_mut().set(metadata).unwrap();
+    });
+
+    let base_cost = get_cycles_cost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
+        "https://cloudflare-eth.com",
+        1000,
+    );
+    let s10 = "0123456789";
+    let base_cost_s10 = get_cycles_cost(
+        &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
+            + s10),
+        "https://cloudflare-eth.com",
+        1000,
+    );
+    assert_eq!(
+        base_cost + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_BYTE_RECEIEVED_COST),
+        base_cost_s10
+    )
+}
+
+#[test]
+fn test_provider_cycles_cost() {
+    METADATA.with(|m| {
+        let mut metadata = m.borrow().get().clone();
+        metadata.nodes_in_subnet = 13;
+        m.borrow_mut().set(metadata).unwrap();
+    });
+
+    let base_cost = get_provider_cycles_cost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
+        0,
+        2,
+    );
+    let s10 = "0123456789";
+    let base_cost_s10 = get_provider_cycles_cost(
+        &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
+            + s10),
+        1000,
+        2,
+    );
+    assert_eq!(base_cost + (10 * 2 + 1000) * 13, base_cost_s10)
+}
