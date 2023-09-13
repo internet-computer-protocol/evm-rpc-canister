@@ -1,4 +1,4 @@
-name: Rust
+name: CI
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
     tags:
       - v*
     paths-ignore:
-      - 'README.md'
+      - "README.md"
 jobs:
   cargo-fmt:
     runs-on: ubuntu-latest
@@ -98,3 +98,13 @@ jobs:
         with:
           command: build
           args: --tests --release --target wasm32-unknown-unknown
+
+  check-candid:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Check interface
+        run: |
+          cargo run > candid/ic_eth_expected.did
+          diff candid/ic_eth.did candid/ic_eth_expected.did
