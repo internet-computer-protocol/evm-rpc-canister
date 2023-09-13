@@ -1,4 +1,3 @@
-use candid::Principal;
 use ic_eth_rpc::*;
 
 #[test]

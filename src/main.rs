@@ -1,4 +1,4 @@
-use candid::{candid_method, CandidType, Principal};
+use candid::{candid_method, CandidType};
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -352,13 +352,6 @@ fn initialize() {
     }
     for principal in AUTHORIZED_ADMIN.iter() {
         authorize(to_principal(principal), Auth::Admin);
-    }
-}
-
-fn to_principal(principal: &str) -> Principal {
-    match Principal::from_text(principal) {
-        Ok(p) => p,
-        Err(e) => ic_cdk::trap(&format!("failed to convert Principal {principal} {e:?}",)),
     }
 }
 
