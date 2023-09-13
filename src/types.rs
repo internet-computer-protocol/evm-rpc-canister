@@ -1,10 +1,6 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-
-#[cfg(target_arch = "wasm32")]
-use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::{BoundedStorable, Storable};
 use std::borrow::Cow;
-
 use std::collections::{HashMap, HashSet};
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
