@@ -2,22 +2,6 @@ use candid::Principal;
 
 use crate::{Auth, PrincipalStorable, AUTH, AUTH_STABLE, METADATA};
 
-pub fn require_admin() -> Result<(), String> {
-    if is_authorized(Auth::Admin) {
-        Ok(())
-    } else {
-        Err("You are not authorized".to_string())
-    }
-}
-
-pub fn require_register_provider() -> Result<(), String> {
-    if is_authorized(Auth::RegisterProvider) {
-        Ok(())
-    } else {
-        Err("You are not authorized".to_string())
-    }
-}
-
 pub fn is_authorized(auth: Auth) -> bool {
     ic_cdk::api::is_controller(&ic_cdk::caller())
         || is_authorized_principal(&ic_cdk::caller(), auth)
@@ -34,6 +18,22 @@ pub fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {
             false
         }
     })
+}
+
+pub fn require_admin() -> Result<(), String> {
+    if is_authorized(Auth::Admin) {
+        Ok(())
+    } else {
+        Err("You are not authorized".to_string())
+    }
+}
+
+pub fn require_register_provider() -> Result<(), String> {
+    if is_authorized(Auth::RegisterProvider) {
+        Ok(())
+    } else {
+        Err("You are not authorized".to_string())
+    }
 }
 
 pub fn require_stable_authorized() -> Result<(), String> {
