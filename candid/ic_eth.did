@@ -26,15 +26,17 @@ type RegisteredProvider = record {
 type Result = variant { Ok : vec nat8; Err : EthRpcError };
 service : {
   authorize : (principal, Auth) -> ();
+  cycles_cost : (text, text, nat64) -> (nat);
   deauthorize : (principal, Auth) -> ();
   get_authorized : (Auth) -> (vec text) query;
   get_nodes_in_subnet : () -> (nat32) query;
   get_open_rpc_access : () -> (bool) query;
   get_owed_cycles : (nat64) -> (nat) query;
   get_providers : () -> (vec RegisteredProvider) query;
-  json_rpc_provider_request : (nat64, text, nat64) -> (Result);
-  json_rpc_request : (text, text, nat64) -> (Result);
+  provider_cycles_cost : (nat64, text) -> (opt nat);
+  provider_request : (nat64, text, nat64) -> (Result);
   register_provider : (RegisterProvider) -> (nat64);
+  request : (text, text, nat64) -> (Result);
   set_nodes_in_subnet : (nat32) -> ();
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> ();

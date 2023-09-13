@@ -7,6 +7,7 @@ use ic_cdk::api::management_canister::http_request::{
     http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
     HttpResponse, TransformArgs, TransformContext,
 };
+use ic_cdk::{query, update};
 use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 #[cfg(not(target_arch = "wasm32"))]
 use ic_stable_structures::file_mem::FileMemory;
@@ -269,9 +270,9 @@ macro_rules! get_metric {
     }};
 }
 
-#[ic_cdk_macros::update]
+#[update]
 #[candid_method]
-async fn json_rpc_request(
+async fn request(
     service_url: String,
     json_rpc_payload: String,
     max_response_bytes: u64,
@@ -279,9 +280,9 @@ async fn json_rpc_request(
     json_rpc_request_internal(json_rpc_payload, service_url, max_response_bytes, None).await
 }
 
-#[ic_cdk_macros::update]
+#[update]
 #[candid_method]
-async fn json_rpc_provider_request(
+async fn provider_request(
     provider_id: u64,
     json_rpc_payload: String,
     max_response_bytes: u64,
@@ -290,8 +291,7 @@ async fn json_rpc_provider_request(
         p.borrow()
             .get(&provider_id)
             .ok_or(EthRpcError::ProviderNotFound)
-    });
-    let provider = provider?;
+    })?;
     let service_url = provider.service_url.clone() + &provider.api_key;
     json_rpc_request_internal(
         json_rpc_payload,
@@ -300,6 +300,23 @@ async fn json_rpc_provider_request(
         Some(provider),
     )
     .await
+}
+
+#[query]
+#[candid_method]
+fn cycles_cost(service_url: String, json_rpc_payload: String, max_response_bytes: u64) -> u128 {
+    json_rpc_cycles_cost_(&json_rpc_payload, &service_url, max_response_bytes)
+}
+
+#[query]
+#[candid_method]
+fn provider_cycles_cost(provider_id: u64, json_rpc_payload: String) -> Option<u128> {
+    let provider = PROVIDERS.with(|p| p.borrow().get(&provider_id))?;
+    Some(json_rpc_provider_cycles_cost_(
+        &json_rpc_payload,
+        provider.cycles_per_call,
+        provider.cycles_per_message_byte,
+    ))
 }
 
 async fn json_rpc_request_internal(
@@ -326,14 +343,14 @@ async fn json_rpc_request_internal(
     }
     let provider_cost = match &provider {
         None => 0,
-        Some(provider) => json_rpc_provider_cycles_cost(
+        Some(provider) => json_rpc_provider_cycles_cost_(
             &json_rpc_payload,
             provider.cycles_per_call,
             provider.cycles_per_message_byte,
         ),
     };
     let cost =
-        json_rpc_cycles_cost(&json_rpc_payload, &service_url, max_response_bytes) + provider_cost;
+        json_rpc_cycles_cost_(&json_rpc_payload, &service_url, max_response_bytes) + provider_cost;
     if !is_authorized(Auth::FreeRpc) {
         if cycles_available < cost {
             return Err(EthRpcError::TooFewCycles(format!(
@@ -370,7 +387,10 @@ async fn json_rpc_request_internal(
         method: HttpMethod::POST,
         headers: request_headers,
         body: Some(json_rpc_payload.as_bytes().to_vec()),
-        transform: Some(TransformContext::from_name("transform".to_string(), vec![])),
+        transform: Some(TransformContext::from_name(
+            "__transform_json_rpc".to_string(),
+            vec![],
+        )),
     };
     match make_http_request(request, cost).await {
         Ok((result,)) => Ok(result.body),
@@ -384,7 +404,7 @@ async fn json_rpc_request_internal(
     }
 }
 
-fn json_rpc_cycles_cost(
+fn json_rpc_cycles_cost_(
     json_rpc_payload: &str,
     service_url: &str,
     max_response_bytes: u64,
@@ -399,7 +419,7 @@ fn json_rpc_cycles_cost(
     base_cost * (nodes_in_subnet as u128) / BASE_SUBNET_SIZE
 }
 
-fn json_rpc_provider_cycles_cost(
+fn json_rpc_provider_cycles_cost_(
     json_rpc_payload: &str,
     provider_cycles_per_call: u64,
     provider_cycles_per_message_byte: u64,
@@ -410,7 +430,7 @@ fn json_rpc_provider_cycles_cost(
     base_cost * (nodes_in_subnet as u128)
 }
 
-#[ic_cdk::query]
+#[query]
 #[candid_method(query)]
 fn get_providers() -> Vec<RegisteredProvider> {
     PROVIDERS.with(|p| {
@@ -489,7 +509,7 @@ fn unregister_provider(provider_id: u64) {
     });
 }
 
-#[ic_cdk::query(guard = "require_register_provider")]
+#[query(guard = "require_register_provider")]
 #[candid_method(query)]
 fn get_owed_cycles(provider_id: u64) -> u128 {
     let provider = PROVIDERS.with(|p| {
@@ -562,7 +582,7 @@ async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
     };
 }
 
-#[ic_cdk_macros::query(name = "transform")]
+#[query(name = "__transform_json_rpc")]
 fn transform(args: TransformArgs) -> HttpResponse {
     HttpResponse {
         status: args.response.status.clone(),
@@ -615,7 +635,7 @@ fn to_principal(principal: &str) -> Principal {
     }
 }
 
-#[ic_cdk::query]
+#[query]
 fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
     match request.path() {
         "/metrics" => serve_metrics(encode_metrics),
@@ -636,17 +656,17 @@ fn is_stable_authorized() -> Result<(), String> {
     })
 }
 
-#[ic_cdk_macros::update(guard = "is_stable_authorized")]
+#[update(guard = "is_stable_authorized")]
 fn stable_authorize(principal: Principal) {
     AUTH_STABLE.with(|a| a.borrow_mut().insert(principal));
 }
 
-#[ic_cdk_macros::query(guard = "is_stable_authorized")]
+#[query(guard = "is_stable_authorized")]
 fn stable_size() -> u64 {
     ic_cdk::api::stable::stable64_size() * WASM_PAGE_SIZE
 }
 
-#[ic_cdk_macros::query(guard = "is_stable_authorized")]
+#[query(guard = "is_stable_authorized")]
 fn stable_read(offset: u64, length: u64) -> Vec<u8> {
     let mut buffer = Vec::new();
     buffer.resize(length as usize, 0);
@@ -654,7 +674,7 @@ fn stable_read(offset: u64, length: u64) -> Vec<u8> {
     buffer
 }
 
-#[ic_cdk_macros::update(guard = "is_stable_authorized")]
+#[update(guard = "is_stable_authorized")]
 fn stable_write(offset: u64, buffer: Vec<u8>) {
     let size = offset + buffer.len() as u64;
     let old_size = ic_cdk::api::stable::stable64_size() * WASM_PAGE_SIZE;
@@ -666,7 +686,7 @@ fn stable_write(offset: u64, buffer: Vec<u8>) {
     ic_cdk::api::stable::stable64_write(offset, buffer.as_slice());
 }
 
-#[ic_cdk_macros::update(guard = "require_admin")]
+#[update(guard = "require_admin")]
 #[candid_method]
 fn authorize(principal: Principal, auth: Auth) {
     AUTH.with(|a| {
@@ -680,7 +700,7 @@ fn authorize(principal: Principal, auth: Auth) {
     });
 }
 
-#[ic_cdk_macros::query(guard = "require_admin")]
+#[query(guard = "require_admin")]
 #[candid_method(query)]
 fn get_authorized(auth: Auth) -> Vec<String> {
     AUTH.with(|a| {
@@ -694,7 +714,7 @@ fn get_authorized(auth: Auth) -> Vec<String> {
     })
 }
 
-#[ic_cdk_macros::update(guard = "require_admin")]
+#[update(guard = "require_admin")]
 #[candid_method]
 fn deauthorize(principal: Principal, auth: Auth) {
     AUTH.with(|a| {
@@ -740,7 +760,7 @@ fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {
     })
 }
 
-#[ic_cdk_macros::update(guard = "require_admin")]
+#[update(guard = "require_admin")]
 #[candid_method]
 fn set_open_rpc_access(open_rpc_access: bool) {
     METADATA.with(|m| {
@@ -750,13 +770,13 @@ fn set_open_rpc_access(open_rpc_access: bool) {
     });
 }
 
-#[ic_cdk_macros::query(guard = "require_admin")]
+#[query(guard = "require_admin")]
 #[candid_method(query)]
 fn get_open_rpc_access() -> bool {
     METADATA.with(|m| m.borrow().get().open_rpc_access)
 }
 
-#[ic_cdk_macros::update(guard = "require_admin")]
+#[update(guard = "require_admin")]
 #[candid_method]
 fn set_nodes_in_subnet(nodes_in_subnet: u32) {
     METADATA.with(|m| {
@@ -766,7 +786,7 @@ fn set_nodes_in_subnet(nodes_in_subnet: u32) {
     });
 }
 
-#[ic_cdk_macros::query(guard = "require_admin")]
+#[query(guard = "require_admin")]
 #[candid_method(query)]
 fn get_nodes_in_subnet() -> u32 {
     METADATA.with(|m| m.borrow().get().nodes_in_subnet)
@@ -849,13 +869,13 @@ fn check_json_rpc_cycles_cost() {
         m.borrow_mut().set(metadata).unwrap();
     });
 
-    let base_cost = json_rpc_cycles_cost(
+    let base_cost = json_rpc_cycles_cost_(
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
         "https://cloudflare-eth.com",
         1000,
     );
     let s10 = "0123456789";
-    let base_cost_s10 = json_rpc_cycles_cost(
+    let base_cost_s10 = json_rpc_cycles_cost_(
         &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
             + s10),
         "https://cloudflare-eth.com",
@@ -875,13 +895,13 @@ fn check_json_rpc_provider_cycles_cost() {
         m.borrow_mut().set(metadata).unwrap();
     });
 
-    let base_cost = json_rpc_provider_cycles_cost(
+    let base_cost = json_rpc_provider_cycles_cost_(
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
         0,
         2,
     );
     let s10 = "0123456789";
-    let base_cost_s10 = json_rpc_provider_cycles_cost(
+    let base_cost_s10 = json_rpc_provider_cycles_cost_(
         &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
             + s10),
         1000,
