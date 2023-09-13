@@ -4,7 +4,9 @@
 
 ## Overview
 
-IC 🔗 ETH is an Internet Computer canister smart contract that makes it possible to communicate with the Ethereum blockchain using an [on-chain API](./API.md). Requests received on this API by the canister are forwarded to Ethereum JSON RPC API services like [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) using [HTTPS outcalls](https://internetcomputer.org/docs/current/developer-docs/integrations/http_requests/). This way, the canister acts as a proxy to the Web2 world of Ethereum API nodes and simplifies the access to Ethereum JSON RPC API services for canisters. The JSON RPC API exposed by this canister allows a canister smart contract to do much of what a regular Ethereum dApp in the Web2 world could do, e.g., by querying the state of Ethereum smart contracts or submitting raw transactions to Ethereum.
+**IC 🔗 ETH** is an Internet Computer canister smart contract for communicating with the Ethereum blockchain using an [on-chain API](./API.md). 
+
+This canister facilitates API requests to Ethereum JSON RPC services such as [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) using [HTTPS outcalls](https://internetcomputer.org/docs/current/developer-docs/integrations/http_requests/), enabling functionality similar to traditional Ethereum dApps, including querying Ethereum smart contract states and submitting raw transactions.
 
 ## Quick Start
 
@@ -92,7 +94,7 @@ dfx canister call ic_eth deauthorize "(principal \"$PRINCIPAL\", variant { Rpc }
 dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth request '("https://cloudflare-eth.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
 dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth request '("https://ethereum.publicnode.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
 dfx canister call ic_eth register_provider '(record { chain_id=1; service_url="https://cloudflare-eth.com"; api_key="/v1/mainnet"; cycles_per_call=10; cycles_per_message_byte=1; })'
-dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth json_rpc_provider_request '(0,"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
+dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic_eth provider_request '(0,"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
 ```
 
 ### Mainnet Ethereum RPC calls

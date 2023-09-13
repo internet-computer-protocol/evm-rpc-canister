@@ -1,18 +1,16 @@
 # IC 🔗 ETH (Canister API)
 
-## Overview
+## Terminology
 
-*Service, JSON API service:* A Web2 service such as [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) that offers access to the Ethereum JSON RPC API through HTTP. Note that also other EVM-compatible chains may be covered by such a JSON RPC API.
+* `service`: A Web2 service such as [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) that offers access to the Ethereum JSON RPC API through HTTP. Note that also other EVM-compatible chains may be covered by such a JSON RPC API.
+* `chain id`: An EVM network identifier (`0x1` for the Ethereum mainnet). 
+* `provider`: A provider is registered in the canister and allows for connecting to a specific JSON-RPC service. Each chain id for a particular service requires a different provider and typically requires a different API key. Multiple providers can be registered for a service / chain id combination.
 
-*Provider:* A provider is registered in the canister and allows for connecting to a specific JSON API service in the Web2 world. Each chain id for a particular service requires a different provider and typically requires a different API key. Multiple providers can be registered for a service / chain id combination.
-
-*Chain id*: The chain id determines the Ethereum / EVM network to connect to.
-
-## Data Types
+View this [reference site](https://chainlist.org/) for a list of available chain ids and services. 
 
 ## Methods
 
-### register_provider
+### `register_provider`
 
 Register a new *provider* for a Web2-based *service*.
 
@@ -37,7 +35,7 @@ The `RegisterProvider` record defines the details about the service to register,
 
 The cycles charged can, for example, be used by the entity providing the API key to amortize the API key costs in the case of commercial API keys. A provider record can be removed by its owner principal or a pricipal with administrative permissions.
 
-### get_providers
+### `get_providers`
 
 Returns a list of currently registered `RegisteredProvider` entries of the canister.
 
@@ -65,7 +63,7 @@ get_providers: () -> (vec RegisteredProvider) query;
 
 Clients of this canister need to select a provider that matches w.r.t. the `chain_id` the network they intend to connect to. If multiple providers are available for a given `chain_id`, the per-message or per-byte price or the entity behind the provider (this can be inferred from the `service_url`) may be factors to choose a suitable provider.
 
-### request
+### `request`
 
 Make a request to a Web2 Ethereum node using the caller's URL to an openly available JSON RPC API service, or the caller's URL including an API key for an access-protected API provider. No registered API key of the canister is used in this scenario.
 
@@ -76,18 +74,18 @@ Make a request to a Web2 Ethereum node using the caller's URL to an openly avail
 * `max_response_bytes`: The expected maximum size of the response of the Web2 API server. This parameter determines the network response size that is charged for. Not specifying it or it being larger than required may lead to substantial extra cycles cost for the HTTPS outcalls mechanism as its (large) default value is used and charged for.
 * `EthRpcResult`: The response comprises the JSON-encoded result or error, see the corresponding type.
 
-### json_rpc_provider_request
+### `provider_request`
 
 Make a request to a Web2 Ethereum node using a registered provider for a JSON RPC API service. There is no need for the client to have any established relationship with the API service.
 
-    json_rpc_provider_request: (provider_id: nat64, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
+    provider_request: (provider_id: nat64, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
 
 * `provider_id`: The id of the registered provider to be used for this call. This uniquely identifies a provider registered with the canister.
 * `json_rpc_payload`: See `request`.
 * `max_response_bytes`: See `request`.
 * `EthRpcResult`: See `request`.
 
-### unregister_provider
+### `unregister_provider`
 
 Unregister a provider from the canister. Only the owner of the provider or an admin principal is authorized to perform this action.
 
@@ -97,7 +95,7 @@ unregister_provider: (provider_id: nat64) -> ();
 
 The `provider_id` for the provider to be unregistered is the only parameter required.
 
-### authorize
+### `authorize`
 
 Used for authorizing a principal for certain classes of actions as defined through `Auth`.
 
