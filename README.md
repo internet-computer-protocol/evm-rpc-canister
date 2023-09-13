@@ -40,7 +40,7 @@ dfx start --background
 dfx deploy ic_eth
 
 # Call the `eth_gasPrice` JSON-RPC method
-dfx canister call ic_eth request '("https://cloudflare-eth.com/v1/mainnet", "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}", 2048)' --wallet $(dfx identity get-wallet) --with-cycles 600000000
+dfx canister call ic_eth request '("https://cloudflare-eth.com/v1/mainnet", "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}", 1000)' --wallet $(dfx identity get-wallet) --with-cycles 600000000
 ```
 
 ## How it Works
