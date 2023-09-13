@@ -99,7 +99,7 @@ jobs:
           command: build
           args: --tests --release --target wasm32-unknown-unknown
 
-  check-candid:
+  candid-check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
