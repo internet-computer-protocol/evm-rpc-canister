@@ -1,20 +1,10 @@
-use candid::{candid_method, CandidType, Decode, Deserialize, Encode, Principal};
-use ic_canister_log::{declare_log_buffer, log};
-use ic_canisters_http_types::{
-    HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
-};
-use ic_cdk::api::management_canister::http_request::{
-    http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
-    HttpResponse, TransformArgs, TransformContext,
-};
-use ic_cdk::{query, update};
-use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
+use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+
 #[cfg(target_arch = "wasm32")]
 use ic_stable_structures::DefaultMemoryImpl;
-use ic_stable_structures::{BoundedStorable, Cell, StableBTreeMap, Storable};
+use ic_stable_structures::{BoundedStorable, Storable};
 use std::borrow::Cow;
-use std::cell::RefCell;
+
 use std::collections::HashMap;
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
