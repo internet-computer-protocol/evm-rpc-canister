@@ -10,21 +10,7 @@ use ic_cdk::api::management_canister::http_request::{
 use ic_cdk::{query, update};
 use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
-#[cfg(target_arch = "wasm32")]
-use ic_stable_structures::DefaultMemoryImpl;
-
-#[macro_use]
-extern crate num_derive;
-
-mod constants;
-mod memory;
-mod metrics;
-mod types;
-
-use crate::constants::*;
-use crate::memory::*;
-// use crate::metrics::*;
-use crate::types::*;
+use ic_eth_rpc::*;
 
 #[update]
 #[candid_method]
@@ -33,7 +19,7 @@ async fn request(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<Vec<u8>, EthRpcError> {
-    request_internal(json_rpc_payload, service_url, max_response_bytes, None).await
+    do_request(json_rpc_payload, service_url, max_response_bytes, None).await
 }
 
 #[update]
@@ -49,7 +35,7 @@ async fn provider_request(
             .ok_or(EthRpcError::ProviderNotFound)
     })?;
     let service_url = provider.service_url.clone() + &provider.api_key;
-    request_internal(
+    do_request(
         json_rpc_payload,
         service_url,
         max_response_bytes,
@@ -75,112 +61,6 @@ fn provider_cycles_cost(provider_id: u64, json_rpc_payload: String) -> Option<u1
     ))
 }
 
-async fn request_internal(
-    json_rpc_payload: String,
-    service_url: String,
-    max_response_bytes: u64,
-    provider: Option<Provider>,
-) -> Result<Vec<u8>, EthRpcError> {
-    inc_metric!(requests);
-    if !is_authorized(Auth::Rpc) {
-        inc_metric!(request_err_no_permission);
-        return Err(EthRpcError::NoPermission);
-    }
-    let cycles_available = ic_cdk::api::call::msg_cycles_available128();
-    let parsed_url = url::Url::parse(&service_url).or(Err(EthRpcError::ServiceUrlParseError))?;
-    let host = parsed_url
-        .host_str()
-        .ok_or(EthRpcError::ServiceUrlHostMissing)?
-        .to_string();
-    if SERVICE_HOSTS_ALLOWLIST.with(|a| !a.borrow().contains(&host.as_str())) {
-        log!(INFO, "host not allowed {}", host);
-        inc_metric!(request_err_service_url_host_not_allowed);
-        return Err(EthRpcError::ServiceUrlHostNotAllowed);
-    }
-    let provider_cost = match &provider {
-        None => 0,
-        Some(provider) => get_provider_cycles_cost(
-            &json_rpc_payload,
-            provider.cycles_per_call,
-            provider.cycles_per_message_byte,
-        ),
-    };
-    let cost = get_cycles_cost(&json_rpc_payload, &service_url, max_response_bytes) + provider_cost;
-    if !is_authorized(Auth::FreeRpc) {
-        if cycles_available < cost {
-            return Err(EthRpcError::TooFewCycles(format!(
-                "requires {cost} cycles, got {cycles_available} cycles",
-            )));
-        }
-        ic_cdk::api::call::msg_cycles_accept128(cost);
-        if let Some(mut provider) = provider {
-            provider.cycles_owed += provider_cost;
-            PROVIDERS.with(|p| {
-                // Error should not happen here as it was checked before.
-                p.borrow_mut()
-                    .insert(provider.provider_id, provider)
-                    .expect("unable to update Provider");
-            });
-        }
-        add_metric!(request_cycles_charged, cost);
-        add_metric!(request_cycles_refunded, cycles_available - cost);
-    }
-    inc_metric_entry!(host_requests, host);
-    let request_headers = vec![
-        HttpHeader {
-            name: "Content-Type".to_string(),
-            value: "application/json".to_string(),
-        },
-        HttpHeader {
-            name: "Host".to_string(),
-            value: host.to_string(),
-        },
-    ];
-    let request = CanisterHttpRequestArgument {
-        url: service_url,
-        max_response_bytes: Some(max_response_bytes),
-        method: HttpMethod::POST,
-        headers: request_headers,
-        body: Some(json_rpc_payload.as_bytes().to_vec()),
-        transform: Some(TransformContext::from_name(
-            "__transform_json_rpc".to_string(),
-            vec![],
-        )),
-    };
-    match make_http_request(request, cost).await {
-        Ok((result,)) => Ok(result.body),
-        Err((r, m)) => {
-            inc_metric!(request_err_http);
-            Err(EthRpcError::HttpRequestError {
-                code: r as u32,
-                message: m,
-            })
-        }
-    }
-}
-
-fn get_cycles_cost(json_rpc_payload: &str, service_url: &str, max_response_bytes: u64) -> u128 {
-    let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
-    let ingress_bytes =
-        (json_rpc_payload.len() + service_url.len()) as u128 + INGRESS_OVERHEAD_BYTES;
-    let base_cost = INGRESS_MESSAGE_RECEIVED_COST
-        + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
-        + HTTP_OUTCALL_REQUEST_COST
-        + HTTP_OUTCALL_BYTE_RECEIEVED_COST * (ingress_bytes + max_response_bytes as u128);
-    base_cost * (nodes_in_subnet as u128) / BASE_SUBNET_SIZE
-}
-
-fn get_provider_cycles_cost(
-    json_rpc_payload: &str,
-    provider_cycles_per_call: u64,
-    provider_cycles_per_message_byte: u64,
-) -> u128 {
-    let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
-    let base_cost = provider_cycles_per_call as u128
-        + provider_cycles_per_message_byte as u128 * json_rpc_payload.len() as u128;
-    base_cost * (nodes_in_subnet as u128)
-}
-
 #[query]
 #[candid_method(query)]
 fn get_providers() -> Vec<RegisteredProvider> {
@@ -199,7 +79,7 @@ fn get_providers() -> Vec<RegisteredProvider> {
     })
 }
 
-#[ic_cdk::update(guard = "require_register_provider")]
+#[update(guard = "require_register_provider")]
 #[candid_method]
 fn register_provider(provider: RegisterProvider) -> u64 {
     let parsed_url = url::Url::parse(&provider.service_url).expect("unable to parse service_url");
@@ -231,7 +111,7 @@ fn register_provider(provider: RegisterProvider) -> u64 {
     provider_id
 }
 
-#[ic_cdk::update(guard = "require_register_provider")]
+#[update(guard = "require_register_provider")]
 #[candid_method]
 fn update_provider_api_key(provider_id: u64, api_key: String) {
     PROVIDERS.with(|p| match p.borrow_mut().get(&provider_id) {
@@ -246,7 +126,7 @@ fn update_provider_api_key(provider_id: u64, api_key: String) {
     });
 }
 
-#[ic_cdk::update(guard = "require_register_provider")]
+#[update(guard = "require_register_provider")]
 #[candid_method]
 fn unregister_provider(provider_id: u64) {
     PROVIDERS.with(|p| {
@@ -280,7 +160,7 @@ struct DepositCyclesArgs {
     canister_id: Principal,
 }
 
-#[ic_cdk::update(guard = "require_register_provider")]
+#[update(guard = "require_register_provider")]
 #[candid_method]
 async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
     let provider = PROVIDERS.with(|p| {
@@ -397,27 +277,17 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
     }
 }
 
-fn is_stable_authorized() -> Result<(), String> {
-    AUTH_STABLE.with(|a| {
-        if ic_cdk::api::is_controller(&ic_cdk::caller()) || a.borrow().contains(&ic_cdk::caller()) {
-            Ok(())
-        } else {
-            Err("You are not stable authorized".to_string())
-        }
-    })
-}
-
-#[update(guard = "is_stable_authorized")]
+#[update(guard = "require_stable_authorized")]
 fn stable_authorize(principal: Principal) {
     AUTH_STABLE.with(|a| a.borrow_mut().insert(principal));
 }
 
-#[query(guard = "is_stable_authorized")]
+#[query(guard = "require_stable_authorized")]
 fn stable_size() -> u64 {
     ic_cdk::api::stable::stable64_size() * WASM_PAGE_SIZE
 }
 
-#[query(guard = "is_stable_authorized")]
+#[query(guard = "require_stable_authorized")]
 fn stable_read(offset: u64, length: u64) -> Vec<u8> {
     let mut buffer = Vec::new();
     buffer.resize(length as usize, 0);
@@ -425,7 +295,7 @@ fn stable_read(offset: u64, length: u64) -> Vec<u8> {
     buffer
 }
 
-#[update(guard = "is_stable_authorized")]
+#[update(guard = "require_stable_authorized")]
 fn stable_write(offset: u64, buffer: Vec<u8>) {
     let size = offset + buffer.len() as u64;
     let old_size = ic_cdk::api::stable::stable64_size() * WASM_PAGE_SIZE;
@@ -440,15 +310,7 @@ fn stable_write(offset: u64, buffer: Vec<u8>) {
 #[update(guard = "require_admin")]
 #[candid_method]
 fn authorize(principal: Principal, auth: Auth) {
-    AUTH.with(|a| {
-        let mut auth_map = a.borrow_mut();
-        let principal = PrincipalStorable(principal);
-        if let Some(v) = auth_map.get(&principal) {
-            auth_map.insert(principal, v | (auth as u32));
-        } else {
-            auth_map.insert(principal, auth as u32);
-        }
-    });
+    do_authorize(principal, auth)
 }
 
 #[query(guard = "require_admin")]
@@ -468,47 +330,7 @@ fn get_authorized(auth: Auth) -> Vec<String> {
 #[update(guard = "require_admin")]
 #[candid_method]
 fn deauthorize(principal: Principal, auth: Auth) {
-    AUTH.with(|a| {
-        let mut auth_map = a.borrow_mut();
-        let principal = PrincipalStorable(principal);
-        if let Some(v) = auth_map.get(&principal) {
-            auth_map.insert(principal, v & !(auth as u32));
-        }
-    });
-}
-
-fn require_admin() -> Result<(), String> {
-    if is_authorized(Auth::Admin) {
-        Ok(())
-    } else {
-        Err("You are not authorized".to_string())
-    }
-}
-
-fn require_register_provider() -> Result<(), String> {
-    if is_authorized(Auth::RegisterProvider) {
-        Ok(())
-    } else {
-        Err("You are not authorized".to_string())
-    }
-}
-
-fn is_authorized(auth: Auth) -> bool {
-    ic_cdk::api::is_controller(&ic_cdk::caller())
-        || is_authorized_principal(&ic_cdk::caller(), auth)
-}
-
-fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {
-    if auth == Auth::Rpc && METADATA.with(|m| m.borrow().get().open_rpc_access) {
-        return true;
-    }
-    AUTH.with(|a| {
-        if let Some(v) = a.borrow().get(&PrincipalStorable(*principal)) {
-            (v & (auth as u32)) != 0
-        } else {
-            false
-        }
-    })
+    do_deauthorize(principal, auth)
 }
 
 #[update(guard = "require_admin")]
@@ -596,85 +418,3 @@ fn main() {
 
 #[cfg(any(target_arch = "wasm32", test))]
 fn main() {}
-
-#[test]
-fn check_candid_interface() {
-    use candid::utils::{service_compatible, CandidSource};
-    use std::path::Path;
-
-    candid::export_service!();
-    let new_interface = __export_service();
-
-    service_compatible(
-        CandidSource::Text(&new_interface),
-        CandidSource::File(Path::new("candid/ic_eth.did")),
-    )
-    .unwrap();
-}
-
-#[test]
-fn check_json_rpc_cycles_cost() {
-    METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = 13;
-        m.borrow_mut().set(metadata).unwrap();
-    });
-
-    let base_cost = get_cycles_cost(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
-        "https://cloudflare-eth.com",
-        1000,
-    );
-    let s10 = "0123456789";
-    let base_cost_s10 = get_cycles_cost(
-        &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
-            + s10),
-        "https://cloudflare-eth.com",
-        1000,
-    );
-    assert_eq!(
-        base_cost + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_BYTE_RECEIEVED_COST),
-        base_cost_s10
-    )
-}
-
-#[test]
-fn check_json_rpc_provider_cycles_cost() {
-    METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = 13;
-        m.borrow_mut().set(metadata).unwrap();
-    });
-
-    let base_cost = get_provider_cycles_cost(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
-        0,
-        2,
-    );
-    let s10 = "0123456789";
-    let base_cost_s10 = get_provider_cycles_cost(
-        &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
-            + s10),
-        1000,
-        2,
-    );
-    assert_eq!(base_cost + (10 * 2 + 1000) * 13, base_cost_s10)
-}
-
-#[test]
-fn check_authorization() {
-    let principal1 =
-        Principal::from_text("k5dlc-ijshq-lsyre-qvvpq-2bnxr-pb26c-ag3sc-t6zo5-rdavy-recje-zqe")
-            .unwrap();
-    let principal2 =
-        Principal::from_text("yxhtl-jlpgx-wqnzc-ysego-h6yqe-3zwfo-o3grn-gvuhm-nz3kv-ainub-6ae")
-            .unwrap();
-    assert!(!is_authorized_principal(&principal1, Auth::Rpc));
-    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
-    authorize(principal1, Auth::Rpc);
-    assert!(is_authorized_principal(&principal1, Auth::Rpc));
-    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
-    deauthorize(principal1, Auth::Rpc);
-    assert!(!is_authorized_principal(&principal1, Auth::Rpc));
-    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
-}

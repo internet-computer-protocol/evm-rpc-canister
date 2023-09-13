@@ -1,5 +1,5 @@
 [package]
-name = "ic_eth"
+name = "ic_eth_rpc"
 version = "0.1.0"
 description = "Ethereum on IC."
 authors = ["DFINITY Foundation"]
