@@ -12,7 +12,7 @@ View this [reference site](https://chainlist.org/) for a list of available chain
 
 ### `register_provider`
 
-Register a new *provider* for a Web2-based *service*.
+Register a new provider for a Web2-based service.
 
 ```candid
 type RegisterProvider = record {
