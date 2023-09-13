@@ -19,9 +19,9 @@ pub fn get_provider_cycles_cost(
     provider_cycles_per_message_byte: u64,
 ) -> u128 {
     let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
-    let base_cost = provider_cycles_per_call as u128
+    let cost_per_node = provider_cycles_per_call as u128
         + provider_cycles_per_message_byte as u128 * json_rpc_payload.len() as u128;
-    base_cost * (nodes_in_subnet as u128)
+    cost_per_node * (nodes_in_subnet as u128)
 }
 
 #[test]
