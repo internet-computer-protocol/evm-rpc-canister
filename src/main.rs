@@ -1,4 +1,4 @@
-use candid::{candid_method, CandidType, Decode, Deserialize, Encode, Principal};
+use candid::{candid_method, CandidType, Principal};
 use ic_canister_log::{declare_log_buffer, log};
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -14,65 +14,18 @@ use ic_stable_structures::file_mem::FileMemory;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 #[cfg(target_arch = "wasm32")]
 use ic_stable_structures::DefaultMemoryImpl;
-use ic_stable_structures::{BoundedStorable, Cell, StableBTreeMap, Storable};
-#[macro_use]
-extern crate num_derive;
-use std::borrow::Cow;
+use ic_stable_structures::{Cell, StableBTreeMap};
 use std::cell::RefCell;
 use std::collections::hash_set::HashSet;
-use std::collections::HashMap;
 
-const INGRESS_OVERHEAD_BYTES: u128 = 100;
-const INGRESS_MESSAGE_RECEIVED_COST: u128 = 1_200_000;
-const INGRESS_MESSAGE_BYTE_RECEIVED_COST: u128 = 2_000;
-const HTTP_OUTCALL_REQUEST_COST: u128 = 400_000_000;
-const HTTP_OUTCALL_BYTE_RECEIEVED_COST: u128 = 100_000;
-const BASE_SUBNET_SIZE: u128 = 13; // App subnet
+#[macro_use]
+extern crate num_derive;
 
-const MINIMUM_WITHDRAWAL_CYCLES: u128 = 1_000_000_000;
+mod constants;
+mod types;
 
-const STRING_STORABLE_MAX_SIZE: u32 = 100;
-const WASM_PAGE_SIZE: u64 = 65536;
-
-const INITIAL_SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
-    "cloudflare-eth.com",
-    "ethereum.publicnode.com",
-    "eth-mainnet.g.alchemy.com",
-    "eth-goerli.g.alchemy.com",
-    "rpc.flashbots.net",
-    "eth-mainnet.blastapi.io",
-    "ethereumnodelight.app.runonflux.io",
-    "eth.nownodes.io",
-    "rpc.ankr.com",
-    "mainnet.infura.io",
-    "eth.getblock.io",
-    "rpc.kriptonio.com",
-    "api.0x.org",
-    "erigon-mainnet--rpc.datahub.figment.io",
-    "archivenode.io",
-    "eth-mainnet.nodereal.io",
-    "ethereum-mainnet.s.chainbase.online",
-    "eth.llamarpc.com",
-    "ethereum-mainnet-rpc.allthatnode.com",
-    "api.zmok.io",
-    "in-light.eth.linkpool.iono",
-    "api.mycryptoapi.com",
-    "mainnet.eth.cloud.ava.dono",
-    "eth-mainnet.gateway.pokt.network",
-];
-
-// Static permissions. The canister creator is also authorized for all permissions.
-
-// Principals allowed to send JSON RPCs.
-const DEFAULT_NODES_IN_SUBNET: u32 = 13;
-const DEFAULT_OPEN_RPC_ACCESS: bool = true;
-const RPC_ALLOWLIST: &[&str] = &[];
-// Principals allowed to registry API keys.
-const REGISTER_PROVIDER_ALLOWLIST: &[&str] = &[];
-// Principals that will not be charged cycles to send JSON RPCs.
-const FREE_RPC_ALLOWLIST: &[&str] = &[];
-// Principals who have Admin authorization.
-const AUTHORIZED_ADMIN: &[&str] = &[];
+use constants::*;
+use types::*;
 
 type AllowlistSet = HashSet<&'static &'static str>;
 
@@ -83,124 +36,6 @@ type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 declare_log_buffer!(name = INFO, capacity = 1000);
 declare_log_buffer!(name = ERROR, capacity = 1000);
-
-#[derive(Default)]
-struct Metrics {
-    requests: u64,
-    request_cycles_charged: u128,
-    request_cycles_refunded: u128,
-    request_err_no_permission: u64,
-    request_err_service_url_host_not_allowed: u64,
-    request_err_http: u64,
-    host_requests: HashMap<String, u64>,
-}
-
-// These need to be powers of two so that they can be used as bit fields.
-#[derive(Clone, Debug, PartialEq, CandidType, FromPrimitive, Deserialize)]
-enum Auth {
-    Admin = 0b0001,
-    Rpc = 0b0010,
-    RegisterProvider = 0b0100,
-    FreeRpc = 0b1000,
-}
-
-#[derive(Clone, Debug, Default, CandidType, Deserialize)]
-struct Metadata {
-    nodes_in_subnet: u32,
-    next_provider_id: u64,
-    open_rpc_access: bool,
-}
-
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
-struct StringStorable(String);
-
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
-struct PrincipalStorable(Principal);
-
-impl Storable for StringStorable {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        // String already implements `Storable`.
-        self.0.to_bytes()
-    }
-
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Self(String::from_bytes(bytes))
-    }
-}
-
-impl BoundedStorable for StringStorable {
-    const MAX_SIZE: u32 = STRING_STORABLE_MAX_SIZE;
-    const IS_FIXED_SIZE: bool = false;
-}
-
-impl Storable for PrincipalStorable {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        std::borrow::Cow::from(self.0.as_slice())
-    }
-
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Self(Principal::from_slice(&bytes))
-    }
-}
-
-impl BoundedStorable for PrincipalStorable {
-    const MAX_SIZE: u32 = 29;
-    const IS_FIXED_SIZE: bool = false;
-}
-
-#[derive(Debug, CandidType)]
-struct RegisteredProvider {
-    provider_id: u64,
-    owner: Principal,
-    chain_id: u64,
-    service_url: String,
-    cycles_per_call: u64,
-    cycles_per_message_byte: u64,
-}
-
-#[derive(Debug, CandidType, Deserialize)]
-struct RegisterProvider {
-    chain_id: u64,
-    service_url: String,
-    api_key: String,
-    cycles_per_call: u64,
-    cycles_per_message_byte: u64,
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-struct Provider {
-    provider_id: u64,
-    owner: Principal,
-    chain_id: u64,
-    service_url: String,
-    api_key: String,
-    cycles_per_call: u64,
-    cycles_per_message_byte: u64,
-    cycles_owed: u128,
-}
-
-impl Storable for Metadata {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Decode!(&bytes, Self).unwrap()
-    }
-}
-
-impl Storable for Provider {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Decode!(&bytes, Self).unwrap()
-    }
-}
-
-impl BoundedStorable for Provider {
-    const MAX_SIZE: u32 = 256; // A reasonable limit.
-    const IS_FIXED_SIZE: bool = false;
-}
 
 thread_local! {
     // Transient static data: this is reset when the canister is upgraded.
