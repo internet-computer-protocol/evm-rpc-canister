@@ -84,4 +84,9 @@ fn test_authorization() {
     do_deauthorize(principal1, Auth::Rpc);
     assert!(!is_authorized_principal(&principal1, Auth::Rpc));
     assert!(!is_authorized_principal(&principal2, Auth::Rpc));
+
+    // Test that a principal with the RegisterProvider permission does not have Admin permissions.
+    do_authorize(principal1, Auth::RegisterProvider);
+    assert!(!is_authorized_principal(&principal1, Auth::Admin));
+    assert!(is_authorized_principal(&principal1, Auth::RegisterProvider));
 }
