@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+PRINCIPAL=$(dfx identity get-principal)
+
+dfx deploy ic_eth --mode reinstall -y
+dfx canister call ic_eth authorize "(principal \"$PRINCIPAL\", variant { Rpc })"
+
+dfx canister call ic_eth register_provider '(record {service_url = "https://cloudflare-eth.com"; api_key = "/v1/mainnet"; chain_id = 1; cycles_per_call = 1000; cycles_per_message_byte = 100})'
