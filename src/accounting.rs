@@ -1,5 +1,6 @@
 use crate::*;
 
+/// Get the baseline cost of sending a JSON-RPC request using HTTP outcalls.
 pub fn get_cycles_cost(json_rpc_payload: &str, service_url: &str, max_response_bytes: u64) -> u128 {
     let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
     let ingress_bytes =
@@ -11,6 +12,7 @@ pub fn get_cycles_cost(json_rpc_payload: &str, service_url: &str, max_response_b
     base_cost * (nodes_in_subnet as u128) / BASE_SUBNET_SIZE
 }
 
+/// Get the additional cost for calling a registered JSON-RPC provider.
 pub fn get_provider_cycles_cost(
     json_rpc_payload: &str,
     provider_cycles_per_call: u64,
