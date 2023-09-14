@@ -1,12 +1,18 @@
-# IC 🔗 ETH (Canister)
+# Ethereum RPC
 
-> #### Interact with the [Ethereum](https://ethereum.org/) blockchain from the [Internet Computer](https://internetcomputer.org/).
+[![GitHub license](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/internet-computer-protocol/ic-eth-rpc/issues)
 
-### Test canister: [6yxaq-riaaa-aaaap-abkpa-cai](https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.ic0.app/?id=6yxaq-riaaa-aaaap-abkpa-cai)
+> #### Interact with [EVM blockchains](https://chainlist.org/) from the [Internet Computer](https://internetcomputer.org/).
+
+---
+
+## Canisters
+
+* Low-cost testing: [6yxaq-riaaa-aaaap-abkpa-cai](https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.ic0.app/?id=6yxaq-riaaa-aaaap-abkpa-cai)
 
 ## Overview
 
-**IC 🔗 ETH** is an Internet Computer canister smart contract for communicating with the Ethereum blockchain using an [on-chain API](./API.md). 
+The **Ethereum RPC Canister** is an Internet Computer canister smart contract for communicating with Ethereum and other [EVM blockchains](https://chainlist.org/) using an [on-chain API](./API.md). 
 
 This canister facilitates API requests to Ethereum JSON RPC services such as [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) using [HTTPS outcalls](https://internetcomputer.org/docs/current/developer-docs/integrations/http_requests/), enabling functionality similar to traditional Ethereum dApps, including querying Ethereum smart contract states and submitting raw transactions.
 
