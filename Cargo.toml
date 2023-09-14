@@ -13,7 +13,7 @@ ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "323bb2
 ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "323bb2ceda477a6f7d13ab007c47935824b63150" }
 ic-certified-map = "0.4"
 ic-cdk = "0.9"
-ic-cdk-macros = "0.6"
+ic-cdk-macros = "0.7"
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
 json5 = "0.4"
