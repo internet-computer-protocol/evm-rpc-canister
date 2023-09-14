@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+PRINCIPAL=$(dfx identity get-principal)
+
+dfx deploy ic_eth --mode reinstall -y
+# dfx canister call ic_eth authorize "(principal \"$PRINCIPAL\", variant { Rpc })"
+dfx canister call ic_eth authorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
+
+dfx canister call ic_eth register_provider '(record {base_url = "https://cloudflare-eth.com"; credential_path = "/v1/mainnet"; chain_id = 1; cycles_per_call = 1000; cycles_per_message_byte = 100})'
+
+dfx canister call ic_eth request_cost '("https://cloudflare-eth.com", "{ \"jsonrpc\": \"2.0\", \"method\": \"eth_getBlockByNumber\", \"params\": [\"0x2244\", true], \"id\": 1 }", 1000)'
+dfx canister call ic_eth request '("https://cloudflare-eth.com", "{ \"jsonrpc\": \"2.0\", \"method\": \"eth_getBlockByNumber\", \"params\": [\"0x2244\", true], \"id\": 1 }", 1000)'
+
+dfx canister call ic_eth provider_request_cost '(0, "{ \"jsonrpc\": \"2.0\", \"method\": \"eth_getBlockByNumber\", \"params\": [\"0x2244\", true], \"id\": 1 }", 1000)'
+dfx canister call ic_eth provider_request '(0, "{ \"jsonrpc\": \"2.0\", \"method\": \"eth_getBlockByNumber\", \"params\": [\"0x2244\", true], \"id\": 1 }", 1000)'
