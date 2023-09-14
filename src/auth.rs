@@ -3,11 +3,13 @@ use candid::Principal;
 use crate::{Auth, PrincipalStorable, AUTH, AUTH_STABLE, METADATA};
 
 pub fn is_authorized(auth: Auth) -> bool {
-    let caller = &ic_cdk::caller();
-    ic_cdk::api::is_controller(&ic_cdk::caller()) || is_authorized_principal(caller, auth)
+    is_authorized_principal(&ic_cdk::caller(), auth)
 }
 
 pub fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {
+    if auth == Auth::Admin && ic_cdk::api::is_controller(principal) {
+        return true;
+    }
     if auth == Auth::Rpc && METADATA.with(|m| m.borrow().get().open_rpc_access) {
         return true;
     }
