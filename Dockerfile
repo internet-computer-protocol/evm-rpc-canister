@@ -1,6 +1,6 @@
 # Use this with
 #
-#  docker build -t iceth .
+#  docker build -t ic_eth .
 #  or use ./scripts/docker-build
 #
 # The docker image. To update, run `docker pull ubuntu` locally, and update the
@@ -45,7 +45,7 @@ COPY . .
 RUN touch src/main.rs
 
 RUN ./scripts/build
-RUN sha256sum /iceth.wasm.gz
+RUN sha256sum /ic_eth.wasm.gz
 
-FROM scratch AS scratch_iceth
-COPY --from=build /iceth.wasm.gz /
+FROM scratch AS scratch_ic_eth
+COPY --from=build /ic_eth.wasm.gz /
