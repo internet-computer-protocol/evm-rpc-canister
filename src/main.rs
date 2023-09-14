@@ -1,11 +1,11 @@
 use candid::{candid_method, CandidType};
 use ic_canister_log::log;
-use ic_canisters_http_types::{
-    HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
-};
 use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpResponse, TransformArgs};
-use ic_cdk_macros::{query, update};
-use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
+use ic_cdk::{query, update};
+// use ic_canisters_http_types::{
+//     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
+// };
+// use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
 use ic_eth_rpc::*;
 
@@ -247,16 +247,16 @@ fn post_upgrade() {
     stable_authorize(ic_cdk::caller());
 }
 
-#[query]
-fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
-    match request.path() {
-        "/metrics" => serve_metrics(encode_metrics),
-        "/logs" => serve_logs_v2(request, &INFO, &ERROR),
-        "/log/info" => serve_logs(&INFO),
-        "/log/error" => serve_logs(&ERROR),
-        _ => HttpResponseBuilder::not_found().build(),
-    }
-}
+// #[query]
+// fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
+//     match request.path() {
+//         "/metrics" => serve_metrics(encode_metrics),
+//         "/logs" => serve_logs_v2(request, &INFO, &ERROR),
+//         "/log/info" => serve_logs(&INFO),
+//         "/log/error" => serve_logs(&ERROR),
+//         _ => HttpResponseBuilder::not_found().build(),
+//     }
+// }
 
 #[update(guard = "require_stable_authorized")]
 fn stable_authorize(principal: Principal) {
