@@ -82,15 +82,6 @@ dfx deploy
 
 ## Examples
 
-### Authorization
-
-```bash
-PRINCIPAL=$(dfx identity get-principal)
-dfx canister call ic_eth authorize "(principal \"$PRINCIPAL\", variant { Rpc })"
-dfx canister call ic_eth get_authorized '(variant { Rpc })'
-dfx canister call ic_eth deauthorize "(principal \"$PRINCIPAL\", variant { Rpc })"
-```
-
 ### Ethereum RPC (local replica)
 ```bash
 # Use a custom provider
@@ -106,6 +97,15 @@ dfx canister call --wallet $(dfx identity get-wallet) --with-cycles 600000000 ic
 ```bash
 dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 ic_eth request '("https://cloudflare-eth.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
 dfx canister --network ic call --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 ic_eth request '("https://ethereum.publicnode.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
+```
+
+### Authorization (local replica)
+
+```bash
+PRINCIPAL=$(dfx identity get-principal)
+dfx canister call ic_eth authorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
+dfx canister call ic_eth get_authorized '(variant { RegisterProvider })'
+dfx canister call ic_eth deauthorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
 ```
 
 ## Caveats
