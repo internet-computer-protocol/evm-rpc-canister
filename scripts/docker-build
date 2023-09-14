@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # vim: ft=bash
-# Build iceth.wasm inside docker. This outputs iceth.internet_identity.wasm.gz.
+# Build ic_eth.wasm inside docker. This outputs ic_eth.internet_identity.wasm.gz.
 
 set -euo pipefail
 
@@ -9,7 +9,7 @@ SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPTS_DIR/.."
 
 function title() {
-    echo "Build iceth inside Docker"
+    echo "Build ic_eth inside Docker"
 }
 
 function usage() {
@@ -24,7 +24,7 @@ EOF
 function help() {
     cat << EOF
 
-This will create (and override) "./iceth.wasm.gz".
+This will create (and override) "./ic_eth.wasm.gz".
 EOF
 }
 
@@ -38,7 +38,7 @@ function build() {
 
     # image name and build args, made global because they're used in
     # check_feature()
-    image_name="iceth-docker-build"
+    image_name="ic_eth-docker-build"
     docker_build_args=( --target "scratch_$canister" )
 
     docker_build_args+=(--tag "$image_name" .)
@@ -86,7 +86,7 @@ do
 done
 
 if [ ${#CANISTERS[@]} -eq 0 ]; then
-    CANISTERS=("iceth")
+    CANISTERS=("ic_eth")
 fi
 
 for canister in "${CANISTERS[@]}"
