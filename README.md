@@ -2,7 +2,7 @@
 
 [![GitHub license](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/internet-computer-protocol/ic-eth-rpc/issues)
 
-> #### Interact with [EVM blockchains](https://chainlist.org/) from the [Internet Computer](https://internetcomputer.org/).
+> #### Interact with [EVM blockchains](https://chainlist.org/?testnets=true) from the [Internet Computer](https://internetcomputer.org/).
 
 ---
 
@@ -12,11 +12,11 @@
 
 ## Overview
 
-**Ethereum RPC** is an Internet Computer canister smart contract for communicating with [Ethereum](https://ethereum.org/en/) and other [EVM blockchains](https://chainlist.org/) using an [on-chain API](./API.md). 
+**Ethereum RPC** is an Internet Computer canister smart contract for communicating with [Ethereum](https://ethereum.org/en/) and other [EVM blockchains](https://chainlist.org/?testnets=true) using an [on-chain API](./API.md). 
 
 This canister facilitates API requests to JSON-RPC services such as [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) using [HTTPS outcalls](https://internetcomputer.org/docs/current/developer-docs/integrations/http_requests/). This enables functionality similar to traditional Ethereum dApps, including querying Ethereum smart contract states and submitting raw transactions.
 
-Beyond the Ethereum blockchain, this canister also supports Polygon, Avalanche, and other popular EVM networks. Check out [this webpage](https://chainlist.org/) for a list of all supported networks and RPC providers.
+Beyond the Ethereum blockchain, this canister also supports Polygon, Avalanche, and other popular EVM networks. Check out [this webpage](https://chainlist.org/?testnets=true) for a list of all supported networks and RPC providers.
 
 ## Learn More
 
