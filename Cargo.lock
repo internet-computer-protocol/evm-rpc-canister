@@ -1378,7 +1378,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "576c539151d4769fb4d1a0c25c4108dd18facd04c5695b02cf2d226ab4e43aa5"
 
 [[package]]
-name = "iceth"
+name = "ic_eth_rpc"
 version = "0.1.0"
 dependencies = [
  "candid 0.8.4",
