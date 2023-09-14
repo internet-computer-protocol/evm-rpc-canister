@@ -14,9 +14,15 @@
 
 **Ethereum RPC** is an Internet Computer canister smart contract for communicating with [Ethereum](https://ethereum.org/en/) and other [EVM blockchains](https://chainlist.org/) using an [on-chain API](./API.md). 
 
-This canister facilitates API requests to JSON-RPC  services such as [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) using [HTTPS outcalls](https://internetcomputer.org/docs/current/developer-docs/integrations/http_requests/). This enables functionality similar to traditional Ethereum dApps, including querying Ethereum smart contract states and submitting raw transactions.
+This canister facilitates API requests to JSON-RPC services such as [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) using [HTTPS outcalls](https://internetcomputer.org/docs/current/developer-docs/integrations/http_requests/). This enables functionality similar to traditional Ethereum dApps, including querying Ethereum smart contract states and submitting raw transactions.
 
 Beyond the Ethereum blockchain, this canister also supports Polygon, Avalanche, and other popular EVM networks. Check out [this webpage](https://chainlist.org/) for a list of all supported networks and RPC providers.
+
+## Learn More
+
+* [How this canister works behind the scenes](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/DeepDive.md)
+* [Candid interface](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/candid/ic_eth.did)
+* [Detailed API documentation](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/API.md)
 
 ## Quick Start
 
@@ -53,27 +59,6 @@ dfx deploy ic_eth
 dfx canister call ic_eth request '("https://cloudflare-eth.com/v1/mainnet", "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}", 1000)' --wallet $(dfx identity get-wallet) --with-cycles 600000000
 ```
 
-## Learn More
-
-* [How this canister works behind the scenes](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/DeepDive.md)
-* [Canister API documentation](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/API.md)
-
-## Contributing
-
-Contributions are welcome! Please check out the [contributor guidelines](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/.github/CONTRIBUTING.md) for more information.
-
-Run the following commands to set up a local development environment:
-
-```bash
-# Clone the repository
-git clone https://github.com/internet-computer-protocol/ic-eth-rpc
-cd ic-eth-rpc
-
-# Deploy to the local replica
-dfx start --background
-dfx deploy
-```
-
 ## Examples
 
 ### Ethereum RPC (local replica)
@@ -91,6 +76,22 @@ dfx canister call ic_eth --wallet $(dfx identity get-wallet) --with-cycles 60000
 ```bash
 dfx canister --network ic call ic_eth --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 request '("https://cloudflare-eth.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
 dfx canister --network ic call ic_eth --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 request '("https://ethereum.publicnode.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
+```
+
+## Contributing
+
+Contributions are welcome! Please check out the [contributor guidelines](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/.github/CONTRIBUTING.md) for more information.
+
+Run the following commands to set up a local development environment:
+
+```bash
+# Clone the repository
+git clone https://github.com/internet-computer-protocol/ic-eth-rpc
+cd ic-eth-rpc
+
+# Deploy to the local replica
+dfx start --background
+dfx deploy
 ```
 
 ### Authorization (local replica)
