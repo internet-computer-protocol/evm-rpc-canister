@@ -3,8 +3,9 @@ use candid::Principal;
 use crate::{Auth, PrincipalStorable, AUTH, AUTH_STABLE, METADATA};
 
 pub fn is_authorized(auth: Auth) -> bool {
-    ic_cdk::api::is_controller(&ic_cdk::caller())
-        || is_authorized_principal(&ic_cdk::caller(), auth)
+    let caller = &ic_cdk::caller();
+    // ic_cdk::api::is_controller(&ic_cdk::caller()) ||
+    is_authorized_principal(caller, auth)
 }
 
 pub fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {

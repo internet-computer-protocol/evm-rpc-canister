@@ -33,7 +33,7 @@ service : {
   get_owed_cycles : (nat64) -> (nat) query;
   get_providers : () -> (vec RegisteredProvider) query;
   provider_request : (nat64, text, nat64) -> (Result);
-  provider_request_cost : (nat64, text) -> (opt nat) query;
+  provider_request_cost : (nat64, text, nat64) -> (opt nat) query;
   register_provider : (RegisterProvider) -> (nat64);
   request : (text, text, nat64) -> (Result);
   request_cost : (text, text, nat64) -> (nat) query;

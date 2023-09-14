@@ -49,13 +49,13 @@ fn request_cost(service_url: String, json_rpc_payload: String, max_response_byte
 
 #[query]
 #[candid_method(query)]
-fn provider_request_cost(provider_id: u64, json_rpc_payload: String) -> Option<u128> {
+fn provider_request_cost(
+    provider_id: u64,
+    json_rpc_payload: String,
+    max_response_bytes: u64,
+) -> Option<u128> {
     let provider = PROVIDERS.with(|p| p.borrow().get(&provider_id))?;
-    let base_cost = get_request_cost(
-        &json_rpc_payload,
-        &provider.service_url,
-        provider.cycles_per_message_byte,
-    );
+    let base_cost = get_request_cost(&json_rpc_payload, &provider.service_url, max_response_bytes);
     let provider_cost = get_provider_cost(
         &json_rpc_payload,
         provider.cycles_per_call,

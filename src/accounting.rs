@@ -29,7 +29,7 @@ pub fn get_provider_cost(
 }
 
 #[test]
-fn test_cycles_cost() {
+fn test_request_cost() {
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.nodes_in_subnet = 13;
@@ -55,7 +55,7 @@ fn test_cycles_cost() {
 }
 
 #[test]
-fn test_provider_cycles_cost() {
+fn test_provider_cost() {
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.nodes_in_subnet = 13;

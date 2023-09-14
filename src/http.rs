@@ -28,6 +28,7 @@ pub async fn do_http_request(
         inc_metric!(request_err_service_url_host_not_allowed);
         return Err(EthRpcError::ServiceUrlHostNotAllowed);
     }
+    let request_cost = get_request_cost(&json_rpc_payload, &service_url, max_response_bytes);
     let provider_cost = match &provider {
         None => 0,
         Some(provider) => get_provider_cost(
@@ -36,7 +37,7 @@ pub async fn do_http_request(
             provider.cycles_per_message_byte,
         ),
     };
-    let cost = get_request_cost(&json_rpc_payload, &service_url, max_response_bytes) + provider_cost;
+    let cost = request_cost + provider_cost;
     if !is_authorized(Auth::FreeRpc) {
         if cycles_available < cost {
             return Err(EthRpcError::TooFewCycles(format!(
