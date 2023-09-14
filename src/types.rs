@@ -1,9 +1,15 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_stable_structures::{BoundedStorable, Storable};
+use num_derive::FromPrimitive;
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
+
+pub enum ResolvedSource {
+    Url(String),
+    Provider(Provider),
+}
 
 #[derive(Default)]
 pub struct Metrics {

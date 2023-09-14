@@ -16,7 +16,12 @@ async fn request(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<Vec<u8>, EthRpcError> {
-    do_http_request(json_rpc_payload, service_url, max_response_bytes, None).await
+    do_http_request(
+        ResolvedSource::Url(service_url),
+        &json_rpc_payload,
+        max_response_bytes,
+    )
+    .await
 }
 
 #[update]
@@ -31,12 +36,10 @@ async fn provider_request(
             .get(&provider_id)
             .ok_or(EthRpcError::ProviderNotFound)
     })?;
-    let service_url = provider.service_url.clone() + &provider.api_key;
     do_http_request(
-        json_rpc_payload,
-        service_url,
+        ResolvedSource::Provider(provider),
+        &json_rpc_payload,
         max_response_bytes,
-        Some(provider),
     )
     .await
 }

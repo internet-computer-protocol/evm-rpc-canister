@@ -7,10 +7,9 @@ use ic_cdk::api::management_canister::http_request::{
 use crate::*;
 
 pub async fn do_http_request(
-    json_rpc_payload: String,
-    service_url: String,
+    source: ResolvedSource,
+    json_rpc_payload: &str,
     max_response_bytes: u64,
-    provider: Option<Provider>,
 ) -> Result<Vec<u8>, EthRpcError> {
     inc_metric!(requests);
     if !is_authorized(Auth::Rpc) {
@@ -18,6 +17,13 @@ pub async fn do_http_request(
         return Err(EthRpcError::NoPermission);
     }
     let cycles_available = ic_cdk::api::call::msg_cycles_available128();
+    let (service_url, provider) = match source {
+        ResolvedSource::Url(url) => (url, None),
+        ResolvedSource::Provider(provider) => (
+            format!("{}{}", provider.service_url, provider.api_key),
+            Some(provider),
+        ),
+    };
     let parsed_url = url::Url::parse(&service_url).or(Err(EthRpcError::ServiceUrlParseError))?;
     let host = parsed_url
         .host_str()
@@ -29,10 +35,9 @@ pub async fn do_http_request(
         return Err(EthRpcError::ServiceUrlHostNotAllowed);
     }
     let request_cost = get_request_cost(&json_rpc_payload, &service_url, max_response_bytes);
-    let provider_cost = match &provider {
-        None => 0,
-        Some(provider) => get_provider_cost(&json_rpc_payload, provider),
-    };
+    let provider_cost = provider.as_ref().map_or(0, |provider| {
+        get_provider_cost(&json_rpc_payload, &provider)
+    });
     let cost = request_cost + provider_cost;
     if !is_authorized(Auth::FreeRpc) {
         if cycles_available < cost {

@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate num_derive;
-
 pub use candid::Principal;
 
 mod accounting;
