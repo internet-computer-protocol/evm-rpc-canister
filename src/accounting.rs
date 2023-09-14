@@ -17,14 +17,10 @@ pub fn get_request_cost(
 }
 
 /// Calculate the additional cost for calling a registered JSON-RPC provider.
-pub fn get_provider_cost(
-    json_rpc_payload: &str,
-    provider_cycles_per_call: u64,
-    provider_cycles_per_message_byte: u64,
-) -> u128 {
+pub fn get_provider_cost(json_rpc_payload: &str, provider: &Provider) -> u128 {
     let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
-    let cost_per_node = provider_cycles_per_call as u128
-        + provider_cycles_per_message_byte as u128 * json_rpc_payload.len() as u128;
+    let cost_per_node = provider.cycles_per_call as u128
+        + provider.cycles_per_message_byte as u128 * json_rpc_payload.len() as u128;
     cost_per_node * (nodes_in_subnet as u128)
 }
 
@@ -62,17 +58,36 @@ fn test_provider_cost() {
         m.borrow_mut().set(metadata).unwrap();
     });
 
+    let provider = Provider {
+        provider_id: 0,
+        service_url: "".to_string(),
+        api_key: "".to_string(),
+        owner: Principal::anonymous(),
+        chain_id: 1,
+        cycles_owed: 0,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 2,
+    };
     let base_cost = get_provider_cost(
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
-        0,
-        2,
+        &provider,
     );
+
+    let provider_s10 = Provider {
+        provider_id: 0,
+        service_url: "".to_string(),
+        api_key: "".to_string(),
+        owner: Principal::anonymous(),
+        chain_id: 1,
+        cycles_owed: 0,
+        cycles_per_call: 1000,
+        cycles_per_message_byte: 2,
+    };
     let s10 = "0123456789";
     let base_cost_s10 = get_provider_cost(
         &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
             + s10),
-        1000,
-        2,
+        &provider_s10,
     );
     assert_eq!(base_cost + (10 * 2 + 1000) * 13, base_cost_s10)
 }

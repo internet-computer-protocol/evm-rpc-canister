@@ -24,18 +24,14 @@ pub async fn do_http_request(
         .ok_or(EthRpcError::ServiceUrlHostMissing)?
         .to_string();
     if SERVICE_HOSTS_ALLOWLIST.with(|a| !a.borrow().contains(&host.as_str())) {
-        log!(INFO, "host not allowed {}", host);
+        log!(INFO, "host not allowed: {}", host);
         inc_metric!(request_err_service_url_host_not_allowed);
         return Err(EthRpcError::ServiceUrlHostNotAllowed);
     }
     let request_cost = get_request_cost(&json_rpc_payload, &service_url, max_response_bytes);
     let provider_cost = match &provider {
         None => 0,
-        Some(provider) => get_provider_cost(
-            &json_rpc_payload,
-            provider.cycles_per_call,
-            provider.cycles_per_message_byte,
-        ),
+        Some(provider) => get_provider_cost(&json_rpc_payload, provider),
     };
     let cost = request_cost + provider_cost;
     if !is_authorized(Auth::FreeRpc) {
