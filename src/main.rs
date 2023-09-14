@@ -58,7 +58,11 @@ fn provider_request_cost(
     max_response_bytes: u64,
 ) -> Option<u128> {
     let provider = PROVIDERS.with(|p| p.borrow().get(&provider_id))?;
-    let request_cost = get_request_cost(&json_rpc_payload, &provider.base_url, max_response_bytes);
+    let request_cost = get_request_cost(
+        &json_rpc_payload,
+        &provider.service_url(),
+        max_response_bytes,
+    );
     let provider_cost = get_provider_cost(&json_rpc_payload, &provider);
     Some(request_cost + provider_cost)
 }
