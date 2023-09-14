@@ -2,7 +2,7 @@
 
 ## Terminology
 
-* `service`: A Web2 service such as [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) that offers access to the Ethereum JSON RPC API through HTTP. Note that also other EVM-compatible chains may be covered by such a JSON RPC API.
+* `service`: A Web2 service such as [Infura](https://www.infura.io/), [Gateway.fm](https://gateway.fm/), or [CloudFlare](https://www.cloudflare.com/en-gb/web3/) that offers access to the Ethereum JSON-RPC API through HTTP. Note that also other EVM-compatible chains may be covered by such a JSON-RPC API.
 * `network`: An EVM blockchain such as the Ethereum mainnet or Sepolia testnet.
 * `chain id`: An EVM network identifier (e.g. `0x1` for the Ethereum mainnet, `0xaa36a7` for the Sepolia testnet). 
 * `provider`: A provider is registered in the canister and allows for connecting to a specific JSON-RPC service. Each chain id for a particular service requires a different provider and typically requires a different API key. Multiple providers can be registered for a service / chain id combination.
@@ -66,18 +66,18 @@ Clients of this canister need to select a provider that matches w.r.t. the `chai
 
 ### `request`
 
-Make a request to a Web2 Ethereum node using the caller's URL to an openly available JSON RPC API service, or the caller's URL including an API key for an access-protected API provider. No registered API key of the canister is used in this scenario.
+Make a request to a Web2 Ethereum node using the caller's URL to an openly available  API service, or the caller's URL including an API key for an access-protected API provider. No registered API key of the canister is used in this scenario.
 
     request: (service_url: text, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
 
 * `service_url`: The URL of the service, including any API key if required for access-protected services.
-* `json_rpc_payload`: The payload for the JSON RPC request, in compliance with the [JSON RPC specification](https://www.jsonrpc.org/specification).
+* `json_rpc_payload`: The payload for the  request, in compliance with the [ specification](https://www.jsonrpc.org/specification).
 * `max_response_bytes`: The expected maximum size of the response of the Web2 API server. This parameter determines the network response size that is charged for. Not specifying it or it being larger than required may lead to substantial extra cycles cost for the HTTPS outcalls mechanism as its (large) default value is used and charged for.
 * `EthRpcResult`: The response comprises the JSON-encoded result or error, see the corresponding type.
 
 ### `provider_request`
 
-Make a request to a Web2 Ethereum node using a registered provider for a JSON RPC API service. There is no need for the client to have any established relationship with the API service.
+Make a request to a Web2 Ethereum node using a registered provider for a  API service. There is no need for the client to have any established relationship with the API service.
 
     provider_request: (provider_id: nat64, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
 

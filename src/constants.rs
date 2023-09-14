@@ -39,13 +39,13 @@ pub const INITIAL_SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
 
 // Static permissions. The canister creator is also authorized for all permissions.
 
-// Principals allowed to send JSON RPCs.
+// Principals allowed to send s.
 pub const DEFAULT_NODES_IN_SUBNET: u32 = 13;
 pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
 pub const RPC_ALLOWLIST: &[&str] = &[];
 // Principals allowed to registry API keys.
 pub const REGISTER_PROVIDER_ALLOWLIST: &[&str] = &[];
-// Principals that will not be charged cycles to send JSON RPCs.
+// Principals that will not be charged cycles to send s.
 pub const FREE_RPC_ALLOWLIST: &[&str] = &[];
 // Principals who have Admin authorization.
 pub const AUTHORIZED_ADMIN: &[&str] = &[];
