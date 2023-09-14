@@ -12,25 +12,25 @@ cd "$SCRIPTS_DIR/.."
 #########
 
 function title() {
-    echo "Builds iceth Canister"
+    echo "Builds ic_eth Canister"
 }
 
 function usage() {
     cat << EOF
 
 Usage:
-  $0 [--only-dependencies] [--iceth]
+  $0 [--only-dependencies] [--ic_eth]
 
 Options:
   --only-dependencies          only build rust dependencies (no js build, no wasm optimization)
-  --iceth                      build the icenthl canister
+  --ic_eth                      build the icenthl canister
 EOF
 }
 
 function help() {
     cat << EOF
 
-Builds the iceth canister.
+Builds the ic_eth canister.
 
 NOTE: This requires a working rust toolchain as well as ic-wasm.
 EOF
@@ -53,8 +53,8 @@ do
             ONLY_DEPS=1
             shift
             ;;
-        --iceth)
-            CANISTERS+=("iceth")
+        --ic_eth)
+            CANISTERS+=("ic_eth")
             shift
             ;;
         *)
@@ -68,7 +68,7 @@ do
 done
 
 if [ ${#CANISTERS[@]} -eq 0 ]; then
-    CANISTERS=("iceth")
+    CANISTERS=("ic_eth")
 fi
 
 # Checking for dependencies
