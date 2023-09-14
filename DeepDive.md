@@ -2,9 +2,8 @@
 
 ## How it Works
 
-This canister provides a connection between the Internet Computer and the Ethereum network. For interactions that involve value transfer, such as in the context of cross-chain asset transfers, multiple Web2 JSON-RPC providers can be queried by a client to increase the assurance of correctness of the answer. This is a decision on the security model that is left to the client.	* [How this canister works behind the scenes](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/DeepDive.md)
+This canister provides a connection between the Internet Computer and the Ethereum network. For interactions that involve value transfer, such as in the context of cross-chain asset transfers, multiple Web2 JSON-RPC providers can be queried by a client to increase the assurance of correctness of the answer. This is a decision on the security model that is left to the client.
 
-* [Canister API documentation](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/API.md)
 Authorized principals are permitted to register, update, and de-register so-called *providers*, each of which defines a registered API key for a specific Web2 JSON API service for a given chain id. It furthermore defines the cycles price to be paid when using this provider.	
 
 This canister's API can be used in two different ways depending on the use case:	
@@ -17,12 +16,11 @@ At least the following deployment scenarios are supported by the API of this can
 * A project can deploy the canister itself on an application subnet, use the project's own API keys, and limit access to the canister's API to project-specific canisters.	
 * Anyone can deploy the canister on an application subnet for public use.	
 
-**Note**	
-The canister has been designed to connect to the Ethereum blockchain from the Internet Computer, however, the canister may also be useful to connect to other EVM blockchains that support the same JSON-RPC API and follow standards of Ethereum.	
+**Note**: The canister has been designed to connect to the Ethereum blockchain from the Internet Computer, however, the canister may also be useful to connect to other EVM blockchains that support the same JSON-RPC API and follow standards of Ethereum.	
 
 The API of the canister is specified through a [Candid interface specification](./candid/ic_eth.did). Detailed API documentation is available [here](./API.md).
 
-## Caveats	## Related Projects
+## Caveats
 
 ### API Keys are stored in the canister	
 
@@ -46,4 +44,4 @@ Users should be aware of the privacy policy of the service provider to which the
 
 ### Idempotency issues because of one HTTP outcall per node in the subnet	
 
-HTTP outcalls result in one HTTP outcall per node in the subnet and the results are then combined after filtering through a Transform function.  Some Ethereum RPC calls may not be idempotent or may vary which will cause the call to be reported as a failure as there will be no consensus on the result.  In particular `provider_request_cost` may be accepted only once and subsequent calls may result in a duplicate error.  Furthermore this behavior may differ by service provider.  Users should be aware of this and use appropriate caution and/or a different solution.
+HTTP outcalls result in one HTTP outcall per node in the subnet and the results are then combined after filtering through a Transform function.  Some Ethereum RPC calls may not be idempotent or may vary which will cause the call to be reported as a failure as there will be no consensus on the result.  Furthermore this behavior may differ by service provider.  Users should be aware of this and use appropriate caution and/or a different solution.
