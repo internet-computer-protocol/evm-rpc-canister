@@ -58,8 +58,7 @@ fn provider_request_cost(
     max_response_bytes: u64,
 ) -> Option<u128> {
     let provider = PROVIDERS.with(|p| p.borrow().get(&provider_id))?;
-    let request_cost =
-        get_request_cost(&json_rpc_payload, &provider.service_url, max_response_bytes);
+    let request_cost = get_request_cost(&json_rpc_payload, &provider.base_url, max_response_bytes);
     let provider_cost = get_provider_cost(&json_rpc_payload, &provider);
     Some(request_cost + provider_cost)
 }
@@ -74,7 +73,7 @@ fn get_providers() -> Vec<RegisteredProvider> {
                 provider_id: e.provider_id,
                 owner: e.owner,
                 chain_id: e.chain_id,
-                service_url: e.service_url,
+                base_url: e.base_url,
                 cycles_per_call: e.cycles_per_call,
                 cycles_per_message_byte: e.cycles_per_message_byte,
             })
@@ -85,11 +84,10 @@ fn get_providers() -> Vec<RegisteredProvider> {
 #[update(guard = "require_register_provider")]
 #[candid_method]
 fn register_provider(provider: RegisterProvider) -> u64 {
-    let parsed_url = url::Url::parse(&provider.service_url).expect("unable to parse service_url");
+    let parsed_url = url::Url::parse(&provider.base_url).expect("unable to parse service_url");
     let host = parsed_url.host_str().expect("service_url host missing");
-    if SERVICE_HOSTS_ALLOWLIST.with(|a| !a.borrow().contains(&host)) {
-        ic_cdk::trap("service_url host not allowed");
-    }
+    validate_base_url(host);
+    validate_credential_path(&provider.credential_path);
     let provider_id = METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.next_provider_id += 1;
@@ -103,8 +101,8 @@ fn register_provider(provider: RegisterProvider) -> u64 {
                 provider_id,
                 owner: ic_cdk::caller(),
                 chain_id: provider.chain_id,
-                service_url: provider.service_url,
-                api_key: provider.api_key,
+                base_url: provider.base_url,
+                credential_path: provider.credential_path,
                 cycles_per_call: provider.cycles_per_call,
                 cycles_per_message_byte: provider.cycles_per_message_byte,
                 cycles_owed: 0,
@@ -116,13 +114,14 @@ fn register_provider(provider: RegisterProvider) -> u64 {
 
 #[update(guard = "require_register_provider")]
 #[candid_method]
-fn update_provider_api_key(provider_id: u64, api_key: String) {
+fn update_provider_credential(provider_id: u64, credential_path: String) {
+    validate_credential_path(&credential_path);
     PROVIDERS.with(|p| match p.borrow_mut().get(&provider_id) {
         Some(mut provider) => {
             if provider.owner != ic_cdk::caller() && !is_authorized(Auth::Admin) {
                 ic_cdk::trap("Provider owner != caller");
             }
-            provider.api_key = api_key;
+            provider.credential_path = credential_path;
             p.borrow_mut().insert(provider_id, provider);
         }
         None => ic_cdk::trap("Provider not found"),

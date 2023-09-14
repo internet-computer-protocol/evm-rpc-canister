@@ -19,10 +19,7 @@ pub async fn do_http_request(
     let cycles_available = ic_cdk::api::call::msg_cycles_available128();
     let (service_url, provider) = match source {
         ResolvedSource::Url(url) => (url, None),
-        ResolvedSource::Provider(provider) => (
-            format!("{}{}", provider.service_url, provider.api_key),
-            Some(provider),
-        ),
+        ResolvedSource::Provider(provider) => (provider.service_url(), Some(provider)),
     };
     let parsed_url = url::Url::parse(&service_url).or(Err(EthRpcError::ServiceUrlParseError))?;
     let host = parsed_url
@@ -31,7 +28,7 @@ pub async fn do_http_request(
         .to_string();
     if SERVICE_HOSTS_ALLOWLIST.with(|a| !a.borrow().contains(&host.as_str())) {
         log!(INFO, "host not allowed: {}", host);
-        inc_metric!(request_err_service_url_host_not_allowed);
+        inc_metric!(request_err_host_not_allowed);
         return Err(EthRpcError::ServiceUrlHostNotAllowed);
     }
     let request_cost = get_request_cost(&json_rpc_payload, &service_url, max_response_bytes);

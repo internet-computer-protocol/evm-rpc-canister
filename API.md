@@ -18,8 +18,8 @@ Register a new provider for a Web2-based service.
 ```candid
 type RegisterProvider = record {
     chain_id: nat64;
-    service_url: text;
-    api_key: text;
+    base_url: text;
+    credential_path: text;
     cycles_per_call: nat64;
     cycles_per_message_byte: nat64;
 };
@@ -29,8 +29,8 @@ register_provider: (RegisterProvider) -> ();
 
 The `RegisterProvider` record defines the details about the service to register, including the API key for the service.
 * `chain_id`: The id of the Ethereum chain this provider allows to connect to. The ids refer to the chain ids as defined for EVM-compatible blockchains, see, e.g., [ChainList](https://chainlist.org/?testnets=true).
-* `service_url`: The URLs of the Web2 service provider that is used by the canister when using this provider.
-* `api_key`: The API key for authorizing requests to this service provider. The API key is private to the entity registering it and the canister. It is not exposed in the response of the `get_providers` method. The URL used to access the service is constructed by concatenating the `service_url` and the `api_key` (without a seperator), e.g., "https://cloudflare-eth.com" and "/my-api-key").
+* `base_url`: The URLs of the Web2 service provider that is used by the canister when using this provider.
+* `credential_path`: A path containing API key for authorizing requests to this service provider. This part of the path is private to the entity registering it and the canister. It is not exposed in the response of the `get_providers` method. The URL used to access the service is constructed by concatenating the `base_url` and the `credential_path` (without a seperator), e.g., "https://cloudflare-eth.com" and "/my-api-key".
 * `cycles_per_call`: Cycles charged per call by the canister in addition to the base charges when using this provider.
 * `cycles_per_message_byte`: Cycles charged per payload byte by the canister in addition to the base charges when using this provider.
 
@@ -45,7 +45,7 @@ type RegisteredProvider = record {
     provider_id: nat64;
     owner: principal;
     chain_id: nat64;
-    service_url: text;
+    base_url: text;
     cycles_per_call: nat64;
     cycles_per_message_byte: nat64;
 };
@@ -62,7 +62,7 @@ get_providers: () -> (vec RegisteredProvider) query;
 * `cycles_per_call`: See `RegisterProvider`.
 * `cycles_per_message_byte`: See `RegisterProvider`.
 
-Clients of this canister need to select a provider that matches w.r.t. the `chain_id` the network they intend to connect to. If multiple providers are available for a given `chain_id`, the per-message or per-byte price or the entity behind the provider (this can be inferred from the `service_url`) may be factors to choose a suitable provider.
+Clients of this canister need to select a provider that matches w.r.t. the `chain_id` the network they intend to connect to. If multiple providers are available for a given `chain_id`, the per-message or per-byte price or the entity behind the provider (this can be inferred from the `base_url`) may be factors to choose a suitable provider.
 
 ### `request`
 

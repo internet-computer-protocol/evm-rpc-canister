@@ -17,7 +17,7 @@ pub struct Metrics {
     pub request_cycles_charged: u128,
     pub request_cycles_refunded: u128,
     pub request_err_no_permission: u64,
-    pub request_err_service_url_host_not_allowed: u64,
+    pub request_err_host_not_allowed: u64,
     pub request_err_http: u64,
     pub host_requests: HashMap<String, u64>,
 }
@@ -80,7 +80,7 @@ pub struct RegisteredProvider {
     pub provider_id: u64,
     pub owner: Principal,
     pub chain_id: u64,
-    pub service_url: String,
+    pub base_url: String,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
 }
@@ -88,8 +88,8 @@ pub struct RegisteredProvider {
 #[derive(Debug, CandidType, Deserialize)]
 pub struct RegisterProvider {
     pub chain_id: u64,
-    pub service_url: String,
-    pub api_key: String,
+    pub base_url: String,
+    pub credential_path: String,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
 }
@@ -99,11 +99,17 @@ pub struct Provider {
     pub provider_id: u64,
     pub owner: Principal,
     pub chain_id: u64,
-    pub service_url: String,
-    pub api_key: String,
+    pub base_url: String,
+    pub credential_path: String,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
     pub cycles_owed: u128,
+}
+
+impl Provider {
+    pub fn service_url(&self) -> String {
+        format!("{}{}", self.base_url, self.credential_path)
+    }
 }
 
 impl Storable for Metadata {
