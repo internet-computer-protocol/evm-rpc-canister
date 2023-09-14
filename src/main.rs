@@ -288,13 +288,13 @@ fn stable_write(offset: u64, buffer: Vec<u8>) {
     ic_cdk::api::stable::stable64_write(offset, buffer.as_slice());
 }
 
-#[update(guard = "require_admin")]
+#[update(guard = "require_admin_or_controller")]
 #[candid_method]
 fn authorize(principal: Principal, auth: Auth) {
     do_authorize(principal, auth)
 }
 
-#[query(guard = "require_admin")]
+#[query(guard = "require_admin_or_controller")]
 #[candid_method(query)]
 fn get_authorized(auth: Auth) -> Vec<String> {
     AUTH.with(|a| {
@@ -308,13 +308,13 @@ fn get_authorized(auth: Auth) -> Vec<String> {
     })
 }
 
-#[update(guard = "require_admin")]
+#[update(guard = "require_admin_or_controller")]
 #[candid_method]
 fn deauthorize(principal: Principal, auth: Auth) {
     do_deauthorize(principal, auth)
 }
 
-#[update(guard = "require_admin")]
+#[update(guard = "require_admin_or_controller")]
 #[candid_method]
 fn set_open_rpc_access(open_rpc_access: bool) {
     METADATA.with(|m| {
@@ -324,13 +324,13 @@ fn set_open_rpc_access(open_rpc_access: bool) {
     });
 }
 
-#[query(guard = "require_admin")]
+#[query(guard = "require_admin_or_controller")]
 #[candid_method(query)]
 fn get_open_rpc_access() -> bool {
     METADATA.with(|m| m.borrow().get().open_rpc_access)
 }
 
-#[update(guard = "require_admin")]
+#[update(guard = "require_admin_or_controller")]
 #[candid_method]
 fn set_nodes_in_subnet(nodes_in_subnet: u32) {
     METADATA.with(|m| {
@@ -340,7 +340,7 @@ fn set_nodes_in_subnet(nodes_in_subnet: u32) {
     });
 }
 
-#[query(guard = "require_admin")]
+#[query(guard = "require_admin_or_controller")]
 #[candid_method(query)]
 fn get_nodes_in_subnet() -> u32 {
     METADATA.with(|m| m.borrow().get().nodes_in_subnet)

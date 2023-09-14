@@ -7,9 +7,6 @@ pub fn is_authorized(auth: Auth) -> bool {
 }
 
 pub fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {
-    if auth == Auth::Admin && ic_cdk::api::is_controller(principal) {
-        return true;
-    }
     if auth == Auth::Rpc && METADATA.with(|m| m.borrow().get().open_rpc_access) {
         return true;
     }
@@ -22,8 +19,9 @@ pub fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {
     })
 }
 
-pub fn require_admin() -> Result<(), String> {
-    if is_authorized(Auth::Admin) {
+pub fn require_admin_or_controller() -> Result<(), String> {
+    let caller = ic_cdk::caller();
+    if is_authorized_principal(&caller, Auth::Admin) || ic_cdk::api::is_controller(&caller) {
         Ok(())
     } else {
         Err("You are not authorized".to_string())
