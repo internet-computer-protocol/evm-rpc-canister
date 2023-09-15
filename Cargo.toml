@@ -34,3 +34,4 @@ url = "2.4"
 
 [dev-dependencies]
 candid = { features = ["parser"] }
+hex = "0.4"
