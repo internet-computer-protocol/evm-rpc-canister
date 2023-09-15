@@ -2,7 +2,6 @@ use candid::{candid_method, CandidType};
 use ic_canister_log::log;
 use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
-use ic_eth::core::types::{Address, RecoveryMessage, Signature};
 // use ic_canisters_http_types::{
 //     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 // };
@@ -13,19 +12,7 @@ use ic_eth_rpc::*;
 #[ic_cdk_macros::query]
 #[candid_method(query)]
 pub fn verify_signature(eth_address: Vec<u8>, message: Vec<u8>, signature: Vec<u8>) -> bool {
-    if signature.len() != 65 {
-        ic_cdk::trap("expected 65-byte signature");
-    }
-    Signature {
-        r: signature[..32].into(),
-        s: signature[32..64].into(),
-        v: signature[64].into(),
-    }
-    .verify(
-        RecoveryMessage::Data(message),
-        Address::from_slice(&eth_address),
-    )
-    .is_ok()
+    do_verify_signature(eth_address, message, signature)
 }
 
 #[update]
