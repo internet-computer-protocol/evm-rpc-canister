@@ -11,30 +11,60 @@ View this [reference site](https://chainlist.org/?testnets=true) for a list of a
 
 ## Methods
 
-### `register_provider`
+### `verify_signature`
 
-Register a new provider for a Web2-based service.
+Confirm the authenticity of a message signed by an Ethereum private key. Check out [this article](https://programtheblockchain.com/posts/2018/02/17/signing-and-verifying-messages-in-ethereum/) to learn more about Ethereum ECDSA signatures.
 
-```candid
-type RegisterProvider = record {
-    chain_id: nat64;
-    base_url: text;
-    credential_path: text;
-    cycles_per_call: nat64;
-    cycles_per_message_byte: nat64;
-};
+    verify_signature : (eth_address: vec nat8, message: vec nat8, signature: vec nat8) -> (bool) query;
 
-register_provider: (RegisterProvider) -> ();
-```
+* `eth_address`: A binary-encoded Ethereum wallet address (20 bytes).
+* `message`: An arbitrary binary message corresponding to the signature.
+* `signature`: An Ethereum ECDSA signature (65 bytes). A common way to generate a signature is via the [`personal_sign` RPC method in MetaMask](https://docs.metamask.io/wallet/how-to/sign-data/#use-personal_sign).
 
-The `RegisterProvider` record defines the details about the service to register, including the API key for the service.
-* `chain_id`: The id of the Ethereum chain this provider allows to connect to. The ids refer to the chain ids as defined for EVM-compatible blockchains, see, e.g., [ChainList](https://chainlist.org/?testnets=true).
-* `base_url`: The URLs of the Web2 service provider that is used by the canister when using this provider.
-* `credential_path`: A path containing API key for authorizing requests to this service provider. This part of the path is private to the entity registering it and the canister. It is not exposed in the response of the `get_providers` method. The URL used to access the service is constructed by concatenating the `base_url` and the `credential_path` (without a seperator), e.g., `"https://cloudflare-eth.com"` and `"/my-api-key"`.
-* `cycles_per_call`: Cycles charged per call by the canister in addition to the base charges when using this provider.
-* `cycles_per_message_byte`: Cycles charged per payload byte by the canister in addition to the base charges when using this provider.
 
-The cycles charged can, for example, be used by the entity providing the API key to amortize the API key costs in the case of commercial API keys. A provider record can be removed by its owner principal or a pricipal with administrative permissions.
+### `request`
+
+Make a request to a Web2 Ethereum node using the caller's URL to an openly available JSON-RPC service, or the caller's URL (including an API key if necessary). No registered API key of the canister is used in this scenario.
+
+    request: (service_url: text, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
+
+* `service_url`: The URL of the service, including any API key if required for access-protected services.
+* `json_rpc_payload`: The payload for the JSON-RPC request. View examples in the [Ethereum documentation](https://ethereum.org/en/developers/docs/apis/json-rpc/).
+* `max_response_bytes`: The expected maximum size of the response of the Web2 API server. This parameter determines the network response size that is charged for. Not specifying it or it being larger than required may lead to substantial extra cycles cost for the HTTPS outcalls mechanism as its (large) default value is used and charged for.
+* `EthRpcResult`: The response comprises the JSON-encoded result or error, see the corresponding type.
+
+
+### `provider_request`
+
+Make a request to a Web2 Ethereum node using a registered provider for a JSON-RPC service. There is no need for the client to have any established relationship with the API service.
+
+    provider_request: (provider_id: nat64, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
+
+* `provider_id`: The id of the registered provider to be used for this call. This uniquely identifies a provider registered with the canister.
+* `json_rpc_payload`: See `request`.
+* `max_response_bytes`: See `request`.
+* `EthRpcResult`: See `request`.
+
+### `request_cost`
+
+Calculate the cost of sending a request with the given input arguments.
+
+    request_cost: (service_url: text, json_rpc_payload: text, max_response_bytes: nat64) -> (nat) query;
+
+* `service_url`: The URL of the service, including any API key if required for access-protected services.
+* `json_rpc_payload`: See `request`.
+* `max_response_bytes`: See `request`.
+
+
+### `provider_request_cost`
+
+Calculate the cost of sending a request with the given input arguments.
+
+    provider_request_cost: (provider_id: nat64, json_rpc_payload: text, max_response_bytes: nat64) -> (nat) query;
+
+* `provider_id`: The id of the registered provider to be used for this call. This uniquely identifies a provider registered with the canister.
+* `json_rpc_payload`: See `request_cost`.
+* `max_response_bytes`: See `request_cost`.
 
 ### `get_providers`
 
@@ -64,47 +94,32 @@ get_providers: () -> (vec RegisteredProvider) query;
 
 Clients of this canister need to select a provider that matches w.r.t. the `chain_id` the network they intend to connect to. If multiple providers are available for a given `chain_id`, the per-message or per-byte price or the entity behind the provider (this can be inferred from the `base_url`) may be factors to choose a suitable provider.
 
-### `request`
 
-Make a request to a Web2 Ethereum node using the caller's URL to an openly available JSON-RPC service, or the caller's URL including an API key for an access-protected API provider. No registered API key of the canister is used in this scenario.
+### `register_provider`
 
-    request: (service_url: text, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
+Register a new provider for a Web2-based service.
 
-* `service_url`: The URL of the service, including any API key if required for access-protected services.
-* `json_rpc_payload`: The payload for the JSON-RPC request. View examples in the [Ethereum documentation](https://ethereum.org/en/developers/docs/apis/json-rpc/).
-* `max_response_bytes`: The expected maximum size of the response of the Web2 API server. This parameter determines the network response size that is charged for. Not specifying it or it being larger than required may lead to substantial extra cycles cost for the HTTPS outcalls mechanism as its (large) default value is used and charged for.
-* `EthRpcResult`: The response comprises the JSON-encoded result or error, see the corresponding type.
+```candid
+type RegisterProvider = record {
+    chain_id: nat64;
+    base_url: text;
+    credential_path: text;
+    cycles_per_call: nat64;
+    cycles_per_message_byte: nat64;
+};
 
-### `provider_request`
+register_provider: (RegisterProvider) -> ();
+```
 
-Make a request to a Web2 Ethereum node using a registered provider for a JSON-RPC service. There is no need for the client to have any established relationship with the API service.
+The `RegisterProvider` record defines the details about the service to register, including the API key for the service.
+* `chain_id`: The id of the Ethereum chain this provider allows to connect to. The ids refer to the chain ids as defined for EVM-compatible blockchains, see, e.g., [ChainList](https://chainlist.org/?testnets=true).
+* `base_url`: The URLs of the Web2 service provider that is used by the canister when using this provider.
+* `credential_path`: A path containing API key for authorizing requests to this service provider. This part of the path is private to the entity registering it and the canister. It is not exposed in the response of the `get_providers` method. The URL used to access the service is constructed by concatenating the `base_url` and the `credential_path` (without a seperator), e.g., `"https://cloudflare-eth.com"` and `"/my-api-key"`.
+* `cycles_per_call`: Cycles charged per call by the canister in addition to the base charges when using this provider.
+* `cycles_per_message_byte`: Cycles charged per payload byte by the canister in addition to the base charges when using this provider.
 
-    provider_request: (provider_id: nat64, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
+The cycles charged can, for example, be used by the entity providing the API key to amortize the API key costs in the case of commercial API keys. A provider record can be removed by its owner principal or a pricipal with administrative permissions.
 
-* `provider_id`: The id of the registered provider to be used for this call. This uniquely identifies a provider registered with the canister.
-* `json_rpc_payload`: See `request`.
-* `max_response_bytes`: See `request`.
-* `EthRpcResult`: See `request`.
-
-### `request_cost`
-
-Calculate the cost of sending a request with the given input arguments.
-
-    request_cost: (service_url: text, json_rpc_payload: text, max_response_bytes: nat64) -> (nat) query;
-
-* `service_url`: The URL of the service, including any API key if required for access-protected services.
-* `json_rpc_payload`: See `request`.
-* `max_response_bytes`: See `request`.
-
-### `provider_request_cost`
-
-Calculate the cost of sending a request with the given input arguments.
-
-    provider_request_cost: (provider_id: nat64, json_rpc_payload: text, max_response_bytes: nat64) -> (nat) query;
-
-* `provider_id`: The id of the registered provider to be used for this call. This uniquely identifies a provider registered with the canister.
-* `json_rpc_payload`: See `request_cost`.
-* `max_response_bytes`: See `request_cost`.
 
 ### `unregister_provider`
 
@@ -115,6 +130,7 @@ unregister_provider: (provider_id: nat64) -> ();
 ```
 
 The `provider_id` for the provider to be unregistered is the only parameter required.
+
 
 ### `authorize`
 

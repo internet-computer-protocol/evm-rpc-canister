@@ -9,6 +9,12 @@ use ic_cdk::{query, update};
 
 use ic_eth_rpc::*;
 
+#[ic_cdk_macros::query]
+#[candid_method(query)]
+pub fn verify_signature(eth_address: Vec<u8>, message: Vec<u8>, signature: Vec<u8>) -> bool {
+    do_verify_signature(&eth_address, message, signature)
+}
+
 #[update]
 #[candid_method]
 async fn request(

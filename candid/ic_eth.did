@@ -41,5 +41,6 @@ service : {
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> ();
   update_provider_credential : (nat64, text) -> ();
+  verify_signature : (vec nat8, vec nat8, vec nat8) -> (bool) query;
   withdraw_owed_cycles : (nat64, principal) -> ();
 }
