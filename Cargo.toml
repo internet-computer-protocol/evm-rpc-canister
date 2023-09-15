@@ -19,6 +19,7 @@ ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "releas
 ic-certified-map = "0.4"
 ic-cdk = "0.10"
 ic-cdk-macros = "0.7"
+ic-eth = "0.0"
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
 json5 = "0.4"
