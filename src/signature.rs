@@ -27,12 +27,12 @@ fn test_verify_signature() {
     let s2 = hex::decode("27ae1f90fd65c86b07aae1287dba8715db7e429ff9bf700205cb8ac904c6ba071c8fb7c6f8b5e15338521fee95a452c6a688f1c6fec5eeddbfa680a2abf300341b").unwrap();
 
     // Invalid message
-    assert_eq!(do_verify_signature(address, m2.clone(), s1.clone()), false);
+    assert!(!do_verify_signature(address, m2.clone(), s1.clone()));
 
     // Invalid signature
-    assert_eq!(do_verify_signature(address, m1.clone(), s2.clone()), false);
+    assert!(!do_verify_signature(address, m1.clone(), s2.clone()));
 
     // Valid signature
-    assert_eq!(do_verify_signature(address, m1, s1), true);
-    assert_eq!(do_verify_signature(address, m2, s2), true);
+    assert!(do_verify_signature(address, m1, s1));
+    assert!(do_verify_signature(address, m2, s2));
 }
