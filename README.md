@@ -6,10 +6,6 @@
 
 ---
 
-## Canisters
-
-* Low-cost testing: [6yxaq-riaaa-aaaap-abkpa-cai](https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.ic0.app/?id=6yxaq-riaaa-aaaap-abkpa-cai)
-
 ## Overview
 
 **Ethereum RPC** is an Internet Computer canister smart contract for communicating with [Ethereum](https://ethereum.org/en/) and other [EVM blockchains](https://chainlist.org/?testnets=true) using an [on-chain API](./API.md). 
@@ -18,15 +14,13 @@ This canister facilitates API requests to JSON-RPC services such as [Infura](htt
 
 Beyond the Ethereum blockchain, this canister also supports Polygon, Avalanche, and other popular EVM networks. Check out [this webpage](https://chainlist.org/?testnets=true) for a list of all supported networks and RPC providers.
 
-## Learn More
+## Canisters
 
-* [How this canister works behind the scenes](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/DeepDive.md)
-* [Candid interface](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/candid/ic_eth.did)
-* [Detailed API documentation](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/API.md)
+* Low-cost testing: [6yxaq-riaaa-aaaap-abkpa-cai](https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.ic0.app/?id=6yxaq-riaaa-aaaap-abkpa-cai)
 
 ## Quick Start
 
-Add the following to your `dfx.json` config file:
+Add the following to your `dfx.json` config file (replace `remote.id.ic` with any option from the list of available canisters above):
 
 ```json
 {
@@ -39,8 +33,7 @@ Add the following to your `dfx.json` config file:
         "id": {
           "ic": "6yxaq-riaaa-aaaap-abkpa-cai"
         }
-      },
-      "frontend": {}
+      }
     }
   }
 }
@@ -78,6 +71,15 @@ dfx canister --network ic call ic_eth --wallet $(dfx identity --network ic get-w
 dfx canister --network ic call ic_eth --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 request '("https://ethereum.publicnode.com","{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
 ```
 
+### Authorization (local replica)
+
+```bash
+PRINCIPAL=$(dfx identity get-principal)
+dfx canister call ic_eth authorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
+dfx canister call ic_eth get_authorized '(variant { RegisterProvider })'
+dfx canister call ic_eth deauthorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
+```
+
 ## Contributing
 
 Contributions are welcome! Please check out the [contributor guidelines](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/.github/CONTRIBUTING.md) for more information.
@@ -94,14 +96,11 @@ dfx start --background
 dfx deploy
 ```
 
-### Authorization (local replica)
+## Learn More
 
-```bash
-PRINCIPAL=$(dfx identity get-principal)
-dfx canister call ic_eth authorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
-dfx canister call ic_eth get_authorized '(variant { RegisterProvider })'
-dfx canister call ic_eth deauthorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
-```
+* [How this canister works behind the scenes](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/DeepDive.md)
+* [Candid interface](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/candid/ic_eth.did)
+* [Detailed API documentation](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/API.md)
 
 ## Related Projects
 
