@@ -5,6 +5,28 @@ use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
+use crate::PROVIDERS;
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum Source {
+    Url(String),
+    Provider(u64),
+    Network(String),
+}
+
+impl Source {
+    pub fn resolve(self) -> Option<ResolvedSource> {
+        Some(match self {
+            Source::Url(name) => ResolvedSource::Url(name),
+            Source::Provider(id) => ResolvedSource::Provider(
+                PROVIDERS
+                    .with(|providers| providers.borrow().get(&id))?
+                    .to_owned(),
+            ),
+            Source::Network(_network) => unimplemented!(), //////
+        })
+    }
+}
 
 pub enum ResolvedSource {
     Url(String),

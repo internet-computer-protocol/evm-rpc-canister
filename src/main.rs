@@ -18,10 +18,11 @@ pub fn verify_signature(eth_address: Vec<u8>, message: Vec<u8>, signature: Vec<u
 #[update]
 #[candid_method]
 async fn request(
-    service_url: String,
+    source: Source,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<Vec<u8>, EthRpcError> {
+    
     do_http_request(
         ResolvedSource::Url(service_url),
         &json_rpc_payload,
