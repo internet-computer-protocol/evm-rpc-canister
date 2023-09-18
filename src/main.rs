@@ -83,7 +83,7 @@ fn register_provider(provider: RegisterProvider) -> u64 {
                 cycles_per_call: provider.cycles_per_call,
                 cycles_per_message_byte: provider.cycles_per_message_byte,
                 cycles_owed: 0,
-                active: false,
+                active: true,
             },
         )
     });
