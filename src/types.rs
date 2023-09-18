@@ -28,7 +28,7 @@ impl Source {
                 if !p.active {
                     Err(EthRpcError::ProviderNotActive)?
                 } else {
-                    p.clone()
+                    p
                 }
             }),
             Source::Chain(id) => ResolvedSource::Provider(PROVIDERS.with(|p| {
