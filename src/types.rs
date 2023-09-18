@@ -134,6 +134,7 @@ pub struct RegisterProvider {
 #[derive(Debug, CandidType, Deserialize)]
 pub struct UpdateProvider {
     pub provider_id: u64,
+    pub base_url: Option<String>,
     pub credential_path: Option<String>,
     pub cycles_per_call: Option<u64>,
     pub cycles_per_message_byte: Option<u64>,

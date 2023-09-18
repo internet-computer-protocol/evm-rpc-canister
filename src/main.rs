@@ -115,6 +115,10 @@ fn update_provider(update: UpdateProvider) {
             if provider.owner != ic_cdk::caller() && !is_authorized(Auth::Admin) {
                 ic_cdk::trap("Provider owner != caller");
             }
+            if let Some(url) = update.base_url {
+                validate_base_url(&url);
+                provider.base_url = url;
+            }
             if let Some(path) = update.credential_path {
                 validate_credential_path(&path);
                 provider.credential_path = path;
