@@ -30,7 +30,7 @@ Make a request to a Web2 Ethereum node using the caller's URL to an openly avail
 
 * `source`: Any of the following:
   * `#Url : text` The URL of the service, including any API key if required for access-protected services.
-  * `#Network : text` The relevant EVM network (using the [Alchemy naming convention](https://github.com/alchemyplatform/alchemy-sdk-js/blob/main/docs-md/enums/Network.md)).
+  * `#Chain : nat64` The relevant EVM network identifier ([reference list](https://chainlist.org/?testnets=true)).
   * `#Provider : nat64` The ID of the provider to be used for this call. Call `get_providers` to view a full list of providers.
 * `json_rpc_payload`: The payload for the JSON-RPC request. View examples in the [Ethereum documentation](https://ethereum.org/en/developers/docs/apis/json-rpc/).
 * `max_response_bytes`: The expected maximum size of the response of the Web2 API server. This parameter determines the network response size that is charged for. Not specifying it or it being larger than required may lead to substantial extra cycles cost for the HTTPS outcalls mechanism as its (large) default value is used and charged for.
