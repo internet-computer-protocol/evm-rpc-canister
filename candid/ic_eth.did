@@ -24,6 +24,8 @@ type RegisteredProvider = record {
   cycles_per_call : nat64;
 };
 type Result = variant { Ok : vec nat8; Err : EthRpcError };
+type Result_1 = variant { Ok : nat; Err : EthRpcError };
+type Source = variant { Url : text; Network : text; Provider : nat64 };
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
@@ -32,11 +34,9 @@ service : {
   get_open_rpc_access : () -> (bool) query;
   get_owed_cycles : (nat64) -> (nat) query;
   get_providers : () -> (vec RegisteredProvider) query;
-  provider_request : (nat64, text, nat64) -> (Result);
-  provider_request_cost : (nat64, text, nat64) -> (opt nat) query;
   register_provider : (RegisterProvider) -> (nat64);
-  request : (text, text, nat64) -> (Result);
-  request_cost : (text, text, nat64) -> (nat) query;
+  request : (Source, text, nat64) -> (Result);
+  request_cost : (Source, text, nat64) -> (Result_1) query;
   set_nodes_in_subnet : (nat32) -> ();
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> ();
