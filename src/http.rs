@@ -17,6 +17,7 @@ pub async fn do_http_request(
         return Err(EthRpcError::NoPermission);
     }
     let cycles_available = ic_cdk::api::call::msg_cycles_available128();
+    let cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
     let (service_url, provider) = match source {
         ResolvedSource::Url(url) => (url, None),
         ResolvedSource::Provider(provider) => (provider.service_url(), Some(provider)),
@@ -31,11 +32,6 @@ pub async fn do_http_request(
         inc_metric!(request_err_host_not_allowed);
         return Err(EthRpcError::ServiceUrlHostNotAllowed);
     }
-    let request_cost = get_request_cost(json_rpc_payload, &service_url, max_response_bytes);
-    let provider_cost = provider
-        .as_ref()
-        .map_or(0, |provider| get_provider_cost(json_rpc_payload, provider));
-    let cost = request_cost + provider_cost;
     if !is_authorized(Auth::FreeRpc) {
         if cycles_available < cost {
             return Err(EthRpcError::TooFewCycles(format!(
@@ -44,7 +40,7 @@ pub async fn do_http_request(
         }
         ic_cdk::api::call::msg_cycles_accept128(cost);
         if let Some(mut provider) = provider {
-            provider.cycles_owed += provider_cost;
+            provider.cycles_owed += get_provider_cost(&provider, json_rpc_payload);
             PROVIDERS.with(|p| {
                 // Error should not happen here as it was checked before.
                 p.borrow_mut()

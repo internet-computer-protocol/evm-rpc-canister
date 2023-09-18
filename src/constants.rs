@@ -42,10 +42,3 @@ pub const INITIAL_SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
 // Principals allowed to send JSON-RPC requests.
 pub const DEFAULT_NODES_IN_SUBNET: u32 = 13;
 pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
-pub const RPC_ALLOWLIST: &[&str] = &[];
-// Principals allowed to registry API keys.
-pub const REGISTER_PROVIDER_ALLOWLIST: &[&str] = &[];
-// Principals that will not be charged cycles to send JSON-RPC requests.
-pub const FREE_RPC_ALLOWLIST: &[&str] = &[];
-// Principals who have Admin authorization.
-pub const AUTHORIZED_ADMIN: &[&str] = &[];

@@ -15,13 +15,18 @@ pub enum Source {
 }
 
 impl Source {
-    pub fn resolve(self) -> Option<ResolvedSource> {
-        Some(match self {
+    pub fn resolve(self) -> Result<ResolvedSource, EthRpcError> {
+        Ok(match self {
             Source::Url(name) => ResolvedSource::Url(name),
             Source::Provider(id) => ResolvedSource::Provider(
                 PROVIDERS
-                    .with(|providers| providers.borrow().get(&id))?
-                    .to_owned(),
+                    .with(|providers| {
+                        providers
+                            .borrow()
+                            .get(&id)
+                            .ok_or(EthRpcError::ProviderNotFound)
+                    })?
+                    .clone(),
             ),
             Source::Network(_network) => unimplemented!(), //////
         })

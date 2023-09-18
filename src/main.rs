@@ -22,57 +22,39 @@ async fn request(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<Vec<u8>, EthRpcError> {
-    
-    do_http_request(
-        ResolvedSource::Url(service_url),
-        &json_rpc_payload,
-        max_response_bytes,
-    )
-    .await
-}
-
-#[update]
-#[candid_method]
-async fn provider_request(
-    provider_id: u64,
-    json_rpc_payload: String,
-    max_response_bytes: u64,
-) -> Result<Vec<u8>, EthRpcError> {
-    let provider = PROVIDERS.with(|p| {
-        p.borrow()
-            .get(&provider_id)
-            .ok_or(EthRpcError::ProviderNotFound)
-    })?;
-    do_http_request(
-        ResolvedSource::Provider(provider),
-        &json_rpc_payload,
-        max_response_bytes,
-    )
-    .await
+    do_http_request(source.resolve()?, &json_rpc_payload, max_response_bytes).await
 }
 
 #[query]
 #[candid_method(query)]
-fn request_cost(service_url: String, json_rpc_payload: String, max_response_bytes: u64) -> u128 {
-    get_request_cost(&json_rpc_payload, &service_url, max_response_bytes)
-}
-
-#[query]
-#[candid_method(query)]
-fn provider_request_cost(
-    provider_id: u64,
+fn request_cost(
+    source: Source,
     json_rpc_payload: String,
     max_response_bytes: u64,
-) -> Option<u128> {
-    let provider = PROVIDERS.with(|p| p.borrow().get(&provider_id))?;
-    let request_cost = get_request_cost(
+) -> Result<u128, EthRpcError> {
+    Ok(get_request_cost(
+        &source.resolve().unwrap(),
         &json_rpc_payload,
-        &provider.service_url(),
         max_response_bytes,
-    );
-    let provider_cost = get_provider_cost(&json_rpc_payload, &provider);
-    Some(request_cost + provider_cost)
+    ))
 }
+
+// #[query]
+// #[candid_method(query)]
+// fn provider_request_cost(
+//     provider_id: u64,
+//     json_rpc_payload: String,
+//     max_response_bytes: u64,
+// ) -> Option<u128> {
+//     let provider = PROVIDERS.with(|p| p.borrow().get(&provider_id))?;
+//     let request_cost = get_request_cost(
+//         &json_rpc_payload,
+//         &provider.service_url(),
+//         max_response_bytes,
+//     );
+//     let provider_cost = get_provider_cost(&json_rpc_payload, &provider);
+//     Some(request_cost + provider_cost)
+// }
 
 #[query]
 #[candid_method(query)]
@@ -240,19 +222,10 @@ fn transform(args: TransformArgs) -> HttpResponse {
 #[ic_cdk::init]
 fn init() {
     initialize();
-    METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = DEFAULT_NODES_IN_SUBNET;
-        metadata.open_rpc_access = DEFAULT_OPEN_RPC_ACCESS;
-        m.borrow_mut().set(metadata).unwrap();
-    });
 }
 
 #[ic_cdk::post_upgrade]
-fn post_upgrade() {
-    initialize();
-    stable_authorize(ic_cdk::caller());
-}
+fn post_upgrade() {}
 
 // #[query]
 // fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
@@ -357,18 +330,14 @@ fn initialize() {
     SERVICE_HOSTS_ALLOWLIST
         .with(|a| (*a.borrow_mut()) = AllowlistSet::from_iter(INITIAL_SERVICE_HOSTS_ALLOWLIST));
 
-    for principal in RPC_ALLOWLIST.iter() {
-        authorize(to_principal(principal), Auth::Rpc);
-    }
-    for principal in REGISTER_PROVIDER_ALLOWLIST.iter() {
-        authorize(to_principal(principal), Auth::RegisterProvider);
-    }
-    for principal in FREE_RPC_ALLOWLIST.iter() {
-        authorize(to_principal(principal), Auth::FreeRpc);
-    }
-    for principal in AUTHORIZED_ADMIN.iter() {
-        authorize(to_principal(principal), Auth::Admin);
-    }
+    stable_authorize(ic_cdk::caller());
+
+    METADATA.with(|m| {
+        let mut metadata = m.borrow().get().clone();
+        metadata.nodes_in_subnet = DEFAULT_NODES_IN_SUBNET;
+        metadata.open_rpc_access = DEFAULT_OPEN_RPC_ACCESS;
+        m.borrow_mut().set(metadata).unwrap();
+    });
 }
 
 #[cfg(not(any(target_arch = "wasm32", test)))]
