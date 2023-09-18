@@ -26,45 +26,27 @@ Confirm the authenticity of a message signed by an Ethereum private key. Check o
 
 Make a request to a Web2 Ethereum node using the caller's URL to an openly available JSON-RPC service, or the caller's URL (including an API key if necessary). No registered API key of the canister is used in this scenario.
 
-    request: (service_url: text, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
+    request: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
 
-* `service_url`: The URL of the service, including any API key if required for access-protected services.
+* `source`: Any of the following:
+  * `#Url : text` The URL of the service, including any API key if required for access-protected services.
+  * `#Chain : nat64` The relevant EVM network identifier ([reference list](https://chainlist.org/?testnets=true)).
+  * `#Provider : nat64` The ID of the provider to be used for this call. Call `get_providers` to view a full list of providers.
 * `json_rpc_payload`: The payload for the JSON-RPC request. View examples in the [Ethereum documentation](https://ethereum.org/en/developers/docs/apis/json-rpc/).
 * `max_response_bytes`: The expected maximum size of the response of the Web2 API server. This parameter determines the network response size that is charged for. Not specifying it or it being larger than required may lead to substantial extra cycles cost for the HTTPS outcalls mechanism as its (large) default value is used and charged for.
 * `EthRpcResult`: The response comprises the JSON-encoded result or error, see the corresponding type.
 
 
-### `provider_request`
-
-Make a request to a Web2 Ethereum node using a registered provider for a JSON-RPC service. There is no need for the client to have any established relationship with the API service.
-
-    provider_request: (provider_id: nat64, json_rpc_payload: text, max_response_bytes: nat64) -> (EthRpcResult);
-
-* `provider_id`: The id of the registered provider to be used for this call. This uniquely identifies a provider registered with the canister.
-* `json_rpc_payload`: See `request`.
-* `max_response_bytes`: See `request`.
-* `EthRpcResult`: See `request`.
-
 ### `request_cost`
 
 Calculate the cost of sending a request with the given input arguments.
 
-    request_cost: (service_url: text, json_rpc_payload: text, max_response_bytes: nat64) -> (nat) query;
+    request_cost: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (nat) query;
 
-* `service_url`: The URL of the service, including any API key if required for access-protected services.
+* `source`: See `request`.
 * `json_rpc_payload`: See `request`.
 * `max_response_bytes`: See `request`.
 
-
-### `provider_request_cost`
-
-Calculate the cost of sending a request with the given input arguments.
-
-    provider_request_cost: (provider_id: nat64, json_rpc_payload: text, max_response_bytes: nat64) -> (nat) query;
-
-* `provider_id`: The id of the registered provider to be used for this call. This uniquely identifies a provider registered with the canister.
-* `json_rpc_payload`: See `request_cost`.
-* `max_response_bytes`: See `request_cost`.
 
 ### `get_providers`
 

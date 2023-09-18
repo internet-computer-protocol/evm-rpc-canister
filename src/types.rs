@@ -5,6 +5,42 @@ use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
+use crate::PROVIDERS;
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum Source {
+    Url(String),
+    Provider(u64),
+    Chain(u64),
+}
+
+impl Source {
+    pub fn resolve(self) -> Result<ResolvedSource, EthRpcError> {
+        Ok(match self {
+            Source::Url(name) => ResolvedSource::Url(name),
+            Source::Provider(id) => ResolvedSource::Provider({
+                let p = PROVIDERS.with(|providers| {
+                    providers
+                        .borrow()
+                        .get(&id)
+                        .ok_or(EthRpcError::ProviderNotFound)
+                })?;
+                if !p.active {
+                    Err(EthRpcError::ProviderNotActive)?
+                } else {
+                    p
+                }
+            }),
+            Source::Chain(id) => ResolvedSource::Provider(PROVIDERS.with(|p| {
+                p.borrow()
+                    .iter()
+                    .find(|(_, p)| p.active && p.chain_id == id)
+                    .map(|(_, p)| p)
+                    .ok_or(EthRpcError::ProviderNotFound)
+            })?),
+        })
+    }
+}
 
 pub enum ResolvedSource {
     Url(String),
@@ -76,13 +112,14 @@ impl BoundedStorable for PrincipalStorable {
 }
 
 #[derive(Debug, CandidType)]
-pub struct RegisteredProvider {
+pub struct ProviderView {
     pub provider_id: u64,
     pub owner: Principal,
     pub chain_id: u64,
     pub base_url: String,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
+    pub active: bool,
 }
 
 #[derive(Debug, CandidType, Deserialize)]
@@ -92,6 +129,16 @@ pub struct RegisterProvider {
     pub credential_path: String,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
+}
+
+#[derive(Debug, CandidType, Deserialize)]
+pub struct UpdateProvider {
+    pub provider_id: u64,
+    pub base_url: Option<String>,
+    pub credential_path: Option<String>,
+    pub cycles_per_call: Option<u64>,
+    pub cycles_per_message_byte: Option<u64>,
+    pub active: Option<bool>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -104,6 +151,7 @@ pub struct Provider {
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
     pub cycles_owed: u128,
+    pub active: bool,
 }
 
 impl Provider {
@@ -143,6 +191,7 @@ pub enum EthRpcError {
     ServiceUrlHostMissing,
     ServiceUrlHostNotAllowed,
     ProviderNotFound,
+    ProviderNotActive,
     HttpRequestError { code: u32, message: String },
 }
 

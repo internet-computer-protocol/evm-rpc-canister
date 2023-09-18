@@ -18,76 +18,43 @@ pub fn verify_signature(eth_address: Vec<u8>, message: Vec<u8>, signature: Vec<u
 #[update]
 #[candid_method]
 async fn request(
-    service_url: String,
+    source: Source,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<Vec<u8>, EthRpcError> {
-    do_http_request(
-        ResolvedSource::Url(service_url),
-        &json_rpc_payload,
-        max_response_bytes,
-    )
-    .await
+    do_http_request(source.resolve()?, &json_rpc_payload, max_response_bytes).await
 }
 
-#[update]
-#[candid_method]
-async fn provider_request(
-    provider_id: u64,
+#[query]
+#[candid_method(query)]
+fn request_cost(
+    source: Source,
     json_rpc_payload: String,
     max_response_bytes: u64,
-) -> Result<Vec<u8>, EthRpcError> {
-    let provider = PROVIDERS.with(|p| {
-        p.borrow()
-            .get(&provider_id)
-            .ok_or(EthRpcError::ProviderNotFound)
-    })?;
-    do_http_request(
-        ResolvedSource::Provider(provider),
+) -> Result<u128, EthRpcError> {
+    Ok(get_request_cost(
+        &source.resolve().unwrap(),
         &json_rpc_payload,
         max_response_bytes,
-    )
-    .await
+    ))
 }
 
 #[query]
 #[candid_method(query)]
-fn request_cost(service_url: String, json_rpc_payload: String, max_response_bytes: u64) -> u128 {
-    get_request_cost(&json_rpc_payload, &service_url, max_response_bytes)
-}
-
-#[query]
-#[candid_method(query)]
-fn provider_request_cost(
-    provider_id: u64,
-    json_rpc_payload: String,
-    max_response_bytes: u64,
-) -> Option<u128> {
-    let provider = PROVIDERS.with(|p| p.borrow().get(&provider_id))?;
-    let request_cost = get_request_cost(
-        &json_rpc_payload,
-        &provider.service_url(),
-        max_response_bytes,
-    );
-    let provider_cost = get_provider_cost(&json_rpc_payload, &provider);
-    Some(request_cost + provider_cost)
-}
-
-#[query]
-#[candid_method(query)]
-fn get_providers() -> Vec<RegisteredProvider> {
+fn get_providers() -> Vec<ProviderView> {
     PROVIDERS.with(|p| {
         p.borrow()
             .iter()
-            .map(|(_, e)| RegisteredProvider {
+            .map(|(_, e)| ProviderView {
                 provider_id: e.provider_id,
                 owner: e.owner,
                 chain_id: e.chain_id,
                 base_url: e.base_url,
                 cycles_per_call: e.cycles_per_call,
                 cycles_per_message_byte: e.cycles_per_message_byte,
+                active: e.active,
             })
-            .collect::<Vec<RegisteredProvider>>()
+            .collect::<Vec<ProviderView>>()
     })
 }
 
@@ -116,6 +83,7 @@ fn register_provider(provider: RegisterProvider) -> u64 {
                 cycles_per_call: provider.cycles_per_call,
                 cycles_per_message_byte: provider.cycles_per_message_byte,
                 cycles_owed: 0,
+                active: true,
             },
         )
     });
@@ -124,15 +92,30 @@ fn register_provider(provider: RegisterProvider) -> u64 {
 
 #[update(guard = "require_register_provider")]
 #[candid_method]
-fn update_provider_credential(provider_id: u64, credential_path: String) {
-    validate_credential_path(&credential_path);
-    PROVIDERS.with(|p| match p.borrow_mut().get(&provider_id) {
+fn update_provider(update: UpdateProvider) {
+    PROVIDERS.with(|p| match p.borrow_mut().get(&update.provider_id) {
         Some(mut provider) => {
             if provider.owner != ic_cdk::caller() && !is_authorized(Auth::Admin) {
                 ic_cdk::trap("Provider owner != caller");
             }
-            provider.credential_path = credential_path;
-            p.borrow_mut().insert(provider_id, provider);
+            if let Some(url) = update.base_url {
+                validate_base_url(&url);
+                provider.base_url = url;
+            }
+            if let Some(path) = update.credential_path {
+                validate_credential_path(&path);
+                provider.credential_path = path;
+            }
+            if let Some(active) = update.active {
+                provider.active = active;
+            }
+            if let Some(cycles_per_call) = update.cycles_per_call {
+                provider.cycles_per_call = cycles_per_call;
+            }
+            if let Some(cycles_per_message_byte) = update.cycles_per_message_byte {
+                provider.cycles_per_message_byte = cycles_per_message_byte;
+            }
+            p.borrow_mut().insert(update.provider_id, provider);
         }
         None => ic_cdk::trap("Provider not found"),
     });
@@ -239,19 +222,10 @@ fn transform(args: TransformArgs) -> HttpResponse {
 #[ic_cdk::init]
 fn init() {
     initialize();
-    METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = DEFAULT_NODES_IN_SUBNET;
-        metadata.open_rpc_access = DEFAULT_OPEN_RPC_ACCESS;
-        m.borrow_mut().set(metadata).unwrap();
-    });
 }
 
 #[ic_cdk::post_upgrade]
-fn post_upgrade() {
-    initialize();
-    stable_authorize(ic_cdk::caller());
-}
+fn post_upgrade() {}
 
 // #[query]
 // fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
@@ -356,18 +330,14 @@ fn initialize() {
     SERVICE_HOSTS_ALLOWLIST
         .with(|a| (*a.borrow_mut()) = AllowlistSet::from_iter(INITIAL_SERVICE_HOSTS_ALLOWLIST));
 
-    for principal in RPC_ALLOWLIST.iter() {
-        authorize(to_principal(principal), Auth::Rpc);
-    }
-    for principal in REGISTER_PROVIDER_ALLOWLIST.iter() {
-        authorize(to_principal(principal), Auth::RegisterProvider);
-    }
-    for principal in FREE_RPC_ALLOWLIST.iter() {
-        authorize(to_principal(principal), Auth::FreeRpc);
-    }
-    for principal in AUTHORIZED_ADMIN.iter() {
-        authorize(to_principal(principal), Auth::Admin);
-    }
+    stable_authorize(ic_cdk::caller());
+
+    METADATA.with(|m| {
+        let mut metadata = m.borrow().get().clone();
+        metadata.nodes_in_subnet = DEFAULT_NODES_IN_SUBNET;
+        metadata.open_rpc_access = DEFAULT_OPEN_RPC_ACCESS;
+        m.borrow_mut().set(metadata).unwrap();
+    });
 }
 
 #[cfg(not(any(target_arch = "wasm32", test)))]

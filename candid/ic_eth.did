@@ -7,6 +7,16 @@ type EthRpcError = variant {
   ServiceUrlHostMissing;
   ProviderNotFound;
   NoPermission;
+  ProviderNotActive;
+};
+type ProviderView = record {
+  base_url : text;
+  active : bool;
+  owner : principal;
+  provider_id : nat64;
+  cycles_per_message_byte : nat64;
+  chain_id : nat64;
+  cycles_per_call : nat64;
 };
 type RegisterProvider = record {
   base_url : text;
@@ -15,15 +25,17 @@ type RegisterProvider = record {
   cycles_per_call : nat64;
   credential_path : text;
 };
-type RegisteredProvider = record {
-  base_url : text;
-  owner : principal;
-  provider_id : nat64;
-  cycles_per_message_byte : nat64;
-  chain_id : nat64;
-  cycles_per_call : nat64;
-};
 type Result = variant { Ok : vec nat8; Err : EthRpcError };
+type Result_1 = variant { Ok : nat; Err : EthRpcError };
+type Source = variant { Url : text; Chain : nat64; Provider : nat64 };
+type UpdateProvider = record {
+  base_url : opt text;
+  active : opt bool;
+  provider_id : nat64;
+  cycles_per_message_byte : opt nat64;
+  cycles_per_call : opt nat64;
+  credential_path : opt text;
+};
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
@@ -31,16 +43,14 @@ service : {
   get_nodes_in_subnet : () -> (nat32) query;
   get_open_rpc_access : () -> (bool) query;
   get_owed_cycles : (nat64) -> (nat) query;
-  get_providers : () -> (vec RegisteredProvider) query;
-  provider_request : (nat64, text, nat64) -> (Result);
-  provider_request_cost : (nat64, text, nat64) -> (opt nat) query;
+  get_providers : () -> (vec ProviderView) query;
   register_provider : (RegisterProvider) -> (nat64);
-  request : (text, text, nat64) -> (Result);
-  request_cost : (text, text, nat64) -> (nat) query;
+  request : (Source, text, nat64) -> (Result);
+  request_cost : (Source, text, nat64) -> (Result_1) query;
   set_nodes_in_subnet : (nat32) -> ();
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> ();
-  update_provider_credential : (nat64, text) -> ();
+  update_provider : (UpdateProvider) -> ();
   verify_signature : (vec nat8, vec nat8, vec nat8) -> (bool) query;
   withdraw_owed_cycles : (nat64, principal) -> ();
 }
