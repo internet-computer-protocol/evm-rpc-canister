@@ -22,6 +22,9 @@ ic-cdk-macros = "0.7"
 ic-eth = "0.1"
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
+ethers-providers = { version = "2.0", default-features = false }
+getrandom = { version = "0.2", features = ["custom"] }
+async-trait = "0.1"
 num = "0.4"
 num-traits = "0.2"
 num-derive = "0.4"

@@ -42,6 +42,7 @@ impl Source {
     }
 }
 
+#[derive(Clone, Debug)]
 pub enum ResolvedSource {
     Url(String),
     Provider(Provider),
