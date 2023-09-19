@@ -3,14 +3,31 @@ use ic_cdk::api::management_canister::http_request::{
     http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
     TransformContext,
 };
+use ic_eth::rpc::JsonRpcRequest;
+use serde::Serialize;
 
 use crate::*;
 
-pub async fn do_http_request(
+pub async fn do_http_request<T: Serialize>(
+    source: ResolvedSource,
+    method: &str,
+    params: T,
+    max_response_bytes: u64,
+) -> Result<Vec<u8>> {
+    do_http_request_str(
+        source,
+        &serde_json::to_string(&JsonRpcRequest::new(method, params))
+            .map_err(|_| EthRpcError::SerializeError)?,
+        max_response_bytes,
+    )
+    .await
+}
+
+pub async fn do_http_request_str(
     source: ResolvedSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
-) -> Result<Vec<u8>, EthRpcError> {
+) -> Result<Vec<u8>> {
     inc_metric!(requests);
     if !is_authorized(Auth::Rpc) {
         inc_metric!(request_err_no_permission);

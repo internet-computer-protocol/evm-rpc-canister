@@ -7,6 +7,8 @@ use std::collections::{HashMap, HashSet};
 use crate::constants::STRING_STORABLE_MAX_SIZE;
 use crate::PROVIDERS;
 
+pub type Result<T, E = EthRpcError> = std::result::Result<T, E>;
+
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum Source {
     Url(String),
@@ -15,7 +17,7 @@ pub enum Source {
 }
 
 impl Source {
-    pub fn resolve(self) -> Result<ResolvedSource, EthRpcError> {
+    pub fn resolve(self) -> Result<ResolvedSource> {
         Ok(match self {
             Source::Url(name) => ResolvedSource::Url(name),
             Source::Provider(id) => ResolvedSource::Provider({
@@ -192,6 +194,7 @@ pub enum EthRpcError {
     ServiceUrlHostNotAllowed,
     ProviderNotFound,
     ProviderNotActive,
+    SerializeError,
     HttpRequestError { code: u32, message: String },
 }
 

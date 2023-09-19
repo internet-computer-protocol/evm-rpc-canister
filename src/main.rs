@@ -21,17 +21,13 @@ async fn request(
     source: Source,
     json_rpc_payload: String,
     max_response_bytes: u64,
-) -> Result<Vec<u8>, EthRpcError> {
-    do_http_request(source.resolve()?, &json_rpc_payload, max_response_bytes).await
+) -> Result<Vec<u8>> {
+    do_http_request_str(source.resolve()?, &json_rpc_payload, max_response_bytes).await
 }
 
 #[query]
 #[candid_method(query)]
-fn request_cost(
-    source: Source,
-    json_rpc_payload: String,
-    max_response_bytes: u64,
-) -> Result<u128, EthRpcError> {
+fn request_cost(source: Source, json_rpc_payload: String, max_response_bytes: u64) -> Result<u128> {
     Ok(get_request_cost(
         &source.resolve().unwrap(),
         &json_rpc_payload,
