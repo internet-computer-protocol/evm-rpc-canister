@@ -4,6 +4,7 @@ type EthRpcError = variant {
   HttpRequestError : record { code : nat32; message : text };
   TooFewCycles : text;
   ServiceUrlParseError;
+  SerializeError;
   ServiceUrlHostMissing;
   ProviderNotFound;
   NoPermission;
@@ -25,8 +26,8 @@ type RegisterProvider = record {
   cycles_per_call : nat64;
   credential_path : text;
 };
-type Result = variant { Ok : vec nat8; Err : EthRpcError };
-type Result_1 = variant { Ok : nat; Err : EthRpcError };
+type Result = variant { Ok : nat; Err : EthRpcError };
+type Result_1 = variant { Ok : vec nat8; Err : EthRpcError };
 type Source = variant { Url : text; Chain : nat64; Provider : nat64 };
 type UpdateProvider = record {
   base_url : opt text;
@@ -39,14 +40,15 @@ type UpdateProvider = record {
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
+  eth_gas_price : (Source) -> (Result);
   get_authorized : (Auth) -> (vec text) query;
   get_nodes_in_subnet : () -> (nat32) query;
   get_open_rpc_access : () -> (bool) query;
   get_owed_cycles : (nat64) -> (nat) query;
   get_providers : () -> (vec ProviderView) query;
   register_provider : (RegisterProvider) -> (nat64);
-  request : (Source, text, nat64) -> (Result);
-  request_cost : (Source, text, nat64) -> (Result_1) query;
+  request : (Source, text, nat64) -> (Result_1);
+  request_cost : (Source, text, nat64) -> (Result) query;
   set_nodes_in_subnet : (nat32) -> ();
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> ();

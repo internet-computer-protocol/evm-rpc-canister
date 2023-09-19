@@ -7,8 +7,6 @@ use ic_cdk::{query, update};
 // };
 // use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
-use ic_eth::core::types::{BlockNumber, FeeHistory};
-use ic_eth::core::utils::serialize;
 use ic_eth_rpc::*;
 
 #[ic_cdk_macros::query]
@@ -21,31 +19,31 @@ pub fn verify_signature(eth_address: Vec<u8>, message: Vec<u8>, signature: Vec<u
 
 #[update]
 #[candid_method]
-async fn eth_gas_price(source: Source) -> Result<u128> {
-    do_http_request(source.resolve()?, "eth_gasPrice", (), 256).await
+async fn eth_gas_price(source: Source) -> Result<u128, EthRpcError> {
+    do_http_request(source.resolve()?, "eth_gasPrice", (), 64).await
 }
 
-#[update]
-#[candid_method]
-async fn eth_fee_history(
-    source: Source,
-    block_count: u128,
-    last_block: candid_types::BlockNumber,
-    reward_percentiles: Vec<f64>,
-    max_response_bytes: u64,
-) -> Result<FeeHistory> {
-    do_http_request(
-        source.resolve()?,
-        "eth_feeHistory",
-        (
-            block_count,
-            /* serialize */ (&last_block),
-            /* serialize */ (&reward_percentiles),
-        ),
-        max_response_bytes,
-    )
-    .await
-}
+// #[update]
+// #[candid_method]
+// async fn eth_fee_history(
+//     source: Source,
+//     block_count: u128,
+//     last_block: candid_types::BlockNumber,
+//     reward_percentiles: Vec<f64>,
+//     max_response_bytes: u64,
+// ) -> Result<FeeHistory, EthRpcError> {
+//     do_http_request(
+//         source.resolve()?,
+//         "eth_feeHistory",
+//         (
+//             block_count,
+//             /* serialize */ (&last_block),
+//             /* serialize */ (&reward_percentiles),
+//         ),
+//         max_response_bytes,
+//     )
+//     .await
+// }
 
 #[update]
 #[candid_method]
@@ -53,13 +51,17 @@ async fn request(
     source: Source,
     json_rpc_payload: String,
     max_response_bytes: u64,
-) -> Result<Vec<u8>> {
+) -> Result<Vec<u8>, EthRpcError> {
     do_http_request_str(source.resolve()?, &json_rpc_payload, max_response_bytes).await
 }
 
 #[query]
 #[candid_method(query)]
-fn request_cost(source: Source, json_rpc_payload: String, max_response_bytes: u64) -> Result<u128> {
+fn request_cost(
+    source: Source,
+    json_rpc_payload: String,
+    max_response_bytes: u64,
+) -> Result<u128, EthRpcError> {
     Ok(get_request_cost(
         &source.resolve().unwrap(),
         &json_rpc_payload,
