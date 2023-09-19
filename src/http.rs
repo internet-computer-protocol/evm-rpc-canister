@@ -4,23 +4,26 @@ use ic_cdk::api::management_canister::http_request::{
     TransformContext,
 };
 use ic_eth::rpc::JsonRpcRequest;
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::*;
 
-pub async fn do_http_request<T: Serialize>(
+pub async fn do_http_request<T: Serialize, R: DeserializeOwned>(
     source: ResolvedSource,
     method: &str,
     params: T,
     max_response_bytes: u64,
-) -> Result<Vec<u8>> {
-    do_http_request_str(
-        source,
-        &serde_json::to_string(&JsonRpcRequest::new(method, params))
-            .map_err(|_| EthRpcError::SerializeError)?,
-        max_response_bytes,
+) -> Result<R> {
+    serde_json::from_slice(
+        &do_http_request_str(
+            source,
+            &serde_json::to_string(&JsonRpcRequest::new(method, params))
+                .map_err(|_| EthRpcError::SerializeError)?,
+            max_response_bytes,
+        )
+        .await?,
     )
-    .await
+    .or(Err(EthRpcError::SerializeError))
 }
 
 pub async fn do_http_request_str(

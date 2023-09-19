@@ -7,12 +7,44 @@ use ic_cdk::{query, update};
 // };
 // use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
+use ic_eth::core::types::{BlockNumber, FeeHistory};
+use ic_eth::core::utils::serialize;
 use ic_eth_rpc::*;
 
 #[ic_cdk_macros::query]
 #[candid_method(query)]
 pub fn verify_signature(eth_address: Vec<u8>, message: Vec<u8>, signature: Vec<u8>) -> bool {
     do_verify_signature(&eth_address, message, signature)
+}
+
+// TODO: logging for eth_* methods
+
+#[update]
+#[candid_method]
+async fn eth_gas_price(source: Source) -> Result<u128> {
+    do_http_request(source.resolve()?, "eth_gasPrice", (), 256).await
+}
+
+#[update]
+#[candid_method]
+async fn eth_fee_history(
+    source: Source,
+    block_count: u128,
+    last_block: candid_types::BlockNumber,
+    reward_percentiles: Vec<f64>,
+    max_response_bytes: u64,
+) -> Result<FeeHistory> {
+    do_http_request(
+        source.resolve()?,
+        "eth_feeHistory",
+        (
+            block_count,
+            /* serialize */ (&last_block),
+            /* serialize */ (&reward_percentiles),
+        ),
+        max_response_bytes,
+    )
+    .await
 }
 
 #[update]

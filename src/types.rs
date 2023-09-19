@@ -199,3 +199,32 @@ pub enum EthRpcError {
 }
 
 pub type AllowlistSet = HashSet<&'static &'static str>;
+
+pub mod candid_types {
+    use candid::CandidType;
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Debug, Serialize, Deserialize, CandidType)]
+    pub enum BlockNumber {
+        Latest,
+        Finalized,
+        Safe,
+        Earliest,
+        Pending,
+        Number(u64),
+    }
+
+    impl Into<ic_eth::core::types::BlockNumber> for BlockNumber {
+        fn into(self) -> ic_eth::core::types::BlockNumber {
+            use ic_eth::core::types::BlockNumber::*;
+            match self {
+                Self::Latest => Latest,
+                Self::Finalized => Finalized,
+                Self::Safe => Safe,
+                Self::Earliest => Earliest,
+                Self::Pending => Pending,
+                Self::Number(n) => Number(n.into()),
+            }
+        }
+    }
+}
