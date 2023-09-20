@@ -19,7 +19,7 @@ pub fn verify_signature(eth_address: Vec<u8>, message: Vec<u8>, signature: Vec<u
 
 #[update]
 #[candid_method]
-async fn eth_gas_price(source: Source) -> Result<u128, EthRpcError> {
+async fn eth_gas_price(source: Source) -> Result<u128> {
     do_http_request(source.resolve()?, "eth_gasPrice", (), 64).await
 }
 
@@ -31,7 +31,7 @@ async fn eth_gas_price(source: Source) -> Result<u128, EthRpcError> {
 //     last_block: candid_types::BlockNumber,
 //     reward_percentiles: Vec<f64>,
 //     max_response_bytes: u64,
-// ) -> Result<FeeHistory, EthRpcError> {
+// ) -> Result<FeeHistory> {
 //     do_http_request(
 //         source.resolve()?,
 //         "eth_feeHistory",
@@ -51,17 +51,13 @@ async fn request(
     source: Source,
     json_rpc_payload: String,
     max_response_bytes: u64,
-) -> Result<Vec<u8>, EthRpcError> {
+) -> Result<Vec<u8>> {
     do_http_request_str(source.resolve()?, &json_rpc_payload, max_response_bytes).await
 }
 
 #[query]
 #[candid_method(query)]
-fn request_cost(
-    source: Source,
-    json_rpc_payload: String,
-    max_response_bytes: u64,
-) -> Result<u128, EthRpcError> {
+fn request_cost(source: Source, json_rpc_payload: String, max_response_bytes: u64) -> Result<u128> {
     Ok(get_request_cost(
         &source.resolve().unwrap(),
         &json_rpc_payload,

@@ -13,7 +13,7 @@ pub async fn do_http_request<T: Serialize, R: DeserializeOwned>(
     method: &str,
     params: T,
     max_response_bytes: u64,
-) -> Result<R, EthRpcError> {
+) -> Result<R> {
     serde_json::from_slice(
         &do_http_request_str(
             source,
@@ -30,7 +30,7 @@ pub async fn do_http_request_str(
     source: ResolvedSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
-) -> Result<Vec<u8>, EthRpcError> {
+) -> Result<Vec<u8>> {
     inc_metric!(requests);
     if !is_authorized(Auth::Rpc) {
         inc_metric!(request_err_no_permission);
