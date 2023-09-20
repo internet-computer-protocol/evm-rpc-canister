@@ -641,8 +641,6 @@ dependencies = [
 [[package]]
 name = "ethers-core"
 version = "2.0.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0a17f0708692024db9956b31d7a20163607d2745953f5ae8125ab368ba280ad"
 dependencies = [
  "arrayvec 0.7.4",
  "bytes",
@@ -668,7 +666,8 @@ dependencies = [
 [[package]]
 name = "ethers-core"
 version = "2.0.10"
-source = "git+https://github.com/rvanasa/ethers-rs?branch=ic-ethers#40a757de0773d604941d8a574d1289f2a8548a64"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0a17f0708692024db9956b31d7a20163607d2745953f5ae8125ab368ba280ad"
 dependencies = [
  "arrayvec 0.7.4",
  "bytes",
@@ -694,7 +693,6 @@ dependencies = [
 [[package]]
 name = "ethers-providers"
 version = "2.0.10"
-source = "git+https://github.com/rvanasa/ethers-rs?branch=ic-ethers#40a757de0773d604941d8a574d1289f2a8548a64"
 dependencies = [
  "async-trait",
  "auto_impl",
@@ -702,13 +700,12 @@ dependencies = [
  "bytes",
  "const-hex",
  "enr",
- "ethers-core 2.0.10 (git+https://github.com/rvanasa/ethers-rs?branch=ic-ethers)",
+ "ethers-core 2.0.10",
  "futures-core",
  "futures-timer",
  "futures-util",
  "getrandom",
  "hashers",
- "http",
  "instant",
  "jsonwebtoken",
  "once_cell",

@@ -22,7 +22,8 @@ ic-cdk-macros = "0.7"
 ic-eth = "0.1"
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
-ethers-providers = { git = "https://github.com/rvanasa/ethers-rs", branch = "ic-ethers", default-features = false }
+# ethers-providers = { git = "https://github.com/rvanasa/ethers-rs", branch = "ic-ethers", default-features = false }
+ethers-providers = { path = "../ethers-rs/ethers-providers", default-features = false }
 async-trait = "0.1"
 num = "0.4"
 num-traits = "0.2"
