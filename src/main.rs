@@ -162,11 +162,25 @@ fn transform(args: TransformArgs) -> HttpResponse {
 
 #[ic_cdk::init]
 fn init() {
-    initialize();
+    SERVICE_HOSTS_ALLOWLIST
+        .with(|a| (*a.borrow_mut()) = AllowlistSet::from_iter(INITIAL_SERVICE_HOSTS_ALLOWLIST));
+
+    stable_authorize(ic_cdk::caller());
+
+    METADATA.with(|m| {
+        let mut metadata = m.borrow().get().clone();
+        metadata.nodes_in_subnet = DEFAULT_NODES_IN_SUBNET;
+        metadata.open_rpc_access = DEFAULT_OPEN_RPC_ACCESS;
+        m.borrow_mut().set(metadata).unwrap();
+    });
+
+    for provider in get_default_providers() {
+        do_register_provider(provider);
+    }
 }
 
-#[ic_cdk::post_upgrade]
-fn post_upgrade() {}
+// #[ic_cdk::post_upgrade]
+// fn post_upgrade() {}
 
 // #[query]
 // fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
@@ -265,24 +279,6 @@ fn set_nodes_in_subnet(nodes_in_subnet: u32) {
 #[candid_method(query)]
 fn get_nodes_in_subnet() -> u32 {
     METADATA.with(|m| m.borrow().get().nodes_in_subnet)
-}
-
-fn initialize() {
-    SERVICE_HOSTS_ALLOWLIST
-        .with(|a| (*a.borrow_mut()) = AllowlistSet::from_iter(INITIAL_SERVICE_HOSTS_ALLOWLIST));
-
-    stable_authorize(ic_cdk::caller());
-
-    METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = DEFAULT_NODES_IN_SUBNET;
-        metadata.open_rpc_access = DEFAULT_OPEN_RPC_ACCESS;
-        m.borrow_mut().set(metadata).unwrap();
-    });
-
-    for provider in get_default_providers() {
-        do_register_provider(provider);
-    }
 }
 
 #[cfg(not(any(target_arch = "wasm32", test)))]
