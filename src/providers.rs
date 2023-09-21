@@ -70,30 +70,33 @@ pub fn do_unregister_provider(provider_id: u64) -> bool {
 }
 
 pub fn do_update_provider(update: UpdateProvider) {
-    PROVIDERS.with(|p| match p.borrow_mut().get(&update.provider_id) {
-        Some(mut provider) => {
-            if provider.owner != ic_cdk::caller() && !is_authorized(Auth::Admin) {
-                ic_cdk::trap("Provider owner != caller");
+    PROVIDERS.with(|p| {
+        let mut p = p.borrow_mut();
+        match p.get(&update.provider_id) {
+            Some(mut provider) => {
+                if provider.owner != ic_cdk::caller() && !is_authorized(Auth::Admin) {
+                    ic_cdk::trap("Provider owner != caller");
+                }
+                if let Some(url) = update.base_url {
+                    validate_base_url(&url);
+                    provider.base_url = url;
+                }
+                if let Some(path) = update.credential_path {
+                    validate_credential_path(&path);
+                    provider.credential_path = path;
+                }
+                if let Some(active) = update.active {
+                    provider.active = active;
+                }
+                if let Some(cycles_per_call) = update.cycles_per_call {
+                    provider.cycles_per_call = cycles_per_call;
+                }
+                if let Some(cycles_per_message_byte) = update.cycles_per_message_byte {
+                    provider.cycles_per_message_byte = cycles_per_message_byte;
+                }
+                p.insert(update.provider_id, provider);
             }
-            if let Some(url) = update.base_url {
-                validate_base_url(&url);
-                provider.base_url = url;
-            }
-            if let Some(path) = update.credential_path {
-                validate_credential_path(&path);
-                provider.credential_path = path;
-            }
-            if let Some(active) = update.active {
-                provider.active = active;
-            }
-            if let Some(cycles_per_call) = update.cycles_per_call {
-                provider.cycles_per_call = cycles_per_call;
-            }
-            if let Some(cycles_per_message_byte) = update.cycles_per_message_byte {
-                provider.cycles_per_message_byte = cycles_per_message_byte;
-            }
-            p.borrow_mut().insert(update.provider_id, provider);
+            None => ic_cdk::trap("Provider not found"),
         }
-        None => ic_cdk::trap("Provider not found"),
     });
 }
