@@ -7,14 +7,13 @@ type EthRpcError = variant {
   ServiceUrlHostMissing;
   ProviderNotFound;
   NoPermission;
-  ProviderNotActive;
 };
 type ProviderView = record {
   base_url : text;
-  active : bool;
   owner : principal;
   provider_id : nat64;
   cycles_per_message_byte : nat64;
+  primary : bool;
   chain_id : nat64;
   cycles_per_call : nat64;
 };
@@ -30,9 +29,9 @@ type Result_1 = variant { Ok : nat; Err : EthRpcError };
 type Source = variant { Url : text; Chain : nat64; Provider : nat64 };
 type UpdateProvider = record {
   base_url : opt text;
-  active : opt bool;
   provider_id : nat64;
   cycles_per_message_byte : opt nat64;
+  primary : opt bool;
   cycles_per_call : opt nat64;
   credential_path : opt text;
 };
