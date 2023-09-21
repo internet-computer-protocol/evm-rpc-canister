@@ -56,16 +56,17 @@ pub fn do_register_provider(provider: RegisterProvider) -> u64 {
     provider_id
 }
 
-pub fn do_unregister_provider(provider_id: u64) {
+pub fn do_unregister_provider(provider_id: u64) -> bool {
     PROVIDERS.with(|p| {
         if let Some(provider) = p.borrow().get(&provider_id) {
             if provider.owner == ic_cdk::caller() || is_authorized(Auth::Admin) {
-                p.borrow_mut().remove(&provider_id);
+                return p.borrow_mut().remove(&provider_id).is_some();
             } else {
                 ic_cdk::trap("Not authorized");
             }
         }
-    });
+        false
+    })
 }
 
 pub fn do_update_provider(update: UpdateProvider) {

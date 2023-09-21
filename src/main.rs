@@ -66,7 +66,7 @@ fn register_provider(provider: RegisterProvider) -> u64 {
 
 #[update(guard = "require_register_provider")]
 #[candid_method]
-fn unregister_provider(provider_id: u64) {
+fn unregister_provider(provider_id: u64) -> bool {
     do_unregister_provider(provider_id)
 }
 
