@@ -70,7 +70,8 @@ fn unregister_provider(provider_id: u64) -> bool {
     do_unregister_provider(provider_id)
 }
 
-#[update(guard = "require_register_provider")]
+// #[update(guard = "require_register_provider")]
+#[update(guard = "require_admin_or_controller")]
 #[candid_method]
 fn update_provider(provider: UpdateProvider) {
     do_update_provider(provider)
