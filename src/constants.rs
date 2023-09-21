@@ -26,6 +26,7 @@ pub const INITIAL_SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
     "mainnet.infura.io",
     "eth.getblock.io",
     "rpc.kriptonio.com",
+    "rpc.sepolia.org",
     "api.0x.org",
     "erigon-mainnet--rpc.datahub.figment.io",
     "archivenode.io",
