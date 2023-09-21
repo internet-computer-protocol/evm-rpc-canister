@@ -60,6 +60,7 @@ type RegisteredProvider = record {
     base_url: text;
     cycles_per_call: nat64;
     cycles_per_message_byte: nat64;
+    primary: bool;
 };
 
 get_providers: () -> (vec RegisteredProvider) query;
@@ -73,6 +74,7 @@ get_providers: () -> (vec RegisteredProvider) query;
 * `service _url`: See `RegisterProvider`.
 * `cycles_per_call`: See `RegisterProvider`.
 * `cycles_per_message_byte`: See `RegisterProvider`.
+* `primary`: Indicates whether the RPC provider is a good default compared to others with the same `chain_id`.
 
 Clients of this canister need to select a provider that matches w.r.t. the `chain_id` the network they intend to connect to. If multiple providers are available for a given `chain_id`, the per-message or per-byte price or the entity behind the provider (this can be inferred from the `base_url`) may be factors to choose a suitable provider.
 

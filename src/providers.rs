@@ -49,7 +49,7 @@ pub fn do_register_provider(provider: RegisterProvider) -> u64 {
                 cycles_per_call: provider.cycles_per_call,
                 cycles_per_message_byte: provider.cycles_per_message_byte,
                 cycles_owed: 0,
-                active: true,
+                primary: false,
             },
         )
     });
@@ -85,8 +85,8 @@ pub fn do_update_provider(update: UpdateProvider) {
                     validate_credential_path(&path);
                     provider.credential_path = path;
                 }
-                if let Some(active) = update.active {
-                    provider.active = active;
+                if let Some(primary) = update.primary {
+                    provider.primary = primary;
                 }
                 if let Some(cycles_per_call) = update.cycles_per_call {
                     provider.cycles_per_call = cycles_per_call;

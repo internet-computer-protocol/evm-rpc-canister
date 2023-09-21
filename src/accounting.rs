@@ -94,7 +94,7 @@ fn test_provider_cost() {
         cycles_owed: 0,
         cycles_per_call: 0,
         cycles_per_message_byte: 2,
-        active: true,
+        primary: false,
     };
     let base_cost = get_provider_cost(
         &provider,
@@ -110,7 +110,7 @@ fn test_provider_cost() {
         cycles_owed: 0,
         cycles_per_call: 1000,
         cycles_per_message_byte: 2,
-        active: true,
+        primary: false,
     };
     let s10 = "0123456789";
     let base_cost_s10 = get_provider_cost(
