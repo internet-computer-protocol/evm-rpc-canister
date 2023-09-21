@@ -7,7 +7,10 @@ pub fn validate_base_url(base_url: &str) {
 }
 
 pub fn validate_credential_path(credential_path: &str) {
-    if !(credential_path.starts_with('/') || credential_path.starts_with('?')) {
-        ic_cdk::trap("secret path must start with '/' or '?'");
+    if !(credential_path.len() == 0
+        || credential_path.starts_with('/')
+        || credential_path.starts_with('?'))
+    {
+        ic_cdk::trap("credential path must start with '/' or '?' unless empty");
     }
 }
