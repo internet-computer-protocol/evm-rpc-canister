@@ -7,7 +7,7 @@ pub fn validate_base_url(base_url: &str) {
 }
 
 pub fn validate_credential_path(credential_path: &str) {
-    if !(credential_path.len() == 0
+    if !(credential_path.is_empty()
         || credential_path.starts_with('/')
         || credential_path.starts_with('?'))
     {
