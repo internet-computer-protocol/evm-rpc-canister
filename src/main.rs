@@ -52,7 +52,7 @@ fn get_providers() -> Vec<ProviderView> {
                 base_url: e.base_url,
                 cycles_per_call: e.cycles_per_call,
                 cycles_per_message_byte: e.cycles_per_message_byte,
-                active: e.active,
+                primary: e.primary,
             })
             .collect::<Vec<ProviderView>>()
     })
@@ -83,7 +83,7 @@ fn register_provider(provider: RegisterProvider) -> u64 {
                 cycles_per_call: provider.cycles_per_call,
                 cycles_per_message_byte: provider.cycles_per_message_byte,
                 cycles_owed: 0,
-                active: true,
+                primary: false,
             },
         )
     });
@@ -95,8 +95,12 @@ fn register_provider(provider: RegisterProvider) -> u64 {
 fn update_provider(update: UpdateProvider) {
     PROVIDERS.with(|p| match p.borrow_mut().get(&update.provider_id) {
         Some(mut provider) => {
-            if provider.owner != ic_cdk::caller() && !is_authorized(Auth::Admin) {
-                ic_cdk::trap("Provider owner != caller");
+            let is_admin = is_authorized(Auth::Admin);
+            // if provider.owner != ic_cdk::caller() && !is_admin {
+            //     ic_cdk::trap("Provider owner != caller");
+            // }
+            if !is_admin {
+                ic_cdk::trap("`update_provider` currently requires admin permissions")
             }
             if let Some(url) = update.base_url {
                 validate_base_url(&url);
@@ -106,8 +110,8 @@ fn update_provider(update: UpdateProvider) {
                 validate_credential_path(&path);
                 provider.credential_path = path;
             }
-            if let Some(active) = update.active {
-                provider.active = active;
+            if let Some(primary) = update.primary {
+                provider.primary = primary;
             }
             if let Some(cycles_per_call) = update.cycles_per_call {
                 provider.cycles_per_call = cycles_per_call;
