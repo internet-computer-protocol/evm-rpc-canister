@@ -3,16 +3,19 @@ pub const INGRESS_MESSAGE_RECEIVED_COST: u128 = 1_200_000;
 pub const INGRESS_MESSAGE_BYTE_RECEIVED_COST: u128 = 2_000;
 pub const HTTP_OUTCALL_REQUEST_COST: u128 = 400_000_000;
 pub const HTTP_OUTCALL_BYTE_RECEIEVED_COST: u128 = 100_000;
-pub const BASE_SUBNET_SIZE: u128 = 13; // App subnet
 
 pub const MINIMUM_WITHDRAWAL_CYCLES: u128 = 1_000_000_000;
 
 pub const STRING_STORABLE_MAX_SIZE: u32 = 100;
 pub const WASM_PAGE_SIZE: u64 = 65536;
 
+pub const DEFAULT_NODES_IN_SUBNET: u32 = 13;
+pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
+
 pub const INITIAL_SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
     "cloudflare-eth.com",
     "ethereum.publicnode.com",
+    "ethereum-goerli.publicnode.com",
     "eth-mainnet.g.alchemy.com",
     "eth-goerli.g.alchemy.com",
     "rpc.flashbots.net",
@@ -36,9 +39,3 @@ pub const INITIAL_SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
     "mainnet.eth.cloud.ava.dono",
     "eth-mainnet.gateway.pokt.network",
 ];
-
-// Static permissions. The canister creator is also authorized for all permissions.
-
-// Principals allowed to send JSON-RPC requests.
-pub const DEFAULT_NODES_IN_SUBNET: u32 = 13;
-pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
