@@ -60,6 +60,7 @@ type RegisteredProvider = record {
     base_url: text;
     cycles_per_call: nat64;
     cycles_per_message_byte: nat64;
+    primary: bool;
 };
 
 get_providers: () -> (vec RegisteredProvider) query;
