@@ -40,7 +40,7 @@ pub fn get_http_request_cost(
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
         + HTTP_OUTCALL_REQUEST_COST
         + HTTP_OUTCALL_BYTE_RECEIEVED_COST * (ingress_bytes + max_response_bytes as u128);
-    base_cost * (nodes_in_subnet as u128) / BASE_SUBNET_SIZE
+    base_cost * (nodes_in_subnet as u128) / DEFAULT_NODES_IN_SUBNET as u128
 }
 
 /// Calculate the additional cost for calling a registered JSON-RPC provider.

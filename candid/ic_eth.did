@@ -48,7 +48,7 @@ service : {
   request_cost : (Source, text, nat64) -> (Result_1) query;
   set_nodes_in_subnet : (nat32) -> ();
   set_open_rpc_access : (bool) -> ();
-  unregister_provider : (nat64) -> ();
+  unregister_provider : (nat64) -> (bool);
   update_provider : (UpdateProvider) -> ();
   verify_signature : (vec nat8, vec nat8, vec nat8) -> (bool) query;
   withdraw_owed_cycles : (nat64, principal) -> ();
