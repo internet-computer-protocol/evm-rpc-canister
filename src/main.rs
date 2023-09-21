@@ -95,8 +95,12 @@ fn register_provider(provider: RegisterProvider) -> u64 {
 fn update_provider(update: UpdateProvider) {
     PROVIDERS.with(|p| match p.borrow_mut().get(&update.provider_id) {
         Some(mut provider) => {
-            if provider.owner != ic_cdk::caller() && !is_authorized(Auth::Admin) {
-                ic_cdk::trap("Provider owner != caller");
+            let is_admin = is_authorized(Auth::Admin);
+            // if provider.owner != ic_cdk::caller() && !is_admin {
+            //     ic_cdk::trap("Provider owner != caller");
+            // }
+            if !is_admin {
+                ic_cdk::trap("`update_provider` currently requires admin permissions")
             }
             if let Some(url) = update.base_url {
                 validate_base_url(&url);
