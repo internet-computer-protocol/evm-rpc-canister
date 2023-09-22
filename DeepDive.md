@@ -24,7 +24,7 @@ The API of the canister is specified through a [Candid interface specification](
 
 ### API Keys are stored in the canister	
 
-Registered API keys are available to IC nodes in plaintext.  While the canister memory is not exposed generallly to users, it is available to node providers and to canister controllers.  In the future features such as SEV-SNP will enable privacy of canister memory, but until we have those features the API keys should not be considered to be entirely safe from leakage and potential misuse. API key providers should limit the scope of their API keys and monitor usage to detect any misuse.	
+Registered API keys are available to IC nodes in plaintext.  While the canister memory is not exposed generally to users, it is available to node providers and to canister controllers.  In the future features such as SEV-SNP will enable privacy of canister memory, but until we have those features the API keys should not be considered to be entirely safe from leakage and potential misuse. API key providers should limit the scope of their API keys and monitor usage to detect any misuse.	
 
 ### Registered API providers should be aware that each API call will result in one service provider call per node in the subnet and that costs (and payment) is scaled accordingly	
 
@@ -36,7 +36,7 @@ This canister takes pre-signed transactions e.g. for `eth_sendRawTransaction` an
 
 ### JSON is not validated	
 
-This canister does not validate the JSON passed to the ETH service.  Registered API key providers should be aware of this in case the back end service is vulnerable to a bad JSON request body.  Registered API providers should be aware that there are methods in the Ethereum RPC API specification which give access to the ETH node keys.  Public service providers tend to block these, but registered API providers should ensure that they are not giving access to private keys or other proviledged operations.	
+This canister does not validate the JSON passed to the ETH service.  Registered API key providers should be aware of this in case the back end service is vulnerable to a bad JSON request body.  Registered API providers should be aware that there are methods in the Ethereum RPC API specification which give access to the ETH node keys.  Public service providers tend to block these, but registered API providers should ensure that they are not giving access to private keys or other privileged operations.	
 
 ### Requests sent to service providers are subject to the service provider's privacy policy	
 
