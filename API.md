@@ -97,11 +97,11 @@ register_provider: (RegisterProvider) -> ();
 The `RegisterProvider` record defines the details about the service to register, including the API key for the service.
 * `chain_id`: The id of the Ethereum chain this provider allows to connect to. The ids refer to the chain ids as defined for EVM-compatible blockchains, see, e.g., [ChainList](https://chainlist.org/?testnets=true).
 * `base_url`: The URLs of the Web2 service provider that is used by the canister when using this provider.
-* `credential_path`: A path containing API key for authorizing requests to this service provider. This part of the path is private to the entity registering it and the canister. It is not exposed in the response of the `get_providers` method. The URL used to access the service is constructed by concatenating the `base_url` and the `credential_path` (without a seperator), e.g., `"https://cloudflare-eth.com"` and `"/my-api-key"`.
+* `credential_path`: A path containing API key for authorizing requests to this service provider. This part of the path is private to the entity registering it and the canister. It is not exposed in the response of the `get_providers` method. The URL used to access the service is constructed by concatenating the `base_url` and the `credential_path` (without a separator), e.g., `"https://cloudflare-eth.com"` and `"/my-api-key"`.
 * `cycles_per_call`: Cycles charged per call by the canister in addition to the base charges when using this provider.
 * `cycles_per_message_byte`: Cycles charged per payload byte by the canister in addition to the base charges when using this provider.
 
-The cycles charged can, for example, be used by the entity providing the API key to amortize the API key costs in the case of commercial API keys. A provider record can be removed by its owner principal or a pricipal with administrative permissions.
+The cycles charged can, for example, be used by the entity providing the API key to amortize the API key costs in the case of commercial API keys. A provider record can be removed by its owner principal or a principal with administrative permissions.
 
 
 ### `unregister_provider`
