@@ -12,6 +12,10 @@ pub enum Source {
     Url(String),
     Provider(u64),
     Chain(u64),
+    Service {
+        base_url: String,
+        chain_id: Option<u64>,
+    },
 }
 
 impl Source {
@@ -26,14 +30,33 @@ impl Source {
                         .ok_or(EthRpcError::ProviderNotFound)
                 })?
             }),
-            Source::Chain(id) => ResolvedSource::Provider(PROVIDERS.with(|p| {
-                let p = p.borrow();
-                Ok(p.iter()
+            Source::Chain(id) => ResolvedSource::Provider(PROVIDERS.with(|providers| {
+                let providers = providers.borrow();
+                Ok(providers
+                    .iter()
                     .find(|(_, p)| p.primary && p.chain_id == id)
-                    .or_else(|| p.iter().find(|(_, p)| p.chain_id == id))
+                    .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
                     .ok_or(EthRpcError::ProviderNotFound)?
                     .1)
             })?),
+            Source::Service { base_url, chain_id } => {
+                ResolvedSource::Provider(PROVIDERS.with(|providers| {
+                    let matches_provider = |p: &Provider| {
+                        p.base_url == base_url
+                            && match chain_id {
+                                Some(id) => p.chain_id == id,
+                                None => true,
+                            }
+                    };
+                    let providers = providers.borrow();
+                    Ok(providers
+                        .iter()
+                        .find(|(_, p)| p.primary && matches_provider(&p))
+                        .or_else(|| providers.iter().find(|(_, p)| matches_provider(&p)))
+                        .ok_or(EthRpcError::ProviderNotFound)?
+                        .1)
+                })?)
+            }
         })
     }
 }
