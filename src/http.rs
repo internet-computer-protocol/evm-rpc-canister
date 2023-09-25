@@ -34,9 +34,10 @@ pub async fn do_http_request(
     }
     if !is_authorized(Auth::FreeRpc) {
         if cycles_available < cost {
-            return Err(EthRpcError::TooFewCycles(format!(
-                "requires {cost} cycles, got {cycles_available} cycles",
-            )));
+            return Err(EthRpcError::TooFewCycles {
+                expected: cost,
+                received: cycles_available,
+            });
         }
         ic_cdk::api::call::msg_cycles_accept128(cost);
         if let Some(mut provider) = provider {
