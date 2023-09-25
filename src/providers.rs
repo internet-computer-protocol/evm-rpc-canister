@@ -4,21 +4,21 @@ pub fn get_default_providers() -> Vec<RegisterProvider> {
     vec![
         RegisterProvider {
             chain_id: 0x1, // Ethereum mainnet
-            base_url: "https://cloudflare-eth.com".to_string(),
+            hostname: "cloudflare-eth.com".to_string(),
             credential_path: "/v1/mainnet".to_string(),
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
         },
         RegisterProvider {
             chain_id: 0x5, // Goerli testnet
-            base_url: "https://ethereum-goerli.publicnode.com".to_string(),
+            hostname: "ethereum-goerli.publicnode.com".to_string(),
             credential_path: "".to_string(),
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
         },
         RegisterProvider {
             chain_id: 0xaa36a7, // Sepolia testnet
-            base_url: "https://rpc.sepolia.org".to_string(),
+            hostname: "rpc.sepolia.org".to_string(),
             credential_path: "".to_string(),
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
@@ -27,9 +27,7 @@ pub fn get_default_providers() -> Vec<RegisterProvider> {
 }
 
 pub fn do_register_provider(caller: Principal, provider: RegisterProvider) -> u64 {
-    let parsed_url = url::Url::parse(&provider.base_url).expect("unable to parse service_url");
-    let host = parsed_url.host_str().expect("service_url host missing");
-    validate_base_url(host);
+    validate_hostname(&provider.hostname);
     validate_credential_path(&provider.credential_path);
     let provider_id = METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
@@ -44,7 +42,7 @@ pub fn do_register_provider(caller: Principal, provider: RegisterProvider) -> u6
                 provider_id,
                 owner: caller,
                 chain_id: provider.chain_id,
-                base_url: provider.base_url,
+                hostname: provider.hostname,
                 credential_path: provider.credential_path,
                 cycles_per_call: provider.cycles_per_call,
                 cycles_per_message_byte: provider.cycles_per_message_byte,
@@ -77,9 +75,9 @@ pub fn do_update_provider(caller: Principal, update: UpdateProvider) {
                 if provider.owner != caller && !is_authorized(Auth::Admin) {
                     ic_cdk::trap("Provider owner != caller");
                 }
-                if let Some(url) = update.base_url {
-                    validate_base_url(&url);
-                    provider.base_url = url;
+                if let Some(hostname) = update.hostname {
+                    validate_hostname(&hostname);
+                    provider.hostname = hostname;
                 }
                 if let Some(path) = update.credential_path {
                     validate_credential_path(&path);

@@ -12,6 +12,10 @@ pub enum Source {
     Url(String),
     Provider(u64),
     Chain(u64),
+    Service {
+        hostname: String,
+        chain_id: Option<u64>,
+    },
 }
 
 impl Source {
@@ -26,14 +30,33 @@ impl Source {
                         .ok_or(EthRpcError::ProviderNotFound)
                 })?
             }),
-            Source::Chain(id) => ResolvedSource::Provider(PROVIDERS.with(|p| {
-                let p = p.borrow();
-                Ok(p.iter()
+            Source::Chain(id) => ResolvedSource::Provider(PROVIDERS.with(|providers| {
+                let providers = providers.borrow();
+                Ok(providers
+                    .iter()
                     .find(|(_, p)| p.primary && p.chain_id == id)
-                    .or_else(|| p.iter().find(|(_, p)| p.chain_id == id))
+                    .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
                     .ok_or(EthRpcError::ProviderNotFound)?
                     .1)
             })?),
+            Source::Service { hostname, chain_id } => {
+                ResolvedSource::Provider(PROVIDERS.with(|providers| {
+                    let matches_provider = |p: &Provider| {
+                        p.hostname == hostname
+                            && match chain_id {
+                                Some(id) => p.chain_id == id,
+                                None => true,
+                            }
+                    };
+                    let providers = providers.borrow();
+                    Ok(providers
+                        .iter()
+                        .find(|(_, p)| p.primary && matches_provider(p))
+                        .or_else(|| providers.iter().find(|(_, p)| matches_provider(p)))
+                        .ok_or(EthRpcError::ProviderNotFound)?
+                        .1)
+                })?)
+            }
         })
     }
 }
@@ -112,7 +135,7 @@ pub struct ProviderView {
     pub provider_id: u64,
     pub owner: Principal,
     pub chain_id: u64,
-    pub base_url: String,
+    pub hostname: String,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
     pub primary: bool,
@@ -121,7 +144,7 @@ pub struct ProviderView {
 #[derive(Debug, CandidType, Deserialize)]
 pub struct RegisterProvider {
     pub chain_id: u64,
-    pub base_url: String,
+    pub hostname: String,
     pub credential_path: String,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
@@ -130,7 +153,7 @@ pub struct RegisterProvider {
 #[derive(Debug, CandidType, Deserialize)]
 pub struct UpdateProvider {
     pub provider_id: u64,
-    pub base_url: Option<String>,
+    pub hostname: Option<String>,
     pub credential_path: Option<String>,
     pub cycles_per_call: Option<u64>,
     pub cycles_per_message_byte: Option<u64>,
@@ -142,7 +165,7 @@ pub struct Provider {
     pub provider_id: u64,
     pub owner: Principal,
     pub chain_id: u64,
-    pub base_url: String,
+    pub hostname: String,
     pub credential_path: String,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
@@ -152,7 +175,7 @@ pub struct Provider {
 
 impl Provider {
     pub fn service_url(&self) -> String {
-        format!("{}{}", self.base_url, self.credential_path)
+        format!("https://{}{}", self.hostname, self.credential_path)
     }
 }
 

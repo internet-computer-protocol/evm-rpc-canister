@@ -28,10 +28,11 @@ Make a request to a Web2 Ethereum node using the caller's URL to an openly avail
 
     request: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (Result<blob, EthRpcError>);
 
-* `source`: Any of the following:
-  * `#Url : text` The URL of the service, including any API key if required for access-protected services.
-  * `#Chain : nat64` The relevant EVM network identifier ([reference list](https://chainlist.org/?testnets=true)).
-  * `#Provider : nat64` The ID of the provider to be used for this call. Call `get_providers` to view a full list of providers.
+* `source`: Any of the following enum variants:
+  * `Chain: nat64` The relevant EVM network identifier ([reference list](https://chainlist.org/?testnets=true)).
+  * `Service: { hostname: text, chain_id: opt nat64 }` A specific RPC service with the given hostname (e.g. `cloudflare-eth.com`) and optional chain id (`0x1` for Ethereum mainnet).
+  * `Provider: nat64` The ID of the provider to be used for this call. Call `get_providers` to view a full list of providers.
+  * `Url: text` The URL of the service, including any API key if required for access-protected services. It's only recommended to use this if no registered RPC provider exists for a given EVM network.
 * `json_rpc_payload`: The payload for the JSON-RPC request. View examples in the [Ethereum documentation](https://ethereum.org/en/developers/docs/apis/json-rpc/).
 * `max_response_bytes`: The expected maximum size of the response of the Web2 API server. This parameter determines the network response size that is charged for. Not specifying it or it being larger than required may lead to substantial extra cycles cost for the HTTPS outcalls mechanism as its (large) default value is used and charged for.
 
@@ -56,7 +57,7 @@ type RegisteredProvider = record {
     provider_id: nat64;
     owner: principal;
     chain_id: nat64;
-    base_url: text;
+    hostname: text;
     cycles_per_call: nat64;
     cycles_per_message_byte: nat64;
     primary: bool;
@@ -75,7 +76,7 @@ get_providers: () -> (vec RegisteredProvider) query;
 * `cycles_per_message_byte`: See `RegisterProvider`.
 * `primary`: Indicates whether the RPC provider is a good default compared to others with the same `chain_id`.
 
-Clients of this canister need to select a provider that matches w.r.t. the `chain_id` the network they intend to connect to. If multiple providers are available for a given `chain_id`, the per-message or per-byte price or the entity behind the provider (this can be inferred from the `base_url`) may be factors to choose a suitable provider.
+Clients of this canister need to select a provider that matches w.r.t. the `chain_id` the network they intend to connect to. If multiple providers are available for a given `chain_id`, the per-message or per-byte price or the entity behind the RPC service (which can be inferred from the `hostname`) may be factors to choose a suitable provider.
 
 
 ### `register_provider`
@@ -85,7 +86,7 @@ Register a new provider for a Web2-based service.
 ```candid
 type RegisterProvider = record {
     chain_id: nat64;
-    base_url: text;
+    hostname: text;
     credential_path: text;
     cycles_per_call: nat64;
     cycles_per_message_byte: nat64;
@@ -96,8 +97,8 @@ register_provider: (RegisterProvider) -> ();
 
 The `RegisterProvider` record defines the details about the service to register, including the API key for the service.
 * `chain_id`: The id of the Ethereum chain this provider allows to connect to. The ids refer to the chain ids as defined for EVM-compatible blockchains, see, e.g., [ChainList](https://chainlist.org/?testnets=true).
-* `base_url`: The URLs of the Web2 service provider that is used by the canister when using this provider.
-* `credential_path`: A path containing API key for authorizing requests to this service provider. This part of the path is private to the entity registering it and the canister. It is not exposed in the response of the `get_providers` method. The URL used to access the service is constructed by concatenating the `base_url` and the `credential_path` (without a separator), e.g., `"https://cloudflare-eth.com"` and `"/my-api-key"`.
+* `hostname`: The URL host of the Web2 service provider that is used by the canister when using this provider.
+* `credential_path`: A path containing API key for authorizing requests to this service provider. This part of the path is private to the entity registering it and the canister. It is not exposed in the response of the `get_providers` method. The URL used to access the service is constructed by concatenating `hostname` and `credential_path` without a separator, e.g., `"cloudflare-eth.com"` and `"/v1/mainnet/my_api_key"` resolves to `https://cloudflare-eth.com/v1/mainnet/my_api_key`.
 * `cycles_per_call`: Cycles charged per call by the canister in addition to the base charges when using this provider.
 * `cycles_per_message_byte`: Cycles charged per payload byte by the canister in addition to the base charges when using this provider.
 
