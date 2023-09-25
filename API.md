@@ -57,7 +57,7 @@ type RegisteredProvider = record {
     provider_id: nat64;
     owner: principal;
     chain_id: nat64;
-    base_url: text;
+    hostname: text;
     cycles_per_call: nat64;
     cycles_per_message_byte: nat64;
     primary: bool;
@@ -86,7 +86,7 @@ Register a new provider for a Web2-based service.
 ```candid
 type RegisterProvider = record {
     chain_id: nat64;
-    base_url: text;
+    hostname: text;
     credential_path: text;
     cycles_per_call: nat64;
     cycles_per_message_byte: nat64;
@@ -97,8 +97,8 @@ register_provider: (RegisterProvider) -> ();
 
 The `RegisterProvider` record defines the details about the service to register, including the API key for the service.
 * `chain_id`: The id of the Ethereum chain this provider allows to connect to. The ids refer to the chain ids as defined for EVM-compatible blockchains, see, e.g., [ChainList](https://chainlist.org/?testnets=true).
-* `base_url`: The URLs of the Web2 service provider that is used by the canister when using this provider.
-* `credential_path`: A path containing API key for authorizing requests to this service provider. This part of the path is private to the entity registering it and the canister. It is not exposed in the response of the `get_providers` method. The URL used to access the service is constructed by concatenating the `base_url` and the `credential_path` (without a separator), e.g., `"https://cloudflare-eth.com"` and `"/my-api-key"`.
+* `hostname`: The URL host of the Web2 service provider that is used by the canister when using this provider.
+* `credential_path`: A path containing API key for authorizing requests to this service provider. This part of the path is private to the entity registering it and the canister. It is not exposed in the response of the `get_providers` method. The URL used to access the service is constructed by concatenating `hostname` and `credential_path` without a separator, e.g., `"cloudflare-eth.com"` and `"/v1/mainnet/my_api_key"` resolves to `https://cloudflare-eth.com/v1/mainnet/my_api_key`.
 * `cycles_per_call`: Cycles charged per call by the canister in addition to the base charges when using this provider.
 * `cycles_per_message_byte`: Cycles charged per payload byte by the canister in addition to the base charges when using this provider.
 

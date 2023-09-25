@@ -87,7 +87,7 @@ fn test_provider_cost() {
 
     let provider = Provider {
         provider_id: 0,
-        base_url: "".to_string(),
+        hostname: "".to_string(),
         credential_path: "".to_string(),
         owner: Principal::anonymous(),
         chain_id: 1,
@@ -103,7 +103,7 @@ fn test_provider_cost() {
 
     let provider_s10 = Provider {
         provider_id: 0,
-        base_url: "".to_string(),
+        hostname: "".to_string(),
         credential_path: "".to_string(),
         owner: Principal::anonymous(),
         chain_id: 1,
