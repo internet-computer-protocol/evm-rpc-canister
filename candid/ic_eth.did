@@ -9,8 +9,8 @@ type EthRpcError = variant {
   NoPermission;
 };
 type ProviderView = record {
-  base_url : text;
   owner : principal;
+  hostname : text;
   provider_id : nat64;
   cycles_per_message_byte : nat64;
   primary : bool;
@@ -18,7 +18,7 @@ type ProviderView = record {
   cycles_per_call : nat64;
 };
 type RegisterProvider = record {
-  base_url : text;
+  hostname : text;
   cycles_per_message_byte : nat64;
   chain_id : nat64;
   cycles_per_call : nat64;
@@ -28,12 +28,12 @@ type Result = variant { Ok : vec nat8; Err : EthRpcError };
 type Result_1 = variant { Ok : nat; Err : EthRpcError };
 type Source = variant {
   Url : text;
-  Service : record { base_url : text; chain_id : opt nat64 };
+  Service : record { hostname : text; chain_id : opt nat64 };
   Chain : nat64;
   Provider : nat64;
 };
 type UpdateProvider = record {
-  base_url : opt text;
+  hostname : opt text;
   provider_id : nat64;
   cycles_per_message_byte : opt nat64;
   primary : opt bool;
