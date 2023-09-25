@@ -28,10 +28,11 @@ Make a request to a Web2 Ethereum node using the caller's URL to an openly avail
 
     request: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (Result<blob, EthRpcError>);
 
-* `source`: Any of the following:
-  * `#Url : text` The URL of the service, including any API key if required for access-protected services.
-  * `#Chain : nat64` The relevant EVM network identifier ([reference list](https://chainlist.org/?testnets=true)).
-  * `#Provider : nat64` The ID of the provider to be used for this call. Call `get_providers` to view a full list of providers.
+* `source`: Any of the following enum variants:
+  * `Chain: nat64` The relevant EVM network identifier ([reference list](https://chainlist.org/?testnets=true)).
+  * `Service: { hostname: text, chain_id: opt nat64 }` A specific RPC service with the given hostname (e.g. `cloudflare-eth.com`) and optional chain id (`0x1` for Ethereum mainnet).
+  * `Provider: nat64` The ID of the provider to be used for this call. Call `get_providers` to view a full list of providers.
+  * `Url: text` The URL of the service, including any API key if required for access-protected services. It's only recommended to use this if no registered RPC provider exists for a given EVM network.
 * `json_rpc_payload`: The payload for the JSON-RPC request. View examples in the [Ethereum documentation](https://ethereum.org/en/developers/docs/apis/json-rpc/).
 * `max_response_bytes`: The expected maximum size of the response of the Web2 API server. This parameter determines the network response size that is charged for. Not specifying it or it being larger than required may lead to substantial extra cycles cost for the HTTPS outcalls mechanism as its (large) default value is used and charged for.
 
