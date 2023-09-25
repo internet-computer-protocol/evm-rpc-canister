@@ -26,7 +26,12 @@ type RegisterProvider = record {
 };
 type Result = variant { Ok : vec nat8; Err : EthRpcError };
 type Result_1 = variant { Ok : nat; Err : EthRpcError };
-type Source = variant { Url : text; Chain : nat64; Provider : nat64 };
+type Source = variant {
+  Url : text;
+  Service : record { base_url : text; chain_id : opt nat64 };
+  Chain : nat64;
+  Provider : nat64;
+};
 type UpdateProvider = record {
   base_url : opt text;
   provider_id : nat64;
