@@ -61,20 +61,19 @@ fn get_providers() -> Vec<ProviderView> {
 #[update(guard = "require_register_provider")]
 #[candid_method]
 fn register_provider(provider: RegisterProvider) -> u64 {
-    do_register_provider(provider)
+    do_register_provider(ic_cdk::caller(), provider)
 }
 
 #[update(guard = "require_register_provider")]
 #[candid_method]
 fn unregister_provider(provider_id: u64) -> bool {
-    do_unregister_provider(provider_id)
+    do_unregister_provider(ic_cdk::caller(), provider_id)
 }
 
-// #[update(guard = "require_register_provider")]
-#[update(guard = "require_admin_or_controller")]
+#[update(guard = "require_register_provider")]
 #[candid_method]
 fn update_provider(provider: UpdateProvider) {
-    do_update_provider(provider)
+    do_update_provider(ic_cdk::caller(), provider)
 }
 
 #[query(guard = "require_register_provider")]
@@ -176,7 +175,7 @@ fn init() {
     });
 
     for provider in get_default_providers() {
-        do_register_provider(provider);
+        do_register_provider(ic_cdk::caller(), provider);
     }
 }
 

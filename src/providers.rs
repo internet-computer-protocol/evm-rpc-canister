@@ -26,7 +26,7 @@ pub fn get_default_providers() -> Vec<RegisterProvider> {
     ]
 }
 
-pub fn do_register_provider(provider: RegisterProvider) -> u64 {
+pub fn do_register_provider(caller: Principal, provider: RegisterProvider) -> u64 {
     let parsed_url = url::Url::parse(&provider.base_url).expect("unable to parse service_url");
     let host = parsed_url.host_str().expect("service_url host missing");
     validate_base_url(host);
@@ -42,7 +42,7 @@ pub fn do_register_provider(provider: RegisterProvider) -> u64 {
             provider_id,
             Provider {
                 provider_id,
-                owner: ic_cdk::caller(),
+                owner: caller,
                 chain_id: provider.chain_id,
                 base_url: provider.base_url,
                 credential_path: provider.credential_path,
@@ -56,10 +56,10 @@ pub fn do_register_provider(provider: RegisterProvider) -> u64 {
     provider_id
 }
 
-pub fn do_unregister_provider(provider_id: u64) -> bool {
+pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
     PROVIDERS.with(|p| {
         if let Some(provider) = p.borrow().get(&provider_id) {
-            if provider.owner == ic_cdk::caller() || is_authorized(Auth::Admin) {
+            if provider.owner == caller || is_authorized(Auth::Admin) {
                 return p.borrow_mut().remove(&provider_id).is_some();
             } else {
                 ic_cdk::trap("Not authorized");
@@ -69,12 +69,12 @@ pub fn do_unregister_provider(provider_id: u64) -> bool {
     })
 }
 
-pub fn do_update_provider(update: UpdateProvider) {
+pub fn do_update_provider(caller: Principal, update: UpdateProvider) {
     PROVIDERS.with(|p| {
         let mut p = p.borrow_mut();
         match p.get(&update.provider_id) {
             Some(mut provider) => {
-                if provider.owner != ic_cdk::caller() && !is_authorized(Auth::Admin) {
+                if provider.owner != caller && !is_authorized(Auth::Admin) {
                     ic_cdk::trap("Provider owner != caller");
                 }
                 if let Some(url) = update.base_url {
