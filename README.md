@@ -4,6 +4,10 @@
 
 ---
 
+This project is currently under active development. The canister interface may change unexpectedly, and the codebase has not yet undergone a comprehensive security audit. We will continue updating this message to reflect the current status of this repository. 
+
+Thank you for your interest! Please feel free to [submit an issue](https://github.com/internet-computer-protocol/ic-eth-rpc/issues) if you would like to request a feature, report a bug, or start a conversation about the Ethereum RPC canister.
+
 ## Overview
 
 **Ethereum RPC** is an Internet Computer canister smart contract for communicating with [Ethereum](https://ethereum.org/en/) and other [EVM blockchains](https://chainlist.org/?testnets=true) using an [on-chain API](./API.md). 
