@@ -49,7 +49,7 @@ fn get_providers() -> Vec<ProviderView> {
                 provider_id: e.provider_id,
                 owner: e.owner,
                 chain_id: e.chain_id,
-                base_url: e.base_url,
+                hostname: e.hostname,
                 cycles_per_call: e.cycles_per_call,
                 cycles_per_message_byte: e.cycles_per_message_byte,
                 primary: e.primary,

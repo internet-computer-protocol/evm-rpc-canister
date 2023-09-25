@@ -1,8 +1,8 @@
 use crate::*;
 
-pub fn validate_base_url(base_url: &str) {
-    if SERVICE_HOSTS_ALLOWLIST.with(|a| !a.borrow().contains(&base_url)) {
-        ic_cdk::trap("base_url host not allowed");
+pub fn validate_hostname(hostname: &str) {
+    if SERVICE_HOSTS_ALLOWLIST.with(|a| !a.borrow().contains(&hostname)) {
+        ic_cdk::trap("hostname not allowed");
     }
 }
 
