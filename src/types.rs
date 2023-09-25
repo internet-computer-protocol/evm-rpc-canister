@@ -51,8 +51,8 @@ impl Source {
                     let providers = providers.borrow();
                     Ok(providers
                         .iter()
-                        .find(|(_, p)| p.primary && matches_provider(&p))
-                        .or_else(|| providers.iter().find(|(_, p)| matches_provider(&p)))
+                        .find(|(_, p)| p.primary && matches_provider(p))
+                        .or_else(|| providers.iter().find(|(_, p)| matches_provider(p)))
                         .ok_or(EthRpcError::ProviderNotFound)?
                         .1)
                 })?)
