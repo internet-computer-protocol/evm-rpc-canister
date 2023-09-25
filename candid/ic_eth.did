@@ -2,7 +2,7 @@ type Auth = variant { Rpc; RegisterProvider; FreeRpc; Admin };
 type EthRpcError = variant {
   ServiceUrlHostNotAllowed;
   HttpRequestError : record { code : nat32; message : text };
-  TooFewCycles : text;
+  TooFewCycles : record { expected : nat; received : nat };
   ServiceUrlParseError;
   ServiceUrlHostMissing;
   ProviderNotFound;
