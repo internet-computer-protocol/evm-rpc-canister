@@ -1,4 +1,4 @@
-# IC 🔗 ETH (Canister API)
+# Ethereum RPC (Canister API)
 
 ## Terminology
 
