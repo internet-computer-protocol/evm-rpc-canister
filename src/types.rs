@@ -205,7 +205,7 @@ impl BoundedStorable for Provider {
 #[derive(CandidType, Debug)]
 pub enum EthRpcError {
     NoPermission,
-    TooFewCycles(String),
+    TooFewCycles { expected: u128, received: u128 },
     ServiceUrlParseError,
     ServiceUrlHostMissing,
     ServiceUrlHostNotAllowed,
