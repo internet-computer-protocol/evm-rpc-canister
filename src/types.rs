@@ -1,8 +1,6 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-use ethers_providers::RpcError;
 use ic_stable_structures::{BoundedStorable, Storable};
 use num_derive::FromPrimitive;
-use serde::ser::StdError;
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
