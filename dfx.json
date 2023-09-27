@@ -8,7 +8,7 @@
     "e2e_rust": {
       "candid": "e2e/rust/e2e_rust.did",
       "type": "rust",
-      "package": "e2e/rust"
+      "package": "e2e"
     },
     "e2e_motoko": {
       "type": "motoko",

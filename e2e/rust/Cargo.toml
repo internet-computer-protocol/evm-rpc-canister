@@ -1,5 +1,5 @@
 [package]
-name = "e2e_rust"
+name = "e2e"
 version = "0.1.0"
 description = "End-to-end testing with a Rust canister."
 authors = ["DFINITY Foundation"]
