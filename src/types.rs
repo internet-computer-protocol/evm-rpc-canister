@@ -1,6 +1,8 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+use ethers_providers::RpcError;
 use ic_stable_structures::{BoundedStorable, Storable};
 use num_derive::FromPrimitive;
+use serde::ser::StdError;
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
@@ -205,7 +207,7 @@ pub mod candid_types {
     use candid::CandidType;
     use serde::{Deserialize, Serialize};
 
-    #[derive(Debug, Serialize, Deserialize, CandidType)]
+    #[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
     pub enum BlockNumber {
         Latest,
         Finalized,
@@ -225,6 +227,41 @@ pub mod candid_types {
                 Self::Earliest => Earliest,
                 Self::Pending => Pending,
                 Self::Number(n) => Number(n.into()),
+            }
+        }
+    }
+
+    #[derive(Deserialize, Serialize, Debug, Clone, CandidType)]
+    #[serde(rename_all = "camelCase")]
+    pub struct FeeHistory {
+        pub base_fee_per_gas: Vec<u128>,
+        pub gas_used_ratio: Vec<f64>,
+        /// oldestBlock is returned as an unsigned integer up to geth v1.10.6. From
+        /// geth v1.10.7, this has been updated to return in the hex encoded form.
+        /// The custom deserializer allows backward compatibility for those clients
+        /// not running v1.10.7 yet.
+        pub oldest_block: u128,
+        /// An (optional) array of effective priority fee per gas data points from a single block. All
+        /// zeroes are returned if the block is empty.
+        #[serde(default)]
+        pub reward: Vec<Vec<u128>>,
+    }
+
+    impl Into<ic_eth::core::types::FeeHistory> for FeeHistory {
+        fn into(self) -> ic_eth::core::types::FeeHistory {
+            ic_eth::core::types::FeeHistory {
+                base_fee_per_gas: self
+                    .base_fee_per_gas
+                    .into_iter()
+                    .map(|x| x.into())
+                    .collect(),
+                gas_used_ratio: self.gas_used_ratio,
+                oldest_block: self.oldest_block.into(),
+                reward: self
+                    .reward
+                    .into_iter()
+                    .map(|x| x.into_iter().map(|x| x.into()).collect())
+                    .collect(),
             }
         }
     }
