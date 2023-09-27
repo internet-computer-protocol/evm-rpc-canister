@@ -1,0 +1,10 @@
+{
+  "name": "ic-eth-rpc",
+  "version": "0.1.0",
+  "scripts": {
+    "sources": "mops sources"
+  },
+  "devDependencies": {
+    "ic-mops": "^0.27.2"
+  }
+}

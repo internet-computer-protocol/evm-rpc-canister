@@ -4,7 +4,19 @@
       "candid": "candid/ic_eth.did",
       "type": "rust",
       "package": "ic_eth_rpc"
+    },
+    "e2e_rust": {
+      "candid": "e2e/rust/e2e_rust.did",
+      "type": "rust",
+      "package": "e2e/rust"
+    },
+    "e2e_motoko": {
+      "type": "motoko",
+      "main": "e2e/motoko/Main.mo"
     }
+  },
+  "defaults": {
+    "build": { "packtool": "npm run --silent sources" }
   },
   "version": 1
 }
