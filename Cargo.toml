@@ -37,4 +37,4 @@ candid = { features = ["parser"] }
 hex = "0.4"
 
 [workspace]
-members = ["e2e/rust"]
+members = ["lib/rust", "e2e/rust"]

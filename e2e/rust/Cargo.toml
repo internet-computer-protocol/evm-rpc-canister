@@ -17,4 +17,4 @@ ic-certified-map = "0.4"
 ic-cdk = "0.10"
 ic-cdk-macros = "0.7"
 ic-cdk-bindgen = "0.1"
-ic-eth = "0.0"
+ic-eth = { path = "lib/rust" }
