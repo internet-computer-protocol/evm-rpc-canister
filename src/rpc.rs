@@ -34,12 +34,12 @@ impl JsonRpcClient for HttpOutcallClient {
     async fn request<T, R>(&self, method: &str, params: T) -> Result<R, Self::Error>
     where
         T: Debug + Serialize + Send + Sync,
-        R: DeserializeOwned + Send,
+        R: DeserializeOwned,
     {
         Ok(
             do_http_request(self.source.clone(), method, params, self.max_response_bytes)
                 .await
-                .expect("TODO"),
+                .unwrap(), // TODO: error handling
         )
     }
 }
