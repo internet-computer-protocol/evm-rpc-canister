@@ -3,4 +3,6 @@ use ic_cdk_macros::update;
 
 #[update]
 #[candid_method(update)]
-pub fn test() {}
+pub fn test() {
+    // TODO
+}
