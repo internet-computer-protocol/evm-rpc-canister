@@ -508,7 +508,7 @@ dependencies = [
  "ic-cdk-bindgen",
  "ic-cdk-macros",
  "ic-certified-map",
- "ic-eth 0.0.4",
+ "ic-eth 0.1.0",
 ]
 
 [[package]]

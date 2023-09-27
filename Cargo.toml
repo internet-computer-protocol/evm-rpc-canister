@@ -36,5 +36,8 @@ url = "2.4"
 candid = { features = ["parser"] }
 hex = "0.4"
 
+[patch.crates-io]
+wasm-bindgen = { package = "ic-wasm-bindgen", version = "0.2" }
+
 [workspace]
 members = ["lib/rust", "e2e/rust"]
