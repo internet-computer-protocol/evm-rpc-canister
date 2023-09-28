@@ -1,8 +1,9 @@
-import Principal "mo:base/Principal";
-import JSON "mo:json.mo";
-import Nat64 "mo:base/Nat64";
-import Text "mo:base/Text";
 import Blob "mo:base/Blob";
+import Debug "mo:base/Debug";
+import Nat64 "mo:base/Nat64";
+import Principal "mo:base/Principal";
+import Text "mo:base/Text";
+import JSON "mo:json.mo";
 
 module {
     public type Network = {
@@ -114,9 +115,22 @@ module {
         };
 
         public func requestPlain(payload : Text, maxResponseBytes : Nat64) : async Result<Text> {
-            switch (await actor_.request(actorSource, payload, maxResponseBytes)) {
-                case (#Ok x) { #ok x };
-                case (#Err x) { #err x };
+            func requestPlain_(payload : Text, maxResponseBytes : Nat64, cycles : Nat) : async Result<Text> {
+                // TODO: payment
+                switch (await actor_.request(actorSource, payload, maxResponseBytes)) {
+                    case (#Ok x) { #ok x };
+                    case (#Err x) { #err x };
+                };
+            };
+            let defaultCycles = 1_000_000_000;
+            switch (await requestPlain_(payload, maxResponseBytes, defaultCycles)) {
+                case (#err(#TooFewCycles { expected })) {
+                    debug {
+                        Debug.print("Retrying with " # (debug_show expected) # " cycles");
+                    };
+                    await requestPlain_(payload, maxResponseBytes, expected);
+                };
+                case x x;
             };
         };
 
