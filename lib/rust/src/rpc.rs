@@ -60,21 +60,24 @@ fn next_id() -> u64 {
 
 pub fn get_provider(
     url: &str,
+    cycles: u128,
     max_response_bytes: Option<u64>,
 ) -> ethers_providers::Provider<HttpOutcallClient> {
-    ethers_providers::Provider::new(HttpOutcallClient::new(url, max_response_bytes))
+    ethers_providers::Provider::new(HttpOutcallClient::new(url, cycles, max_response_bytes))
 }
 
 #[derive(Debug)]
 pub struct HttpOutcallClient<'a> {
     pub url: &'a str,
+    pub cycles: u128,
     pub max_response_bytes: Option<u64>,
 }
 
 impl<'a> HttpOutcallClient<'a> {
-    pub fn new(url: &'a str, max_response_bytes: Option<u64>) -> Self {
+    pub fn new(url: &'a str, cycles: u128, max_response_bytes: Option<u64>) -> Self {
         Self {
             url,
+            cycles,
             max_response_bytes,
         }
     }
@@ -90,11 +93,10 @@ impl<'a> JsonRpcClient for HttpOutcallClient<'a> {
         T: Debug + Serialize + Send + Sync,
         R: DeserializeOwned + Send,
     {
-        let cycles = 0; // TODO
         let result = request(
             self.url,
             &JsonRpcRequest::new(method, params),
-            cycles,
+            self.cycles,
             self.max_response_bytes,
         )
         .await
