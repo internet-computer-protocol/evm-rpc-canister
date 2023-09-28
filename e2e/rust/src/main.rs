@@ -27,4 +27,3 @@ pub async fn test() {
         Result_::Err(err) => ic_cdk::trap(&format!("{}", err)),
     }
 }
-
