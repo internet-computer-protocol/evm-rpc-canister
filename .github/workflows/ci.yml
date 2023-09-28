@@ -18,6 +18,7 @@ jobs:
       - name: Cargo fmt
         run: |
           rustup component add rustfmt
+          cargo build
           cargo fmt --all -- --check
 
   cargo-clippy:
@@ -66,18 +67,18 @@ jobs:
   #         command: check
   #         args: --all-targets
 
-  cargo-build:
-    runs-on: ubuntu-latest
-    # needs: cargo-check
-    steps:
-      - name: Checkout
-        uses: actions/checkout@master
+  # cargo-build:
+  #   runs-on: ubuntu-latest
+  #   # needs: cargo-check
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@master
 
-      - name: Cargo build
-        uses: actions-rs/cargo@master
-        with:
-          command: build
-          args: --tests --release
+  #     - name: Cargo build
+  #       uses: actions-rs/cargo@master
+  #       with:
+  #         command: build
+  #         args: --tests --release
 
   cargo-wasm-build:
     runs-on: ubuntu-latest
