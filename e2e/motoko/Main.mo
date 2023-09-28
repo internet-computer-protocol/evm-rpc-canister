@@ -4,7 +4,7 @@ import Principal "mo:base/Principal";
 import Eth "mo:eth";
 import Debug "mo:base/Debug";
 
-actor class () {
+actor class Main() {
     let rpc = Eth.Rpc(
         #Canister EthCanister,
         #Service {
