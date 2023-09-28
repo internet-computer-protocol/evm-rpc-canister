@@ -10,16 +10,15 @@ on:
     paths-ignore:
       - "README.md"
 jobs:
-  cargo-fmt:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@master
-      - name: Cargo fmt
-        run: |
-          rustup component add rustfmt
-          cargo build
-          cargo fmt --all -- --check
+  # cargo-fmt:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@master
+  #     - name: Cargo fmt
+  #       run: |
+  #         rustup component add rustfmt
+  #         cargo fmt --all -- --check
 
   cargo-clippy:
     runs-on: ubuntu-latest
@@ -143,3 +142,6 @@ jobs:
 
       - name: Test (Rust)
         run: dfx canister call e2e_rust test
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
