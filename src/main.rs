@@ -1,5 +1,6 @@
 use candid::{candid_method, CandidType};
 use ic_canister_log::log;
+use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
 // use ic_canisters_http_types::{
 //     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -148,16 +149,16 @@ async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
     };
 }
 
-// #[query(name = "__transform_eth_rpc")]
-// fn transform(args: TransformArgs) -> HttpResponse {
-//     HttpResponse {
-//         status: args.response.status.clone(),
-//         body: args.response.body,
-//         // Strip headers as they contain the Date which is not necessarily the same
-//         // and will prevent consensus on the result.
-//         headers: Vec::<HttpHeader>::new(),
-//     }
-// }
+#[query(name = "__transform_eth_rpc")]
+fn transform(args: TransformArgs) -> HttpResponse {
+    HttpResponse {
+        status: args.response.status.clone(),
+        body: args.response.body,
+        // Strip headers as they contain the Date which is not necessarily the same
+        // and will prevent consensus on the result.
+        headers: Vec::<HttpHeader>::new(),
+    }
+}
 
 #[ic_cdk::init]
 fn init() {
