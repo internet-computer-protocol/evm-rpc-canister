@@ -20,7 +20,7 @@ async fn request(
     source: Source,
     json_rpc_payload: String,
     max_response_bytes: u64,
-) -> Result<Vec<u8>, EthRpcError> {
+) -> Result<String, EthRpcError> {
     do_http_request(source.resolve()?, &json_rpc_payload, max_response_bytes).await
 }
 

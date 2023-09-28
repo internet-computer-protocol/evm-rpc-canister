@@ -47,7 +47,7 @@ module {
 
     public type RpcActor = actor {
         request : shared (ActorSource, Text, Nat64) -> async {
-            #Ok : [Nat8];
+            #Ok : Text;
             #Err : Error;
         };
     };
@@ -103,14 +103,9 @@ module {
                 ("params", params),
             ]));
             switch (await requestPlain(payload, maxResponseBytes)) {
-                case (#ok blob) {
-                    switch (Text.decodeUtf8(blob)) {
-                        case (?text) {
-                            switch (JSON.parse(text)) {
-                                case (?json) { #ok json };
-                                case null { #err(#ResponseParseError) };
-                            };
-                        };
+                case (#ok text) {
+                    switch (JSON.parse(text)) {
+                        case (?json) { #ok json };
                         case null { #err(#ResponseParseError) };
                     };
                 };
@@ -118,9 +113,9 @@ module {
             };
         };
 
-        public func requestPlain(payload : Text, maxResponseBytes : Nat64) : async Result<Blob> {
+        public func requestPlain(payload : Text, maxResponseBytes : Nat64) : async Result<Text> {
             switch (await actor_.request(actorSource, payload, maxResponseBytes)) {
-                case (#Ok x) { #ok(Blob.fromArray(x)) };
+                case (#Ok x) { #ok x };
                 case (#Err x) { #err x };
             };
         };

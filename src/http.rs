@@ -10,7 +10,7 @@ pub async fn do_http_request(
     source: ResolvedSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
-) -> Result<Vec<u8>, EthRpcError> {
+) -> Result<String, EthRpcError> {
     inc_metric!(requests);
     if !is_authorized(Auth::Rpc) {
         inc_metric!(request_err_no_permission);
@@ -75,7 +75,9 @@ pub async fn do_http_request(
         )),
     };
     match make_http_request(request, cost).await {
-        Ok((result,)) => Ok(result.body),
+        Ok((result,)) => {
+            Ok(String::from_utf8(result.body).expect("invalid UTF-8 in JSON-RPC response"))
+        }
         Err((r, m)) => {
             inc_metric!(request_err_http);
             Err(EthRpcError::HttpRequestError {
