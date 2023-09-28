@@ -32,8 +32,8 @@ module {
         #TooFewCycles : { expected : Nat; received : Nat };
         #ServiceUrlParseError;
         #ServiceHostMissing;
-        #ServiceHostNotAllowed;
-        #ProviderNotFound : Text;
+        #ServiceHostNotAllowed : Text;
+        #ProviderNotFound;
         #NoPermission;
 
         // Library errors
