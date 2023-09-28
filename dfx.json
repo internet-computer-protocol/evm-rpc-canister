@@ -6,11 +6,13 @@
       "package": "ic_eth_rpc"
     },
     "e2e_rust": {
+      "dependencies": ["ic_eth"],
       "candid": "e2e/rust/e2e_rust.did",
       "type": "rust",
       "package": "e2e"
     },
     "e2e_motoko": {
+      "dependencies": ["ic_eth"],
       "type": "motoko",
       "main": "e2e/motoko/Main.mo"
     }
