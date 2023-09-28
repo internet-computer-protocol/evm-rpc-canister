@@ -38,4 +38,4 @@ candid = { features = ["parser"] }
 hex = "0.4"
 
 [patch.crates-io]
-wasm-bindgen = { path = "../wasm-bindgen" }
+wasm-bindgen = { path = "../wasm-bindgen", package = "ic-wasm-bindgen" }
