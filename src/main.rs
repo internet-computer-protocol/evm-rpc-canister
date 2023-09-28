@@ -152,7 +152,7 @@ async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
 #[query(name = "__transform_eth_rpc")]
 fn transform(args: TransformArgs) -> HttpResponse {
     HttpResponse {
-        status: args.response.status.clone(),
+        status: args.response.status,
         body: args.response.body,
         // Strip headers as they contain the Date which is not necessarily the same
         // and will prevent consensus on the result.
