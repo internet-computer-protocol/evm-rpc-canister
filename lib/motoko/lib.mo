@@ -2,9 +2,24 @@ import Principal "mo:base/Principal";
 import JSON "mo:json.mo";
 import Nat64 "mo:base/Nat64";
 import Text "mo:base/Text";
+import Blob "mo:base/Blob";
 
 module {
+    public type Network = {
+        #EthMainnet;
+        #EthSepolia;
+        #EthGoerli;
+        #Custom : Nat64;
+    };
+
     public type Source = {
+        #Url : Text;
+        #Service : { hostname : Text; network : ?Network };
+        #Chain : Network;
+        #Provider : Nat64;
+    };
+
+    type ActorSource = {
         #Url : Text;
         #Service : { hostname : Text; chain_id : ?Nat64 };
         #Chain : Nat64;
@@ -30,12 +45,51 @@ module {
         #err : Error;
     };
 
-    type RpcCanisterActor = actor {
-        request : (Source, Text, Nat64) -> async { #Ok : Blob; #Err : Error };
+    public type RpcActor = actor {
+        request : shared (ActorSource, Text, Nat64) -> async {
+            #Ok : [Nat8];
+            #Err : Error;
+        };
     };
 
-    public class RpcCanister(id : Text) = this {
-        let actor_ = actor (id) : RpcCanisterActor;
+    public type Provider = {
+        #Canister : RpcActor;
+        #Principal : Principal;
+    };
+
+    func getChainId(network : Network) : Nat64 {
+        // Reference: https://chainlist.org/?testnets=true
+        switch network {
+            case (#EthMainnet) { 1 };
+            case (#EthGoerli) { 5 };
+            case (#EthSepolia) { 11155111 };
+            case (#Custom n) { n };
+        };
+    };
+
+    func getActorSource(source : Source) : ActorSource {
+        switch source {
+            case (#Url s) { #Url s };
+            case (#Service { hostname; network }) {
+                #Service {
+                    hostname;
+                    chain_id = switch network {
+                        case (?n) { ?getChainId(n) };
+                        case null { null };
+                    };
+                };
+            };
+            case (#Chain n) { #Chain(getChainId(n)) };
+            case (#Provider n) { #Provider n };
+        };
+    };
+
+    public class Rpc(provider : Provider) = this {
+        let actor_ = switch provider {
+            case (#Canister a) { a };
+            case (#Principal p) { actor (Principal.toText(p)) : RpcActor };
+        };
+
         var nextId : Nat = 0;
 
         public func request(source : Source, method : Text, params : JSON.JSON, maxResponseBytes : Nat64) : async Result<JSON.JSON> {
@@ -64,8 +118,8 @@ module {
         };
 
         public func requestPlain(source : Source, payload : Text, maxResponseBytes : Nat64) : async Result<Blob> {
-            switch (await actor_.request(source, payload, maxResponseBytes)) {
-                case (#Ok x) { #ok x };
+            switch (await actor_.request(getActorSource(source), payload, maxResponseBytes)) {
+                case (#Ok x) { #ok(Blob.fromArray(x)) };
                 case (#Err x) { #err x };
             };
         };
