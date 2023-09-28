@@ -70,6 +70,8 @@ module {
 
     public class Rpc(provider : Provider, source : Source) = this {
 
+        public var defaultCycles = 1_000_000_000;
+
         func getActorSource(source : Source) : ActorSource {
             switch source {
                 case (#Url s) { #Url s };
@@ -118,11 +120,10 @@ module {
             func requestPlain_(payload : Text, maxResponseBytes : Nat64, cycles : Nat) : async Result<Text> {
                 // TODO: payment
                 switch (await actor_.request(actorSource, payload, maxResponseBytes)) {
-                    case (#Ok x) { #ok x };
-                    case (#Err x) { #err x };
+                    case (#Ok ok) { #ok ok };
+                    case (#Err err) { #err err };
                 };
             };
-            let defaultCycles = 1_000_000_000;
             switch (await requestPlain_(payload, maxResponseBytes, defaultCycles)) {
                 case (#err(#TooFewCycles { expected })) {
                     debug {
@@ -130,7 +131,7 @@ module {
                     };
                     await requestPlain_(payload, maxResponseBytes, expected);
                 };
-                case x x;
+                case r r;
             };
         };
 
