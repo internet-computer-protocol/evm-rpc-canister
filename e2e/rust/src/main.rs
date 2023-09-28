@@ -10,7 +10,10 @@ fn main() {}
 pub async fn test() {
     // Define request parameters
     let params = (
-        &Source::Chain(1 /* Ethereum */),
+        &Source::Service {
+            hostname: "cloudflare-eth.com".to_string(),
+            chain_id: Some(1 /* Ethereum */),
+        },
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}".to_string(),
         1000 as u64,
     );
@@ -42,10 +45,11 @@ pub async fn test() {
             .await
             .unwrap();
     match result {
-        Ok(response) => assert_eq!(
-            response,
-            "{\"jsonrpc\":\"2.0\",\"result\":\"0x247a3fa65\",\"id\":1}",
-        ),
+        Ok(response) => {
+            // Check response structure around gas price
+            assert_eq!(&response[..29], "{\"jsonrpc\":\"2.0\",\"result\":\"0x",);
+            assert_eq!(&response[response.len() - 9..], "\",\"id\":1}")
+        }
         Err(err) => ic_cdk::trap(&format!("error in `request` with cycles: {}", err)),
     }
 }
