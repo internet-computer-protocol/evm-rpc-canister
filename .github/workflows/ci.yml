@@ -54,17 +54,17 @@ jobs:
   #       run: |
   #         cargo audit || true
 
-  cargo-check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@master
+  # cargo-check:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@master
 
-      - name: Cargo build
-        uses: actions-rs/cargo@master
-        with:
-          command: check
-          args: --all-targets
+  #     - name: Cargo build
+  #       uses: actions-rs/cargo@master
+  #       with:
+  #         command: check
+  #         args: --all-targets
 
   cargo-build:
     runs-on: ubuntu-latest
@@ -127,6 +127,9 @@ jobs:
           rm install-dfx.sh
           dfx cache install
           echo "$HOME/bin" >> $GITHUB_PATH
+      
+      - name: Start dfx
+        run: dfx start --background
 
       - name: Install npm packages
         run: npm ci
