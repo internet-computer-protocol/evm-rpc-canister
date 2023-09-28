@@ -6,11 +6,6 @@ authors = ["DFINITY Foundation"]
 # readme = "README.md"
 edition = "2021"
 
-[profile.release]
-debug = false
-lto = true
-opt-level = 'z'
-
 [dependencies]
 candid = "0.9"
 ic-certified-map = "0.4"
