@@ -25,12 +25,12 @@ pub async fn do_http_request(
     let parsed_url = url::Url::parse(&service_url).or(Err(EthRpcError::ServiceUrlParseError))?;
     let host = parsed_url
         .host_str()
-        .ok_or(EthRpcError::ServiceUrlHostMissing)?
+        .ok_or(EthRpcError::ServiceUrlParseError)?
         .to_string();
     if SERVICE_HOSTS_ALLOWLIST.with(|a| !a.borrow().contains(&host.as_str())) {
         log!(INFO, "host not allowed: {}", host);
         inc_metric!(request_err_host_not_allowed);
-        return Err(EthRpcError::ServiceUrlHostNotAllowed(host));
+        return Err(EthRpcError::ServiceHostNotAllowed(host));
     }
     if !is_authorized(Auth::FreeRpc) {
         if cycles_available < cost {

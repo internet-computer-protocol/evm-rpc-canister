@@ -28,12 +28,12 @@ module {
 
     public type Error = {
         // RPC canister errors
-        #ServiceUrlHostNotAllowed;
         #HttpRequestError : { code : Nat32; message : Text };
         #TooFewCycles : { expected : Nat; received : Nat };
         #ServiceUrlParseError;
-        #ServiceUrlHostMissing;
-        #ProviderNotFound : String;
+        #ServiceHostMissing;
+        #ServiceHostNotAllowed;
+        #ProviderNotFound : Text;
         #NoPermission;
 
         // Library errors
