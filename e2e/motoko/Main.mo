@@ -5,20 +5,26 @@ import Eth "mo:eth";
 import Debug "mo:base/Debug";
 
 actor class () {
-    public shared ({ caller }) func test() : async Text {
-        let rpc = Eth.Rpc(#Canister EthCanister);
+    let rpc = Eth.Rpc(
+        #Canister EthCanister,
+        #Service {
+            hostname = "cloudflare-eth.com";
+            network = ? #EthMainnet;
+        },
+    );
 
-        // assert  == #ok();
+    public func example() : async Text {
+
+        let a = await rpc.gasPrice();
+        let b = await rpc.request("eth_gasPrice", #Array([]), 1000);
+
         debug_show (
-            await rpc.request(
-                #Service {
-                    hostname = "cloudflare-eth.com";
-                    network = ? #EthMainnet;
-                },
-                "eth_gasPrice",
-                #Array([]),
-                1000,
-            )
+            a,
+            b,
         );
+    };
+
+    public shared ({ caller }) func test() : async () {
+        // TODO
     };
 };

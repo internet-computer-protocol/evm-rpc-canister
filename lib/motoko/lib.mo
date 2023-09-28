@@ -67,32 +67,33 @@ module {
         };
     };
 
-    func getActorSource(source : Source) : ActorSource {
-        switch source {
-            case (#Url s) { #Url s };
-            case (#Service { hostname; network }) {
-                #Service {
-                    hostname;
-                    chain_id = switch network {
-                        case (?n) { ?getChainId(n) };
-                        case null { null };
+    public class Rpc(provider : Provider, source : Source) = this {
+
+        func getActorSource(source : Source) : ActorSource {
+            switch source {
+                case (#Url s) { #Url s };
+                case (#Service { hostname; network }) {
+                    #Service {
+                        hostname;
+                        chain_id = switch network {
+                            case (?n) { ?getChainId(n) };
+                            case null { null };
+                        };
                     };
                 };
+                case (#Chain n) { #Chain(getChainId(n)) };
+                case (#Provider n) { #Provider n };
             };
-            case (#Chain n) { #Chain(getChainId(n)) };
-            case (#Provider n) { #Provider n };
         };
-    };
 
-    public class Rpc(provider : Provider) = this {
         let actor_ = switch provider {
             case (#Canister a) { a };
             case (#Principal p) { actor (Principal.toText(p)) : RpcActor };
         };
+        let actorSource = getActorSource(source);
 
         var nextId : Nat = 0;
-
-        public func request(source : Source, method : Text, params : JSON.JSON, maxResponseBytes : Nat64) : async Result<JSON.JSON> {
+        public func request(method : Text, params : JSON.JSON, maxResponseBytes : Nat64) : async Result<JSON.JSON> {
             nextId += 1;
             // prettier-ignore
             let payload = JSON.show(#Object([
@@ -101,7 +102,7 @@ module {
                 ("method", #String(method)),
                 ("params", params),
             ]));
-            switch (await requestPlain(source, payload, maxResponseBytes)) {
+            switch (await requestPlain(payload, maxResponseBytes)) {
                 case (#ok blob) {
                     switch (Text.decodeUtf8(blob)) {
                         case (?text) {
@@ -117,11 +118,18 @@ module {
             };
         };
 
-        public func requestPlain(source : Source, payload : Text, maxResponseBytes : Nat64) : async Result<Blob> {
-            switch (await actor_.request(getActorSource(source), payload, maxResponseBytes)) {
+        public func requestPlain(payload : Text, maxResponseBytes : Nat64) : async Result<Blob> {
+            switch (await actor_.request(actorSource, payload, maxResponseBytes)) {
                 case (#Ok x) { #ok(Blob.fromArray(x)) };
                 case (#Err x) { #err x };
             };
+        };
+
+        public func gasPrice() : async Nat {
+            let result = request("eth_gasPrice", #Array([]), 256);
+            // TODO: decode
+            assert false;
+            0;
         };
     };
 };
