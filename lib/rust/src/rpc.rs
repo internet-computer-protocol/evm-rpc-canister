@@ -137,7 +137,7 @@ pub async fn request<'a, T: Serialize>(
         headers: request_headers,
         body: Some(json_rpc_payload.as_bytes().to_vec()),
         transform: Some(TransformContext::from_name(
-            "__transform_eth_rpc".to_string(),
+            "__ic_eth_transform".to_string(),
             vec![],
         )),
     };

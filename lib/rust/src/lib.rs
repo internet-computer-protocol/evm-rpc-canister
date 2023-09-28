@@ -8,7 +8,7 @@ pub use ethers_core as core;
 
 pub use rpc::{call_contract, get_provider, request};
 
-// #[ic_cdk_macros::query(name = "__transform_eth_rpc")]
+#[ic_cdk_macros::query(name = "__ic_eth_transform")]
 pub fn transform_eth_rpc(args: TransformArgs) -> HttpResponse {
     HttpResponse {
         status: args.response.status,
