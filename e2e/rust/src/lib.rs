@@ -1,8 +1,3 @@
-use candid::candid_method;
-use ic_cdk_macros::update;
+pub mod declarations;
 
-#[update]
-#[candid_method(update)]
-pub fn test() {
-    // TODO
-}
+pub use crate::declarations::ic_eth::ic_eth;

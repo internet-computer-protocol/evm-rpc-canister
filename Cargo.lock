@@ -509,6 +509,8 @@ dependencies = [
  "ic-cdk-macros",
  "ic-certified-map",
  "ic-eth 0.1.0",
+ "serde",
+ "serde_bytes",
 ]
 
 [[package]]
