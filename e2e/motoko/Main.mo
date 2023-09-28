@@ -18,10 +18,7 @@ actor class () {
         let a = await rpc.gasPrice();
         let b = await rpc.request("eth_gasPrice", #Null, 1000);
 
-        debug_show (
-            a,
-            b,
-        );
+        debug_show (a, b);
     };
 
     public shared ({ caller }) func test() : async () {
