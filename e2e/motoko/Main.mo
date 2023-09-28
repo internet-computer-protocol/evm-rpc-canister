@@ -14,8 +14,6 @@ actor class Main() {
     );
 
     public shared ({ caller }) func test() : async () {
-        // let result = await rpc.request("eth_gasPrice", #Null, 1000);
-
         let source = #Service {
             hostname = "cloudflare-eth.com";
             chain_id = ?(1 : Nat64); // Ethereum mainnet
@@ -38,5 +36,7 @@ actor class Main() {
         };
 
         // TODO: call with cycles
+
+        // let result = await rpc.request("eth_gasPrice", #Null, 1000);
     };
 };
