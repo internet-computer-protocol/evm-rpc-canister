@@ -208,7 +208,7 @@ pub enum EthRpcError {
     TooFewCycles { expected: u128, received: u128 },
     ServiceUrlParseError,
     ServiceUrlHostMissing,
-    ServiceUrlHostNotAllowed,
+    ServiceUrlHostNotAllowed(String),
     ProviderNotFound,
     HttpRequestError { code: u32, message: String },
 }
