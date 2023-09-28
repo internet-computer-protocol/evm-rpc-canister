@@ -9,7 +9,7 @@ module {
         #EthMainnet;
         #EthSepolia;
         #EthGoerli;
-        #Custom : Nat64;
+        #Network : Nat64;
     };
 
     public type Source = {
@@ -63,7 +63,7 @@ module {
             case (#EthMainnet) { 1 };
             case (#EthGoerli) { 5 };
             case (#EthSepolia) { 11155111 };
-            case (#Custom n) { n };
+            case (#Network n) { n };
         };
     };
 
