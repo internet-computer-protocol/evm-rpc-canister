@@ -90,8 +90,16 @@ impl<'a> JsonRpcClient for HttpOutcallClient<'a> {
         T: Debug + Serialize + Send + Sync,
         R: DeserializeOwned + Send,
     {
-        // request(self.url.clone(), method, params, self.max_response_bytes).await
-        todo!()
+        let cycles = 0; // TODO
+        let result = request(
+            self.url,
+            &JsonRpcRequest::new(method, params),
+            cycles,
+            self.max_response_bytes,
+        )
+        .await
+        .map_err(|e| ProviderError::CustomError(format!("{:?}", e)))?;
+        Ok(serde_json::from_slice(&result)?)
     }
 }
 
