@@ -1,4 +1,3 @@
-use candid::Principal;
 use ic_canister_log::declare_log_buffer;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -8,7 +7,6 @@ use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemor
 use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::{Cell, StableBTreeMap};
 use std::cell::RefCell;
-use std::collections::hash_set::HashSet;
 
 use crate::types::*;
 
@@ -23,7 +21,6 @@ declare_log_buffer!(name = ERROR, capacity = 1000);
 thread_local! {
     // Transient static data: this is reset when the canister is upgraded.
     pub static TRANSIENT_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
-    pub static TRANSIENT_AUTH: RefCell<HashSet<Principal>> = RefCell::new(HashSet::<Principal>::new());
 
     // Stable static data: this is preserved when the canister is upgraded.
     #[cfg(not(target_arch = "wasm32"))]

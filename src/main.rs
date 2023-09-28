@@ -162,8 +162,6 @@ fn transform(args: TransformArgs) -> HttpResponse {
 
 #[ic_cdk::init]
 fn init() {
-    stable_authorize(ic_cdk::caller());
-
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.nodes_in_subnet = DEFAULT_NODES_IN_SUBNET;
@@ -190,17 +188,12 @@ fn init() {
 //     }
 // }
 
-#[update(guard = "require_stable_authorized")]
-fn stable_authorize(principal: Principal) {
-    TRANSIENT_AUTH.with(|a| a.borrow_mut().insert(principal));
-}
-
-#[query(guard = "require_stable_authorized")]
+#[query(guard = "require_admin_or_controller")]
 fn stable_size() -> u64 {
     ic_cdk::api::stable::stable64_size() * WASM_PAGE_SIZE
 }
 
-#[query(guard = "require_stable_authorized")]
+#[query(guard = "require_admin_or_controller")]
 fn stable_read(offset: u64, length: u64) -> Vec<u8> {
     let mut buffer = Vec::new();
     buffer.resize(length as usize, 0);
@@ -208,7 +201,7 @@ fn stable_read(offset: u64, length: u64) -> Vec<u8> {
     buffer
 }
 
-#[update(guard = "require_stable_authorized")]
+#[update(guard = "require_admin_or_controller")]
 fn stable_write(offset: u64, buffer: Vec<u8>) {
     let size = offset + buffer.len() as u64;
     let old_size = ic_cdk::api::stable::stable64_size() * WASM_PAGE_SIZE;
