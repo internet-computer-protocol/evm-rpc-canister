@@ -31,9 +31,10 @@ pub fn do_register_provider(caller: Principal, provider: RegisterProvider) -> u6
     validate_credential_path(&provider.credential_path);
     let provider_id = METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
+        let id = metadata.next_provider_id;
         metadata.next_provider_id += 1;
-        m.borrow_mut().set(metadata.clone()).unwrap();
-        metadata.next_provider_id - 1
+        m.borrow_mut().set(metadata).unwrap();
+        id
     });
     PROVIDERS.with(|p| {
         p.borrow_mut().insert(
