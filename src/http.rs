@@ -27,7 +27,7 @@ pub async fn do_http_request(
         .host_str()
         .ok_or(EthRpcError::ServiceUrlParseError)?
         .to_string();
-    if SERVICE_HOSTS_ALLOWLIST.contains(&host.as_str()) {
+    if !SERVICE_HOSTS_ALLOWLIST.contains(&host.as_str()) {
         log!(INFO, "host not allowed: {}", host);
         inc_metric!(request_err_host_not_allowed);
         return Err(EthRpcError::ServiceHostNotAllowed(host));
