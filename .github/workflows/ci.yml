@@ -68,7 +68,7 @@ jobs:
 
   cargo-build:
     runs-on: ubuntu-latest
-    needs: cargo-check
+    # needs: cargo-check
     steps:
       - name: Checkout
         uses: actions/checkout@master
@@ -81,7 +81,7 @@ jobs:
 
   cargo-wasm-build:
     runs-on: ubuntu-latest
-    needs: cargo-check
+    # needs: cargo-check
     steps:
       - name: Checkout
         uses: actions/checkout@master
@@ -94,7 +94,7 @@ jobs:
 
   cargo-test:
     runs-on: ubuntu-latest
-    needs: cargo-check
+    # needs: cargo-check
     steps:
       - name: Checkout
         uses: actions/checkout@master
@@ -113,3 +113,29 @@ jobs:
   #       run: |
   #         cargo run > candid/ic_eth_expected.did
   #         diff candid/ic_eth.did candid/ic_eth_expected.did
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Install dfx
+        run: |
+          wget --output-document install-dfx.sh "https://internetcomputer.org/install.sh"
+          bash install-dfx.sh < <(yes Y)
+          rm install-dfx.sh
+          dfx cache install
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Install npm packages
+        run: npm ci
+
+      - name: Deploy
+        run: dfx deploy
+
+      - name: Test (Motoko)
+        run: dfx canister call e2e_motoko test
+
+      - name: Test (Rust)
+        run: dfx canister call e2e_rust test
