@@ -126,7 +126,7 @@ module {
         };
 
         public func gasPrice() : async Nat {
-            let result = request("eth_gasPrice", #Array([]), 256);
+            let result = request("eth_gasPrice", #Null, 256);
             // TODO: decode
             assert false;
             0;

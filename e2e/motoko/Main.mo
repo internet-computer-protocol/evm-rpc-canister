@@ -16,7 +16,7 @@ actor class () {
     public func example() : async Text {
 
         let a = await rpc.gasPrice();
-        let b = await rpc.request("eth_gasPrice", #Array([]), 1000);
+        let b = await rpc.request("eth_gasPrice", #Null, 1000);
 
         debug_show (
             a,
