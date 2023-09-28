@@ -162,9 +162,6 @@ fn transform(args: TransformArgs) -> HttpResponse {
 
 #[ic_cdk::init]
 fn init() {
-    SERVICE_HOSTS_ALLOWLIST
-        .with(|a| (*a.borrow_mut()) = AllowlistSet::from_iter(INITIAL_SERVICE_HOSTS_ALLOWLIST));
-
     stable_authorize(ic_cdk::caller());
 
     METADATA.with(|m| {
@@ -195,7 +192,7 @@ fn init() {
 
 #[update(guard = "require_stable_authorized")]
 fn stable_authorize(principal: Principal) {
-    AUTH_STABLE.with(|a| a.borrow_mut().insert(principal));
+    TRANSIENT_AUTH.with(|a| a.borrow_mut().insert(principal));
 }
 
 #[query(guard = "require_stable_authorized")]

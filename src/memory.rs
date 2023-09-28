@@ -22,9 +22,8 @@ declare_log_buffer!(name = ERROR, capacity = 1000);
 
 thread_local! {
     // Transient static data: this is reset when the canister is upgraded.
-    pub static METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
-    pub static SERVICE_HOSTS_ALLOWLIST: RefCell<AllowlistSet> = RefCell::new(AllowlistSet::new());
-    pub static AUTH_STABLE: RefCell<HashSet<Principal>> = RefCell::new(HashSet::<Principal>::new());
+    pub static TRANSIENT_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
+    pub static TRANSIENT_AUTH: RefCell<HashSet<Principal>> = RefCell::new(HashSet::<Principal>::new());
 
     // Stable static data: this is preserved when the canister is upgraded.
     #[cfg(not(target_arch = "wasm32"))]
