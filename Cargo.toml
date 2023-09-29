@@ -1,7 +1,7 @@
 [package]
 name = "ic_eth_rpc"
 version = "0.1.0"
-description = "Ethereum on IC."
+description = "Interact with EVM blockchains from the Internet Computer."
 authors = ["DFINITY Foundation"]
 readme = "README.md"
 edition = "2021"
@@ -12,7 +12,7 @@ lto = true
 opt-level = 'z'
 
 [dependencies]
-candid = "0.9"
+candid = { version = "0.9", features = ["parser"] }
 ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2023-08-30_23-01" }
 ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-08-30_23-01" }
 # ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-08-30_23-01" }
@@ -22,16 +22,18 @@ ic-cdk-macros = "0.7"
 ic-eth = "0.0"
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
-json5 = "0.4"
 num = "0.4"
 num-traits = "0.2"
 num-derive = "0.4"
 serde = "1"
-serde_bytes = "0.11"
-serde_cbor = "0.11"
-sha2 = "0.10"
 url = "2.4"
 
 [dev-dependencies]
-candid = { features = ["parser"] }
 hex = "0.4"
+
+[patch.crates-io]
+# wasm-bindgen = { package = "ic-wasm-bindgen", version = "0.2" }
+wasm-bindgen = { git = "https://github.com/rvanasa/wasm-bindgen", branch = "ic-wasm-bindgen" }
+
+[workspace]
+members = ["lib/rust", "e2e/rust"]

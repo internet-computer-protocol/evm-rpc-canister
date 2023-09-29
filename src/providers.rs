@@ -3,21 +3,21 @@ use crate::*;
 pub fn get_default_providers() -> Vec<RegisterProvider> {
     vec![
         RegisterProvider {
-            chain_id: 0x1, // Ethereum mainnet
+            chain_id: 1, // Ethereum mainnet
             hostname: "cloudflare-eth.com".to_string(),
             credential_path: "/v1/mainnet".to_string(),
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
         },
         RegisterProvider {
-            chain_id: 0x5, // Goerli testnet
+            chain_id: 5, // Goerli testnet
             hostname: "ethereum-goerli.publicnode.com".to_string(),
             credential_path: "".to_string(),
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
         },
         RegisterProvider {
-            chain_id: 0xaa36a7, // Sepolia testnet
+            chain_id: 11155111, // Sepolia testnet
             hostname: "rpc.sepolia.org".to_string(),
             credential_path: "".to_string(),
             cycles_per_call: 0,
@@ -31,9 +31,10 @@ pub fn do_register_provider(caller: Principal, provider: RegisterProvider) -> u6
     validate_credential_path(&provider.credential_path);
     let provider_id = METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
+        let id = metadata.next_provider_id;
         metadata.next_provider_id += 1;
-        m.borrow_mut().set(metadata.clone()).unwrap();
-        metadata.next_provider_id - 1
+        m.borrow_mut().set(metadata).unwrap();
+        id
     });
     PROVIDERS.with(|p| {
         p.borrow_mut().insert(

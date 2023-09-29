@@ -12,7 +12,7 @@ pub const WASM_PAGE_SIZE: u64 = 65536;
 pub const DEFAULT_NODES_IN_SUBNET: u32 = 13;
 pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
 
-pub const INITIAL_SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
+pub const SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
     "cloudflare-eth.com",
     "ethereum.publicnode.com",
     "ethereum-goerli.publicnode.com",

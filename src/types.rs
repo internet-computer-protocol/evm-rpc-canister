@@ -2,7 +2,7 @@ use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_stable_structures::{BoundedStorable, Storable};
 use num_derive::FromPrimitive;
 use std::borrow::Cow;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
 use crate::PROVIDERS;
@@ -207,10 +207,9 @@ pub enum EthRpcError {
     NoPermission,
     TooFewCycles { expected: u128, received: u128 },
     ServiceUrlParseError,
-    ServiceUrlHostMissing,
-    ServiceUrlHostNotAllowed,
+    ServiceHostNotAllowed(String),
     ProviderNotFound,
     HttpRequestError { code: u32, message: String },
 }
 
-pub type AllowlistSet = HashSet<&'static &'static str>;
+// pub type AllowlistSet = HashSet<&'static &'static str>;

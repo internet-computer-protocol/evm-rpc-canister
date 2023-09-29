@@ -1,11 +1,10 @@
 type Auth = variant { Rpc; RegisterProvider; FreeRpc; Admin };
 type EthRpcError = variant {
-  ServiceUrlHostNotAllowed;
   HttpRequestError : record { code : nat32; message : text };
   TooFewCycles : record { expected : nat; received : nat };
   ServiceUrlParseError;
-  ServiceUrlHostMissing;
   ProviderNotFound;
+  ServiceHostNotAllowed : text;
   NoPermission;
 };
 type ProviderView = record {
@@ -24,7 +23,7 @@ type RegisterProvider = record {
   cycles_per_call : nat64;
   credential_path : text;
 };
-type Result = variant { Ok : vec nat8; Err : EthRpcError };
+type Result = variant { Ok : text; Err : EthRpcError };
 type Result_1 = variant { Ok : nat; Err : EthRpcError };
 type Source = variant {
   Url : text;

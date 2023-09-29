@@ -10,7 +10,7 @@ pub async fn do_http_request(
     source: ResolvedSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
-) -> Result<Vec<u8>, EthRpcError> {
+) -> Result<String, EthRpcError> {
     inc_metric!(requests);
     if !is_authorized(Auth::Rpc) {
         inc_metric!(request_err_no_permission);
@@ -25,12 +25,12 @@ pub async fn do_http_request(
     let parsed_url = url::Url::parse(&service_url).or(Err(EthRpcError::ServiceUrlParseError))?;
     let host = parsed_url
         .host_str()
-        .ok_or(EthRpcError::ServiceUrlHostMissing)?
+        .ok_or(EthRpcError::ServiceUrlParseError)?
         .to_string();
-    if SERVICE_HOSTS_ALLOWLIST.with(|a| !a.borrow().contains(&host.as_str())) {
+    if !SERVICE_HOSTS_ALLOWLIST.contains(&host.as_str()) {
         log!(INFO, "host not allowed: {}", host);
         inc_metric!(request_err_host_not_allowed);
-        return Err(EthRpcError::ServiceUrlHostNotAllowed);
+        return Err(EthRpcError::ServiceHostNotAllowed(host));
     }
     if !is_authorized(Auth::FreeRpc) {
         if cycles_available < cost {
@@ -70,12 +70,14 @@ pub async fn do_http_request(
         headers: request_headers,
         body: Some(json_rpc_payload.as_bytes().to_vec()),
         transform: Some(TransformContext::from_name(
-            "__transform_json_rpc".to_string(),
+            "__transform_eth_rpc".to_string(),
             vec![],
         )),
     };
     match make_http_request(request, cost).await {
-        Ok((result,)) => Ok(result.body),
+        Ok((result,)) => {
+            Ok(String::from_utf8(result.body).expect("invalid UTF-8 in JSON-RPC response"))
+        }
         Err((r, m)) => {
             inc_metric!(request_err_http);
             Err(EthRpcError::HttpRequestError {

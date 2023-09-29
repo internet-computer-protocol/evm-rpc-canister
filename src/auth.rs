@@ -1,6 +1,6 @@
 use candid::Principal;
 
-use crate::{Auth, PrincipalStorable, AUTH, AUTH_STABLE, METADATA};
+use crate::{Auth, PrincipalStorable, AUTH, METADATA};
 
 pub fn is_authorized(auth: Auth) -> bool {
     is_authorized_principal(&ic_cdk::caller(), auth)
@@ -34,16 +34,6 @@ pub fn require_register_provider() -> Result<(), String> {
     } else {
         Err("You are not authorized".to_string())
     }
-}
-
-pub fn require_stable_authorized() -> Result<(), String> {
-    AUTH_STABLE.with(|a| {
-        if ic_cdk::api::is_controller(&ic_cdk::caller()) || a.borrow().contains(&ic_cdk::caller()) {
-            Ok(())
-        } else {
-            Err("You are not stable authorized".to_string())
-        }
-    })
 }
 
 pub fn do_authorize(principal: Principal, auth: Auth) {

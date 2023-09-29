@@ -1,7 +1,7 @@
 use crate::*;
 
 pub fn validate_hostname(hostname: &str) {
-    if SERVICE_HOSTS_ALLOWLIST.with(|a| !a.borrow().contains(&hostname)) {
+    if !SERVICE_HOSTS_ALLOWLIST.contains(&hostname) {
         ic_cdk::trap("hostname not allowed");
     }
 }

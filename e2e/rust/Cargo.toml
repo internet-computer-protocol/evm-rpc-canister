@@ -1,0 +1,19 @@
+[package]
+name = "e2e"
+version = "0.1.0"
+description = "End-to-end testing with a Rust canister."
+authors = ["DFINITY Foundation"]
+# readme = "README.md"
+edition = "2021"
+
+[dependencies]
+candid = "0.9"
+ic-certified-map = "0.4"
+ic-cdk = "0.10"
+ic-cdk-macros = "0.7"
+ic-eth = { path = "../../lib/rust" }
+serde = "1"
+serde_bytes = "0.11"
+
+[build-dependencies]
+ic-cdk-bindgen = "0.1"

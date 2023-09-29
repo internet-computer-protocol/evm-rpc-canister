@@ -1,14 +1,14 @@
 #[macro_export]
 macro_rules! inc_metric {
     ($metric:ident) => {{
-        $crate::METRICS.with(|m| m.borrow_mut().$metric += 1);
+        $crate::TRANSIENT_METRICS.with(|m| m.borrow_mut().$metric += 1);
     }};
 }
 
 #[macro_export]
 macro_rules! inc_metric_entry {
     ($metric:ident, $entry:expr) => {{
-        $crate::METRICS.with(|m| {
+        $crate::TRANSIENT_METRICS.with(|m| {
             m.borrow_mut()
                 .$metric
                 .entry($entry.clone())
@@ -21,14 +21,14 @@ macro_rules! inc_metric_entry {
 #[macro_export]
 macro_rules! add_metric {
     ($metric:ident, $value:expr) => {{
-        $crate::METRICS.with(|m| m.borrow_mut().$metric += $value);
+        $crate::TRANSIENT_METRICS.with(|m| m.borrow_mut().$metric += $value);
     }};
 }
 
 #[macro_export]
 macro_rules! get_metric {
     ($metric:ident) => {{
-        $crate::METRICS.with(|m| m.borrow().$metric)
+        $crate::TRANSIENT_METRICS.with(|m| m.borrow().$metric)
     }};
 }
 
@@ -58,7 +58,7 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
         get_metric!(request_cycles_refunded) as f64,
         "Cycles refunded by request() calls.",
     )?;
-    crate::METRICS.with(|m| {
+    crate::TRANSIENT_METRICS.with(|m| {
         m.borrow()
             .host_requests
             .iter()

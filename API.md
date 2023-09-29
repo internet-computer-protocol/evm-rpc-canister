@@ -26,7 +26,7 @@ Confirm the authenticity of a message signed by an Ethereum private key. Check o
 
 Make a request to a Web2 Ethereum node using the caller's URL to an openly available JSON-RPC service, or the caller's URL (including an API key if necessary). No registered API key of the canister is used in this scenario.
 
-    request: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (Result<blob, EthRpcError>);
+    request: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (Result<text, EthRpcError>);
 
 * `source`: Any of the following enum variants:
   * `Chain: nat64` The relevant EVM network identifier ([reference list](https://chainlist.org/?testnets=true)).
