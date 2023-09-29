@@ -120,6 +120,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
+      - uses: Swatinem/rust-cache@v2
+
       - name: Install dfx
         run: |
           wget --output-document install-dfx.sh "https://internetcomputer.org/install.sh"
