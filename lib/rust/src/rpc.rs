@@ -137,7 +137,7 @@ pub async fn request<'a, T: Serialize>(
         headers: request_headers,
         body: Some(json_rpc_payload.as_bytes().to_vec()),
         transform: Some(TransformContext::from_name(
-            "__ic_eth_transform".to_string(),
+            "__transform_eth_rpc".to_string(),
             vec![],
         )),
     };
@@ -177,8 +177,8 @@ pub async fn request<'a, T: Serialize>(
 /// ### Example
 ///
 /// ```rust
-/// use ic_eth::core::abi::{Token, Contract};
-/// use ic_eth::{include_abi, call_contract};
+/// use eth_rpc::core::abi::{Token, Contract};
+/// use eth_rpc::{include_abi, call_contract};
 ///
 /// let service_url = "https://cloudflare-eth.com/v1/mainnet";
 /// let contract_address = "0x123456789abcdefABCDEF123456789abcdefaBcde".to_string();

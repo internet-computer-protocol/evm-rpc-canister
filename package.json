@@ -1,5 +1,5 @@
 {
-  "name": "ic-eth-rpc",
+  "name": "eth-rpc",
   "version": "0.1.0",
   "scripts": {
     "postinstall": "mops install",

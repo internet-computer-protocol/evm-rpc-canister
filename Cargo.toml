@@ -1,5 +1,5 @@
 [package]
-name = "ic_eth_rpc"
+name = "eth_rpc"
 version = "0.1.0"
 description = "Interact with EVM blockchains from the Internet Computer."
 authors = ["DFINITY Foundation"]

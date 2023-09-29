@@ -7,7 +7,7 @@ use ic_cdk::{query, update};
 // };
 // use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
-use ic_eth_rpc::*;
+use eth_rpc::*;
 
 #[ic_cdk_macros::query]
 #[candid_method(query)]
@@ -290,7 +290,7 @@ fn test_candid_interface() {
 
     service_compatible(
         CandidSource::Text(&new_interface),
-        CandidSource::File(Path::new("candid/ic_eth.did")),
+        CandidSource::File(Path::new("candid/eth_rpc.did")),
     )
     .unwrap();
 }
