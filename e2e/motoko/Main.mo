@@ -37,6 +37,6 @@ actor class Main() {
 
         // TODO: call with cycles
 
-        // let result = await rpc.request("eth_gasPrice", #Null, 1000);
+        // let result = await rpc.request("eth_gasPrice", #Array([]), 1000);
     };
 };
