@@ -18,7 +18,7 @@ At least the following deployment scenarios are supported by the API of this can
 
 **Note**: The canister has been designed to connect to the Ethereum blockchain from the Internet Computer, however, the canister may also be useful to connect to other EVM blockchains that support the same JSON-RPC API and follow standards of Ethereum.	
 
-The API of the canister is specified through a [Candid interface specification](./candid/ic_eth.did). Detailed API documentation is available [here](./API.md).
+The API of the canister is specified through a [Candid interface specification](./candid/eth_rpc.did). Detailed API documentation is available [here](./API.md).
 
 ## Caveats
 

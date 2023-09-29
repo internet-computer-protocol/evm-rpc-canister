@@ -1,18 +1,18 @@
 {
   "canisters": {
-    "ic_eth": {
-      "candid": "candid/ic_eth.did",
+    "eth_rpc": {
+      "candid": "candid/eth_rpc.did",
       "type": "rust",
-      "package": "ic_eth_rpc"
+      "package": "eth_rpc"
     },
     "e2e_rust": {
-      "dependencies": ["ic_eth"],
+      "dependencies": ["eth_rpc"],
       "candid": "e2e/rust/e2e_rust.did",
       "type": "rust",
       "package": "e2e"
     },
     "e2e_motoko": {
-      "dependencies": ["ic_eth"],
+      "dependencies": ["eth_rpc"],
       "type": "motoko",
       "main": "e2e/motoko/Main.mo"
     }

@@ -1,6 +1,6 @@
 # Use this with
 #
-#  docker build -t ic_eth .
+#  docker build -t eth_rpc .
 #  or use ./scripts/docker-build
 #
 # The docker image. To update, run `docker pull ubuntu` locally, and update the
@@ -45,7 +45,7 @@ COPY . .
 RUN touch src/main.rs
 
 RUN ./scripts/build
-RUN sha256sum /ic_eth.wasm.gz
+RUN sha256sum /eth_rpc.wasm.gz
 
-FROM scratch AS scratch_ic_eth
-COPY --from=build /ic_eth.wasm.gz /
+FROM scratch AS scratch_eth_rpc
+COPY --from=build /eth_rpc.wasm.gz /
