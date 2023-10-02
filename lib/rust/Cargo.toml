@@ -19,7 +19,7 @@ name = "ic_eth"
 ethers-core = "2.0"
 ethers-providers = { version = "2.0", default-features = false }
 async-trait = "0.1"
-ic-cdk = "0.10"
+ic-cdk = "0.11"
 ic-cdk-macros = "0.7"
 url = "2.3"
 hex = "0.4"
