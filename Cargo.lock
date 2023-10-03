@@ -506,7 +506,7 @@ dependencies = [
  "candid 0.9.8",
  "ic-cdk",
  "ic-cdk-bindgen",
- "ic-cdk-macros",
+ "ic-cdk-macros 0.8.1",
  "ic-certified-map",
  "ic-eth 0.1.0",
  "serde",
@@ -624,7 +624,7 @@ dependencies = [
  "ic-canister-log",
  "ic-canisters-http-types",
  "ic-cdk",
- "ic-cdk-macros",
+ "ic-cdk-macros 0.8.1",
  "ic-certified-map",
  "ic-eth 0.0.4",
  "ic-metrics-encoder",
@@ -1111,7 +1111,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d4c0b932bf454d5d60e61e13c3c944972fcfd74dc82b9ed5c8b0a75979cf50"
 dependencies = [
  "candid 0.9.8",
- "ic-cdk-macros",
+ "ic-cdk-macros 0.7.1",
  "ic0",
  "serde",
  "serde_bytes",
@@ -1131,6 +1131,20 @@ name = "ic-cdk-macros"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "411c0dd4c149132b68e679274d397053332ee29996c6a541075895881916333b"
+dependencies = [
+ "candid 0.9.8",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_tokenstream",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "ic-cdk-macros"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b6295fd7389c198a97dd99b28b846e18487d99303077102d817eebbf6a924cd"
 dependencies = [
  "candid 0.9.8",
  "proc-macro2",
@@ -1161,7 +1175,7 @@ dependencies = [
  "getrandom",
  "hex",
  "ic-cdk",
- "ic-cdk-macros",
+ "ic-cdk-macros 0.7.1",
  "serde",
  "serde_json",
  "url",
@@ -1177,7 +1191,7 @@ dependencies = [
  "getrandom",
  "hex",
  "ic-cdk",
- "ic-cdk-macros",
+ "ic-cdk-macros 0.8.1",
  "serde",
  "serde_json",
  "url",
