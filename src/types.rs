@@ -1,4 +1,5 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+use ic_eth::core::types::RecoveryMessage;
 use ic_stable_structures::{BoundedStorable, Storable};
 use num_derive::FromPrimitive;
 use std::borrow::Cow;
@@ -203,10 +204,25 @@ impl BoundedStorable for Provider {
 }
 
 #[derive(CandidType, Debug, Deserialize)]
+pub enum Message {
+    Data(Vec<u8>),
+    Hash([u8; 32]),
+}
+
+impl Into<RecoveryMessage> for Message {
+    fn into(self) -> RecoveryMessage {
+        match self {
+            Message::Data(d) => RecoveryMessage::Data(d),
+            Message::Hash(h) => RecoveryMessage::Hash(h.into()),
+        }
+    }
+}
+
+#[derive(CandidType, Debug, Deserialize)]
 pub struct SignedMessage {
     // TODO: Candid `blob` in place of `vec nat8`
     pub address: Vec<u8>,
-    pub message: Vec<u8>,
+    pub message: Message,
     pub signature: Vec<u8>,
 }
 

@@ -14,7 +14,7 @@ use eth_rpc::*;
 pub fn verify_signature(signed_message: SignedMessage) -> bool {
     do_verify_signature(
         &signed_message.address,
-        signed_message.message,
+        signed_message.message.into(),
         signed_message.signature,
     )
 }
