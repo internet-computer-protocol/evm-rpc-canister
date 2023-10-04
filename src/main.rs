@@ -2,10 +2,10 @@ use candid::{candid_method, CandidType};
 use ic_canister_log::log;
 use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
-// use ic_canisters_http_types::{
-//     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
-// };
-// use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
+use ic_canisters_http_types::{
+    HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
+};
+use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
 use eth_rpc::*;
 
