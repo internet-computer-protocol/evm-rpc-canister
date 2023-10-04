@@ -202,6 +202,14 @@ impl BoundedStorable for Provider {
     const IS_FIXED_SIZE: bool = false;
 }
 
+#[derive(CandidType, Debug, Deserialize)]
+pub struct SignedMessage {
+    // TODO: Candid `blob` in place of `vec nat8`
+    pub address: Vec<u8>,
+    pub message: Vec<u8>,
+    pub signature: Vec<u8>,
+}
+
 #[derive(CandidType, Debug)]
 pub enum EthRpcError {
     NoPermission,

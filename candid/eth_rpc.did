@@ -25,6 +25,11 @@ type RegisterProvider = record {
 };
 type Result = variant { Ok : text; Err : EthRpcError };
 type Result_1 = variant { Ok : nat; Err : EthRpcError };
+type SignedMessage = record {
+  signature : vec nat8;
+  message : vec nat8;
+  address : vec nat8;
+};
 type Source = variant {
   Url : text;
   Service : record { hostname : text; chain_id : opt nat64 };
@@ -54,6 +59,6 @@ service : {
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> (bool);
   update_provider : (UpdateProvider) -> ();
-  verify_signature : (vec nat8, vec nat8, vec nat8) -> (bool) query;
+  verify_signature : (SignedMessage) -> (bool) query;
   withdraw_owed_cycles : (nat64, principal) -> ();
 }
