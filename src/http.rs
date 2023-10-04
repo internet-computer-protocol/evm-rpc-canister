@@ -75,8 +75,9 @@ pub async fn do_http_request(
         )),
     };
     match make_http_request(request, cost).await {
-        Ok((result,)) => String::from_utf8(result.body)
-            .map_err(|_| EthRpcError::InvalidResponse("expected UTF-8".to_string())),
+        Ok((result,)) => {
+            String::from_utf8(result.body).map_err(|_| EthRpcError::ResponseParseError)
+        }
         Err((r, m)) => {
             inc_metric!(request_err_http);
             Err(EthRpcError::HttpRequestError {
