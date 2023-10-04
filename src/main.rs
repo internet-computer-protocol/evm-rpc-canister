@@ -177,16 +177,16 @@ fn init() {
 // #[ic_cdk::post_upgrade]
 // fn post_upgrade() {}
 
-// #[query]
-// fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
-//     match request.path() {
-//         "/metrics" => serve_metrics(encode_metrics),
-//         "/logs" => serve_logs_v2(request, &INFO, &ERROR),
-//         "/log/info" => serve_logs(&INFO),
-//         "/log/error" => serve_logs(&ERROR),
-//         _ => HttpResponseBuilder::not_found().build(),
-//     }
-// }
+#[query]
+fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
+    match request.path() {
+        "/metrics" => serve_metrics(encode_metrics),
+        "/logs" => serve_logs_v2(request, &INFO, &ERROR),
+        "/log/info" => serve_logs(&INFO),
+        "/log/error" => serve_logs(&ERROR),
+        _ => HttpResponseBuilder::not_found().build(),
+    }
+}
 
 #[query(guard = "require_admin_or_controller")]
 fn stable_size() -> u64 {
