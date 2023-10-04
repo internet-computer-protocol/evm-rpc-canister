@@ -44,7 +44,7 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
         "Size of the stable memory allocated by this canister measured in 64K Wasm pages.",
     )?;
     w.encode_counter(
-        "requests",
+        "request_calls",
         get_metric!(requests) as f64,
         "Number of request() calls.",
     )?;
