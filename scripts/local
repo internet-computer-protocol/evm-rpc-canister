@@ -6,7 +6,7 @@ dfx deploy eth_rpc --mode reinstall -y
 # dfx canister call eth_rpc authorize "(principal \"$PRINCIPAL\", variant { Rpc })"
 dfx canister call eth_rpc authorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
 
-dfx canister call eth_rpc register_provider '(record {base_url = "https://cloudflare-eth.com"; credential_path = "/v1/mainnet"; chain_id = 1; cycles_per_call = 1000; cycles_per_message_byte = 100})'
+dfx canister call eth_rpc register_provider '(record {hostname = "cloudflare-eth.com"; credential_path = "/v1/mainnet"; chain_id = 1; cycles_per_call = 1000; cycles_per_message_byte = 100})'
 
 dfx canister call eth_rpc request_cost '(variant {Chain=1}, "{ \"jsonrpc\": \"2.0\", \"method\": \"eth_getBlockByNumber\", \"params\": [\"0x2244\", true], \"id\": 1 }", 1000)'
 dfx canister call eth_rpc request '(variant {Chain=1}, "{ \"jsonrpc\": \"2.0\", \"method\": \"eth_getBlockByNumber\", \"params\": [\"0x2244\", true], \"id\": 1 }", 1000)'
