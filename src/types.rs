@@ -209,9 +209,9 @@ pub enum Message {
     Hash([u8; 32]),
 }
 
-impl Into<RecoveryMessage> for Message {
-    fn into(self) -> RecoveryMessage {
-        match self {
+impl From<Message> for RecoveryMessage {
+    fn from(message: Message) -> Self {
+        match message {
             Message::Data(d) => RecoveryMessage::Data(d),
             Message::Hash(h) => RecoveryMessage::Hash(h.into()),
         }
