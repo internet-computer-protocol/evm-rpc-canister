@@ -28,7 +28,6 @@ module {
     };
 
     public type Error = {
-        // RPC canister errors
         #HttpRequestError : { code : Nat32; message : Text };
         #TooFewCycles : { expected : Nat; received : Nat };
         #ServiceUrlParseError;
