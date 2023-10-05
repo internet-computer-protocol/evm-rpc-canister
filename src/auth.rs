@@ -7,8 +7,8 @@ pub fn is_authorized(auth: Auth) -> bool {
 }
 
 pub fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {
-    if auth == Auth::Rpc && METADATA.with(|m| m.borrow().get().open_rpc_access) {
-        return true;
+    if auth == Auth::Rpc && !METADATA.with(|m| m.borrow().get().open_rpc_access) {
+        return false;
     }
     AUTH.with(|a| {
         if let Some(v) = a.borrow().get(&PrincipalStorable(*principal)) {
@@ -78,6 +78,20 @@ fn test_authorization() {
     assert!(!is_authorized_principal(&principal2, Auth::Rpc));
 
     do_authorize(principal1, Auth::RegisterProvider);
-    assert!(!is_authorized_principal(&principal1, Auth::Admin));
     assert!(is_authorized_principal(&principal1, Auth::RegisterProvider));
+    assert!(!is_authorized_principal(
+        &principal2,
+        Auth::RegisterProvider
+    ));
+
+    do_authorize(principal2, Auth::Admin);
+    assert!(!is_authorized_principal(&principal1, Auth::Admin));
+    assert!(is_authorized_principal(&principal2, Auth::Admin));
+
+    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
+    assert!(!is_authorized_principal(&principal2, Auth::FreeRpc));
+    assert!(!is_authorized_principal(
+        &principal2,
+        Auth::RegisterProvider
+    ));
 }
