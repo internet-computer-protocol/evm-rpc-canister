@@ -1,17 +1,16 @@
 use ic_canister_log::declare_log_buffer;
-
-#[cfg(not(target_arch = "wasm32"))]
-use ic_stable_structures::file_mem::FileMemory;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 #[cfg(target_arch = "wasm32")]
 use ic_stable_structures::DefaultMemoryImpl;
+#[cfg(not(target_arch = "wasm32"))]
+use ic_stable_structures::VectorMemory;
 use ic_stable_structures::{Cell, StableBTreeMap};
 use std::cell::RefCell;
 
 use crate::types::*;
 
 #[cfg(not(target_arch = "wasm32"))]
-type Memory = VirtualMemory<FileMemory>;
+type Memory = VirtualMemory<VectorMemory>;
 #[cfg(target_arch = "wasm32")]
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -24,8 +23,8 @@ thread_local! {
 
     // Stable static data: this is preserved when the canister is upgraded.
     #[cfg(not(target_arch = "wasm32"))]
-    pub static MEMORY_MANAGER: RefCell<MemoryManager<FileMemory>> =
-        RefCell::new(MemoryManager::init(FileMemory::new(std::fs::OpenOptions::new().read(true).write(true).create(true).open("target/test_stable_memory.bin").unwrap())));
+    pub static MEMORY_MANAGER: RefCell<MemoryManager<VectorMemory>> =
+        RefCell::new(MemoryManager::init(VectorMemory::new(RefCell::new(vec![]))));
     #[cfg(target_arch = "wasm32")]
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));

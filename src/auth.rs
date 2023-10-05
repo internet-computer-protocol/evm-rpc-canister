@@ -74,6 +74,9 @@ fn test_authorization() {
     assert!(is_authorized(&principal1, Auth::RegisterProvider));
     assert!(!is_authorized(&principal2, Auth::RegisterProvider));
 
+    do_deauthorize(principal1, Auth::RegisterProvider);
+    assert!(!is_authorized(&principal1, Auth::RegisterProvider));
+
     do_authorize(principal2, Auth::Admin);
     assert!(!is_authorized(&principal1, Auth::Admin));
     assert!(is_authorized(&principal2, Auth::Admin));
