@@ -7,9 +7,9 @@ use crate::eth_rpc::{
 use providers::{RpcNodeProvider, MAINNET_PROVIDERS, SEPOLIA_PROVIDERS};
 use requests::GetTransactionCountParams;
 use responses::TransactionReceipt;
-use crate::logs::{DEBUG, INFO};
-use crate::numeric::TransactionCount;
-use crate::state::State;
+use crate::{DEBUG, INFO};
+use crate::ck_eth::numeric::TransactionCount;
+use crate::ck_eth::state::State;
 use ic_canister_log::log;
 use serde::de::DeserializeOwned;
 use serde::Serialize;

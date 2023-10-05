@@ -31,6 +31,7 @@ url = "2.4"
 
 # ckETH
 futures = "0.3"
+hex = "0.4"
 
 [dev-dependencies]
 hex = "0.4"
