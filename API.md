@@ -15,7 +15,16 @@ View this [reference site](https://chainlist.org/?testnets=true) for a list of a
 
 Make a request to a Web2 Ethereum node using the caller's URL to an openly available JSON-RPC service, or the caller's URL (including an API key if necessary). No registered API key of the canister is used in this scenario.
 
-    request: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (Result<text, EthRpcError>);
+```candid
+type Source = variant {
+  Url : text;
+  Service : record { hostname : text; chain_id : opt nat64 };
+  Chain : nat64;
+  Provider : nat64;
+};
+
+request: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (Result<text, EthRpcError>);
+```
 
 * `source`: Any of the following enum variants:
   * `Chain: nat64` The relevant EVM network identifier ([reference list](https://chainlist.org/?testnets=true)).
@@ -30,7 +39,9 @@ Make a request to a Web2 Ethereum node using the caller's URL to an openly avail
 
 Calculate the cost of sending a request with the given input arguments.
 
-    request_cost: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (Result<nat, EthRpcError>) query;
+```candid
+request_cost: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (Result<nat, EthRpcError>) query;
+```
 
 * `source`: See `request`.
 * `json_rpc_payload`: See `request`.
@@ -72,7 +83,20 @@ Clients of this canister need to select a provider that matches w.r.t. the `chai
 
 Confirm the authenticity of a message signed by an Ethereum private key. Check out [this article](https://programtheblockchain.com/posts/2018/02/17/signing-and-verifying-messages-in-ethereum/) to learn more about Ethereum ECDSA signatures.
 
-    verify_signature : (eth_address: vec nat8, message: vec nat8, signature: vec nat8) -> (bool) query;
+```candid
+type Message = variant {
+    Data: vec nat8;
+    Hash: vec nat8
+};
+
+type SignedMessage = record {
+  signature: vec nat8;
+  message: Message;
+  address: vec nat8;
+};
+
+verify_signature : (SignedMessage) -> (bool) query;
+```
 
 * `eth_address`: A binary-encoded Ethereum wallet address (20 bytes).
 * `message`: Either of the following enum variants:
