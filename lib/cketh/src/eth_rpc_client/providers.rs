@@ -1,3 +1,5 @@
+use candid::CandidType;
+
 pub(crate) const MAINNET_PROVIDERS: [RpcNodeProvider; 2] = [
     RpcNodeProvider::Ethereum(EthereumProvider::Ankr),
     RpcNodeProvider::Ethereum(EthereumProvider::Cloudflare),
@@ -9,7 +11,7 @@ pub(crate) const SEPOLIA_PROVIDERS: [RpcNodeProvider; 3] = [
     RpcNodeProvider::Sepolia(SepoliaProvider::PublicNode),
 ];
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Ord, PartialOrd, Hash, CandidType)]
 pub(crate) enum RpcNodeProvider {
     Ethereum(EthereumProvider),
     Sepolia(SepoliaProvider),
@@ -24,7 +26,7 @@ impl RpcNodeProvider {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Ord, PartialOrd, Hash, CandidType)]
 pub(crate) enum EthereumProvider {
     //https://www.ankr.com/rpc/
     Ankr,
@@ -41,7 +43,7 @@ impl EthereumProvider {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Ord, PartialOrd, Hash, CandidType)]
 pub(crate) enum SepoliaProvider {
     //https://www.ankr.com/rpc/
     Ankr,

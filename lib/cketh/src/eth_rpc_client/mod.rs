@@ -11,6 +11,7 @@ use crate::lifecycle::EthereumNetwork;
 use crate::logs::{DEBUG, INFO};
 use crate::numeric::TransactionCount;
 use crate::state::State;
+use candid::CandidType;
 use ic_canister_log::log;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -30,7 +31,7 @@ pub struct EthRpcClient {
 }
 
 impl EthRpcClient {
-    const fn new(chain: EthereumNetwork) -> Self {
+    pub const fn new(chain: EthereumNetwork) -> Self {
         Self { chain }
     }
 
@@ -206,7 +207,7 @@ impl EthRpcClient {
 
 /// Aggregates responses of different providers to the same query.
 /// Guaranteed to be non-empty.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, CandidType)]
 pub struct MultiCallResults<T> {
     results: BTreeMap<RpcNodeProvider, HttpOutcallResult<JsonRpcResult<T>>>,
 }
@@ -269,7 +270,7 @@ impl<T: PartialEq> MultiCallResults<T> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, CandidType)]
 pub enum MultiCallError<T> {
     ConsistentHttpOutcallError(HttpOutcallError),
     ConsistentJsonRpcError { code: i64, message: String },

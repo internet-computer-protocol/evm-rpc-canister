@@ -2,6 +2,7 @@
 //! interface.
 
 use crate::address::Address;
+use crate::checked_amount::CheckedAmountOf;
 use crate::endpoints::CandidBlockTag;
 use crate::eth_rpc_client::responses::TransactionReceipt;
 use crate::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
@@ -45,7 +46,7 @@ pub fn into_nat(quantity: Quantity) -> candid::Nat {
     candid::Nat::from(BigUint::from_bytes_be(&quantity.to_be_bytes()))
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, CandidType)]
 #[serde(transparent)]
 pub struct Data(#[serde(with = "crate::serde_data")] pub Vec<u8>);
 
@@ -55,7 +56,7 @@ impl AsRef<[u8]> for Data {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Hash)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Hash, CandidType)]
 #[serde(transparent)]
 pub struct FixedSizeData(#[serde(with = "crate::serde_data")] pub [u8; 32]);
 
@@ -118,7 +119,18 @@ impl HttpResponsePayload for SendRawTransactionResult {
 }
 
 #[derive(
-    Clone, Copy, Deserialize, Serialize, PartialEq, Eq, Hash, Ord, PartialOrd, Encode, Decode,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    Eq,
+    Hash,
+    Ord,
+    PartialOrd,
+    Encode,
+    Decode,
+    CandidType,
 )]
 #[serde(transparent)]
 #[cbor(transparent)]
@@ -170,7 +182,7 @@ impl HttpResponsePayload for Hash {}
 
 /// Block tags.
 /// See <https://ethereum.org/en/developers/docs/apis/json-rpc/#default-block>
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
 #[serde(rename_all = "lowercase")]
 pub enum BlockTag {
     /// The latest mined block.
@@ -197,7 +209,7 @@ impl From<CandidBlockTag> for BlockTag {
 }
 
 /// The block specification indicating which block to query.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
 #[serde(untagged)]
 pub enum BlockSpec {
     /// Query the block with the specified index.
@@ -231,7 +243,7 @@ impl std::str::FromStr for BlockSpec {
 }
 
 /// Parameters of the [`eth_getLogs`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getlogs) call.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
 #[serde(rename_all = "camelCase")]
 pub struct GetLogsParam {
     /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
@@ -264,7 +276,7 @@ pub struct GetLogsParam {
 //    "removed": false
 //  }
 // ```
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, CandidType)]
 #[serde(rename_all = "camelCase")]
 pub struct LogEntry {
     /// The address from which this log originated.
@@ -283,7 +295,7 @@ pub struct LogEntry {
     pub transaction_hash: Option<Hash>,
     // Integer of the transactions position within the block the log was created from.
     // None if the log is pending.
-    pub transaction_index: Option<Quantity>,
+    pub transaction_index: Option<CheckedAmountOf<()>>,
     /// 32 Bytes - hash of the block in which this log appeared.
     /// None if the block is pending.
     pub block_hash: Option<Hash>,
@@ -489,7 +501,7 @@ fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
     args.response
 }
 
-#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType)]
 pub enum HttpOutcallError {
     /// Error from the IC system API.
     IcError {

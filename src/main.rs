@@ -1,5 +1,7 @@
 use candid::{candid_method, CandidType};
-use cketh_common::{EthRpcClient, EthereumNetwork};
+use cketh_common::eth_rpc::{GetLogsParam, LogEntry};
+use cketh_common::eth_rpc_client::{EthRpcClient, MultiCallError};
+use cketh_common::lifecycle::EthereumNetwork;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -10,12 +12,14 @@ use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
 use eth_rpc::*;
 
+type MultiCallResult<T> = Result<T, MultiCallError<T>>;
+
 #[ic_cdk_macros::update]
 #[candid_method]
-pub async fn eth_get_logs() -> Result<(), EthRpcError> {
-    let client = EthRpcClient::new(EthereumNetwork::Mainnet); //
+pub async fn eth_get_logs(param: GetLogsParam) -> MultiCallResult<Vec<LogEntry>> {
+    let client = EthRpcClient::new(EthereumNetwork::Mainnet);
 
-    client.eth_get_logs().await
+    client.eth_get_logs(param).await
 }
 
 #[ic_cdk_macros::query]

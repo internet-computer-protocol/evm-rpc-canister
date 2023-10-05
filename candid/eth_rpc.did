@@ -1,4 +1,6 @@
 type Auth = variant { Rpc; RegisterProvider; FreeRpc; Admin };
+type BlockSpec = variant { Tag : BlockTag; Number : nat };
+type BlockTag = variant { Safe; Finalized; Latest };
 type EthRpcError = variant {
   HttpRequestError : record { code : nat32; message : text };
   TooFewCycles : record { expected : nat; received : nat };
@@ -8,7 +10,45 @@ type EthRpcError = variant {
   ServiceHostNotAllowed : text;
   NoPermission;
 };
+type EthereumProvider = variant { Cloudflare; Ankr };
+type GetLogsParam = record {
+  topics : vec vec nat8;
+  address : vec vec nat8;
+  to_block : BlockSpec;
+  from_block : BlockSpec;
+};
+type HttpOutcallError = variant {
+  IcError : record { code : RejectionCode; message : text };
+  InvalidHttpJsonRpcResponse : record {
+    status : nat16;
+    body : text;
+    parsing_error : opt text;
+  };
+};
+type JsonRpcResult = variant {
+  Error : record { code : int64; message : text };
+  Result : vec LogEntry;
+};
+type LogEntry = record {
+  transaction_hash : opt vec nat8;
+  block_hash : opt vec nat8;
+  log_index : opt nat;
+  data : vec nat8;
+  transaction_index : opt nat;
+  block_number : opt nat;
+  topics : vec vec nat8;
+  address : vec nat8;
+  removed : bool;
+};
 type Message = variant { Data : vec nat8; Hash : vec nat8 };
+type MultiCallError = variant {
+  InconsistentResults : MultiCallResults;
+  ConsistentJsonRpcError : record { code : int64; message : text };
+  ConsistentHttpOutcallError : HttpOutcallError;
+};
+type MultiCallResults = record {
+  results : vec record { RpcNodeProvider; Result };
+};
 type ProviderView = record {
   owner : principal;
   hostname : text;
@@ -25,8 +65,24 @@ type RegisterProvider = record {
   cycles_per_call : nat64;
   credential_path : text;
 };
-type Result = variant { Ok : text; Err : EthRpcError };
-type Result_1 = variant { Ok : nat; Err : EthRpcError };
+type RejectionCode = variant {
+  NoError;
+  CanisterError;
+  SysTransient;
+  DestinationInvalid;
+  Unknown;
+  SysFatal;
+  CanisterReject;
+};
+type Result = variant { Ok : JsonRpcResult; Err : HttpOutcallError };
+type Result_1 = variant { Ok : vec LogEntry; Err : MultiCallError };
+type Result_2 = variant { Ok : text; Err : EthRpcError };
+type Result_3 = variant { Ok : nat; Err : EthRpcError };
+type RpcNodeProvider = variant {
+  Ethereum : EthereumProvider;
+  Sepolia : SepoliaProvider;
+};
+type SepoliaProvider = variant { BlockPi; PublicNode; Ankr };
 type SignedMessage = record {
   signature : vec nat8;
   message : Message;
@@ -49,14 +105,15 @@ type UpdateProvider = record {
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
+  eth_get_logs : (GetLogsParam) -> (Result_1);
   get_authorized : (Auth) -> (vec text) query;
   get_nodes_in_subnet : () -> (nat32) query;
   get_open_rpc_access : () -> (bool) query;
   get_owed_cycles : (nat64) -> (nat) query;
   get_providers : () -> (vec ProviderView) query;
   register_provider : (RegisterProvider) -> (nat64);
-  request : (Source, text, nat64) -> (Result);
-  request_cost : (Source, text, nat64) -> (Result_1) query;
+  request : (Source, text, nat64) -> (Result_2);
+  request_cost : (Source, text, nat64) -> (Result_3) query;
   set_nodes_in_subnet : (nat32) -> ();
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> (bool);
