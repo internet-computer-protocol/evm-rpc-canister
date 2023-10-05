@@ -12,6 +12,7 @@ impl std::fmt::Display for EthRpcError {
             }
             ServiceUrlParseError => write!(f, "URL parse error"),
             ProviderNotFound => write!(f, "provider not found"),
+            ResponseParseError => write!(f, "response parse error"),
             ServiceHostNotAllowed(host) => write!(f, "service host not allowed: {}", host),
             NoPermission => write!(f, "no permission"),
         }
