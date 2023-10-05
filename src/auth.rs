@@ -7,8 +7,8 @@ pub fn is_authorized(auth: Auth) -> bool {
 }
 
 pub fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {
-    if auth == Auth::Rpc && METADATA.with(|m| m.borrow().get().open_rpc_access) {
-        return true;
+    if auth != Auth::Rpc && !METADATA.with(|m| m.borrow().get().open_rpc_access) {
+        return false;
     }
     AUTH.with(|a| {
         if let Some(v) = a.borrow().get(&PrincipalStorable(*principal)) {
