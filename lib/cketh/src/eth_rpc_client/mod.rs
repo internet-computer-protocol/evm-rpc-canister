@@ -18,7 +18,7 @@ use serde::Serialize;
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 
-mod providers;
+pub mod providers;
 pub mod requests;
 pub mod responses;
 
@@ -28,21 +28,25 @@ mod tests;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EthRpcClient {
     chain: EthereumNetwork,
+    providers: Option<Vec<RpcNodeProvider>>,
 }
 
 impl EthRpcClient {
-    pub const fn new(chain: EthereumNetwork) -> Self {
-        Self { chain }
+    pub const fn new(chain: EthereumNetwork, providers: Option<Vec<RpcNodeProvider>>) -> Self {
+        Self { chain, providers }
     }
 
     pub const fn from_state(state: &State) -> Self {
-        Self::new(state.ethereum_network())
+        Self::new(state.ethereum_network(), None)
     }
 
     fn providers(&self) -> &[RpcNodeProvider] {
-        match self.chain {
-            EthereumNetwork::Mainnet => &MAINNET_PROVIDERS,
-            EthereumNetwork::Sepolia => &SEPOLIA_PROVIDERS,
+        match self.providers {
+            Some(ref providers) => providers,
+            None => match self.chain {
+                EthereumNetwork::Mainnet => MAINNET_PROVIDERS,
+                EthereumNetwork::Sepolia => SEPOLIA_PROVIDERS,
+            },
         }
     }
 

@@ -5,7 +5,7 @@ mod eth_rpc_client {
 
     #[test]
     fn should_retrieve_sepolia_providers_in_stable_order() {
-        let client = EthRpcClient::new(EthereumNetwork::Sepolia);
+        let client = EthRpcClient::new(EthereumNetwork::Sepolia, None);
 
         let providers = client.providers();
 
@@ -21,7 +21,7 @@ mod eth_rpc_client {
 
     #[test]
     fn should_retrieve_mainnet_providers_in_stable_order() {
-        let client = EthRpcClient::new(EthereumNetwork::Mainnet);
+        let client = EthRpcClient::new(EthereumNetwork::Mainnet, None);
 
         let providers = client.providers();
 

@@ -1,6 +1,10 @@
 type Auth = variant { Rpc; RegisterProvider; FreeRpc; Admin };
 type BlockSpec = variant { Tag : BlockTag; Number : nat };
 type BlockTag = variant { Safe; Finalized; Latest };
+type CallConfig = record {
+  network : EthereumNetwork;
+  providers : opt vec RpcNodeProvider;
+};
 type EthRpcError = variant {
   HttpRequestError : record { code : nat32; message : text };
   TooFewCycles : record { expected : nat; received : nat };
@@ -10,6 +14,7 @@ type EthRpcError = variant {
   ServiceHostNotAllowed : text;
   NoPermission;
 };
+type EthereumNetwork = variant { Mainnet; Sepolia };
 type EthereumProvider = variant { Cloudflare; Ankr };
 type GetLogsParam = record {
   topics : vec vec nat8;
@@ -105,7 +110,7 @@ type UpdateProvider = record {
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
-  eth_get_logs : (GetLogsParam) -> (Result_1);
+  eth_get_logs : (CallConfig, GetLogsParam) -> (Result_1);
   get_authorized : (Auth) -> (vec text) query;
   get_nodes_in_subnet : () -> (nat32) query;
   get_open_rpc_access : () -> (bool) query;
