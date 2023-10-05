@@ -3,7 +3,7 @@ type EthRpcError = variant {
   HttpRequestError : record { code : nat32; message : text };
   TooFewCycles : record { expected : nat; received : nat };
   ServiceUrlParseError;
-  InvalidResponse : text;
+  ResponseParseError;
   ProviderNotFound;
   ServiceHostNotAllowed : text;
   NoPermission;
