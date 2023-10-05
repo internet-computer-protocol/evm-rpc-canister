@@ -2,7 +2,6 @@ pub use candid::Principal;
 
 mod accounting;
 mod auth;
-mod ck_eth;
 mod constants;
 mod http;
 mod memory;
@@ -15,7 +14,6 @@ mod validate;
 
 pub use crate::accounting::*;
 pub use crate::auth::*;
-pub use crate::ck_eth::*;
 pub use crate::constants::*;
 pub use crate::http::*;
 pub use crate::memory::*;

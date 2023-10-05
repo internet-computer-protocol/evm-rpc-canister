@@ -1,4 +1,5 @@
 use candid::{candid_method, CandidType};
+use cketh_common::{EthRpcClient, EthereumNetwork};
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -12,8 +13,7 @@ use eth_rpc::*;
 #[ic_cdk_macros::update]
 #[candid_method]
 pub async fn eth_get_logs() -> Result<(), EthRpcError> {
-    let chain_id = 1;
-    let client = ck_eth::client::EthRpcClient::new(chain_id);
+    let client = EthRpcClient::new(EthereumNetwork::Mainnet); //
 
     client.eth_get_logs().await
 }

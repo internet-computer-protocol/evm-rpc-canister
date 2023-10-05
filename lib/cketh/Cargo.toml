@@ -3,6 +3,9 @@ name = "cketh-common"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "cketh_common"
+
 [dependencies]
 askama = "0.12.1"
 candid = { workspace = true }
@@ -15,11 +18,11 @@ ic-canister-log = "0.2.0"
 ic-canisters-http-types = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
-ic-cdk-timers = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-cdk-timers = "0.5.0"
 ic-crypto-ecdsa-secp256k1 = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-crypto-sha3 = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-icrc1-client-cdk = { path = "../../../rosetta-api/icrc1/client/cdk" }
+ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-metrics-encoder = "1"
 ic-stable-structures = { workspace = true }
 icrc-ledger-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
