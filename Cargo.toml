@@ -12,16 +12,16 @@ lto = true
 opt-level = 'z'
 
 [dependencies]
-candid = { version = "0.9", features = ["parser"] }
-ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-certified-map = "0.4"
-ic-cdk = "0.10"
-ic-cdk-macros = "0.7"
-ic-eth = "0.0"
-ic-metrics-encoder = "1.1"
-ic-stable-structures = "0.5"
+candid = { workspace = true }
+ic-canister-log = { workspace = true }
+ic-canisters-http-types = { workspace = true }
+ic-nervous-system-common = { workspace = true }
+ic-metrics-encoder = { workspace = true }
+ic-stable-structures = { workspace = true }
+ic-certified-map = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-eth = { workspace = true }
 num = "0.4"
 num-traits = "0.2"
 num-derive = "0.4"
@@ -31,6 +31,18 @@ url = "2.4"
 
 [dev-dependencies]
 hex = "0.4"
+
+[workspace.dependencies]
+candid = { version = "0.9", features = ["parser"] }
+ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-metrics-encoder = "1.1"
+ic-stable-structures = "0.5"
+ic-certified-map = "0.4"
+ic-cdk = "0.10"
+ic-cdk-macros = "0.7"
+ic-eth = { path = "lib/rust" }
 
 [patch.crates-io]
 # wasm-bindgen = { package = "ic-wasm-bindgen", version = "0.2" }
