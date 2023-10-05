@@ -436,9 +436,9 @@ dependencies = [
 
 [[package]]
 name = "candid"
-version = "0.9.8"
+version = "0.9.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "749938f355699c7dd0975e505d54541cd1d84db239374470bdf500a5d885530a"
+checksum = "aa0f00717c71b8e9ee4c090b4880ec2418c8506bb6828a2c72df72d3896e905d"
 dependencies = [
  "anyhow",
  "binread",
