@@ -75,7 +75,9 @@ Confirm the authenticity of a message signed by an Ethereum private key. Check o
     verify_signature : (eth_address: vec nat8, message: vec nat8, signature: vec nat8) -> (bool) query;
 
 * `eth_address`: A binary-encoded Ethereum wallet address (20 bytes).
-* `message`: An arbitrary binary message corresponding to the signature.
+* `message`: Either of the following enum variants:
+  * `Data : vec nat8` An arbitrary pre-hashed message signed by the given address.
+  * `Hash : vec nat8` A 32-byte Keccak-256 hash signed by the given address.
 * `signature`: An Ethereum ECDSA signature (65 bytes). A common way to generate a signature is via the [`personal_sign` RPC method in MetaMask](https://docs.metamask.io/wallet/how-to/sign-data/#use-personal_sign).
 
 
