@@ -7,7 +7,6 @@ use crate::eth_rpc::{
 use providers::{RpcNodeProvider, MAINNET_PROVIDERS, SEPOLIA_PROVIDERS};
 use requests::GetTransactionCountParams;
 use responses::TransactionReceipt;
-use crate::lifecycle::EthereumNetwork;
 use crate::logs::{DEBUG, INFO};
 use crate::numeric::TransactionCount;
 use crate::state::State;
@@ -26,12 +25,12 @@ mod tests;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EthRpcClient {
-    chain: EthereumNetwork,
+    chain_id: u64,
 }
 
 impl EthRpcClient {
-    const fn new(chain: EthereumNetwork) -> Self {
-        Self { chain }
+    const fn new(chain_id: u64) -> Self {
+        Self { chain_id }
     }
 
     pub const fn from_state(state: &State) -> Self {

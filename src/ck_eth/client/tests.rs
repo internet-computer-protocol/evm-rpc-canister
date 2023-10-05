@@ -307,7 +307,7 @@ mod eth_get_transaction_receipt {
 mod eth_get_transaction_count {
     use crate::address::Address;
     use crate::eth_rpc::{BlockSpec, BlockTag};
-    use crate::eth_rpc_client::requests::GetTransactionCountParams;
+    use crate::ck_eth::client::requests::GetTransactionCountParams;
     use crate::numeric::TransactionCount;
     use std::str::FromStr;
 

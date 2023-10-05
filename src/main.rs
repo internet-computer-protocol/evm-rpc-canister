@@ -9,6 +9,15 @@ use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
 use eth_rpc::*;
 
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_get_logs() -> Result<(), EthRpcError> {
+    let chain_id = 1;
+    let client = ck_eth::client::EthRpcClient::new(chain_id);
+
+    client.eth_get_logs().await
+}
+
 #[ic_cdk_macros::query]
 #[candid_method(query)]
 pub fn verify_signature(signed_message: SignedMessage) -> bool {
