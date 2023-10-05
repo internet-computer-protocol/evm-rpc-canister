@@ -11,17 +11,6 @@ View this [reference site](https://chainlist.org/?testnets=true) for a list of a
 
 ## Methods
 
-### `verify_signature`
-
-Confirm the authenticity of a message signed by an Ethereum private key. Check out [this article](https://programtheblockchain.com/posts/2018/02/17/signing-and-verifying-messages-in-ethereum/) to learn more about Ethereum ECDSA signatures.
-
-    verify_signature : (eth_address: vec nat8, message: vec nat8, signature: vec nat8) -> (bool) query;
-
-* `eth_address`: A binary-encoded Ethereum wallet address (20 bytes).
-* `message`: An arbitrary binary message corresponding to the signature.
-* `signature`: An Ethereum ECDSA signature (65 bytes). A common way to generate a signature is via the [`personal_sign` RPC method in MetaMask](https://docs.metamask.io/wallet/how-to/sign-data/#use-personal_sign).
-
-
 ### `request`
 
 Make a request to a Web2 Ethereum node using the caller's URL to an openly available JSON-RPC service, or the caller's URL (including an API key if necessary). No registered API key of the canister is used in this scenario.
@@ -77,6 +66,17 @@ get_providers: () -> (vec RegisteredProvider) query;
 * `primary`: Indicates whether the RPC provider is a good default compared to others with the same `chain_id`.
 
 Clients of this canister need to select a provider that matches w.r.t. the `chain_id` the network they intend to connect to. If multiple providers are available for a given `chain_id`, the per-message or per-byte price or the entity behind the RPC service (which can be inferred from the `hostname`) may be factors to choose a suitable provider.
+
+
+### `verify_signature`
+
+Confirm the authenticity of a message signed by an Ethereum private key. Check out [this article](https://programtheblockchain.com/posts/2018/02/17/signing-and-verifying-messages-in-ethereum/) to learn more about Ethereum ECDSA signatures.
+
+    verify_signature : (eth_address: vec nat8, message: vec nat8, signature: vec nat8) -> (bool) query;
+
+* `eth_address`: A binary-encoded Ethereum wallet address (20 bytes).
+* `message`: An arbitrary binary message corresponding to the signature.
+* `signature`: An Ethereum ECDSA signature (65 bytes). A common way to generate a signature is via the [`personal_sign` RPC method in MetaMask](https://docs.metamask.io/wallet/how-to/sign-data/#use-personal_sign).
 
 
 ### `register_provider`
