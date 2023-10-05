@@ -7,7 +7,7 @@ use crate::eth_rpc::{
 use crate::eth_rpc_client::providers::{RpcNodeProvider, MAINNET_PROVIDERS, SEPOLIA_PROVIDERS};
 use crate::eth_rpc_client::requests::GetTransactionCountParams;
 use crate::eth_rpc_client::responses::TransactionReceipt;
-use crate::lifecycle::EthereumNetwork;
+use crate::lifecycle::EvmNetwork;
 use crate::logs::{DEBUG, INFO};
 use crate::numeric::TransactionCount;
 use crate::state::State;
@@ -27,12 +27,12 @@ mod tests;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EthRpcClient {
-    chain: EthereumNetwork,
+    chain: EvmNetwork,
     providers: Option<Vec<RpcNodeProvider>>,
 }
 
 impl EthRpcClient {
-    pub const fn new(chain: EthereumNetwork, providers: Option<Vec<RpcNodeProvider>>) -> Self {
+    pub const fn new(chain: EvmNetwork, providers: Option<Vec<RpcNodeProvider>>) -> Self {
         Self { chain, providers }
     }
 
@@ -44,8 +44,8 @@ impl EthRpcClient {
         match self.providers {
             Some(ref providers) => providers,
             None => match self.chain {
-                EthereumNetwork::Mainnet => MAINNET_PROVIDERS,
-                EthereumNetwork::Sepolia => SEPOLIA_PROVIDERS,
+                EvmNetwork::Ethereum => MAINNET_PROVIDERS,
+                EvmNetwork::Sepolia => SEPOLIA_PROVIDERS,
             },
         }
     }
@@ -279,6 +279,7 @@ pub enum MultiCallError<T> {
     ConsistentHttpOutcallError(HttpOutcallError),
     ConsistentJsonRpcError { code: i64, message: String },
     InconsistentResults(MultiCallResults<T>),
+    Unavailable,
 }
 
 impl<T: Debug + PartialEq> MultiCallResults<T> {

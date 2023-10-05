@@ -13,7 +13,7 @@ pub async fn do_http_request(
     max_response_bytes: u64,
 ) -> Result<String, EthRpcError> {
     inc_metric!(requests);
-    if !is_authorized(&caller, Auth::Rpc) && !METADATA.with(|m| m.borrow().get().open_rpc_access) {
+    if !is_rpc_allowed(&caller) {
         inc_metric!(request_err_no_permission);
         return Err(EthRpcError::NoPermission);
     }

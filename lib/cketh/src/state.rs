@@ -2,7 +2,7 @@ use crate::address::Address;
 use crate::eth_logs::{EventSource, ReceivedEthEvent};
 use crate::eth_rpc::BlockTag;
 use crate::lifecycle::upgrade::UpgradeArg;
-use crate::lifecycle::EthereumNetwork;
+use crate::lifecycle::EvmNetwork;
 use crate::logs::DEBUG;
 use crate::numeric::{BlockNumber, LedgerMintIndex, TransactionNonce, Wei};
 use crate::transactions::EthTransactions;
@@ -39,7 +39,7 @@ impl MintedEvent {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct State {
-    pub ethereum_network: EthereumNetwork,
+    pub ethereum_network: EvmNetwork,
     pub ecdsa_key_name: String,
     pub ledger_id: Principal,
     pub ethereum_contract_address: Option<Address>,
@@ -175,7 +175,7 @@ impl State {
         current_request_id
     }
 
-    pub const fn ethereum_network(&self) -> EthereumNetwork {
+    pub const fn ethereum_network(&self) -> EvmNetwork {
         self.ethereum_network
     }
 

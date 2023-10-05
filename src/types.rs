@@ -1,4 +1,6 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+use cketh_common::eth_rpc_client::providers::{EthereumProvider, SepoliaProvider};
+use cketh_common::eth_rpc_client::MultiCallError;
 use ic_eth::core::types::RecoveryMessage;
 use ic_stable_structures::{BoundedStorable, Storable};
 use num_derive::FromPrimitive;
@@ -237,4 +239,10 @@ pub enum EthRpcError {
     HttpRequestError { code: u32, message: String },
 }
 
-// pub type AllowlistSet = HashSet<&'static &'static str>;
+pub type MultiCallResult<T> = Result<T, MultiCallError<T>>;
+
+#[derive(Deserialize, CandidType)]
+pub enum MultiSource {
+    Ethereum(Option<Vec<EthereumProvider>>),
+    Sepolia(Option<Vec<SepoliaProvider>>),
+}

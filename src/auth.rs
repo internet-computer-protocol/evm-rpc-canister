@@ -1,6 +1,6 @@
 use candid::Principal;
 
-use crate::{Auth, PrincipalStorable, AUTH};
+use crate::*;
 
 pub fn is_authorized(principal: &Principal, auth: Auth) -> bool {
     AUTH.with(|a| {
@@ -27,6 +27,10 @@ pub fn require_register_provider() -> Result<(), String> {
     } else {
         Err("You are not authorized".to_string())
     }
+}
+
+pub fn is_rpc_allowed(caller: &Principal) -> bool {
+    METADATA.with(|m| m.borrow().get().open_rpc_access) || is_authorized(caller, Auth::Rpc)
 }
 
 pub fn do_authorize(principal: Principal, auth: Auth) {

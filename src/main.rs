@@ -1,7 +1,8 @@
 use candid::{candid_method, CandidType};
 use cketh_common::eth_rpc::{GetLogsParam, LogEntry};
-use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient, MultiCallError};
-use cketh_common::lifecycle::EthereumNetwork;
+use cketh_common::eth_rpc_client::MultiCallError;
+use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
+use cketh_common::lifecycle::EvmNetwork;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -11,24 +12,27 @@ use ic_cdk::{query, update};
 use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
 use eth_rpc::*;
-use serde::Deserialize;
-
-type MultiCallResult<T> = Result<T, MultiCallError<T>>;
-
-#[derive(Deserialize, CandidType)]
-pub struct CallConfig {
-    pub network: EthereumNetwork,
-    pub providers: Option<Vec<RpcNodeProvider>>,
-}
 
 #[ic_cdk_macros::update]
 #[candid_method]
 pub async fn eth_get_logs(
-    config: CallConfig,
+    source: MultiSource,
     param: GetLogsParam,
 ) -> MultiCallResult<Vec<LogEntry>> {
-    // TODO: access control
-    let client = EthRpcClient::new(config.network, config.providers);
+    if !is_rpc_allowed(&ic_cdk::caller()) {
+        // inc_metric!(eth_get_logs_err_no_permission);
+        return Err(MultiCallError::Unavailable);
+    }
+    let client = match source {
+        MultiSource::Ethereum(providers) => EthRpcClient::new(
+            EvmNetwork::Ethereum,
+            providers.map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
+        ),
+        MultiSource::Sepolia(providers) => EthRpcClient::new(
+            EvmNetwork::Sepolia,
+            providers.map(|p| p.into_iter().map(RpcNodeProvider::Sepolia).collect()),
+        ),
+    };
     client.eth_get_logs(param).await
 }
 
