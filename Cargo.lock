@@ -823,7 +823,7 @@ dependencies = [
  "ic-cdk-bindgen",
  "ic-cdk-macros",
  "ic-certified-map",
- "ic-eth 0.1.0",
+ "ic-eth",
  "serde",
  "serde_bytes",
 ]
@@ -950,7 +950,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-macros",
  "ic-certified-map",
- "ic-eth 0.0.4",
+ "ic-eth",
  "ic-metrics-encoder",
  "ic-nervous-system-common",
  "ic-stable-structures",
@@ -1621,22 +1621,6 @@ dependencies = [
  "serde",
  "strum 0.23.0",
  "strum_macros 0.23.1",
-]
-
-[[package]]
-name = "ic-eth"
-version = "0.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09dadba2b8277c9b3299ebdaf5031b0e957c648bab3117ac444bad76a886afee"
-dependencies = [
- "ethers-core",
- "getrandom",
- "hex",
- "ic-cdk",
- "ic-cdk-macros",
- "serde",
- "serde_json",
- "url",
 ]
 
 [[package]]
