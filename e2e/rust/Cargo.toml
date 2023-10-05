@@ -7,13 +7,13 @@ authors = ["DFINITY Foundation"]
 edition = "2021"
 
 [dependencies]
-candid = "0.9"
-ic-certified-map = "0.4"
-ic-cdk = "0.10"
-ic-cdk-macros = "0.7"
-ic-eth = { path = "../../lib/rust" }
+candid = { workspace = true }
+ic-certified-map = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-eth = { workspace = true }
 serde = "1"
 serde_bytes = "0.11"
 
 [build-dependencies]
-ic-cdk-bindgen = "0.1"
+ic-cdk-bindgen = { workspace = true }
