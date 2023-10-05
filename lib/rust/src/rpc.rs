@@ -114,7 +114,7 @@ pub async fn request<'a, T: Serialize>(
     let json_rpc_payload =
         serde_json::to_string(request).expect("Error while encoding JSON-RPC request");
 
-    let parsed_url = url::Url::parse(&url).expect("Service URL parse error");
+    let parsed_url = url::Url::parse(url).expect("Service URL parse error");
     let host = parsed_url
         .host_str()
         .expect("Invalid JSON-RPC host")
