@@ -1,15 +1,17 @@
-use crate::ck_eth::eth_rpc::{
+use crate::eth_rpc;
+use crate::eth_rpc::{
     are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetLogsParam, Hash,
     HttpOutcallError, HttpOutcallResult, HttpResponsePayload, JsonRpcResult, LogEntry,
-    ResponseSizeEstimate, SendRawTransactionResult, Transaction,
+    ResponseSizeEstimate, SendRawTransactionResult,
 };
-use crate::ck_eth::numeric::TransactionCount;
-use crate::ck_eth::{eth_rpc, EthereumNetwork};
-use crate::{DEBUG, INFO};
+use crate::eth_rpc_client::providers::{RpcNodeProvider, MAINNET_PROVIDERS, SEPOLIA_PROVIDERS};
+use crate::eth_rpc_client::requests::GetTransactionCountParams;
+use crate::eth_rpc_client::responses::TransactionReceipt;
+use crate::lifecycle::EthereumNetwork;
+use crate::logs::{DEBUG, INFO};
+use crate::numeric::TransactionCount;
+use crate::state::State;
 use ic_canister_log::log;
-use providers::{RpcNodeProvider, MAINNET_PROVIDERS, SEPOLIA_PROVIDERS};
-use requests::GetTransactionCountParams;
-use responses::TransactionReceipt;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -30,6 +32,10 @@ pub struct EthRpcClient {
 impl EthRpcClient {
     const fn new(chain: EthereumNetwork) -> Self {
         Self { chain }
+    }
+
+    pub const fn from_state(state: &State) -> Self {
+        Self::new(state.ethereum_network())
     }
 
     fn providers(&self) -> &[RpcNodeProvider] {
@@ -143,20 +149,6 @@ impl EthRpcClient {
                     include_full_transactions: false,
                 },
                 ResponseSizeEstimate::new(6 * 1024),
-            )
-            .await;
-        results.reduce_with_equality()
-    }
-
-    pub async fn eth_get_transaction_by_hash(
-        &self,
-        tx_hash: Hash,
-    ) -> Result<Option<Transaction>, MultiCallError<Option<Transaction>>> {
-        let results: MultiCallResults<Option<Transaction>> = self
-            .parallel_call(
-                "eth_getTransactionByHash",
-                vec![tx_hash],
-                ResponseSizeEstimate::new(1200),
             )
             .await;
         results.reduce_with_equality()

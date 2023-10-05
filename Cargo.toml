@@ -32,6 +32,9 @@ url = "2.4"
 # ckETH
 futures = "0.3"
 hex = "0.4"
+ciborium = "0.2"
+ethnum = "1.4"
+minicbor = "0.20"
 
 [dev-dependencies]
 hex = "0.4"
@@ -58,4 +61,4 @@ ic-eth = { path = "lib/rust" }
 wasm-bindgen = { git = "https://github.com/rvanasa/wasm-bindgen", branch = "ic-wasm-bindgen" }
 
 [workspace]
-members = ["lib/rust", "e2e/rust"]
+members = ["lib/rust", "lib/cketh", "e2e/rust"]

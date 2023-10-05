@@ -14,6 +14,7 @@ type Memory = VirtualMemory<VectorMemory>;
 #[cfg(target_arch = "wasm32")]
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
+declare_log_buffer!(name = DEBUG, capacity = 1000);
 declare_log_buffer!(name = INFO, capacity = 1000);
 declare_log_buffer!(name = ERROR, capacity = 1000);
 

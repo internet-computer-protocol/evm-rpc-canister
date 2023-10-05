@@ -951,6 +951,8 @@ version = "0.1.0"
 dependencies = [
  "assert_matches",
  "candid",
+ "ciborium",
+ "ethnum",
  "futures",
  "hex",
  "ic-canister-log",
@@ -962,6 +964,7 @@ dependencies = [
  "ic-metrics-encoder",
  "ic-nervous-system-common",
  "ic-stable-structures",
+ "minicbor",
  "num",
  "num-derive",
  "num-traits",
@@ -1081,6 +1084,12 @@ dependencies = [
  "web-sys",
  "ws_stream_wasm",
 ]
+
+[[package]]
+name = "ethnum"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c8ff382b2fa527fb7fb06eeebfc5bbb3f17e3cc6b9d70b006c41daa8824adac"
 
 [[package]]
 name = "fastrand"
@@ -2211,6 +2220,12 @@ name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
+
+[[package]]
+name = "minicbor"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d15f4203d71fdf90903c2696e55426ac97a363c67b218488a73b534ce7aca10"
 
 [[package]]
 name = "miniz_oxide"
