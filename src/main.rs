@@ -26,7 +26,13 @@ async fn request(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<String, EthRpcError> {
-    do_http_request(source.resolve()?, &json_rpc_payload, max_response_bytes).await
+    do_http_request(
+        ic_cdk::caller(),
+        source.resolve()?,
+        &json_rpc_payload,
+        max_response_bytes,
+    )
+    .await
 }
 
 #[query]

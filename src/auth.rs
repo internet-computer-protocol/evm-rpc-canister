@@ -1,15 +1,8 @@
 use candid::Principal;
 
-use crate::{Auth, PrincipalStorable, AUTH, METADATA};
+use crate::{Auth, PrincipalStorable, AUTH};
 
-pub fn is_authorized(auth: Auth) -> bool {
-    is_authorized_principal(&ic_cdk::caller(), auth)
-}
-
-pub fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {
-    if auth == Auth::Rpc && !METADATA.with(|m| m.borrow().get().open_rpc_access) {
-        return false;
-    }
+pub fn is_authorized(principal: &Principal, auth: Auth) -> bool {
     AUTH.with(|a| {
         if let Some(v) = a.borrow().get(&PrincipalStorable(*principal)) {
             (v & (auth as u32)) != 0
@@ -21,7 +14,7 @@ pub fn is_authorized_principal(principal: &Principal, auth: Auth) -> bool {
 
 pub fn require_admin_or_controller() -> Result<(), String> {
     let caller = ic_cdk::caller();
-    if is_authorized_principal(&caller, Auth::Admin) || ic_cdk::api::is_controller(&caller) {
+    if is_authorized(&caller, Auth::Admin) || ic_cdk::api::is_controller(&caller) {
         Ok(())
     } else {
         Err("You are not authorized".to_string())
@@ -29,7 +22,7 @@ pub fn require_admin_or_controller() -> Result<(), String> {
 }
 
 pub fn require_register_provider() -> Result<(), String> {
-    if is_authorized(Auth::RegisterProvider) {
+    if is_authorized(&ic_cdk::caller(), Auth::RegisterProvider) {
         Ok(())
     } else {
         Err("You are not authorized".to_string())
@@ -66,32 +59,26 @@ fn test_authorization() {
     let principal2 =
         Principal::from_text("yxhtl-jlpgx-wqnzc-ysego-h6yqe-3zwfo-o3grn-gvuhm-nz3kv-ainub-6ae")
             .unwrap();
-    assert!(!is_authorized_principal(&principal1, Auth::Rpc));
-    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
+    assert!(!is_authorized(&principal1, Auth::Rpc));
+    assert!(!is_authorized(&principal2, Auth::Rpc));
 
     do_authorize(principal1, Auth::Rpc);
-    assert!(is_authorized_principal(&principal1, Auth::Rpc));
-    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
+    assert!(is_authorized(&principal1, Auth::Rpc));
+    assert!(!is_authorized(&principal2, Auth::Rpc));
 
     do_deauthorize(principal1, Auth::Rpc);
-    assert!(!is_authorized_principal(&principal1, Auth::Rpc));
-    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
+    assert!(!is_authorized(&principal1, Auth::Rpc));
+    assert!(!is_authorized(&principal2, Auth::Rpc));
 
     do_authorize(principal1, Auth::RegisterProvider);
-    assert!(is_authorized_principal(&principal1, Auth::RegisterProvider));
-    assert!(!is_authorized_principal(
-        &principal2,
-        Auth::RegisterProvider
-    ));
+    assert!(is_authorized(&principal1, Auth::RegisterProvider));
+    assert!(!is_authorized(&principal2, Auth::RegisterProvider));
 
     do_authorize(principal2, Auth::Admin);
-    assert!(!is_authorized_principal(&principal1, Auth::Admin));
-    assert!(is_authorized_principal(&principal2, Auth::Admin));
+    assert!(!is_authorized(&principal1, Auth::Admin));
+    assert!(is_authorized(&principal2, Auth::Admin));
 
-    assert!(!is_authorized_principal(&principal2, Auth::Rpc));
-    assert!(!is_authorized_principal(&principal2, Auth::FreeRpc));
-    assert!(!is_authorized_principal(
-        &principal2,
-        Auth::RegisterProvider
-    ));
+    assert!(!is_authorized(&principal2, Auth::Rpc));
+    assert!(!is_authorized(&principal2, Auth::FreeRpc));
+    assert!(!is_authorized(&principal2, Auth::RegisterProvider));
 }
