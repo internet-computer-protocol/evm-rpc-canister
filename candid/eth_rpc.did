@@ -3,10 +3,12 @@ type EthRpcError = variant {
   HttpRequestError : record { code : nat32; message : text };
   TooFewCycles : record { expected : nat; received : nat };
   ServiceUrlParseError;
+  ResponseParseError;
   ProviderNotFound;
   ServiceHostNotAllowed : text;
   NoPermission;
 };
+type Message = variant { Data : vec nat8; Hash : vec nat8 };
 type ProviderView = record {
   owner : principal;
   hostname : text;
@@ -25,6 +27,11 @@ type RegisterProvider = record {
 };
 type Result = variant { Ok : text; Err : EthRpcError };
 type Result_1 = variant { Ok : nat; Err : EthRpcError };
+type SignedMessage = record {
+  signature : vec nat8;
+  message : Message;
+  address : vec nat8;
+};
 type Source = variant {
   Url : text;
   Service : record { hostname : text; chain_id : opt nat64 };
@@ -54,6 +61,6 @@ service : {
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> (bool);
   update_provider : (UpdateProvider) -> ();
-  verify_signature : (vec nat8, vec nat8, vec nat8) -> (bool) query;
+  verify_signature : (SignedMessage) -> (bool) query;
   withdraw_owed_cycles : (nat64, principal) -> ();
 }

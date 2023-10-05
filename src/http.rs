@@ -7,12 +7,13 @@ use ic_cdk::api::management_canister::http_request::{
 use crate::*;
 
 pub async fn do_http_request(
+    caller: Principal,
     source: ResolvedSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> Result<String, EthRpcError> {
     inc_metric!(requests);
-    if !is_authorized(Auth::Rpc) {
+    if !is_authorized(&caller, Auth::Rpc) && !METADATA.with(|m| m.borrow().get().open_rpc_access) {
         inc_metric!(request_err_no_permission);
         return Err(EthRpcError::NoPermission);
     }
@@ -32,7 +33,7 @@ pub async fn do_http_request(
         inc_metric!(request_err_host_not_allowed);
         return Err(EthRpcError::ServiceHostNotAllowed(host));
     }
-    if !is_authorized(Auth::FreeRpc) {
+    if !is_authorized(&caller, Auth::FreeRpc) {
         if cycles_available < cost {
             return Err(EthRpcError::TooFewCycles {
                 expected: cost,
@@ -76,7 +77,7 @@ pub async fn do_http_request(
     };
     match make_http_request(request, cost).await {
         Ok((result,)) => {
-            Ok(String::from_utf8(result.body).expect("invalid UTF-8 in JSON-RPC response"))
+            String::from_utf8(result.body).map_err(|_| EthRpcError::ResponseParseError)
         }
         Err((r, m)) => {
             inc_metric!(request_err_http);

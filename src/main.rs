@@ -1,18 +1,22 @@
 use candid::{candid_method, CandidType};
 use ic_canister_log::log;
-use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpResponse, TransformArgs};
-use ic_cdk::{query, update};
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
+use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpResponse, TransformArgs};
+use ic_cdk::{query, update};
 use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
 use eth_rpc::*;
 
 #[ic_cdk_macros::query]
 #[candid_method(query)]
-pub fn verify_signature(eth_address: Vec<u8>, message: Vec<u8>, signature: Vec<u8>) -> bool {
-    do_verify_signature(&eth_address, message, signature)
+pub fn verify_signature(signed_message: SignedMessage) -> bool {
+    do_verify_signature(
+        &signed_message.address,
+        signed_message.message.into(),
+        signed_message.signature,
+    )
 }
 
 #[update]
@@ -22,7 +26,13 @@ async fn request(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<String, EthRpcError> {
-    do_http_request(source.resolve()?, &json_rpc_payload, max_response_bytes).await
+    do_http_request(
+        ic_cdk::caller(),
+        source.resolve()?,
+        &json_rpc_payload,
+        max_response_bytes,
+    )
+    .await
 }
 
 #[query]

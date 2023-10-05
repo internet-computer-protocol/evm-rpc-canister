@@ -28,17 +28,14 @@ module {
     };
 
     public type Error = {
-        // RPC canister errors
         #HttpRequestError : { code : Nat32; message : Text };
         #TooFewCycles : { expected : Nat; received : Nat };
         #ServiceUrlParseError;
         #ServiceHostMissing;
         #ServiceHostNotAllowed : Text;
+        #ResponseParseError;
         #ProviderNotFound;
         #NoPermission;
-
-        // Library errors
-        #ResponseParseError;
     };
 
     public type Result<T> = {
