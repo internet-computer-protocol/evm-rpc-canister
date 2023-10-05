@@ -34,11 +34,9 @@ module {
         #ServiceUrlParseError;
         #ServiceHostMissing;
         #ServiceHostNotAllowed : Text;
+        #ResponseParseError;
         #ProviderNotFound;
         #NoPermission;
-
-        // Library errors
-        #ResponseParseError;
     };
 
     public type Result<T> = {
