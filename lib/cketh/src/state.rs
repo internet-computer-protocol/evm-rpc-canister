@@ -22,7 +22,25 @@ pub mod event;
 mod tests;
 
 thread_local! {
-    pub static STATE: RefCell<Option<State>> = RefCell::default();
+    // pub static STATE: RefCell<Option<State>> = RefCell::default();
+    pub static STATE: RefCell<Option<State>> = RefCell::new(Some(State {
+        ethereum_network: EvmNetwork::Ethereum,
+        ecdsa_key_name: "".to_string(),
+        ledger_id: Principal::anonymous(),
+        ethereum_contract_address: None,
+        ecdsa_public_key: None,
+        minimum_withdrawal_amount: 0_u128.into(),
+        ethereum_block_height: BlockTag::Latest,
+        last_scraped_block_number: 0_u128.into(),
+        last_observed_block_number: None,
+        events_to_mint: BTreeMap::new(),
+        minted_events: BTreeMap::new(),
+        invalid_events: BTreeMap::new(),
+        eth_transactions: EthTransactions::new(0_u128.into()),
+        retrieve_eth_principals: BTreeSet::new(),
+        active_tasks: HashSet::new(),
+        http_request_counter: 0,
+    }));
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]

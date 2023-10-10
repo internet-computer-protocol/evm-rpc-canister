@@ -90,10 +90,10 @@ pub async fn last_received_eth_events(
 
     let result: Vec<LogEntry> = read_state(EthRpcClient::from_state)
         .eth_get_logs(GetLogsParam {
-            from_block: from.into(),
-            to_block: to.into(),
+            from_block: Some(from.into()),
+            to_block: Some(to.into()),
             address: vec![contract_address],
-            topics: vec![FixedSizeData(RECEIVED_ETH_EVENT_TOPIC)],
+            topics: Some(vec![FixedSizeData(RECEIVED_ETH_EVENT_TOPIC)]),
         })
         .await
         .expect("HTTP call failed");

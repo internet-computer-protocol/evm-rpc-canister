@@ -1,6 +1,9 @@
 type Auth = variant { Rpc; RegisterProvider; FreeRpc; Admin };
+type Block = record { base_fee_per_gas : nat; number : nat };
 type BlockSpec = variant { Tag : BlockTag; Number : nat };
+type BlockSpec_1 = variant { Tag : BlockTag_1; Number : nat };
 type BlockTag = variant { Safe; Finalized; Latest };
+type BlockTag_1 = variant { Safe; Finalized; Latest };
 type EthRpcError = variant {
   HttpRequestError : record { code : nat32; message : text };
   TooFewCycles : record { expected : nat; received : nat };
@@ -12,10 +15,10 @@ type EthRpcError = variant {
 };
 type EthereumProvider = variant { Cloudflare; Ankr };
 type GetLogsParam = record {
-  topics : vec vec nat8;
+  topics : opt vec vec nat8;
   address : vec vec nat8;
-  to_block : BlockSpec;
-  from_block : BlockSpec;
+  to_block : opt BlockSpec_1;
+  from_block : opt BlockSpec_1;
 };
 type HttpOutcallError = variant {
   IcError : record { code : RejectionCode; message : text };
@@ -26,6 +29,10 @@ type HttpOutcallError = variant {
   };
 };
 type JsonRpcResult = variant {
+  Error : record { code : int64; message : text };
+  Result : Block;
+};
+type JsonRpcResult_1 = variant {
   Error : record { code : int64; message : text };
   Result : vec LogEntry;
 };
@@ -47,8 +54,17 @@ type MultiCallError = variant {
   Unavailable;
   ConsistentHttpOutcallError : HttpOutcallError;
 };
+type MultiCallError_1 = variant {
+  InconsistentResults : MultiCallResults_1;
+  ConsistentJsonRpcError : record { code : int64; message : text };
+  Unavailable;
+  ConsistentHttpOutcallError : HttpOutcallError;
+};
 type MultiCallResults = record {
   results : vec record { RpcNodeProvider; Result };
+};
+type MultiCallResults_1 = record {
+  results : vec record { RpcNodeProvider; Result_2 };
 };
 type MultiSource = variant {
   Ethereum : opt vec EthereumProvider;
@@ -80,9 +96,11 @@ type RejectionCode = variant {
   CanisterReject;
 };
 type Result = variant { Ok : JsonRpcResult; Err : HttpOutcallError };
-type Result_1 = variant { Ok : vec LogEntry; Err : MultiCallError };
-type Result_2 = variant { Ok : text; Err : EthRpcError };
-type Result_3 = variant { Ok : nat; Err : EthRpcError };
+type Result_1 = variant { Ok : Block; Err : MultiCallError };
+type Result_2 = variant { Ok : JsonRpcResult_1; Err : HttpOutcallError };
+type Result_3 = variant { Ok : vec LogEntry; Err : MultiCallError_1 };
+type Result_4 = variant { Ok : text; Err : EthRpcError };
+type Result_5 = variant { Ok : nat; Err : EthRpcError };
 type RpcNodeProvider = variant {
   Ethereum : EthereumProvider;
   Sepolia : SepoliaProvider;
@@ -110,15 +128,16 @@ type UpdateProvider = record {
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
-  eth_get_logs : (MultiSource, GetLogsParam) -> (Result_1);
+  eth_get_block_by_number : (MultiSource, BlockSpec) -> (Result_1);
+  eth_get_logs : (MultiSource, GetLogsParam) -> (Result_3);
   get_authorized : (Auth) -> (vec text) query;
   get_nodes_in_subnet : () -> (nat32) query;
   get_open_rpc_access : () -> (bool) query;
   get_owed_cycles : (nat64) -> (nat) query;
   get_providers : () -> (vec ProviderView) query;
   register_provider : (RegisterProvider) -> (nat64);
-  request : (Source, text, nat64) -> (Result_2);
-  request_cost : (Source, text, nat64) -> (Result_3) query;
+  request : (Source, text, nat64) -> (Result_4);
+  request_cost : (Source, text, nat64) -> (Result_5) query;
   set_nodes_in_subnet : (nat32) -> ();
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> (bool);

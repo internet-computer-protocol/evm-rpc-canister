@@ -1,5 +1,5 @@
 use candid::{candid_method, CandidType};
-use cketh_common::eth_rpc::{GetLogsParam, LogEntry};
+use cketh_common::eth_rpc::{Block, GetLogsParam, LogEntry, BlockSpec};
 use cketh_common::eth_rpc_client::MultiCallError;
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
 use cketh_common::lifecycle::EvmNetwork;
@@ -41,8 +41,9 @@ pub async fn eth_get_logs(
 #[candid_method]
 pub async fn eth_get_block_by_number(
     source: MultiSource,
-    block: candid::BlockSpec,
+    block: candid_types::BlockSpec,
 ) -> MultiCallResult<Block> {
+    let block: BlockSpec = block.into();
     // TODO: charge for cycles
     if !is_rpc_allowed(&ic_cdk::caller()) {
         // inc_metric!(eth_get_block_by_number_err_no_permission);

@@ -247,6 +247,42 @@ pub enum MultiSource {
     Sepolia(Option<Vec<SepoliaProvider>>),
 }
 
-pub mod candid {
+pub mod candid_types {
+    use candid::CandidType;
+    use serde::Deserialize;
 
+    #[derive(Deserialize, CandidType)]
+    pub enum BlockSpec {
+        Number(u128),
+        Tag(BlockTag),
+    }
+
+    impl From<BlockSpec> for cketh_common::eth_rpc::BlockSpec {
+        fn from(value: BlockSpec) -> Self {
+            use cketh_common::eth_rpc::BlockSpec::*;
+            match value {
+                BlockSpec::Number(n) => Number(n.into()),
+                BlockSpec::Tag(t) => Tag(t.into()),
+            }
+        }
+    }
+
+    #[derive(CandidType, Debug, Default, Deserialize)]
+    pub enum BlockTag {
+        #[default]
+        Latest,
+        Safe,
+        Finalized,
+    }
+
+    impl From<BlockTag> for cketh_common::eth_rpc::BlockTag {
+        fn from(value: BlockTag) -> cketh_common::eth_rpc::BlockTag {
+            use cketh_common::eth_rpc::BlockTag::*;
+            match value {
+                BlockTag::Latest => Latest,
+                BlockTag::Safe => Safe,
+                BlockTag::Finalized => Finalized,
+            }
+        }
+    }
 }
