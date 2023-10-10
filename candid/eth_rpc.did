@@ -1,9 +1,7 @@
 type Auth = variant { Rpc; RegisterProvider; FreeRpc; Admin };
 type Block = record { base_fee_per_gas : nat; number : nat };
 type BlockSpec = variant { Tag : BlockTag; Number : nat };
-type BlockSpec_1 = variant { Tag : BlockTag_1; Number : nat };
 type BlockTag = variant { Safe; Finalized; Latest };
-type BlockTag_1 = variant { Safe; Finalized; Latest };
 type EthRpcError = variant {
   HttpRequestError : record { code : nat32; message : text };
   TooFewCycles : record { expected : nat; received : nat };
@@ -14,12 +12,7 @@ type EthRpcError = variant {
   NoPermission;
 };
 type EthereumProvider = variant { Cloudflare; Ankr };
-type GetLogsParam = record {
-  topics : opt vec vec nat8;
-  address : vec vec nat8;
-  to_block : opt BlockSpec_1;
-  from_block : opt BlockSpec_1;
-};
+type GetLogsArgs = record { addresses : vec vec nat8 };
 type HttpOutcallError = variant {
   IcError : record { code : RejectionCode; message : text };
   InvalidHttpJsonRpcResponse : record {
@@ -129,7 +122,7 @@ service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
   eth_get_block_by_number : (MultiSource, BlockSpec) -> (Result_1);
-  eth_get_logs : (MultiSource, GetLogsParam) -> (Result_3);
+  eth_get_logs : (MultiSource, GetLogsArgs) -> (Result_3);
   get_authorized : (Auth) -> (vec text) query;
   get_nodes_in_subnet : () -> (nat32) query;
   get_open_rpc_access : () -> (bool) query;

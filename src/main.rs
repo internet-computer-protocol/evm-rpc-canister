@@ -1,5 +1,5 @@
 use candid::{candid_method, CandidType};
-use cketh_common::eth_rpc::{Block, GetLogsParam, LogEntry, BlockSpec};
+use cketh_common::eth_rpc::{Block, BlockSpec, GetLogsParam, LogEntry};
 use cketh_common::eth_rpc_client::MultiCallError;
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
 use cketh_common::lifecycle::EvmNetwork;
@@ -13,18 +13,12 @@ use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
 use eth_rpc::*;
 
-#[ic_cdk_macros::update]
-#[candid_method]
-pub async fn eth_get_logs(
-    source: MultiSource,
-    param: GetLogsParam,
-) -> MultiCallResult<Vec<LogEntry>> {
-    // TODO: charge for cycles
+fn get_rpc_client(source: MultiSource) -> Option<EthRpcClient> {
     if !is_rpc_allowed(&ic_cdk::caller()) {
-        // inc_metric!(eth_get_logs_err_no_permission);
-        return Err(MultiCallError::Unavailable);
+        // inc_metric!(eth_*_err_no_permission);
+        return None;
     }
-    let client = match source {
+    Some(match source {
         MultiSource::Ethereum(providers) => EthRpcClient::new(
             EvmNetwork::Ethereum,
             providers.map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
@@ -33,8 +27,19 @@ pub async fn eth_get_logs(
             EvmNetwork::Sepolia,
             providers.map(|p| p.into_iter().map(RpcNodeProvider::Sepolia).collect()),
         ),
-    };
-    client.eth_get_logs(param).await
+    })
+}
+
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_get_logs(
+    source: MultiSource,
+    args: candid_types::GetLogsArgs,
+) -> MultiCallResult<Vec<LogEntry>> {
+    let args: GetLogsParam = args.into();
+    let client = get_rpc_client(source).ok_or_else(|| MultiCallError::Unavailable)?;
+    // TODO: charge for cycles
+    client.eth_get_logs(args).await
 }
 
 #[ic_cdk_macros::update]
@@ -44,21 +49,8 @@ pub async fn eth_get_block_by_number(
     block: candid_types::BlockSpec,
 ) -> MultiCallResult<Block> {
     let block: BlockSpec = block.into();
+    let client = get_rpc_client(source).ok_or_else(|| MultiCallError::Unavailable)?;
     // TODO: charge for cycles
-    if !is_rpc_allowed(&ic_cdk::caller()) {
-        // inc_metric!(eth_get_block_by_number_err_no_permission);
-        return Err(MultiCallError::Unavailable);
-    }
-    let client = match source {
-        MultiSource::Ethereum(providers) => EthRpcClient::new(
-            EvmNetwork::Ethereum,
-            providers.map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
-        ),
-        MultiSource::Sepolia(providers) => EthRpcClient::new(
-            EvmNetwork::Sepolia,
-            providers.map(|p| p.into_iter().map(RpcNodeProvider::Sepolia).collect()),
-        ),
-    };
     client.eth_get_block_by_number(block).await
 }
 

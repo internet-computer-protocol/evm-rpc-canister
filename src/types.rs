@@ -249,6 +249,7 @@ pub enum MultiSource {
 
 pub mod candid_types {
     use candid::CandidType;
+    use cketh_common::address::Address;
     use serde::Deserialize;
 
     #[derive(Deserialize, CandidType)]
@@ -282,6 +283,29 @@ pub mod candid_types {
                 BlockTag::Latest => Latest,
                 BlockTag::Safe => Safe,
                 BlockTag::Finalized => Finalized,
+            }
+        }
+    }
+
+    #[derive(CandidType, Default, Deserialize)]
+    // #[serde(rename_all = "camelCase")]
+    pub struct GetLogsArgs {
+        // pub from_block: Option<BlockSpec>,
+        // pub to_block: Option<BlockSpec>,
+        pub addresses: Vec<[u8; 20]>,
+        // pub topics: Option<Vec<FixedSizeData>>,
+    }
+
+    impl From<GetLogsArgs> for cketh_common::eth_rpc::GetLogsParam {
+        fn from(value: GetLogsArgs) -> Self {
+            cketh_common::eth_rpc::GetLogsParam {
+                // from_block: value.from_block.map(|x| x.into()),
+                // to_block: value.to_block.map(|x| x.into()),
+                address: value.addresses.into_iter().map(Address::new).collect(),
+                // topics: value.topics,
+                from_block: None,
+                to_block: None,
+                topics: None,
             }
         }
     }
