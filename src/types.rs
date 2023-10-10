@@ -246,3 +246,7 @@ pub enum MultiSource {
     Ethereum(Option<Vec<EthereumProvider>>),
     Sepolia(Option<Vec<SepoliaProvider>>),
 }
+
+pub mod candid {
+
+}

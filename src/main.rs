@@ -19,6 +19,7 @@ pub async fn eth_get_logs(
     source: MultiSource,
     param: GetLogsParam,
 ) -> MultiCallResult<Vec<LogEntry>> {
+    // TODO: charge for cycles
     if !is_rpc_allowed(&ic_cdk::caller()) {
         // inc_metric!(eth_get_logs_err_no_permission);
         return Err(MultiCallError::Unavailable);
@@ -34,6 +35,30 @@ pub async fn eth_get_logs(
         ),
     };
     client.eth_get_logs(param).await
+}
+
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_get_block_by_number(
+    source: MultiSource,
+    block: candid::BlockSpec,
+) -> MultiCallResult<Block> {
+    // TODO: charge for cycles
+    if !is_rpc_allowed(&ic_cdk::caller()) {
+        // inc_metric!(eth_get_block_by_number_err_no_permission);
+        return Err(MultiCallError::Unavailable);
+    }
+    let client = match source {
+        MultiSource::Ethereum(providers) => EthRpcClient::new(
+            EvmNetwork::Ethereum,
+            providers.map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
+        ),
+        MultiSource::Sepolia(providers) => EthRpcClient::new(
+            EvmNetwork::Sepolia,
+            providers.map(|p| p.into_iter().map(RpcNodeProvider::Sepolia).collect()),
+        ),
+    };
+    client.eth_get_block_by_number(block).await
 }
 
 #[ic_cdk_macros::query]
