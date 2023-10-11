@@ -672,6 +672,16 @@ where
         const SUBNET_SIZE: u128 = 34;
         let cycles = base_cycles * SUBNET_SIZE / BASE_SUBNET_SIZE;
 
+        let cycles_available = ic_cdk::api::call::msg_cycles_available128();
+        if cycles_available < cycles {
+            return Err(ProviderError::TooFewCycles {
+                expected: cycles,
+                received: cycles_available,
+            }
+            .into());
+        }
+        ic_cdk::api::call::msg_cycles_accept128(cycles);
+
         let response: HttpResponse = match call_with_payment128(
             Principal::management_canister(),
             "http_request",
