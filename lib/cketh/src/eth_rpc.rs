@@ -358,7 +358,7 @@ impl From<FeeHistoryParams> for (Quantity, BlockSpec, Vec<u8>) {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, CandidType)]
 #[serde(rename_all = "camelCase")]
 pub struct FeeHistory {
     /// Lowest number block of the returned range.

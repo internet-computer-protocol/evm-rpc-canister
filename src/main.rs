@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use candid::{candid_method, CandidType};
 use cketh_common::eth_rpc::{
-    Block, BlockSpec, GetLogsParam, HttpOutcallError, JsonRpcReply, LogEntry, ProviderError,
-    RpcError,
+    Block, BlockSpec, FeeHistory, GetLogsParam, HttpOutcallError, JsonRpcReply, LogEntry,
+    ProviderError, RpcError,
 };
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
 use cketh_common::eth_rpc_client::{MultiCallError, RpcTransport};
@@ -123,6 +123,20 @@ pub async fn eth_get_transaction_receipt(
     };
     wrap_result(client.eth_get_transaction_receipt(hash).await)
         .map(|option| option.map(|r| r.into()))
+}
+
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_fee_history(
+    source: MultiSource,
+    args: candid_type::FeeHistoryParams,
+) -> MultiRpcResult<Option<FeeHistory>> {
+    let args = args.into();
+    let client = match get_rpc_client(source) {
+        Some(client) => client,
+        None => return RpcError::ProviderError(ProviderError::ProviderNotFound).into(),
+    };
+    wrap_result(client.eth_fee_history(args).await).map(|option| option.map(|r| r.into()))
 }
 
 #[ic_cdk_macros::query]

@@ -361,7 +361,6 @@ pub mod candid_types {
     }
 
     #[derive(Clone, Debug, CandidType, Deserialize)]
-    #[serde(rename_all = "camelCase")]
     pub struct TransactionReceipt {
         pub block_hash: Hash,
         pub block_number: BlockNumber,
@@ -380,6 +379,26 @@ pub mod candid_types {
                 gas_used: into_nat(value.gas_used),
                 status: value.status,
                 transaction_hash: value.transaction_hash,
+            }
+        }
+    }
+
+    #[derive(Clone, Debug, CandidType, Deserialize)]
+    pub struct FeeHistoryArgs {
+        pub block_count: u128,
+        pub highest_block: Option<BlockSpec>,
+        pub reward_percentiles: Option<Vec<u8>>,
+    }
+
+    impl From<FeeHistoryArgs> for cketh_common::eth_rpc::FeeHistoryParams {
+        fn from(value: FeeHistoryArgs) -> Self {
+            cketh_common::eth_rpc::FeeHistoryParams {
+                block_count: value.block_count.into(),
+                highest_block: value
+                    .highest_block
+                    .unwrap_or(BlockSpec::Tag(BlockTag::default()))
+                    .into(),
+                reward_percentiles: value.reward_percentiles.unwrap_or_default(),
             }
         }
     }
