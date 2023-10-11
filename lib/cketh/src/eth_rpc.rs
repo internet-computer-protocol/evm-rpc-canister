@@ -501,11 +501,11 @@ fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
     args.response
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
 pub enum RpcError {
     ProviderError(ProviderError),
     HttpOutcallError(HttpOutcallError),
-    JsonRpcError { code: i64, message: String },
+    JsonRpcError(JsonRpcError),
 }
 
 impl From<ProviderError> for RpcError {
@@ -517,6 +517,12 @@ impl From<ProviderError> for RpcError {
 impl From<HttpOutcallError> for RpcError {
     fn from(err: HttpOutcallError) -> Self {
         RpcError::HttpOutcallError(err)
+    }
+}
+
+impl From<JsonRpcError> for RpcError {
+    fn from(err: JsonRpcError) -> Self {
+        RpcError::JsonRpcError(err)
     }
 }
 
@@ -549,13 +555,19 @@ pub enum HttpOutcallError {
 pub type HttpOutcallResult<T> = Result<T, HttpOutcallError>;
 
 pub fn are_errors_consistent<T: PartialEq>(
-    left: &HttpOutcallResult<JsonRpcResult<T>>,
-    right: &HttpOutcallResult<JsonRpcResult<T>>,
+    left: &Result<T, RpcError>,
+    right: &Result<T, RpcError>,
 ) -> bool {
     match (left, right) {
-        (Ok(JsonRpcResult::Result(_)), _) | (_, Ok(JsonRpcResult::Result(_))) => true,
+        (Ok(_), _) | (_, Ok(_)) => true,
         _ => left == right,
     }
+}
+
+#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize)]
+pub struct JsonRpcError {
+    pub code: i64,
+    pub message: String,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -602,7 +614,7 @@ pub async fn call<I, O>(
     method: impl Into<String>,
     params: I,
     mut response_size_estimate: ResponseSizeEstimate,
-) -> HttpOutcallResult<JsonRpcResult<O>>
+) -> Result<O, RpcError>
 where
     I: Serialize,
     O: DeserializeOwned + HttpResponsePayload,
@@ -672,13 +684,13 @@ where
             {
                 let new_estimate = response_size_estimate.adjust();
                 if response_size_estimate == new_estimate {
-                    return Err(HttpOutcallError::IcError { code, message });
+                    return Err(HttpOutcallError::IcError { code, message }.into());
                 }
                 log!(DEBUG, "The {eth_method} response didn't fit into {response_size_estimate} bytes, retrying with {new_estimate}");
                 response_size_estimate = new_estimate;
                 continue;
             }
-            Err((code, message)) => return Err(HttpOutcallError::IcError { code, message }),
+            Err((code, message)) => return Err(HttpOutcallError::IcError { code, message }.into()),
         };
 
         log!(
@@ -698,7 +710,8 @@ where
                 status: http_status_code,
                 body: String::from_utf8_lossy(&response.body).to_string(),
                 parsing_error: None,
-            });
+            }
+            .into());
         }
 
         let reply: JsonRpcReply<O> = serde_json::from_slice(&response.body).map_err(|e| {
@@ -709,7 +722,10 @@ where
             }
         })?;
 
-        return Ok(reply.result);
+        return match reply.result {
+            JsonRpcResult::Result(ok) => Ok(ok),
+            JsonRpcResult::Error { code, message } => Err(JsonRpcError { code, message }.into()),
+        };
     }
 }
 

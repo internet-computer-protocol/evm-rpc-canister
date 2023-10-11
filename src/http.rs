@@ -26,10 +26,10 @@ pub async fn do_http_request(
         ResolvedSource::Provider(provider) => (provider.service_url(), Some(provider)),
     };
     let parsed_url =
-        url::Url::parse(&service_url).or(Err(ProviderError::ServiceUrlParseError).into())?;
+        url::Url::parse(&service_url).or(Err(ProviderError::ServiceUrlParseError))?;
     let host = parsed_url
         .host_str()
-        .ok_or(ProviderError::ServiceUrlParseError.into())?
+        .ok_or(ProviderError::ServiceUrlParseError)?
         .to_string();
     if !SERVICE_HOSTS_ALLOWLIST.contains(&host.as_str()) {
         log!(INFO, "host not allowed: {}", host);

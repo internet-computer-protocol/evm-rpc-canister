@@ -1,8 +1,8 @@
-use crate::eth_rpc::{self, ProviderError};
+use crate::eth_rpc::{self, JsonRpcError, RpcError};
 use crate::eth_rpc::{
     are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetLogsParam, Hash,
-    HttpOutcallError, HttpOutcallResult, HttpResponsePayload, JsonRpcResult, LogEntry,
-    ResponseSizeEstimate, SendRawTransactionResult,
+    HttpOutcallResult, HttpResponsePayload, JsonRpcResult, LogEntry, ResponseSizeEstimate,
+    SendRawTransactionResult,
 };
 use crate::eth_rpc_client::providers::{RpcNodeProvider, MAINNET_PROVIDERS, SEPOLIA_PROVIDERS};
 use crate::eth_rpc_client::requests::GetTransactionCountParams;
@@ -92,12 +92,12 @@ impl<T: RpcTransport> EthRpcClient<T> {
         method: impl Into<String> + Clone,
         params: I,
         response_size_estimate: ResponseSizeEstimate,
-    ) -> HttpOutcallResult<JsonRpcResult<O>>
+    ) -> Result<O, RpcError>
     where
         I: Serialize + Clone,
         O: DeserializeOwned + HttpResponsePayload + Debug,
     {
-        let mut last_result: Option<HttpOutcallResult<JsonRpcResult<O>>> = None;
+        let mut last_result: Option<Result<O, RpcError>> = None;
         for provider in self.providers() {
             log!(
                 DEBUG,
@@ -112,17 +112,17 @@ impl<T: RpcTransport> EthRpcClient<T> {
             )
             .await;
             match result {
-                Ok(JsonRpcResult::Result(value)) => return Ok(JsonRpcResult::Result(value)),
-                Ok(json_rpc_error @ JsonRpcResult::Error { .. }) => {
+                Ok(value) => return Ok(value),
+                Err(RpcError::JsonRpcError(json_rpc_error @ JsonRpcError { .. })) => {
                     log!(
                         INFO,
                         "Provider {provider:?} returned JSON-RPC error {json_rpc_error:?}",
                     );
-                    last_result = Some(Ok(json_rpc_error));
+                    last_result = Some(Err(json_rpc_error.into()));
                 }
                 Err(e) => {
                     log!(INFO, "Querying provider {provider:?} returned error {e:?}");
-                    last_result = Some(Err(e));
+                    last_result = Some(Err(e.into()));
                 }
             };
         }
@@ -205,10 +205,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
         results.reduce_with_equality()
     }
 
-    pub async fn eth_fee_history(
-        &self,
-        params: FeeHistoryParams,
-    ) -> HttpOutcallResult<JsonRpcResult<FeeHistory>> {
+    pub async fn eth_fee_history(&self, params: FeeHistoryParams) -> Result<FeeHistory, RpcError> {
         // A typical response is slightly above 300 bytes.
         self.sequential_call_until_ok("eth_feeHistory", params, ResponseSizeEstimate::new(512))
             .await
@@ -217,7 +214,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
     pub async fn eth_send_raw_transaction(
         &self,
         raw_signed_transaction_hex: String,
-    ) -> HttpOutcallResult<JsonRpcResult<SendRawTransactionResult>> {
+    ) -> Result<SendRawTransactionResult, RpcError> {
         // A successful reply is under 256 bytes, but we expect most calls to end with an error
         // since we submit the same transaction from multiple nodes.
         self.sequential_call_until_ok(
@@ -245,13 +242,11 @@ impl<T: RpcTransport> EthRpcClient<T> {
 /// Guaranteed to be non-empty.
 #[derive(Debug, Clone, PartialEq, Eq, CandidType)]
 pub struct MultiCallResults<T> {
-    results: BTreeMap<RpcNodeProvider, HttpOutcallResult<JsonRpcResult<T>>>,
+    pub results: BTreeMap<RpcNodeProvider, Result<T, RpcError>>,
 }
 
 impl<T> MultiCallResults<T> {
-    fn from_non_empty_iter<
-        I: IntoIterator<Item = (RpcNodeProvider, HttpOutcallResult<JsonRpcResult<T>>)>,
-    >(
+    fn from_non_empty_iter<I: IntoIterator<Item = (RpcNodeProvider, Result<T, RpcError>)>>(
         iter: I,
     ) -> Self {
         let results = BTreeMap::from_iter(iter);
@@ -269,10 +264,10 @@ impl<T: PartialEq> MultiCallResults<T> {
     /// * MultiCallError::InconsistentResults if there are different errors.
     fn all_ok(self) -> Result<BTreeMap<RpcNodeProvider, T>, MultiCallError<T>> {
         let mut results = BTreeMap::new();
-        let mut first_error: Option<(RpcNodeProvider, HttpOutcallResult<JsonRpcResult<T>>)> = None;
+        let mut first_error: Option<(RpcNodeProvider, Result<T, RpcError>)> = None;
         for (provider, result) in self.results.into_iter() {
             match result {
-                Ok(JsonRpcResult::Result(value)) => {
+                Ok(value) => {
                     results.insert(provider, value);
                 }
                 _ => match first_error {
@@ -295,11 +290,11 @@ impl<T: PartialEq> MultiCallResults<T> {
         }
         match first_error {
             None => Ok(results),
-            Some((_provider, Ok(JsonRpcResult::Error { code, message }))) => {
-                Err(MultiCallError::ConsistentJsonRpcError { code, message })
-            }
-            Some((_provider, Err(error))) => Err(MultiCallError::ConsistentHttpOutcallError(error)),
-            Some((_, Ok(JsonRpcResult::Result(_)))) => {
+            Some((_provider, Err(RpcError::JsonRpcError(JsonRpcError { code, message })))) => Err(
+                MultiCallError::ConsistentError(JsonRpcError { code, message }.into()),
+            ),
+            Some((_provider, Err(error))) => Err(MultiCallError::ConsistentError(error)),
+            Some((_, Ok(_))) => {
                 panic!("BUG: first_error should be an error type")
             }
         }
@@ -308,9 +303,7 @@ impl<T: PartialEq> MultiCallResults<T> {
 
 #[derive(Debug, PartialEq, Eq, CandidType)]
 pub enum MultiCallError<T> {
-    ConsistentProviderError(ProviderError),
-    ConsistentHttpOutcallError(HttpOutcallError),
-    ConsistentJsonRpcError { code: i64, message: String },
+    ConsistentError(RpcError),
     InconsistentResults(MultiCallResults<T>),
 }
 
@@ -328,7 +321,7 @@ impl<T: Debug + PartialEq> MultiCallResults<T> {
             let error = MultiCallError::InconsistentResults(MultiCallResults::from_non_empty_iter(
                 inconsistent_results
                     .into_iter()
-                    .map(|(provider, result)| (provider, Ok(JsonRpcResult::Result(result)))),
+                    .map(|(provider, result)| (provider, Ok(result))),
             ));
             log!(
                 INFO,

@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use candid::{candid_method, CandidType};
 use cketh_common::eth_rpc::{
-    Block, BlockSpec, GetLogsParam, HttpOutcallResult, JsonRpcError, JsonRpcReply, JsonRpcResult,
-    LogEntry, ProviderError, RpcError,
+    Block, BlockSpec, GetLogsParam, HttpOutcallResult, JsonRpcReply, JsonRpcResult, LogEntry,
+    ProviderError, RpcError,
 };
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
 use cketh_common::eth_rpc_client::{MultiCallError, RpcTransport};
@@ -64,17 +64,10 @@ fn wrap_result<T>(result: MultiCallResult<T>) -> MultiRpcResult<T> {
     match result {
         Ok(value) => MultiRpcResult::Consistent(Ok(value)),
         Err(err) => match err {
-            MultiCallError::ConsistentProviderError(e) => MultiRpcResult::Consistent(Err(e.into())),
-            MultiCallError::ConsistentHttpOutcallError(e) => {
-                MultiRpcResult::Consistent(Err(e.into()))
+            MultiCallError::ConsistentError(e) => MultiRpcResult::Consistent(Err(e)),
+            MultiCallError::InconsistentResults(r) => {
+                MultiRpcResult::Inconsistent(r.results.into_iter().collect())
             }
-            MultiCallError::ConsistentJsonRpcError { code, message } => {
-                MultiRpcResult::Consistent(Err(JsonRpcError {
-                    code,
-                    message,
-                }.into()))
-            }
-            MultiCallError::InconsistentResults(results) => MultiRpcResult::Inconsistent(results),
         },
     }
 }
@@ -86,7 +79,14 @@ pub async fn eth_get_logs(
     args: candid_types::GetLogsArgs,
 ) -> MultiRpcResult<Vec<LogEntry>> {
     let args: GetLogsParam = args.into();
-    let client = get_rpc_client(source).ok_or_else(|| MultiCallError::Unavailable)?;
+    let client = match get_rpc_client(source) {
+        Some(client) => client,
+        None => {
+            return MultiRpcResult::Consistent(Err(RpcError::ProviderError(
+                ProviderError::ProviderNotFound,
+            )))
+        }
+    };
     // TODO: charge for cycles
     wrap_result(client.eth_get_logs(args).await)
 }
@@ -98,7 +98,14 @@ pub async fn eth_get_block_by_number(
     block: candid_types::BlockSpec,
 ) -> MultiRpcResult<Block> {
     let block: BlockSpec = block.into();
-    let client = get_rpc_client(source).ok_or_else(|| MultiCallError::Unavailable)?;
+    let client = match get_rpc_client(source) {
+        Some(client) => client,
+        None => {
+            return MultiRpcResult::Consistent(Err(RpcError::ProviderError(
+                ProviderError::ProviderNotFound,
+            )))
+        }
+    };
     // TODO: charge for cycles
     wrap_result(client.eth_get_block_by_number(block).await)
 }
