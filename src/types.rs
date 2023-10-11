@@ -272,8 +272,11 @@ pub mod candid_types {
     pub enum BlockTag {
         #[default]
         Latest,
-        Safe,
         Finalized,
+        Safe,
+        Earliest,
+        Pending,
+        Number(u64),
     }
 
     impl From<BlockTag> for cketh_common::eth_rpc::BlockTag {
@@ -283,6 +286,7 @@ pub mod candid_types {
                 BlockTag::Latest => Latest,
                 BlockTag::Safe => Safe,
                 BlockTag::Finalized => Finalized,
+                _ => unimplemented!(),
             }
         }
     }
