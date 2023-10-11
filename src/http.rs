@@ -2,7 +2,7 @@ use cketh_common::eth_rpc::{HttpOutcallError, ProviderError, RpcError};
 use ic_canister_log::log;
 use ic_cdk::api::management_canister::http_request::{
     http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
-    TransformContext,
+    HttpResponse, TransformContext,
 };
 use num_traits::ToPrimitive;
 
@@ -13,7 +13,7 @@ pub async fn do_http_request(
     source: ResolvedSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
-) -> Result<String, RpcError> {
+) -> Result<HttpResponse, RpcError> {
     inc_metric!(requests);
     if !is_rpc_allowed(&caller) {
         inc_metric!(request_err_no_permission);
@@ -25,8 +25,7 @@ pub async fn do_http_request(
         ResolvedSource::Url(url) => (url, None),
         ResolvedSource::Provider(provider) => (provider.service_url(), Some(provider)),
     };
-    let parsed_url =
-        url::Url::parse(&service_url).or(Err(ProviderError::ServiceUrlParseError))?;
+    let parsed_url = url::Url::parse(&service_url).or(Err(ProviderError::ServiceUrlParseError))?;
     let host = parsed_url
         .host_str()
         .ok_or(ProviderError::ServiceUrlParseError)?
@@ -80,14 +79,7 @@ pub async fn do_http_request(
         )),
     };
     match make_http_request(request, cost).await {
-        Ok((result,)) => String::from_utf8(result.body).or_else(|e| {
-            Err(HttpOutcallError::InvalidHttpJsonRpcResponse {
-                status: result.status.0.to_u16().unwrap_or(u16::MAX),
-                body: "".to_string(),
-                parsing_error: Some(format!("{e}")),
-            }
-            .into())
-        }),
+        Ok((response,)) => Ok(response),
         Err((r, m)) => {
             inc_metric!(request_err_http);
             Err(HttpOutcallError::IcError {
@@ -97,4 +89,19 @@ pub async fn do_http_request(
             .into())
         }
     }
+}
+
+pub fn get_http_response_status(status: candid::Nat) -> u16 {
+    status.0.to_u16().unwrap_or(u16::MAX)
+}
+
+pub fn get_http_response_body(response: HttpResponse) -> Result<String, RpcError> {
+    String::from_utf8(response.body).or_else(|e| {
+        Err(HttpOutcallError::InvalidHttpJsonRpcResponse {
+            status: get_http_response_status(response.status),
+            body: "".to_string(),
+            parsing_error: Some(format!("{e}")),
+        }
+        .into())
+    })
 }

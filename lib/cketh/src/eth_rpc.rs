@@ -438,6 +438,15 @@ impl<T> JsonRpcResult<T> {
     }
 }
 
+impl<T> From<JsonRpcResult<T>> for Result<T, RpcError> {
+    fn from(result: JsonRpcResult<T>) -> Self {
+        match result {
+            JsonRpcResult::Result(r) => Ok(r),
+            JsonRpcResult::Error { code, message } => Err(JsonRpcError { code, message }.into()),
+        }
+    }
+}
+
 /// Describes a payload transformation to execute before passing the HTTP response to consensus.
 /// The purpose of these transformations is to ensure that the response encoding is deterministic
 /// (the field order is the same).
@@ -565,7 +574,9 @@ pub fn are_errors_consistent<T: PartialEq>(
     }
 }
 
-#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize)]
+#[derive(
+    Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Serialize, Deserialize,
+)]
 pub struct JsonRpcError {
     pub code: i64,
     pub message: String,
@@ -735,10 +746,7 @@ where
             }
         })?;
 
-        return match reply.result {
-            JsonRpcResult::Result(ok) => Ok(ok),
-            JsonRpcResult::Error { code, message } => Err(JsonRpcError { code, message }.into()),
-        };
+        return reply.result.into();
     }
 }
 

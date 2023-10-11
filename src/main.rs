@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use candid::{candid_method, CandidType};
 use cketh_common::eth_rpc::{
-    Block, BlockSpec, GetLogsParam, HttpOutcallResult, JsonRpcReply, JsonRpcResult, LogEntry,
-    ProviderError, RpcError,
+    Block, BlockSpec, GetLogsParam, HttpOutcallError, JsonRpcReply, LogEntry, ProviderError,
+    RpcError,
 };
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
 use cketh_common::eth_rpc_client::{MultiCallError, RpcTransport};
@@ -32,7 +32,7 @@ impl RpcTransport for CanisterTransport {
         service: RpcNodeProvider,
         json: &str,
         max_response_bytes: u64,
-    ) -> HttpOutcallResult<JsonRpcResult<T>> {
+    ) -> Result<T, RpcError> {
         let response = do_http_request(
             ic_cdk::caller(),
             ResolvedSource::Url(service.url().to_string()),
@@ -41,9 +41,16 @@ impl RpcTransport for CanisterTransport {
         )
         .await
         .unwrap();
-        let json: JsonRpcReply<T> =
-            serde_json::from_str(&response).expect("JSON was not well-formatted") /* TODO */;
-        Ok(json.result)
+        let status = get_http_response_status(response.status.clone());
+        let body = get_http_response_body(response)?;
+        let json: JsonRpcReply<T> = serde_json::from_str(&body).unwrap_or_else(|e| {
+            Err(HttpOutcallError::InvalidHttpJsonRpcResponse {
+                status,
+                body,
+                parsing_error: Some(format!("JSON response parse error: {e}")),
+            })
+        })?;
+        json.result.into()
     }
 }
 
@@ -142,13 +149,14 @@ async fn request(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<String, RpcError> {
-    do_http_request(
+    let response = do_http_request(
         ic_cdk::caller(),
         source.resolve()?,
         &json_rpc_payload,
         max_response_bytes,
     )
-    .await
+    .await?;
+    get_http_response_body(response)
 }
 
 #[query]
