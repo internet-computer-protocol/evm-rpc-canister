@@ -92,13 +92,8 @@ pub async fn eth_get_logs(
     let args: GetLogsParam = args.into();
     let client = match get_rpc_client(source) {
         Some(client) => client,
-        None => {
-            return MultiRpcResult::Consistent(Err(RpcError::ProviderError(
-                ProviderError::ProviderNotFound,
-            )))
-        }
+        None => return RpcError::ProviderError(ProviderError::ProviderNotFound).into(),
     };
-    // TODO: charge for cycles
     wrap_result(client.eth_get_logs(args).await)
 }
 
@@ -111,13 +106,8 @@ pub async fn eth_get_block_by_number(
     let block: BlockSpec = block.into();
     let client = match get_rpc_client(source) {
         Some(client) => client,
-        None => {
-            return MultiRpcResult::Consistent(Err(RpcError::ProviderError(
-                ProviderError::ProviderNotFound,
-            )))
-        }
+        None => return RpcError::ProviderError(ProviderError::ProviderNotFound).into(),
     };
-    // TODO: charge for cycles
     wrap_result(client.eth_get_block_by_number(block).await)
 }
 
@@ -126,9 +116,8 @@ pub async fn eth_get_block_by_number(
 // pub async fn eth_get_transaction_receipt(
 //     source: MultiSource,
 //     hash: Hash,
-// ) -> MultiCallResult<TransactionReceipt> {
+// ) -> MultiCallResult<candid_types::TransactionReceipt> {
 //     let client = get_rpc_client(source).ok_or_else(|| MultiCallError::Unavailable)?;
-//     // TODO: charge for cycles
 //     wrap_result(client.eth_get_transaction_receipt(hash).await)
 // }
 
