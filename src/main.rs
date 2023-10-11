@@ -24,7 +24,7 @@ struct CanisterTransport;
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RpcTransport for CanisterTransport {
-    async fn json_rpc_request<T: DeserializeOwned>(
+    async fn call_json_rpc<T: DeserializeOwned>(
         service: RpcNodeProvider,
         json: &str,
         max_response_bytes: u64,

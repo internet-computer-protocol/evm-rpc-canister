@@ -30,7 +30,7 @@ mod tests;
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait RpcTransport: Debug {
-    async fn json_rpc_request<T: DeserializeOwned>(
+    async fn call_json_rpc<T: DeserializeOwned>(
         service: RpcNodeProvider,
         json: &str,
         max_response_bytes: u64,
@@ -43,7 +43,7 @@ pub struct DefaultTransport;
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RpcTransport for DefaultTransport {
-    async fn json_rpc_request<T: DeserializeOwned>(
+    async fn call_json_rpc<T: DeserializeOwned>(
         _service: RpcNodeProvider,
         _json: &str,
         _max_response_bytes: u64,

@@ -669,7 +669,7 @@ where
         let base_cycles = 400_000_000u128 + 100_000u128 * (2 * effective_size_estimate as u128);
 
         const BASE_SUBNET_SIZE: u128 = 13;
-        const SUBNET_SIZE: u128 = 34;
+        const SUBNET_SIZE: u128 = T::get_subnet_size();
         let cycles = base_cycles * SUBNET_SIZE / BASE_SUBNET_SIZE;
 
         let cycles_available = ic_cdk::api::call::msg_cycles_available128();
