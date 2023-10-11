@@ -104,7 +104,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
                 "[sequential_call_until_ok]: calling provider: {:?}",
                 provider
             );
-            let result = eth_rpc::call(
+            let result = eth_rpc::call::<T, _, _>(
                 provider.url().to_string(),
                 method.clone(),
                 params.clone(),
@@ -149,7 +149,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
             let mut fut = Vec::with_capacity(providers.len());
             for provider in providers {
                 log!(DEBUG, "[parallel_call]: will call provider: {:?}", provider);
-                fut.push(eth_rpc::call(
+                fut.push(eth_rpc::call::<T, _, _>(
                     provider.url().to_string(),
                     method.clone(),
                     params.clone(),
