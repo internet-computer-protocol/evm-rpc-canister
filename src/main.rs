@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use candid::{candid_method, CandidType};
 use cketh_common::eth_rpc::{
-    Block, BlockSpec, GetLogsParam, HttpOutcallResult, JsonRpcReply, JsonRpcResult, LogEntry,
-    ProviderError, RpcError,
+    Block, BlockSpec, GetLogsParam, HttpOutcallResult, JsonRpcError, JsonRpcReply, JsonRpcResult,
+    LogEntry, ProviderError, RpcError,
 };
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
 use cketh_common::eth_rpc_client::{MultiCallError, RpcTransport};
@@ -63,14 +63,19 @@ fn get_rpc_client(source: MultiSource) -> Option<EthRpcClient<CanisterTransport>
 fn wrap_result<T>(result: MultiCallResult<T>) -> MultiRpcResult<T> {
     match result {
         Ok(value) => MultiRpcResult::Consistent(Ok(value)),
-        Err(err) => MultiRpcResult::Inconsistent(match err {
-            MultiCallError::ConsistentProviderError(e) => Err(e.into()),
-            MultiCallError::ConsistentHttpOutcallError(e) => Err(e.into()),
-            MultiCallError::ConsistentJsonRpcError { code, message } => {
-                Err(RpcError::JsonRpcError { code, message })
+        Err(err) => match err {
+            MultiCallError::ConsistentProviderError(e) => MultiRpcResult::Consistent(Err(e.into())),
+            MultiCallError::ConsistentHttpOutcallError(e) => {
+                MultiRpcResult::Consistent(Err(e.into()))
             }
-            MultiCallError::InconsistentResults(e) => Err(e.into()),
-        }),
+            MultiCallError::ConsistentJsonRpcError { code, message } => {
+                MultiRpcResult::Consistent(Err(JsonRpcError {
+                    code,
+                    message,
+                }.into()))
+            }
+            MultiCallError::InconsistentResults(results) => MultiRpcResult::Inconsistent(results),
+        },
     }
 }
 

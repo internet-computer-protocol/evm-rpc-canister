@@ -1,4 +1,4 @@
-use cketh_common::eth_rpc::{HttpOutcallError, RpcError, ProviderError};
+use cketh_common::eth_rpc::{HttpOutcallError, ProviderError, RpcError};
 use ic_canister_log::log;
 use ic_cdk::api::management_canister::http_request::{
     http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
@@ -17,7 +17,7 @@ pub async fn do_http_request(
     inc_metric!(requests);
     if !is_rpc_allowed(&caller) {
         inc_metric!(request_err_no_permission);
-        return Err(RpcError::ProviderError(ProviderError::NoPermission));
+        return Err(ProviderError::NoPermission.into());
     }
     let cycles_available = ic_cdk::api::call::msg_cycles_available128();
     let cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
@@ -25,26 +25,24 @@ pub async fn do_http_request(
         ResolvedSource::Url(url) => (url, None),
         ResolvedSource::Provider(provider) => (provider.service_url(), Some(provider)),
     };
-    let parsed_url = url::Url::parse(&service_url).or(Err(RpcError::ProviderError(
-        ProviderError::ServiceUrlParseError,
-    )))?;
+    let parsed_url =
+        url::Url::parse(&service_url).or(Err(ProviderError::ServiceUrlParseError).into())?;
     let host = parsed_url
         .host_str()
-        .ok_or(RpcError::ProviderError(ProviderError::ServiceUrlParseError))?
+        .ok_or(ProviderError::ServiceUrlParseError.into())?
         .to_string();
     if !SERVICE_HOSTS_ALLOWLIST.contains(&host.as_str()) {
         log!(INFO, "host not allowed: {}", host);
         inc_metric!(request_err_host_not_allowed);
-        return Err(RpcError::ProviderError(
-            ProviderError::ServiceHostNotAllowed(host),
-        ));
+        return Err(ProviderError::ServiceHostNotAllowed(host).into());
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
         if cycles_available < cost {
-            return Err(RpcError::ProviderError(ProviderError::TooFewCycles {
+            return Err(ProviderError::TooFewCycles {
                 expected: cost,
                 received: cycles_available,
-            }));
+            }
+            .into());
         }
         ic_cdk::api::call::msg_cycles_accept128(cost);
         if let Some(mut provider) = provider {
@@ -83,20 +81,20 @@ pub async fn do_http_request(
     };
     match make_http_request(request, cost).await {
         Ok((result,)) => String::from_utf8(result.body).or_else(|e| {
-            Err(RpcError::HttpOutcallError(
-                HttpOutcallError::InvalidHttpJsonRpcResponse {
-                    status: result.status.0.to_u16().unwrap_or(u16::MAX),
-                    body: "".to_string(),
-                    parsing_error: Some(format!("{e}")),
-                },
-            ))
+            Err(HttpOutcallError::InvalidHttpJsonRpcResponse {
+                status: result.status.0.to_u16().unwrap_or(u16::MAX),
+                body: "".to_string(),
+                parsing_error: Some(format!("{e}")),
+            }
+            .into())
         }),
         Err((r, m)) => {
             inc_metric!(request_err_http);
-            Err(RpcError::HttpOutcallError(HttpOutcallError::IcError {
+            Err(HttpOutcallError::IcError {
                 code: r,
                 message: m,
-            }))
+            }
+            .into())
         }
     }
 }
