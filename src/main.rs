@@ -111,15 +111,19 @@ pub async fn eth_get_block_by_number(
     wrap_result(client.eth_get_block_by_number(block).await)
 }
 
-// #[ic_cdk_macros::update]
-// #[candid_method]
-// pub async fn eth_get_transaction_receipt(
-//     source: MultiSource,
-//     hash: Hash,
-// ) -> MultiCallResult<candid_types::TransactionReceipt> {
-//     let client = get_rpc_client(source).ok_or_else(|| MultiCallError::Unavailable)?;
-//     wrap_result(client.eth_get_transaction_receipt(hash).await)
-// }
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_get_transaction_receipt(
+    source: MultiSource,
+    hash: candid_types::Hash,
+) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
+    let client = match get_rpc_client(source) {
+        Some(client) => client,
+        None => return RpcError::ProviderError(ProviderError::ProviderNotFound).into(),
+    };
+    wrap_result(client.eth_get_transaction_receipt(hash).await)
+        .map(|option| option.map(|r| r.into()))
+}
 
 #[ic_cdk_macros::query]
 #[candid_method(query)]

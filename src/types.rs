@@ -259,6 +259,27 @@ pub enum MultiRpcResult<T> {
     Inconsistent(Vec<(RpcNodeProvider, Result<T, RpcError>)>),
 }
 
+impl<T> MultiRpcResult<T> {
+    pub fn and_then<R>(
+        self,
+        op: impl Fn(Result<T, RpcError>) -> Result<R, RpcError>,
+    ) -> MultiRpcResult<R> {
+        match self {
+            MultiRpcResult::Consistent(r) => MultiRpcResult::Consistent(op(r)),
+            MultiRpcResult::Inconsistent(rs) => {
+                MultiRpcResult::Inconsistent(rs.into_iter().map(|(p, r)| (p, op(r))).collect())
+            }
+        }
+    }
+
+    pub fn map<R>(self, op: impl Fn(T) -> R) -> MultiRpcResult<R> {
+        self.and_then(|r| match r {
+            Ok(value) => Ok(op(value)),
+            Err(err) => Err(err),
+        })
+    }
+}
+
 impl<T> From<RpcError> for MultiRpcResult<T> {
     fn from(error: RpcError) -> Self {
         MultiRpcResult::Consistent(Err(error))
@@ -267,8 +288,15 @@ impl<T> From<RpcError> for MultiRpcResult<T> {
 
 pub mod candid_types {
     use candid::CandidType;
-    use cketh_common::address::Address;
+    use cketh_common::{
+        address::Address,
+        eth_rpc::into_nat,
+        eth_rpc_client::responses::TransactionStatus,
+        numeric::{BlockNumber, Wei},
+    };
     use serde::Deserialize;
+
+    pub use cketh_common::eth_rpc::Hash;
 
     #[derive(Clone, Debug, CandidType, Deserialize)]
     pub enum BlockSpec {
@@ -328,6 +356,30 @@ pub mod candid_types {
                 from_block: None,
                 to_block: None,
                 topics: None,
+            }
+        }
+    }
+
+    #[derive(Clone, Debug, CandidType, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct TransactionReceipt {
+        pub block_hash: Hash,
+        pub block_number: BlockNumber,
+        pub effective_gas_price: Wei,
+        pub gas_used: candid::Nat,
+        pub status: TransactionStatus,
+        pub transaction_hash: Hash,
+    }
+
+    impl From<cketh_common::eth_rpc_client::responses::TransactionReceipt> for TransactionReceipt {
+        fn from(value: cketh_common::eth_rpc_client::responses::TransactionReceipt) -> Self {
+            TransactionReceipt {
+                block_hash: value.block_hash,
+                block_number: value.block_number,
+                effective_gas_price: value.effective_gas_price,
+                gas_used: into_nat(value.gas_used),
+                status: value.status,
+                transaction_hash: value.transaction_hash,
             }
         }
     }
