@@ -24,6 +24,10 @@ struct CanisterTransport;
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RpcTransport for CanisterTransport {
+    fn get_subnet_size() -> u32 {
+        METADATA.with(|m| m.borrow().get().nodes_in_subnet)
+    }
+
     async fn call_json_rpc<T: DeserializeOwned>(
         service: RpcNodeProvider,
         json: &str,

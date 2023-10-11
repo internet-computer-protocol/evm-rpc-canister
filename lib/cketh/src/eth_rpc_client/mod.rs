@@ -30,6 +30,9 @@ mod tests;
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait RpcTransport: Debug {
+    // TODO: remove after refactoring to `call_json_rpc()`
+    fn get_subnet_size() -> u32;
+
     async fn call_json_rpc<T: DeserializeOwned>(
         service: RpcNodeProvider,
         json: &str,
@@ -37,12 +40,17 @@ pub trait RpcTransport: Debug {
     ) -> HttpOutcallResult<JsonRpcResult<T>>;
 }
 
+// Placeholder during refactoring
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DefaultTransport;
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RpcTransport for DefaultTransport {
+    fn get_subnet_size() -> u32 {
+        unimplemented!()
+    }
+
     async fn call_json_rpc<T: DeserializeOwned>(
         _service: RpcNodeProvider,
         _json: &str,
