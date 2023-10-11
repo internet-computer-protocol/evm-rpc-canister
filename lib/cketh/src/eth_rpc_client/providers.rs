@@ -19,7 +19,7 @@ pub enum RpcNodeProvider {
 }
 
 impl RpcNodeProvider {
-    pub(crate) fn url(&self) -> &str {
+    pub fn url(&self) -> &str {
         match self {
             Self::Ethereum(provider) => provider.ethereum_mainnet_endpoint_url(),
             Self::Sepolia(provider) => provider.ethereum_sepolia_endpoint_url(),

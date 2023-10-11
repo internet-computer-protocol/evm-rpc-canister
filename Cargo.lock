@@ -811,6 +811,7 @@ version = "0.1.0"
 dependencies = [
  "askama",
  "assert_matches",
+ "async-trait",
  "candid",
  "ciborium",
  "ethers-core",
@@ -1605,6 +1606,7 @@ dependencies = [
 name = "eth_rpc"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "candid",
  "cketh-common",
  "hex",

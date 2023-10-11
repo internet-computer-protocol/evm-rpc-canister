@@ -11,12 +11,14 @@ use crate::lifecycle::EvmNetwork;
 use crate::logs::{DEBUG, INFO};
 use crate::numeric::TransactionCount;
 use crate::state::State;
+use async_trait::async_trait;
 use candid::CandidType;
 use ic_canister_log::log;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::fmt::Debug;
+use std::marker::PhantomData;
 
 pub mod providers;
 pub mod requests;
@@ -25,15 +27,45 @@ pub mod responses;
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct EthRpcClient {
-    chain: EvmNetwork,
-    providers: Option<Vec<RpcNodeProvider>>,
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+pub trait RpcTransport: Debug {
+    async fn json_rpc_request<T: DeserializeOwned>(
+        service: RpcNodeProvider,
+        json: &str,
+        max_response_bytes: u64,
+    ) -> HttpOutcallResult<JsonRpcResult<T>>;
 }
 
-impl EthRpcClient {
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DefaultTransport;
+
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl RpcTransport for DefaultTransport {
+    async fn json_rpc_request<T: DeserializeOwned>(
+        _service: RpcNodeProvider,
+        _json: &str,
+        _max_response_bytes: u64,
+    ) -> HttpOutcallResult<JsonRpcResult<T>> {
+        unimplemented!()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EthRpcClient<T: RpcTransport> {
+    chain: EvmNetwork,
+    providers: Option<Vec<RpcNodeProvider>>,
+    phantom: PhantomData<T>,
+}
+
+impl<T: RpcTransport> EthRpcClient<T> {
     pub const fn new(chain: EvmNetwork, providers: Option<Vec<RpcNodeProvider>>) -> Self {
-        Self { chain, providers }
+        Self {
+            chain,
+            providers,
+            phantom: PhantomData,
+        }
     }
 
     pub const fn from_state(state: &State) -> Self {

@@ -1,7 +1,10 @@
+use async_trait::async_trait;
 use candid::{candid_method, CandidType};
-use cketh_common::eth_rpc::{Block, BlockSpec, GetLogsParam, LogEntry};
-use cketh_common::eth_rpc_client::MultiCallError;
+use cketh_common::eth_rpc::{
+    Block, BlockSpec, GetLogsParam, HttpOutcallResult, JsonRpcReply, JsonRpcResult, LogEntry,
+};
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
+use cketh_common::eth_rpc_client::{MultiCallError, RpcTransport};
 use cketh_common::lifecycle::EvmNetwork;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
@@ -12,8 +15,34 @@ use ic_cdk::{query, update};
 use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
 use eth_rpc::*;
+use serde::de::DeserializeOwned;
 
-fn get_rpc_client(source: MultiSource) -> Option<EthRpcClient> {
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct CanisterTransport;
+
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl RpcTransport for CanisterTransport {
+    async fn json_rpc_request<T: DeserializeOwned>(
+        service: RpcNodeProvider,
+        json: &str,
+        max_response_bytes: u64,
+    ) -> HttpOutcallResult<JsonRpcResult<T>> {
+        let response = do_http_request(
+            ic_cdk::caller(),
+            ResolvedSource::Url(service.url().to_string()),
+            json,
+            max_response_bytes,
+        )
+        .await
+        .unwrap();
+        let json: JsonRpcReply<T> =
+            serde_json::from_str(&response).expect("JSON was not well-formatted") /* TODO */;
+        Ok(json.result)
+    }
+}
+
+fn get_rpc_client(source: MultiSource) -> Option<EthRpcClient<CanisterTransport>> {
     if !is_rpc_allowed(&ic_cdk::caller()) {
         // inc_metric!(eth_*_err_no_permission);
         return None;
@@ -53,6 +82,17 @@ pub async fn eth_get_block_by_number(
     // TODO: charge for cycles
     client.eth_get_block_by_number(block).await
 }
+
+// #[ic_cdk_macros::update]
+// #[candid_method]
+// pub async fn eth_get_transaction_receipt(
+//     source: MultiSource,
+//     hash: Hash,
+// ) -> MultiCallResult<TransactionReceipt> {
+//     let client = get_rpc_client(source).ok_or_else(|| MultiCallError::Unavailable)?;
+//     // TODO: charge for cycles
+//     client.eth_get_transaction_receipt(hash).await
+// }
 
 #[ic_cdk_macros::query]
 #[candid_method(query)]
