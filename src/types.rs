@@ -259,6 +259,12 @@ pub enum MultiRpcResult<T> {
     Inconsistent(Vec<(RpcNodeProvider, Result<T, RpcError>)>),
 }
 
+impl<T> From<RpcError> for MultiRpcResult<T> {
+    fn from(error: RpcError) -> Self {
+        MultiRpcResult::Consistent(Err(error))
+    }
+}
+
 pub mod candid_types {
     use candid::CandidType;
     use cketh_common::address::Address;
