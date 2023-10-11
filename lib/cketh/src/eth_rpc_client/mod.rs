@@ -1,8 +1,7 @@
 use crate::eth_rpc::{self, JsonRpcError, RpcError};
 use crate::eth_rpc::{
     are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetLogsParam, Hash,
-    HttpOutcallResult, HttpResponsePayload, JsonRpcResult, LogEntry, ResponseSizeEstimate,
-    SendRawTransactionResult,
+    HttpResponsePayload, LogEntry, ResponseSizeEstimate, SendRawTransactionResult,
 };
 use crate::eth_rpc_client::providers::{RpcNodeProvider, MAINNET_PROVIDERS, SEPOLIA_PROVIDERS};
 use crate::eth_rpc_client::requests::GetTransactionCountParams;
@@ -37,7 +36,7 @@ pub trait RpcTransport: Debug {
         service: RpcNodeProvider,
         json: &str,
         max_response_bytes: u64,
-    ) -> HttpOutcallResult<JsonRpcResult<T>>;
+    ) -> Result<T, RpcError>;
 }
 
 // Placeholder during refactoring
@@ -55,7 +54,7 @@ impl RpcTransport for DefaultTransport {
         _service: RpcNodeProvider,
         _json: &str,
         _max_response_bytes: u64,
-    ) -> HttpOutcallResult<JsonRpcResult<T>> {
+    ) -> Result<T, RpcError> {
         unimplemented!()
     }
 }
