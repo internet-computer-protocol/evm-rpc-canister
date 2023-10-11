@@ -1,4 +1,4 @@
-use crate::eth_rpc;
+use crate::eth_rpc::{self, ProviderError};
 use crate::eth_rpc::{
     are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetLogsParam, Hash,
     HttpOutcallError, HttpOutcallResult, HttpResponsePayload, JsonRpcResult, LogEntry,
@@ -308,10 +308,10 @@ impl<T: PartialEq> MultiCallResults<T> {
 
 #[derive(Debug, PartialEq, Eq, CandidType)]
 pub enum MultiCallError<T> {
+    ConsistentProviderError(ProviderError),
     ConsistentHttpOutcallError(HttpOutcallError),
     ConsistentJsonRpcError { code: i64, message: String },
     InconsistentResults(MultiCallResults<T>),
-    Unavailable,
 }
 
 impl<T: Debug + PartialEq> MultiCallResults<T> {

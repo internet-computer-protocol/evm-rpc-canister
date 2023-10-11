@@ -501,7 +501,35 @@ fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
     args.response
 }
 
-#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum RpcError {
+    ProviderError(ProviderError),
+    HttpOutcallError(HttpOutcallError),
+    JsonRpcError { code: i64, message: String },
+}
+
+impl From<ProviderError> for RpcError {
+    fn from(err: ProviderError) -> Self {
+        RpcError::ProviderError(err)
+    }
+}
+
+impl From<HttpOutcallError> for RpcError {
+    fn from(err: HttpOutcallError) -> Self {
+        RpcError::HttpOutcallError(err)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
+pub enum ProviderError {
+    NoPermission,
+    TooFewCycles { expected: u128, received: u128 },
+    ServiceUrlParseError,
+    ServiceHostNotAllowed(String),
+    ProviderNotFound,
+}
+
+#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize)]
 pub enum HttpOutcallError {
     /// Error from the IC system API.
     IcError {

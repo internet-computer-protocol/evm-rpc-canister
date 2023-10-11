@@ -1,5 +1,6 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-use cketh_common::eth_rpc_client::providers::{EthereumProvider, SepoliaProvider};
+use cketh_common::eth_rpc::{ProviderError, RpcError};
+use cketh_common::eth_rpc_client::providers::{EthereumProvider, RpcNodeProvider, SepoliaProvider};
 use cketh_common::eth_rpc_client::MultiCallError;
 use ic_eth::core::types::RecoveryMessage;
 use ic_stable_structures::{BoundedStorable, Storable};
@@ -22,7 +23,7 @@ pub enum Source {
 }
 
 impl Source {
-    pub fn resolve(self) -> Result<ResolvedSource, EthRpcError> {
+    pub fn resolve(self) -> Result<ResolvedSource, ProviderError> {
         Ok(match self {
             Source::Url(name) => ResolvedSource::Url(name),
             Source::Provider(id) => ResolvedSource::Provider({
@@ -30,7 +31,7 @@ impl Source {
                     providers
                         .borrow()
                         .get(&id)
-                        .ok_or(EthRpcError::ProviderNotFound)
+                        .ok_or(ProviderError::ProviderNotFound)
                 })?
             }),
             Source::Chain(id) => ResolvedSource::Provider(PROVIDERS.with(|providers| {
@@ -39,7 +40,7 @@ impl Source {
                     .iter()
                     .find(|(_, p)| p.primary && p.chain_id == id)
                     .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
-                    .ok_or(EthRpcError::ProviderNotFound)?
+                    .ok_or(ProviderError::ProviderNotFound)?
                     .1)
             })?),
             Source::Service { hostname, chain_id } => {
@@ -56,7 +57,7 @@ impl Source {
                         .iter()
                         .find(|(_, p)| p.primary && matches_provider(p))
                         .or_else(|| providers.iter().find(|(_, p)| matches_provider(p)))
-                        .ok_or(EthRpcError::ProviderNotFound)?
+                        .ok_or(ProviderError::ProviderNotFound)?
                         .1)
                 })?)
             }
@@ -133,7 +134,7 @@ impl BoundedStorable for PrincipalStorable {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(Debug, CandidType)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct ProviderView {
     pub provider_id: u64,
     pub owner: Principal,
@@ -144,7 +145,7 @@ pub struct ProviderView {
     pub primary: bool,
 }
 
-#[derive(Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct RegisterProvider {
     pub chain_id: u64,
     pub hostname: String,
@@ -153,7 +154,7 @@ pub struct RegisterProvider {
     pub cycles_per_message_byte: u64,
 }
 
-#[derive(Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct UpdateProvider {
     pub provider_id: u64,
     pub hostname: Option<String>,
@@ -205,7 +206,7 @@ impl BoundedStorable for Provider {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(CandidType, Debug, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum Message {
     Data(Vec<u8>),
     Hash([u8; 32]),
@@ -220,7 +221,7 @@ impl From<Message> for RecoveryMessage {
     }
 }
 
-#[derive(CandidType, Debug, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct SignedMessage {
     // TODO: Candid `blob` in place of `vec nat8`
     pub address: Vec<u8>,
@@ -228,23 +229,34 @@ pub struct SignedMessage {
     pub signature: Vec<u8>,
 }
 
-#[derive(CandidType, Debug)]
-pub enum EthRpcError {
-    NoPermission,
-    TooFewCycles { expected: u128, received: u128 },
-    ServiceUrlParseError,
-    ServiceHostNotAllowed(String),
-    ResponseParseError,
-    ProviderNotFound,
-    HttpRequestError { code: u32, message: String },
-}
+// #[derive(Clone, Debug, CandidType, Deserialize)]
+// pub enum RpcError {
+//     ProviderError(ProviderError),
+//     HttpOutcallError(HttpOutcallError),
+//     JsonRpcError { code: i64, message: String },
+// }
+
+// #[derive(Clone, Debug, CandidType, Deserialize)]
+// pub enum ProviderError {
+//     NoPermission,
+//     TooFewCycles { expected: u128, received: u128 },
+//     ServiceUrlParseError,
+//     ServiceHostNotAllowed(String),
+//     ProviderNotFound,
+// }
 
 pub type MultiCallResult<T> = Result<T, MultiCallError<T>>;
 
-#[derive(Deserialize, CandidType)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum MultiSource {
     Ethereum(Option<Vec<EthereumProvider>>),
     Sepolia(Option<Vec<SepoliaProvider>>),
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum MultiRpcResult<T> {
+    Consistent(Result<T, RpcError>),
+    Inconsistent(Vec<(RpcNodeProvider, Result<T, RpcError>)>),
 }
 
 pub mod candid_types {
@@ -252,7 +264,7 @@ pub mod candid_types {
     use cketh_common::address::Address;
     use serde::Deserialize;
 
-    #[derive(Deserialize, CandidType)]
+    #[derive(Clone, Debug, CandidType, Deserialize)]
     pub enum BlockSpec {
         Number(u128),
         Tag(BlockTag),
@@ -268,7 +280,7 @@ pub mod candid_types {
         }
     }
 
-    #[derive(CandidType, Debug, Default, Deserialize)]
+    #[derive(Clone, Debug, CandidType, Deserialize, Default)]
     pub enum BlockTag {
         #[default]
         Latest,
@@ -291,7 +303,7 @@ pub mod candid_types {
         }
     }
 
-    #[derive(CandidType, Default, Deserialize)]
+    #[derive(Clone, Debug, CandidType, Deserialize)]
     // #[serde(rename_all = "camelCase")]
     pub struct GetLogsArgs {
         // pub from_block: Option<BlockSpec>,

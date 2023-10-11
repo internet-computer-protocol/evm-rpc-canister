@@ -23,7 +23,7 @@ type Source = variant {
   Provider : nat64;
 };
 
-request: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (Result<text, EthRpcError>);
+request: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (Result<text, RpcError>);
 ```
 
 * `source`: Any of the following enum variants:
@@ -40,7 +40,7 @@ request: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> 
 Calculate the cost of sending a request with the given input arguments.
 
 ```candid
-request_cost: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (Result<nat, EthRpcError>) query;
+request_cost: (source: Source, json_rpc_payload: text, max_response_bytes: nat64) -> (Result<nat, RpcError>) query;
 ```
 
 * `source`: See `request`.

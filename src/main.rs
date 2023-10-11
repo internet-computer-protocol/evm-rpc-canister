@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use candid::{candid_method, CandidType};
 use cketh_common::eth_rpc::{
     Block, BlockSpec, GetLogsParam, HttpOutcallResult, JsonRpcReply, JsonRpcResult, LogEntry,
+    ProviderError, RpcError,
 };
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
 use cketh_common::eth_rpc_client::{MultiCallError, RpcTransport};
@@ -59,16 +60,30 @@ fn get_rpc_client(source: MultiSource) -> Option<EthRpcClient<CanisterTransport>
     })
 }
 
+fn wrap_result<T>(result: MultiCallResult<T>) -> MultiRpcResult<T> {
+    match result {
+        Ok(value) => MultiRpcResult::Consistent(Ok(value)),
+        Err(err) => MultiRpcResult::Inconsistent(match err {
+            MultiCallError::ConsistentProviderError(e) => Err(e.into()),
+            MultiCallError::ConsistentHttpOutcallError(e) => Err(e.into()),
+            MultiCallError::ConsistentJsonRpcError { code, message } => {
+                Err(RpcError::JsonRpcError { code, message })
+            }
+            MultiCallError::InconsistentResults(e) => Err(e.into()),
+        }),
+    }
+}
+
 #[ic_cdk_macros::update]
 #[candid_method]
 pub async fn eth_get_logs(
     source: MultiSource,
     args: candid_types::GetLogsArgs,
-) -> MultiCallResult<Vec<LogEntry>> {
+) -> MultiRpcResult<Vec<LogEntry>> {
     let args: GetLogsParam = args.into();
     let client = get_rpc_client(source).ok_or_else(|| MultiCallError::Unavailable)?;
     // TODO: charge for cycles
-    client.eth_get_logs(args).await
+    wrap_result(client.eth_get_logs(args).await)
 }
 
 #[ic_cdk_macros::update]
@@ -76,11 +91,11 @@ pub async fn eth_get_logs(
 pub async fn eth_get_block_by_number(
     source: MultiSource,
     block: candid_types::BlockSpec,
-) -> MultiCallResult<Block> {
+) -> MultiRpcResult<Block> {
     let block: BlockSpec = block.into();
     let client = get_rpc_client(source).ok_or_else(|| MultiCallError::Unavailable)?;
     // TODO: charge for cycles
-    client.eth_get_block_by_number(block).await
+    wrap_result(client.eth_get_block_by_number(block).await)
 }
 
 // #[ic_cdk_macros::update]
@@ -91,7 +106,7 @@ pub async fn eth_get_block_by_number(
 // ) -> MultiCallResult<TransactionReceipt> {
 //     let client = get_rpc_client(source).ok_or_else(|| MultiCallError::Unavailable)?;
 //     // TODO: charge for cycles
-//     client.eth_get_transaction_receipt(hash).await
+//     wrap_result(client.eth_get_transaction_receipt(hash).await)
 // }
 
 #[ic_cdk_macros::query]
@@ -110,7 +125,7 @@ async fn request(
     source: Source,
     json_rpc_payload: String,
     max_response_bytes: u64,
-) -> Result<String, EthRpcError> {
+) -> Result<String, RpcError> {
     do_http_request(
         ic_cdk::caller(),
         source.resolve()?,
@@ -126,7 +141,7 @@ fn request_cost(
     source: Source,
     json_rpc_payload: String,
     max_response_bytes: u64,
-) -> Result<u128, EthRpcError> {
+) -> Result<u128, RpcError> {
     Ok(get_request_cost(
         &source.resolve().unwrap(),
         &json_rpc_payload,
@@ -177,7 +192,7 @@ fn get_owed_cycles(provider_id: u64) -> u128 {
     let provider = PROVIDERS.with(|p| {
         p.borrow()
             .get(&provider_id)
-            .ok_or(EthRpcError::ProviderNotFound)
+            .ok_or(ProviderError::ProviderNotFound)
     });
     let provider = provider.expect("Provider not found");
     if ic_cdk::caller() != provider.owner {
@@ -197,7 +212,7 @@ async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
     let provider = PROVIDERS.with(|p| {
         p.borrow()
             .get(&provider_id)
-            .ok_or(EthRpcError::ProviderNotFound)
+            .ok_or(ProviderError::ProviderNotFound)
     });
     let mut provider = provider.expect("Provider not found");
     if ic_cdk::caller() != provider.owner {
@@ -233,7 +248,7 @@ async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
             let provider = PROVIDERS.with(|p| {
                 p.borrow()
                     .get(&provider_id)
-                    .ok_or(EthRpcError::ProviderNotFound)
+                    .ok_or(ProviderError::ProviderNotFound)
             });
             let mut provider = provider.expect("Provider not found during refund, cycles lost.");
             PROVIDERS.with(|p| {

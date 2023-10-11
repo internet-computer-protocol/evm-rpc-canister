@@ -1,7 +1,7 @@
 use candid::candid_method;
 use ic_cdk_macros::update;
 
-use e2e::declarations::eth_rpc::{eth_rpc, EthRpcError, Source};
+use e2e::declarations::eth_rpc::{eth_rpc, ProviderError, RpcError, Source};
 
 fn main() {}
 
@@ -19,7 +19,7 @@ pub async fn test() {
     );
 
     // Get cycles cost
-    let (cycles_result,): (Result<u128, EthRpcError>,) =
+    let (cycles_result,): (Result<u128, RpcError>,) =
         ic_cdk::call(eth_rpc.0, "request_cost", params.clone())
             .await
             .unwrap();
@@ -27,20 +27,20 @@ pub async fn test() {
         cycles_result.unwrap_or_else(|e| ic_cdk::trap(&format!("error in `request_cost`: {}", e)));
 
     // Call without sending cycles
-    let (result_without_cycles,): (Result<String, EthRpcError>,) =
+    let (result_without_cycles,): (Result<String, RpcError>,) =
         ic_cdk::api::call::call(eth_rpc.0, "request", params.clone())
             .await
             .unwrap();
     match result_without_cycles {
         Ok(s) => ic_cdk::trap(&format!("response from `request` without cycles: {:?}", s)),
-        Err(EthRpcError::TooFewCycles { expected, .. }) => {
+        Err(RpcError::ProviderError(ProviderError::TooFewCycles { expected, .. })) => {
             assert_eq!(expected, cycles)
         }
         Err(err) => ic_cdk::trap(&format!("error in `request` without cycles: {}", err)),
     }
 
     // Call with expected number of cycles
-    let (result,): (Result<String, EthRpcError>,) =
+    let (result,): (Result<String, RpcError>,) =
         ic_cdk::api::call::call_with_payment128(eth_rpc.0, "request", params, cycles)
             .await
             .unwrap();
