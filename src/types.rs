@@ -386,7 +386,7 @@ pub mod candid_types {
     #[derive(Clone, Debug, CandidType, Deserialize)]
     pub struct FeeHistoryArgs {
         pub block_count: u128,
-        pub highest_block: Option<BlockSpec>,
+        pub highest_block: BlockSpec,
         pub reward_percentiles: Option<Vec<u8>>,
     }
 
@@ -394,10 +394,7 @@ pub mod candid_types {
         fn from(value: FeeHistoryArgs) -> Self {
             cketh_common::eth_rpc::FeeHistoryParams {
                 block_count: value.block_count.into(),
-                highest_block: value
-                    .highest_block
-                    .unwrap_or(BlockSpec::Tag(BlockTag::default()))
-                    .into(),
+                highest_block: value.highest_block.into(),
                 reward_percentiles: value.reward_percentiles.unwrap_or_default(),
             }
         }
