@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use candid::{candid_method, CandidType};
 use cketh_common::eth_rpc::{
     Block, BlockSpec, FeeHistory, GetLogsParam, HttpOutcallError, JsonRpcReply, LogEntry,
-    ProviderError, RpcError,
+    ProviderError, RpcError, SendRawTransactionResult,
 };
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
 use cketh_common::eth_rpc_client::{MultiCallError, RpcTransport};
@@ -137,6 +137,21 @@ pub async fn eth_fee_history(
         None => return Err(ProviderError::ProviderNotFound.into()),
     };
     Ok(client.eth_fee_history(args).await?.into())
+}
+
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_send_raw_transaction(
+    source: MultiSource,
+    raw_signed_transaction_hex: String,
+) -> Result<SendRawTransactionResult, RpcError> {
+    let client = match get_rpc_client(source) {
+        Some(client) => client,
+        None => return Err(ProviderError::ProviderNotFound.into()),
+    };
+    client
+        .eth_send_raw_transaction(raw_signed_transaction_hex)
+        .await
 }
 
 #[ic_cdk_macros::query]

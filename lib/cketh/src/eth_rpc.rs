@@ -105,7 +105,7 @@ impl UpperHex for FixedSizeData {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, CandidType)]
 pub enum SendRawTransactionResult {
     Ok,
     InsufficientFunds,
