@@ -17,7 +17,7 @@ type FeeHistory = record {
 };
 type FeeHistoryArgs = record {
   block_count : nat;
-  highest_block : BlockSpec;
+  newest_block : BlockSpec;
   reward_percentiles : opt vec nat8;
 };
 type GetLogsArgs = record { addresses : vec vec nat8 };

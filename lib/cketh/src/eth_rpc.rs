@@ -369,6 +369,7 @@ pub struct FeeHistory {
     /// Zeroes are returned for pre-EIP-1559 blocks.
     pub base_fee_per_gas: Vec<Wei>,
     /// A two-dimensional array of effective priority fees per gas at the requested block percentiles.
+    #[serde(default)]
     pub reward: Vec<Vec<Wei>>,
 }
 
