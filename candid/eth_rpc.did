@@ -17,7 +17,7 @@ type FeeHistory = record {
 };
 type FeeHistoryArgs = record {
   block_count : nat;
-  highest_block : opt BlockSpec;
+  highest_block : BlockSpec;
   reward_percentiles : opt vec nat8;
 };
 type GetLogsArgs = record { addresses : vec vec nat8 };
@@ -94,8 +94,9 @@ type Result = variant { Ok : opt FeeHistory; Err : RpcError };
 type Result_1 = variant { Ok : Block; Err : RpcError };
 type Result_2 = variant { Ok : vec LogEntry; Err : RpcError };
 type Result_3 = variant { Ok : opt TransactionReceipt; Err : RpcError };
-type Result_4 = variant { Ok : text; Err : RpcError };
-type Result_5 = variant { Ok : nat; Err : RpcError };
+type Result_4 = variant { Ok : SendRawTransactionResult; Err : RpcError };
+type Result_5 = variant { Ok : text; Err : RpcError };
+type Result_6 = variant { Ok : nat; Err : RpcError };
 type RpcError = variant {
   JsonRpcError : JsonRpcError;
   ProviderError : ProviderError;
@@ -104,6 +105,12 @@ type RpcError = variant {
 type RpcNodeProvider = variant {
   Ethereum : EthereumProvider;
   Sepolia : SepoliaProvider;
+};
+type SendRawTransactionResult = variant {
+  Ok;
+  NonceTooLow;
+  NonceTooHigh;
+  InsufficientFunds;
 };
 type SepoliaProvider = variant { BlockPi; PublicNode; Ankr };
 type SignedMessage = record {
@@ -141,14 +148,15 @@ service : {
   eth_get_block_by_number : (MultiSource, BlockSpec) -> (MultiRpcResult);
   eth_get_logs : (MultiSource, GetLogsArgs) -> (MultiRpcResult_1);
   eth_get_transaction_receipt : (MultiSource, vec nat8) -> (MultiRpcResult_2);
+  eth_send_raw_transaction : (MultiSource, text) -> (Result_4);
   get_authorized : (Auth) -> (vec text) query;
   get_nodes_in_subnet : () -> (nat32) query;
   get_open_rpc_access : () -> (bool) query;
   get_owed_cycles : (nat64) -> (nat) query;
   get_providers : () -> (vec ProviderView) query;
   register_provider : (RegisterProvider) -> (nat64);
-  request : (Source, text, nat64) -> (Result_4);
-  request_cost : (Source, text, nat64) -> (Result_5) query;
+  request : (Source, text, nat64) -> (Result_5);
+  request_cost : (Source, text, nat64) -> (Result_6) query;
   set_nodes_in_subnet : (nat32) -> ();
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> (bool);
