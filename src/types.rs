@@ -287,10 +287,12 @@ impl<T> From<RpcError> for MultiRpcResult<T> {
 }
 
 pub mod candid_types {
+    use std::str::FromStr;
+
     use candid::CandidType;
     use cketh_common::{
         address::Address,
-        eth_rpc::into_nat,
+        eth_rpc::{into_nat, FixedSizeData, DataFormatError},
         eth_rpc_client::responses::TransactionStatus,
         numeric::{BlockNumber, Wei},
     };
@@ -340,23 +342,31 @@ pub mod candid_types {
     #[derive(Clone, Debug, CandidType, Deserialize)]
     // #[serde(rename_all = "camelCase")]
     pub struct GetLogsArgs {
-        // pub from_block: Option<BlockSpec>,
-        // pub to_block: Option<BlockSpec>,
-        pub addresses: Vec<[u8; 20]>,
-        // pub topics: Option<Vec<FixedSizeData>>,
+        pub from_block: Option<BlockSpec>,
+        pub to_block: Option<BlockSpec>,
+        pub addresses: Vec<String>,
+        pub topics: Option<Vec<String>>,
     }
 
-    impl From<GetLogsArgs> for cketh_common::eth_rpc::GetLogsParam {
-        fn from(value: GetLogsArgs) -> Self {
-            cketh_common::eth_rpc::GetLogsParam {
-                // from_block: value.from_block.map(|x| x.into()),
-                // to_block: value.to_block.map(|x| x.into()),
-                address: value.addresses.into_iter().map(Address::new).collect(),
-                // topics: value.topics,
-                from_block: None,
-                to_block: None,
-                topics: None,
-            }
+    impl TryFrom<GetLogsArgs> for cketh_common::eth_rpc::GetLogsParam {
+        type Error = DataFormatError;
+
+        fn try_from(value: GetLogsArgs) -> Result<Self, Self::Error> {
+            Ok(cketh_common::eth_rpc::GetLogsParam {
+                from_block: value.from_block.map(|x| x.into()).unwrap_or_default(),
+                to_block: value.to_block.map(|x| x.into()).unwrap_or_default(),
+                address: value
+                    .addresses
+                    .into_iter()
+                    .map(|s| Address::from_str(&s).map_err(|_| DataFormatError::InvalidHex(s)))
+                    .collect::<Result<_, _>>()?,
+                topics: value
+                    .topics
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(|s| FixedSizeData::from_str(&s).map_err(|_| DataFormatError::InvalidHex(s)))
+                    .collect::<Result<_, _>>()?,
+            })
         }
     }
 

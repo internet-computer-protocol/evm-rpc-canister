@@ -25,15 +25,18 @@ pub async fn do_http_request(
         ResolvedSource::Url(url) => (url, None),
         ResolvedSource::Provider(provider) => (provider.service_url(), Some(provider)),
     };
-    let parsed_url = url::Url::parse(&service_url).or(Err(ProviderError::ServiceUrlParseError))?;
-    let host = parsed_url
-        .host_str()
-        .ok_or(ProviderError::ServiceUrlParseError)?
-        .to_string();
-    if !SERVICE_HOSTS_ALLOWLIST.contains(&host.as_str()) {
+    let parsed_url = match url::Url::parse(&service_url) {
+        Ok(url) => url,
+        Err(_) => return Err(ProviderError::ServiceUrlParseError(service_url).into()),
+    };
+    let host = match parsed_url.host_str() {
+        Some(host) => host,
+        None => return Err(ProviderError::ServiceUrlParseError(service_url).into()),
+    };
+    if !SERVICE_HOSTS_ALLOWLIST.contains(&host) {
         log!(INFO, "host not allowed: {}", host);
         inc_metric!(request_err_host_not_allowed);
-        return Err(ProviderError::ServiceHostNotAllowed(host).into());
+        return Err(ProviderError::ServiceHostNotAllowed(host.to_string()).into());
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
         if cycles_available < cost {
@@ -56,7 +59,7 @@ pub async fn do_http_request(
         add_metric!(request_cycles_charged, cost);
         add_metric!(request_cycles_refunded, cycles_available - cost);
     }
-    inc_metric_entry!(host_requests, host);
+    inc_metric_entry!(host_requests, host.to_string());
     let request_headers = vec![
         HttpHeader {
             name: "Content-Type".to_string(),

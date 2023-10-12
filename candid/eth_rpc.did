@@ -9,6 +9,7 @@ type BlockTag = variant {
   Number : nat64;
   Pending;
 };
+type DataFormatError = variant { InvalidHex : text };
 type EthereumProvider = variant { Cloudflare; Ankr };
 type FeeHistory = record {
   reward : vec vec nat;
@@ -20,7 +21,12 @@ type FeeHistoryArgs = record {
   newest_block : BlockSpec;
   reward_percentiles : opt vec nat8;
 };
-type GetLogsArgs = record { addresses : vec vec nat8 };
+type GetLogsArgs = record {
+  addresses : vec text;
+  topics : opt vec text;
+  to_block : opt BlockSpec;
+  from_block : opt BlockSpec;
+};
 type HttpOutcallError = variant {
   IcError : record { code : RejectionCode; message : text };
   InvalidHttpJsonRpcResponse : record {
@@ -60,7 +66,7 @@ type MultiSource = variant {
 };
 type ProviderError = variant {
   TooFewCycles : record { expected : nat; received : nat };
-  ServiceUrlParseError;
+  ServiceUrlParseError : text;
   ProviderNotFound;
   ServiceHostNotAllowed : text;
   NoPermission;
@@ -101,6 +107,7 @@ type RpcError = variant {
   JsonRpcError : JsonRpcError;
   ProviderError : ProviderError;
   HttpOutcallError : HttpOutcallError;
+  DataFormatError : DataFormatError;
 };
 type RpcNodeProvider = variant {
   Ethereum : EthereumProvider;

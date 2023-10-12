@@ -23,6 +23,7 @@ use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
+use thiserror::Error;
 
 #[cfg(test)]
 mod tests;
@@ -248,16 +249,16 @@ impl std::str::FromStr for BlockSpec {
 #[serde(rename_all = "camelCase")]
 pub struct GetLogsParam {
     /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
-    pub from_block: Option<BlockSpec>,
+    pub from_block: BlockSpec,
     /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
-    pub to_block: Option<BlockSpec>,
+    pub to_block: BlockSpec,
     /// Contract address or a list of addresses from which logs should originate.
     pub address: Vec<Address>,
     /// Array of 32 Bytes DATA topics.
     /// Topics are order-dependent.
     /// Each topic can also be an array of DATA with "or" options.
-    // #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub topics: Option<Vec<FixedSizeData>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub topics: Vec<FixedSizeData>,
 }
 
 /// An entry of the [`eth_getLogs`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getlogs) call reply.
@@ -514,9 +515,14 @@ fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
 pub enum RpcError {
-    ProviderError(ProviderError),
-    HttpOutcallError(HttpOutcallError),
-    JsonRpcError(JsonRpcError),
+    // #[error("RPC provider error")]
+    ProviderError(/* #[source] */ ProviderError),
+    // #[error("HTTPS outcall error")]
+    HttpOutcallError(/* #[source] */ HttpOutcallError),
+    // #[error("JSON-RPC error")]
+    JsonRpcError(/* #[source] */ JsonRpcError),
+    // #[error("data format error")]
+    DataFormatError(/* #[source] */ DataFormatError),
 }
 
 impl From<ProviderError> for RpcError {
@@ -537,18 +543,30 @@ impl From<JsonRpcError> for RpcError {
     }
 }
 
+impl From<DataFormatError> for RpcError {
+    fn from(err: DataFormatError) -> Self {
+        RpcError::DataFormatError(err)
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
 pub enum ProviderError {
+    // #[error("no permission")]
     NoPermission,
+    // #[error("too few cycles (expected {expected}, received {received})")]
     TooFewCycles { expected: u128, received: u128 },
-    ServiceUrlParseError,
+    // #[error("service URL parse error: {0}")]
+    ServiceUrlParseError(String),
+    // #[error("service host not allowed: {0}")]
     ServiceHostNotAllowed(String),
+    // #[error("provider not found")]
     ProviderNotFound,
 }
 
 #[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize)]
 pub enum HttpOutcallError {
     /// Error from the IC system API.
+    // #[error("IC system error code {}: {message}", *.code as i32)]
     IcError {
         code: RejectionCode,
         message: String,
@@ -556,6 +574,7 @@ pub enum HttpOutcallError {
     /// Response is not a valid JSON-RPC response,
     /// which means that the response was not successful (status other than 2xx)
     /// or that the response body could not be deserialized into a JSON-RPC response.
+    // #[error("invalid JSON-RPC response {status}: {})", .parsing_error.as_deref().unwrap_or(.body))]
     InvalidHttpJsonRpcResponse {
         status: u16,
         body: String,
@@ -564,6 +583,12 @@ pub enum HttpOutcallError {
 }
 
 pub type HttpOutcallResult<T> = Result<T, HttpOutcallError>;
+
+#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize)]
+pub enum DataFormatError {
+    // #[error("invalid hex data: {0}")]
+    InvalidHex(String),
+}
 
 pub fn are_errors_consistent<T: PartialEq>(
     left: &Result<T, RpcError>,
@@ -576,8 +601,9 @@ pub fn are_errors_consistent<T: PartialEq>(
 }
 
 #[derive(
-    Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Serialize, Deserialize,
+    Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Serialize, Deserialize, Error,
 )]
+#[error("code {code}: {message}")]
 pub struct JsonRpcError {
     pub code: i64,
     pub message: String,

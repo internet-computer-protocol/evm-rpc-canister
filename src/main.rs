@@ -89,7 +89,10 @@ pub async fn eth_get_logs(
     source: MultiSource,
     args: candid_types::GetLogsArgs,
 ) -> MultiRpcResult<Vec<LogEntry>> {
-    let args: GetLogsParam = args.into();
+    let args: GetLogsParam = match args.try_into() {
+        Ok(args) => args,
+        Err(err) => return RpcError::from(err).into(),
+    };
     let client = match get_rpc_client(source) {
         Some(client) => client,
         None => return RpcError::ProviderError(ProviderError::ProviderNotFound).into(),

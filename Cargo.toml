@@ -30,8 +30,6 @@ serde = "1.0"
 serde_json = "1.0"
 url = "2.4"
 async-trait = "0.1"
-
-[dev-dependencies]
 hex = "0.4"
 
 [workspace.dependencies]
