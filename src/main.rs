@@ -129,14 +129,14 @@ pub async fn eth_get_transaction_receipt(
 #[candid_method]
 pub async fn eth_fee_history(
     source: MultiSource,
-    args: candid_type::FeeHistoryParams,
-) -> MultiRpcResult<Option<FeeHistory>> {
+    args: candid_types::FeeHistoryArgs,
+) -> Result<Option<FeeHistory>, RpcError> {
     let args = args.into();
     let client = match get_rpc_client(source) {
         Some(client) => client,
-        None => return RpcError::ProviderError(ProviderError::ProviderNotFound).into(),
+        None => return Err(ProviderError::ProviderNotFound.into()),
     };
-    wrap_result(client.eth_fee_history(args).await).map(|option| option.map(|r| r.into()))
+    Ok(client.eth_fee_history(args).await?.into())
 }
 
 #[ic_cdk_macros::query]
