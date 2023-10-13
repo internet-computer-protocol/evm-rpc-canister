@@ -31,7 +31,7 @@ actor class Main() {
 
         let resultWithoutCycles = await EthCanister.request(source, json, maxResponseBytes);
         assert switch resultWithoutCycles {
-            case (#Err(#TooFewCycles { expected })) expected == cycles;
+            case (#Err(#ProviderError(#TooFewCycles { expected }))) expected == cycles;
             case _ false;
         };
 
