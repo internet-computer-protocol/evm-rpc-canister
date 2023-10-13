@@ -24,7 +24,7 @@ pub async fn test() {
             .await
             .unwrap();
     let cycles =
-        cycles_result.unwrap_or_else(|e| ic_cdk::trap(&format!("error in `request_cost`: {}", e)));
+        cycles_result.unwrap_or_else(|e| ic_cdk::trap(&format!("error in `request_cost`: {:?}", e)));
 
     // Call without sending cycles
     let (result_without_cycles,): (Result<String, RpcError>,) =
@@ -36,7 +36,7 @@ pub async fn test() {
         Err(RpcError::ProviderError(ProviderError::TooFewCycles { expected, .. })) => {
             assert_eq!(expected, cycles)
         }
-        Err(err) => ic_cdk::trap(&format!("error in `request` without cycles: {}", err)),
+        Err(err) => ic_cdk::trap(&format!("error in `request` without cycles: {:?}", err)),
     }
 
     // Call with expected number of cycles
@@ -50,6 +50,6 @@ pub async fn test() {
             assert_eq!(&response[..29], "{\"jsonrpc\":\"2.0\",\"result\":\"0x",);
             assert_eq!(&response[response.len() - 9..], "\",\"id\":1}")
         }
-        Err(err) => ic_cdk::trap(&format!("error in `request` with cycles: {}", err)),
+        Err(err) => ic_cdk::trap(&format!("error in `request` with cycles: {:?}", err)),
     }
 }
