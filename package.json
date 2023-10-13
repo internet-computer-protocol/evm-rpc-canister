@@ -2,6 +2,7 @@
   "name": "eth-rpc",
   "version": "0.1.0",
   "scripts": {
+    "generate": "cargo run > candid/eth_rpc.did && dfx generate eth_rpc",
     "postinstall": "mops install",
     "sources": "mops sources"
   },

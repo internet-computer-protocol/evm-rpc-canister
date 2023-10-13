@@ -5,6 +5,8 @@ import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import JSON "mo:json.mo";
 
+import EthRpc "declarations/eth_rpc";
+
 module {
     public type Network = {
         #EthMainnet;
@@ -27,15 +29,14 @@ module {
         #Provider : Nat64;
     };
 
-    public type Error = {
-        #HttpRequestError : { code : Nat32; message : Text };
-        #TooFewCycles : { expected : Nat; received : Nat };
-        #ServiceUrlParseError;
-        #ServiceHostMissing;
-        #ServiceHostNotAllowed : Text;
-        #ResponseParseError;
-        #ProviderNotFound;
-        #NoPermission;
+    public type RpcError = EthRpc.RpcError;
+    public type JsonRpcError = EthRpc.JsonRpcError;
+    public type ProviderError = EthRpc.ProviderError;
+    public type HttpOutcallError = EthRpc.HttpOutcallError;
+    public type DataFormatError = EthRpc.DataFormatError;
+
+    public type Error = ProviderError or HttpOutcallError or DataFormatError or {
+        #JsonRpcError : JsonRpcError;
     };
 
     public type Result<T> = {
@@ -46,7 +47,7 @@ module {
     public type RpcActor = actor {
         request : shared (ActorSource, Text, Nat64) -> async {
             #Ok : Text;
-            #Err : Error;
+            #Err : RpcError;
         };
     };
 
@@ -62,6 +63,15 @@ module {
             case (#EthGoerli) { 5 };
             case (#EthSepolia) { 11155111 };
             case (#Network n) { n };
+        };
+    };
+
+    func getError(rpcError : RpcError) : Error {
+        switch rpcError {
+            case (#ProviderError e) { e };
+            case (#HttpOutcallError e) { e };
+            case (#JsonRpcError e) { #JsonRpcError e };
+            case (#DataFormatError e) { e };
         };
     };
 
@@ -106,7 +116,15 @@ module {
                 case (#ok text) {
                     switch (JSON.parse(text)) {
                         case (?json) { #ok json };
-                        case null { #err(#ResponseParseError) };
+                        case null {
+                            #err(
+                                #InvalidHttpJsonRpcResponse {
+                                    status = 0;
+                                    body = text;
+                                    parsing_error = ?("error while parsing JSON response");
+                                }
+                            );
+                        };
                     };
                 };
                 case (#err err) { #err err };
@@ -118,7 +136,7 @@ module {
                 // TODO: payment
                 switch (await actor_.request(actorSource, payload, maxResponseBytes)) {
                     case (#Ok ok) { #ok ok };
-                    case (#Err err) { #err err };
+                    case (#Err err) { #err(getError(err)) };
                 };
             };
             switch (await requestPlain_(payload, maxResponseBytes, defaultCycles)) {
