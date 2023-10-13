@@ -99,6 +99,12 @@ dfx start --background
 dfx deploy
 ```
 
+After making source code changes, regenerate language bindings with the `generate` [npm script](https://docs.npmjs.com/cli/v10/using-npm/scripts):
+
+```bash
+npm run generate
+```
+
 ## Learn More
 
 * [How this canister works behind the scenes](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/DeepDive.md)
