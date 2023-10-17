@@ -3,6 +3,7 @@ import EthCanister "canister:eth_rpc";
 import Principal "mo:base/Principal";
 import Eth "mo:eth";
 import Debug "mo:base/Debug";
+import Text "mo:base/Text";
 
 actor class Main() {
     let rpc = Eth.Rpc(
@@ -35,8 +36,23 @@ actor class Main() {
             case _ false;
         };
 
-        // TODO: call with cycles
-
-        // let result = await rpc.request("eth_gasPrice", #Array([]), 1000);
+        let result = await rpc.request("eth_gasPrice", #Array([]), 1000);
+        label validate {
+            switch result {
+                case (#ok(#Object fields)) {
+                    for ((key, val) in fields.vals()) {
+                        switch (key, val) {
+                            case ("result", #String val) {
+                                assert Text.startsWith(val, #text "0x");
+                                break validate;
+                            };
+                            case _ {};
+                        };
+                    };
+                };
+                case _ {};
+            };
+            Debug.trap(debug_show result);
+        };
     };
 };
