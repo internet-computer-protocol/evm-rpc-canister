@@ -8075,4 +8075,4 @@ dependencies = [
 [[patch.unused]]
 name = "ic-wasm-bindgen"
 version = "0.2.87"
-source = "git+https://github.com/rvanasa/wasm-bindgen?branch=ic-wasm-bindgen#f1dfffb6217e8c03c5c908d53d28fb67693081b4"
+source = "git+https://github.com/rvanasa/wasm-bindgen?rev=f1dfffb621#f1dfffb6217e8c03c5c908d53d28fb67693081b4"
