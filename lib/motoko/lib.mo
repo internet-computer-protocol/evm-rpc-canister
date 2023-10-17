@@ -1,5 +1,6 @@
 import Blob "mo:base/Blob";
 import Debug "mo:base/Debug";
+import Cycles "mo:base/ExperimentalCycles";
 import Nat64 "mo:base/Nat64";
 import Principal "mo:base/Principal";
 import Text "mo:base/Text";
@@ -133,7 +134,7 @@ module {
 
         public func requestPlain(payload : Text, maxResponseBytes : Nat64) : async Result<Text> {
             func requestPlain_(payload : Text, maxResponseBytes : Nat64, cycles : Nat) : async Result<Text> {
-                // TODO: payment
+                Cycles.add(cycles);
                 switch (await actor_.request(actorSource, payload, maxResponseBytes)) {
                     case (#Ok ok) { #ok ok };
                     case (#Err err) { #err(getError(err)) };
