@@ -57,7 +57,7 @@ module {
         #Principal : Principal;
     };
 
-    func getChainId(network : Network) : Nat64 {
+    func wrapChainId(network : Network) : Nat64 {
         // Reference: https://chainlist.org/?testnets=true
         switch network {
             case (#EthMainnet) { 1 };
@@ -67,7 +67,7 @@ module {
         };
     };
 
-    func getError(rpcError : RpcError) : Error {
+    func unwrapError(rpcError : RpcError) : Error {
         switch rpcError {
             case (#ProviderError e) { e };
             case (#HttpOutcallError e) { e };
@@ -80,19 +80,19 @@ module {
 
         public var defaultCycles = 1_000_000_000;
 
-        func getActorSource(source : Source) : ActorSource {
+        func wrapActorSource(source : Source) : ActorSource {
             switch source {
                 case (#Url s) { #Url s };
                 case (#Service { hostname; network }) {
                     #Service {
                         hostname;
                         chain_id = switch network {
-                            case (?n) { ?getChainId(n) };
+                            case (?n) { ?wrapChainId(n) };
                             case null { null };
                         };
                     };
                 };
-                case (#Chain n) { #Chain(getChainId(n)) };
+                case (#Chain n) { #Chain(wrapChainId(n)) };
                 case (#Provider n) { #Provider n };
             };
         };
@@ -101,7 +101,7 @@ module {
             case (#Canister a) { a };
             case (#Principal p) { actor (Principal.toText(p)) : RpcActor };
         };
-        let actorSource = getActorSource(source);
+        let actorSource = wrapActorSource(source);
 
         var nextId : Nat = 0;
         public func request(method : Text, params : JSON.JSON, maxResponseBytes : Nat64) : async Result<JSON.JSON> {
@@ -137,7 +137,7 @@ module {
                 Cycles.add(cycles);
                 switch (await actor_.request(actorSource, payload, maxResponseBytes)) {
                     case (#Ok ok) { #ok ok };
-                    case (#Err err) { #err(getError(err)) };
+                    case (#Err err) { #err(unwrapError(err)) };
                 };
             };
             switch (await requestPlain_(payload, maxResponseBytes, defaultCycles)) {
