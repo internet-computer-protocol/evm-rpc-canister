@@ -129,7 +129,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
                 }
                 Err(e) => {
                     log!(INFO, "Querying provider {provider:?} returned error {e:?}");
-                    last_result = Some(Err(e.into()));
+                    last_result = Some(Err(e));
                 }
             };
         }
