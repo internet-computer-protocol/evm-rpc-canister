@@ -135,11 +135,9 @@ impl From<TransferFromError> for WithdrawalError {
             TransferFromError::GenericError {
                 error_code,
                 message,
-            } => Self::TemporarilyUnavailable(
-                format!(
-                    "ckETH ledger unreachable, error code: {error_code}, with message: {message}"
-                ),
-            ),
+            } => Self::TemporarilyUnavailable(format!(
+                "ckETH ledger unreachable, error code: {error_code}, with message: {message}"
+            )),
         }
     }
 }
