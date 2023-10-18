@@ -237,7 +237,7 @@ fn update_provider(provider: UpdateProvider) {
 
 #[query(guard = "require_register_provider")]
 #[candid_method(query)]
-fn get_owed_cycles(provider_id: u64) -> u128 {
+fn get_accumulated_cycle_count(provider_id: u64) -> u128 {
     let provider = PROVIDERS.with(|p| {
         p.borrow()
             .get(&provider_id)
@@ -257,7 +257,7 @@ struct DepositCyclesArgs {
 
 #[update(guard = "require_register_provider")]
 #[candid_method]
-async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
+async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
     let provider = PROVIDERS.with(|p| {
         p.borrow()
             .get(&provider_id)

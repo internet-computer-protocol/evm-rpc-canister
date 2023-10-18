@@ -166,10 +166,10 @@ module {
         Blob,
       ) -> async MultiRpcResult_2;
     eth_send_raw_transaction : shared (MultiSource, Text) -> async Result_4;
+    get_accumulated_cycle_count : shared query Nat64 -> async Nat;
     get_authorized : shared query Auth -> async [Text];
     get_nodes_in_subnet : shared query () -> async Nat32;
     get_open_rpc_access : shared query () -> async Bool;
-    get_owed_cycles : shared query Nat64 -> async Nat;
     get_providers : shared query () -> async [ProviderView];
     register_provider : shared RegisterProvider -> async Nat64;
     request : shared (Source, Text, Nat64) -> async Result_5;
@@ -179,6 +179,6 @@ module {
     unregister_provider : shared Nat64 -> async Bool;
     update_provider : shared UpdateProvider -> async ();
     verify_signature : shared query SignedMessage -> async Bool;
-    withdraw_owed_cycles : shared (Nat64, Principal) -> async ();
+    withdraw_accumulated_cycles : shared (Nat64, Principal) -> async ();
   }
 }

@@ -156,10 +156,10 @@ service : {
   eth_get_logs : (MultiSource, GetLogsArgs) -> (MultiRpcResult_1);
   eth_get_transaction_receipt : (MultiSource, vec nat8) -> (MultiRpcResult_2);
   eth_send_raw_transaction : (MultiSource, text) -> (Result_4);
+  get_accumulated_cycle_count : (nat64) -> (nat) query;
   get_authorized : (Auth) -> (vec text) query;
   get_nodes_in_subnet : () -> (nat32) query;
   get_open_rpc_access : () -> (bool) query;
-  get_owed_cycles : (nat64) -> (nat) query;
   get_providers : () -> (vec ProviderView) query;
   register_provider : (RegisterProvider) -> (nat64);
   request : (Source, text, nat64) -> (Result_5);
@@ -169,5 +169,5 @@ service : {
   unregister_provider : (nat64) -> (bool);
   update_provider : (UpdateProvider) -> ();
   verify_signature : (SignedMessage) -> (bool) query;
-  withdraw_owed_cycles : (nat64, principal) -> ();
+  withdraw_accumulated_cycles : (nat64, principal) -> ();
 }
