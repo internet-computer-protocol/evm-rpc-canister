@@ -23,8 +23,8 @@ pub async fn test() {
         ic_cdk::call(eth_rpc.0, "request_cost", params.clone())
             .await
             .unwrap();
-    let cycles =
-        cycles_result.unwrap_or_else(|e| ic_cdk::trap(&format!("error in `request_cost`: {:?}", e)));
+    let cycles = cycles_result
+        .unwrap_or_else(|e| ic_cdk::trap(&format!("error in `request_cost`: {:?}", e)));
 
     // Call without sending cycles
     let (result_without_cycles,): (Result<String, RpcError>,) =

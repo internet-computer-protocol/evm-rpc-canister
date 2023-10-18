@@ -11,7 +11,18 @@ mod tests;
 
 /// An Ethereum account address.
 #[derive(
-    Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Encode, Decode, CandidType
+    Clone,
+    Copy,
+    Hash,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Encode,
+    Decode,
+    CandidType,
 )]
 #[serde(transparent)]
 #[cbor(transparent)]

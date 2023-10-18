@@ -292,7 +292,7 @@ pub mod candid_types {
     use candid::CandidType;
     use cketh_common::{
         address::Address,
-        eth_rpc::{into_nat, FixedSizeData, DataFormatError},
+        eth_rpc::{into_nat, DataFormatError, FixedSizeData},
         eth_rpc_client::responses::TransactionStatus,
         numeric::{BlockNumber, Wei},
     };
@@ -364,7 +364,9 @@ pub mod candid_types {
                     .topics
                     .unwrap_or_default()
                     .into_iter()
-                    .map(|s| FixedSizeData::from_str(&s).map_err(|_| DataFormatError::InvalidHex(s)))
+                    .map(|s| {
+                        FixedSizeData::from_str(&s).map_err(|_| DataFormatError::InvalidHex(s))
+                    })
                     .collect::<Result<_, _>>()?,
             })
         }

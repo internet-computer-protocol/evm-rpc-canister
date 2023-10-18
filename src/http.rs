@@ -99,12 +99,12 @@ pub fn get_http_response_status(status: candid::Nat) -> u16 {
 }
 
 pub fn get_http_response_body(response: HttpResponse) -> Result<String, RpcError> {
-    String::from_utf8(response.body).or_else(|e| {
-        Err(HttpOutcallError::InvalidHttpJsonRpcResponse {
+    String::from_utf8(response.body).map_err(|e| {
+        HttpOutcallError::InvalidHttpJsonRpcResponse {
             status: get_http_response_status(response.status),
             body: "".to_string(),
             parsing_error: Some(format!("{e}")),
         }
-        .into())
+        .into()
     })
 }
