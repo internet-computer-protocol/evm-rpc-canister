@@ -1,4 +1,4 @@
-# Deep Dive: [Ethereum RPC](https://github.com/internet-computer-protocol/ic-eth-rpc)
+# Deep Dive: [EVM RPC](https://github.com/internet-computer-protocol/ic-eth-rpc)
 
 ## How it Works
 
@@ -36,7 +36,7 @@ This canister takes pre-signed transactions e.g. for `eth_sendRawTransaction` an
 
 ### JSON is not validated	
 
-This canister does not validate the JSON passed to the ETH service.  Registered API key providers should be aware of this in case the back end service is vulnerable to a bad JSON request body.  Registered API providers should be aware that there are methods in the Ethereum RPC API specification which give access to the ETH node keys.  Public service providers tend to block these, but registered API providers should ensure that they are not giving access to private keys or other privileged operations.	
+This canister does not validate the JSON passed to the ETH service.  Registered API key providers should be aware of this in case the back end service is vulnerable to a bad JSON request body.  Registered API providers should be aware that there are methods in the EVM RPC API specification which give access to the ETH node keys.  Public service providers tend to block these, but registered API providers should ensure that they are not giving access to private keys or other privileged operations.	
 
 ### Requests sent to service providers are subject to the service provider's privacy policy	
 
@@ -44,4 +44,4 @@ Users should be aware of the privacy policy of the service provider to which the
 
 ### Idempotency issues because of one HTTP outcall per node in the subnet	
 
-HTTP outcalls result in one HTTP outcall per node in the subnet and the results are then combined after filtering through a Transform function.  Some Ethereum RPC calls may not be idempotent or may vary which will cause the call to be reported as a failure as there will be no consensus on the result.  Furthermore this behavior may differ by service provider.  Users should be aware of this and use appropriate caution and/or a different solution.
+HTTP outcalls result in one HTTP outcall per node in the subnet and the results are then combined after filtering through a Transform function.  Some EVM RPC calls may not be idempotent or may vary which will cause the call to be reported as a failure as there will be no consensus on the result.  Furthermore this behavior may differ by service provider.  Users should be aware of this and use appropriate caution and/or a different solution.

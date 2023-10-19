@@ -1,4 +1,4 @@
-# Ethereum RPC &nbsp;[![GitHub license](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/internet-computer-protocol/ic-eth-rpc/issues)
+# EVM RPC &nbsp;[![GitHub license](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/internet-computer-protocol/ic-eth-rpc/issues)
 
 > #### Interact with [EVM blockchains](https://chainlist.org/?testnets=true) from the [Internet Computer](https://internetcomputer.org/).
 
@@ -6,11 +6,11 @@
 
 This project is currently under active development. The canister interface may change unexpectedly, and the codebase has not yet undergone a comprehensive security audit. We will continue updating this message to reflect the current status of this repository. 
 
-Thank you for your interest! Please feel free to [submit an issue](https://github.com/internet-computer-protocol/ic-eth-rpc/issues) if you would like to request a feature, report a bug, or start a conversation about the Ethereum RPC canister.
+Thank you for your interest! Please feel free to [submit an issue](https://github.com/internet-computer-protocol/ic-eth-rpc/issues) if you would like to request a feature, report a bug, or start a conversation about the EVM RPC canister.
 
 ## Overview
 
-**Ethereum RPC** is an Internet Computer canister smart contract for communicating with [Ethereum](https://ethereum.org/en/) and other [EVM blockchains](https://chainlist.org/?testnets=true) using an [on-chain API](./API.md). 
+**EVM RPC** is an Internet Computer canister smart contract for communicating with [Ethereum](https://ethereum.org/en/) and other [EVM blockchains](https://chainlist.org/?testnets=true) using an [on-chain API](./API.md). 
 
 This canister facilitates API requests to JSON-RPC services such as [CloudFlare](https://www.cloudflare.com/en-gb/web3/), [Alchemy](https://www.alchemy.com/), or [Gateway.fm](https://gateway.fm/) using [HTTPS outcalls](https://internetcomputer.org/docs/current/developer-docs/integrations/http_requests/). This enables functionality similar to traditional Ethereum dApps, including querying Ethereum smart contract states and submitting raw transactions.
 
@@ -56,12 +56,14 @@ dfx canister call eth_rpc request '(variant {Url="https://cloudflare-eth.com/v1/
 
 ## Examples
 
-### Ethereum RPC (IC mainnet)
+### JSON-RPC (IC mainnet)
+
 ```bash
 dfx canister call eth_rpc --network ic --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 request '(variant {Chain=0x1},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
 ```
 
-### Ethereum RPC (local replica)
+### JSON-RPC (local replica)
+
 ```bash
 # Use a custom provider
 dfx canister call eth_rpc --wallet $(dfx identity get-wallet) --with-cycles 600000000 request '(variant {Url="https://cloudflare-eth.com"},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'

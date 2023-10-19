@@ -1,4 +1,4 @@
-# Ethereum RPC (Canister API)
+# EVM RPC (Canister API)
 
 ## Terminology
 
