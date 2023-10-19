@@ -1,4 +1,4 @@
-import EthCanister "canister:eth_rpc";
+import EthCanister "canister:evm_rpc";
 
 import Principal "mo:base/Principal";
 import Eth "mo:eth";

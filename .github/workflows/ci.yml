@@ -111,8 +111,8 @@ jobs:
   #       uses: actions/checkout@master
   #     - name: Check interface
   #       run: |
-  #         cargo run > candid/eth_rpc_expected.did
-  #         diff candid/eth_rpc.did candid/eth_rpc_expected.did
+  #         cargo run > candid/evm_rpc_expected.did
+  #         diff candid/evm_rpc.did candid/evm_rpc_expected.did
 
   e2e:
     runs-on: ubuntu-latest

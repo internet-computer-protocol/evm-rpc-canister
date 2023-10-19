@@ -1,7 +1,7 @@
 use candid::candid_method;
 use ic_cdk_macros::update;
 
-use e2e::declarations::eth_rpc::{eth_rpc, ProviderError, RpcError, Source};
+use e2e::declarations::evm_rpc::{evm_rpc, ProviderError, RpcError, Source};
 
 fn main() {}
 
@@ -20,7 +20,7 @@ pub async fn test() {
 
     // Get cycles cost
     let (cycles_result,): (Result<u128, RpcError>,) =
-        ic_cdk::call(eth_rpc.0, "request_cost", params.clone())
+        ic_cdk::call(evm_rpc.0, "request_cost", params.clone())
             .await
             .unwrap();
     let cycles = cycles_result
@@ -28,7 +28,7 @@ pub async fn test() {
 
     // Call without sending cycles
     let (result_without_cycles,): (Result<String, RpcError>,) =
-        ic_cdk::api::call::call(eth_rpc.0, "request", params.clone())
+        ic_cdk::api::call::call(evm_rpc.0, "request", params.clone())
             .await
             .unwrap();
     match result_without_cycles {
@@ -41,7 +41,7 @@ pub async fn test() {
 
     // Call with expected number of cycles
     let (result,): (Result<String, RpcError>,) =
-        ic_cdk::api::call::call_with_payment128(eth_rpc.0, "request", params, cycles)
+        ic_cdk::api::call::call_with_payment128(evm_rpc.0, "request", params, cycles)
             .await
             .unwrap();
     match result {

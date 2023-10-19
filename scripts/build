@@ -12,25 +12,25 @@ cd "$SCRIPTS_DIR/.."
 #########
 
 function title() {
-    echo "Builds eth_rpc Canister"
+    echo "Builds evm_rpc Canister"
 }
 
 function usage() {
     cat << EOF
 
 Usage:
-  $0 [--only-dependencies] [--eth_rpc]
+  $0 [--only-dependencies] [--evm_rpc]
 
 Options:
   --only-dependencies          only build rust dependencies (no js build, no wasm optimization)
-  --eth_rpc                      build the icenthl canister
+  --evm_rpc                      build the icenthl canister
 EOF
 }
 
 function help() {
     cat << EOF
 
-Builds the eth_rpc canister.
+Builds the evm_rpc canister.
 
 NOTE: This requires a working rust toolchain as well as ic-wasm.
 EOF
@@ -53,8 +53,8 @@ do
             ONLY_DEPS=1
             shift
             ;;
-        --eth_rpc)
-            CANISTERS+=("eth_rpc")
+        --evm_rpc)
+            CANISTERS+=("evm_rpc")
             shift
             ;;
         *)
@@ -68,7 +68,7 @@ do
 done
 
 if [ ${#CANISTERS[@]} -eq 0 ]; then
-    CANISTERS=("eth_rpc")
+    CANISTERS=("evm_rpc")
 fi
 
 # Checking for dependencies

@@ -15,7 +15,7 @@ use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpResponse, T
 use ic_cdk::{query, update};
 use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
-use eth_rpc::*;
+use evm_rpc::*;
 use serde::de::DeserializeOwned;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -308,7 +308,7 @@ async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
     };
 }
 
-#[query(name = "__transform_eth_rpc")]
+#[query(name = "__transform_evm_rpc")]
 fn transform(args: TransformArgs) -> HttpResponse {
     HttpResponse {
         status: args.response.status,
@@ -449,7 +449,7 @@ fn test_candid_interface() {
 
     service_compatible(
         CandidSource::Text(&new_interface),
-        CandidSource::File(Path::new("candid/eth_rpc.did")),
+        CandidSource::File(Path::new("candid/evm_rpc.did")),
     )
     .unwrap();
 }

@@ -1603,31 +1603,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "eth_rpc"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "candid",
- "cketh-common",
- "hex",
- "ic-canister-log 0.2.0 (git+https://github.com/dfinity/ic?rev=release-2023-09-27_23-01)",
- "ic-canisters-http-types",
- "ic-cdk 0.10.0",
- "ic-cdk-macros 0.7.1",
- "ic-certified-map",
- "ic-eth",
- "ic-metrics-encoder",
- "ic-nervous-system-common",
- "ic-stable-structures",
- "num",
- "num-derive",
- "num-traits",
- "serde",
- "serde_json",
- "url",
-]
-
-[[package]]
 name = "ethabi"
 version = "18.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1745,6 +1720,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c8ff382b2fa527fb7fb06eeebfc5bbb3f17e3cc6b9d70b006c41daa8824adac"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "evm_rpc"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "candid",
+ "cketh-common",
+ "hex",
+ "ic-canister-log 0.2.0 (git+https://github.com/dfinity/ic?rev=release-2023-09-27_23-01)",
+ "ic-canisters-http-types",
+ "ic-cdk 0.10.0",
+ "ic-cdk-macros 0.7.1",
+ "ic-certified-map",
+ "ic-eth",
+ "ic-metrics-encoder",
+ "ic-nervous-system-common",
+ "ic-stable-structures",
+ "num",
+ "num-derive",
+ "num-traits",
+ "serde",
+ "serde_json",
+ "url",
 ]
 
 [[package]]

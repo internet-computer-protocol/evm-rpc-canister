@@ -6,7 +6,7 @@ import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import JSON "mo:json.mo";
 
-import EthRpc "declarations/eth_rpc";
+import EvmRpc "declarations/evm_rpc";
 
 module {
     public type Network = {
@@ -30,11 +30,11 @@ module {
         #Provider : Nat64;
     };
 
-    public type RpcError = EthRpc.RpcError;
-    public type JsonRpcError = EthRpc.JsonRpcError;
-    public type ProviderError = EthRpc.ProviderError;
-    public type HttpOutcallError = EthRpc.HttpOutcallError;
-    public type DataFormatError = EthRpc.DataFormatError;
+    public type RpcError = EvmRpc.RpcError;
+    public type JsonRpcError = EvmRpc.JsonRpcError;
+    public type ProviderError = EvmRpc.ProviderError;
+    public type HttpOutcallError = EvmRpc.HttpOutcallError;
+    public type DataFormatError = EvmRpc.DataFormatError;
 
     public type Error = ProviderError or HttpOutcallError or DataFormatError or {
         #JsonRpcError : JsonRpcError;
