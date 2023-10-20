@@ -54,19 +54,27 @@ impl RpcTransport for CanisterTransport {
     }
 }
 
-fn get_rpc_client(source: MultiSource) -> Option<EthRpcClient<CanisterTransport>> {
+fn get_rpc_client(source: MultiSource) -> Result<EthRpcClient<CanisterTransport>, RpcError> {
+    fn validate_providers<T>(opt_vec: Option<Vec<T>>) -> Result<Option<Vec<T>>, RpcError> {
+        Ok(match opt_vec {
+            Some(v) if v.is_empty() => Err(ProviderError::ProviderNotFound)?,
+            opt => opt,
+        })
+    }
     if !is_rpc_allowed(&ic_cdk::caller()) {
         // inc_metric!(eth_*_err_no_permission);
-        return None;
+        return Err(ProviderError::NoPermission.into());
     }
-    Some(match source {
+    Ok(match source {
         MultiSource::Ethereum(providers) => EthRpcClient::new(
             EvmNetwork::Ethereum,
-            providers.map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
+            validate_providers(providers)?
+                .map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
         ),
         MultiSource::Sepolia(providers) => EthRpcClient::new(
             EvmNetwork::Sepolia,
-            providers.map(|p| p.into_iter().map(RpcNodeProvider::Sepolia).collect()),
+            validate_providers(providers)?
+                .map(|p| p.into_iter().map(RpcNodeProvider::Sepolia).collect()),
         ),
     })
 }
@@ -94,8 +102,8 @@ pub async fn eth_get_logs(
         Err(err) => return RpcError::from(err).into(),
     };
     let client = match get_rpc_client(source) {
-        Some(client) => client,
-        None => return RpcError::ProviderError(ProviderError::ProviderNotFound).into(),
+        Ok(client) => client,
+        Err(err) => return err.into(),
     };
     wrap_result(client.eth_get_logs(args).await)
 }
@@ -108,8 +116,8 @@ pub async fn eth_get_block_by_number(
 ) -> MultiRpcResult<Block> {
     let block: BlockSpec = block.into();
     let client = match get_rpc_client(source) {
-        Some(client) => client,
-        None => return RpcError::ProviderError(ProviderError::ProviderNotFound).into(),
+        Ok(client) => client,
+        Err(err) => return err.into(),
     };
     wrap_result(client.eth_get_block_by_number(block).await)
 }
@@ -121,8 +129,8 @@ pub async fn eth_get_transaction_receipt(
     hash: candid_types::Hash,
 ) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
     let client = match get_rpc_client(source) {
-        Some(client) => client,
-        None => return RpcError::ProviderError(ProviderError::ProviderNotFound).into(),
+        Ok(client) => client,
+        Err(err) => return err.into(),
     };
     wrap_result(client.eth_get_transaction_receipt(hash).await)
         .map(|option| option.map(|r| r.into()))
@@ -135,10 +143,7 @@ pub async fn eth_fee_history(
     args: candid_types::FeeHistoryArgs,
 ) -> Result<Option<FeeHistory>, RpcError> {
     let args = args.into();
-    let client = match get_rpc_client(source) {
-        Some(client) => client,
-        None => return Err(ProviderError::ProviderNotFound.into()),
-    };
+    let client = get_rpc_client(source)?;
     Ok(client.eth_fee_history(args).await?.into())
 }
 
@@ -148,10 +153,7 @@ pub async fn eth_send_raw_transaction(
     source: MultiSource,
     raw_signed_transaction_hex: String,
 ) -> Result<SendRawTransactionResult, RpcError> {
-    let client = match get_rpc_client(source) {
-        Some(client) => client,
-        None => return Err(ProviderError::ProviderNotFound.into()),
-    };
+    let client = get_rpc_client(source)?;
     client
         .eth_send_raw_transaction(raw_signed_transaction_hex)
         .await
