@@ -4,9 +4,11 @@ use cketh_common::eth_rpc::{
     Block, BlockSpec, FeeHistory, GetLogsParam, HttpOutcallError, JsonRpcReply, LogEntry,
     ProviderError, RpcError, SendRawTransactionResult,
 };
+use cketh_common::eth_rpc_client::requests::GetTransactionCountParams;
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
 use cketh_common::eth_rpc_client::{MultiCallError, RpcTransport};
 use cketh_common::lifecycle::EvmNetwork;
+use cketh_common::numeric::TransactionCount;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -134,6 +136,23 @@ pub async fn eth_get_transaction_receipt(
     };
     wrap_result(client.eth_get_transaction_receipt(hash).await)
         .map(|option| option.map(|r| r.into()))
+}
+
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_get_transaction_count(
+    source: MultiSource,
+    args: candid_types::GetTransactionCountArgs,
+) -> MultiRpcResult<TransactionCount> {
+    let args: GetTransactionCountParams = match args.try_into() {
+        Ok(args) => args,
+        Err(err) => return RpcError::from(err).into(),
+    };
+    let client = match get_rpc_client(source) {
+        Ok(client) => client,
+        Err(err) => return err.into(),
+    };
+    wrap_result(client.eth_get_transaction_count(args).await)
 }
 
 #[ic_cdk_macros::update]

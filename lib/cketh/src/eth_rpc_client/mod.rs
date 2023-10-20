@@ -235,13 +235,15 @@ impl<T: RpcTransport> EthRpcClient<T> {
     pub async fn eth_get_transaction_count(
         &self,
         params: GetTransactionCountParams,
-    ) -> MultiCallResults<TransactionCount> {
-        self.parallel_call(
-            "eth_getTransactionCount",
-            params,
-            ResponseSizeEstimate::new(50),
-        )
-        .await
+    ) -> Result<TransactionCount, MultiCallError<TransactionCount>> {
+        let results = self
+            .parallel_call(
+                "eth_getTransactionCount",
+                params,
+                ResponseSizeEstimate::new(50),
+            )
+            .await;
+        results.reduce_with_equality()
     }
 }
 

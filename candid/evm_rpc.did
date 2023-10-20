@@ -27,6 +27,7 @@ type GetLogsArgs = record {
   to_block : opt BlockSpec;
   from_block : opt BlockSpec;
 };
+type GetTransactionCountArgs = record { address : text; block : BlockSpec };
 type HttpOutcallError = variant {
   IcError : record { code : RejectionCode; message : text };
   InvalidHttpJsonRpcResponse : record {
@@ -59,6 +60,10 @@ type MultiRpcResult_1 = variant {
 type MultiRpcResult_2 = variant {
   Consistent : Result_3;
   Inconsistent : vec record { RpcNodeProvider; Result_3 };
+};
+type MultiRpcResult_3 = variant {
+  Consistent : Result_4;
+  Inconsistent : vec record { RpcNodeProvider; Result_4 };
 };
 type MultiSource = variant {
   Ethereum : opt vec EthereumProvider;
@@ -99,10 +104,11 @@ type RejectionCode = variant {
 type Result = variant { Ok : opt FeeHistory; Err : RpcError };
 type Result_1 = variant { Ok : Block; Err : RpcError };
 type Result_2 = variant { Ok : vec LogEntry; Err : RpcError };
-type Result_3 = variant { Ok : opt TransactionReceipt; Err : RpcError };
-type Result_4 = variant { Ok : SendRawTransactionResult; Err : RpcError };
-type Result_5 = variant { Ok : text; Err : RpcError };
-type Result_6 = variant { Ok : nat; Err : RpcError };
+type Result_3 = variant { Ok : nat; Err : RpcError };
+type Result_4 = variant { Ok : opt TransactionReceipt; Err : RpcError };
+type Result_5 = variant { Ok : SendRawTransactionResult; Err : RpcError };
+type Result_6 = variant { Ok : text; Err : RpcError };
+type Result_7 = variant { Ok : nat; Err : RpcError };
 type RpcError = variant {
   JsonRpcError : JsonRpcError;
   ProviderError : ProviderError;
@@ -154,16 +160,19 @@ service : {
   eth_fee_history : (MultiSource, FeeHistoryArgs) -> (Result);
   eth_get_block_by_number : (MultiSource, BlockSpec) -> (MultiRpcResult);
   eth_get_logs : (MultiSource, GetLogsArgs) -> (MultiRpcResult_1);
-  eth_get_transaction_receipt : (MultiSource, vec nat8) -> (MultiRpcResult_2);
-  eth_send_raw_transaction : (MultiSource, text) -> (Result_4);
+  eth_get_transaction_count : (MultiSource, GetTransactionCountArgs) -> (
+      MultiRpcResult_2,
+    );
+  eth_get_transaction_receipt : (MultiSource, vec nat8) -> (MultiRpcResult_3);
+  eth_send_raw_transaction : (MultiSource, text) -> (Result_5);
   get_accumulated_cycle_count : (nat64) -> (nat) query;
   get_authorized : (Auth) -> (vec text) query;
   get_nodes_in_subnet : () -> (nat32) query;
   get_open_rpc_access : () -> (bool) query;
   get_providers : () -> (vec ProviderView) query;
   register_provider : (RegisterProvider) -> (nat64);
-  request : (Source, text, nat64) -> (Result_5);
-  request_cost : (Source, text, nat64) -> (Result_6) query;
+  request : (Source, text, nat64) -> (Result_6);
+  request_cost : (Source, text, nat64) -> (Result_7) query;
   set_nodes_in_subnet : (nat32) -> ();
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> (bool);

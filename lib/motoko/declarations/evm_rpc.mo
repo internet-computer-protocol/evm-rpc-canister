@@ -31,6 +31,7 @@ module {
     to_block : ?BlockSpec;
     from_block : ?BlockSpec;
   };
+  public type GetTransactionCountArgs = { address : Text; block : BlockSpec };
   public type HttpOutcallError = {
     #IcError : { code : RejectionCode; message : Text };
     #InvalidHttpJsonRpcResponse : {
@@ -63,6 +64,10 @@ module {
   public type MultiRpcResult_2 = {
     #Consistent : Result_3;
     #Inconsistent : [(RpcNodeProvider, Result_3)];
+  };
+  public type MultiRpcResult_3 = {
+    #Consistent : Result_4;
+    #Inconsistent : [(RpcNodeProvider, Result_4)];
   };
   public type MultiSource = {
     #Ethereum : ?[EthereumProvider];
@@ -103,10 +108,11 @@ module {
   public type Result = { #Ok : ?FeeHistory; #Err : RpcError };
   public type Result_1 = { #Ok : Block; #Err : RpcError };
   public type Result_2 = { #Ok : [LogEntry]; #Err : RpcError };
-  public type Result_3 = { #Ok : ?TransactionReceipt; #Err : RpcError };
-  public type Result_4 = { #Ok : SendRawTransactionResult; #Err : RpcError };
-  public type Result_5 = { #Ok : Text; #Err : RpcError };
-  public type Result_6 = { #Ok : Nat; #Err : RpcError };
+  public type Result_3 = { #Ok : Nat; #Err : RpcError };
+  public type Result_4 = { #Ok : ?TransactionReceipt; #Err : RpcError };
+  public type Result_5 = { #Ok : SendRawTransactionResult; #Err : RpcError };
+  public type Result_6 = { #Ok : Text; #Err : RpcError };
+  public type Result_7 = { #Ok : Nat; #Err : RpcError };
   public type RpcError = {
     #JsonRpcError : JsonRpcError;
     #ProviderError : ProviderError;
@@ -161,19 +167,23 @@ module {
         BlockSpec,
       ) -> async MultiRpcResult;
     eth_get_logs : shared (MultiSource, GetLogsArgs) -> async MultiRpcResult_1;
+    eth_get_transaction_count : shared (
+        MultiSource,
+        GetTransactionCountArgs,
+      ) -> async MultiRpcResult_2;
     eth_get_transaction_receipt : shared (
         MultiSource,
         Blob,
-      ) -> async MultiRpcResult_2;
-    eth_send_raw_transaction : shared (MultiSource, Text) -> async Result_4;
+      ) -> async MultiRpcResult_3;
+    eth_send_raw_transaction : shared (MultiSource, Text) -> async Result_5;
     get_accumulated_cycle_count : shared query Nat64 -> async Nat;
     get_authorized : shared query Auth -> async [Text];
     get_nodes_in_subnet : shared query () -> async Nat32;
     get_open_rpc_access : shared query () -> async Bool;
     get_providers : shared query () -> async [ProviderView];
     register_provider : shared RegisterProvider -> async Nat64;
-    request : shared (Source, Text, Nat64) -> async Result_5;
-    request_cost : shared query (Source, Text, Nat64) -> async Result_6;
+    request : shared (Source, Text, Nat64) -> async Result_6;
+    request_cost : shared query (Source, Text, Nat64) -> async Result_7;
     set_nodes_in_subnet : shared Nat32 -> async ();
     set_open_rpc_access : shared Bool -> async ();
     unregister_provider : shared Nat64 -> async Bool;

@@ -350,7 +350,6 @@ pub mod candid_types {
 
     impl TryFrom<GetLogsArgs> for cketh_common::eth_rpc::GetLogsParam {
         type Error = DataFormatError;
-
         fn try_from(value: GetLogsArgs) -> Result<Self, Self::Error> {
             Ok(cketh_common::eth_rpc::GetLogsParam {
                 from_block: value.from_block.map(|x| x.into()).unwrap_or_default(),
@@ -409,6 +408,27 @@ pub mod candid_types {
                 highest_block: value.newest_block.into(),
                 reward_percentiles: value.reward_percentiles.unwrap_or_default(),
             }
+        }
+    }
+
+    #[derive(Clone, Debug, CandidType, Deserialize)]
+    pub struct GetTransactionCountArgs {
+        pub address: String,
+        pub block: BlockSpec,
+    }
+
+    impl TryFrom<GetTransactionCountArgs>
+        for cketh_common::eth_rpc_client::requests::GetTransactionCountParams
+    {
+        type Error = DataFormatError;
+        fn try_from(value: GetTransactionCountArgs) -> Result<Self, Self::Error> {
+            Ok(
+                cketh_common::eth_rpc_client::requests::GetTransactionCountParams {
+                    address: Address::from_str(&value.address)
+                        .map_err(|_| DataFormatError::InvalidHex(value.address))?,
+                    block: value.block.into(),
+                },
+            )
         }
     }
 }
