@@ -1,6 +1,6 @@
 use candid::Principal;
 
-use crate::{Auth, PrincipalStorable, AUTH, AuthSet};
+use crate::{Auth, AuthSet, PrincipalStorable, AUTH};
 
 pub fn is_authorized(principal: &Principal, auth: Auth) -> bool {
     AUTH.with(|a| {

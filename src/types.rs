@@ -7,7 +7,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
-use crate::{PROVIDERS, AUTH_SET_STORABLE_MAX_SIZE};
+use crate::{AUTH_SET_STORABLE_MAX_SIZE, PROVIDERS};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum Source {
