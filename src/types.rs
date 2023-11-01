@@ -7,7 +7,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
-use crate::PROVIDERS;
+use crate::{PROVIDERS, AUTH_SET_STORABLE_MAX_SIZE};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum Source {
@@ -139,7 +139,7 @@ impl Storable for AuthSet {
 }
 
 impl BoundedStorable for AuthSet {
-    const MAX_SIZE: u32 = 1024;
+    const MAX_SIZE: u32 = AUTH_SET_STORABLE_MAX_SIZE;
     const IS_FIXED_SIZE: bool = false;
 }
 
