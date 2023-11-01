@@ -1,11 +1,11 @@
 use candid::Principal;
 
-use crate::{Auth, PrincipalStorable, AUTH};
+use crate::{Auth, PrincipalStorable, AUTH, AuthSet};
 
 pub fn is_authorized(principal: &Principal, auth: Auth) -> bool {
     AUTH.with(|a| {
         if let Some(v) = a.borrow().get(&PrincipalStorable(*principal)) {
-            (v & (auth as u32)) != 0
+            v.is_authorized(auth)
         } else {
             false
         }
@@ -33,10 +33,11 @@ pub fn do_authorize(principal: Principal, auth: Auth) {
     AUTH.with(|a| {
         let mut auth_map = a.borrow_mut();
         let principal = PrincipalStorable(principal);
-        if let Some(v) = auth_map.get(&principal) {
-            auth_map.insert(principal, v | (auth as u32));
+        if let Some(mut v) = auth_map.get(&principal) {
+            v.authorize(auth);
+            auth_map.insert(principal, v);
         } else {
-            auth_map.insert(principal, auth as u32);
+            auth_map.insert(principal, AuthSet::new(vec![auth]));
         }
     });
 }
@@ -45,8 +46,13 @@ pub fn do_deauthorize(principal: Principal, auth: Auth) {
     AUTH.with(|a| {
         let mut auth_map = a.borrow_mut();
         let principal = PrincipalStorable(principal);
-        if let Some(v) = auth_map.get(&principal) {
-            auth_map.insert(principal, v & !(auth as u32));
+        if let Some(mut v) = auth_map.get(&principal) {
+            v.deauthorize(auth);
+            if v.is_empty() {
+                auth_map.remove(&principal);
+            } else {
+                auth_map.insert(principal, v);
+            }
         }
     });
 }
