@@ -130,7 +130,7 @@ impl AuthSet {
 // Using explicit JSON representation in place of enum indices for security
 impl Storable for AuthSet {
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        serde_json::from_slice(&*bytes).expect("Unable to deserialize AuthSet")
+        serde_json::from_slice(&bytes).expect("Unable to deserialize AuthSet")
     }
 
     fn to_bytes(&self) -> Cow<[u8]> {
