@@ -1,12 +1,13 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_eth::core::types::RecoveryMessage;
 use ic_stable_structures::{BoundedStorable, Storable};
-use num_derive::FromPrimitive;
+
+use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
-use crate::PROVIDERS;
+use crate::{AUTH_SET_STORABLE_MAX_SIZE, PROVIDERS};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum Source {
@@ -78,13 +79,68 @@ pub struct Metrics {
     pub host_requests: HashMap<String, u64>,
 }
 
-// These need to be powers of two so that they can be used as bit fields.
-#[derive(Clone, Debug, PartialEq, CandidType, FromPrimitive, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]
 pub enum Auth {
-    Admin = 0b0001,
-    Rpc = 0b0010,
-    RegisterProvider = 0b0100,
-    FreeRpc = 0b1000,
+    Admin,
+    RegisterProvider,
+    Rpc,
+    FreeRpc,
+}
+
+#[derive(Clone, Debug, PartialEq, CandidType, Serialize, Deserialize, Default)]
+pub struct AuthSet(Vec<Auth>);
+
+impl AuthSet {
+    pub fn new(auths: Vec<Auth>) -> Self {
+        let mut auth_set = Self(Vec::with_capacity(auths.len()));
+        for auth in auths {
+            // Deduplicate
+            auth_set.authorize(auth);
+        }
+        auth_set
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn is_authorized(&self, auth: Auth) -> bool {
+        self.0.contains(&auth)
+    }
+
+    pub fn authorize(&mut self, auth: Auth) -> bool {
+        if !self.is_authorized(auth) {
+            self.0.push(auth);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn deauthorize(&mut self, auth: Auth) -> bool {
+        if let Some(index) = self.0.iter().position(|a| *a == auth) {
+            self.0.remove(index);
+            true
+        } else {
+            false
+        }
+    }
+}
+
+// Using explicit JSON representation in place of enum indices for security
+impl Storable for AuthSet {
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        serde_json::from_slice(&bytes).expect("Unable to deserialize AuthSet")
+    }
+
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::Owned(serde_json::to_vec(self).expect("Unable to serialize AuthSet"))
+    }
+}
+
+impl BoundedStorable for AuthSet {
+    const MAX_SIZE: u32 = AUTH_SET_STORABLE_MAX_SIZE;
+    const IS_FIXED_SIZE: bool = false;
 }
 
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
@@ -101,12 +157,12 @@ pub struct StringStorable(pub String);
 pub struct PrincipalStorable(pub Principal);
 
 impl Storable for StringStorable {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+    fn to_bytes(&self) -> Cow<[u8]> {
         // String already implements `Storable`.
         self.0.to_bytes()
     }
 
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
         Self(String::from_bytes(bytes))
     }
 }
@@ -117,11 +173,11 @@ impl BoundedStorable for StringStorable {
 }
 
 impl Storable for PrincipalStorable {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        std::borrow::Cow::from(self.0.as_slice())
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::from(self.0.as_slice())
     }
 
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
         Self(Principal::from_slice(&bytes))
     }
 }
@@ -181,7 +237,7 @@ impl Provider {
 }
 
 impl Storable for Metadata {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+    fn to_bytes(&self) -> Cow<[u8]> {
         Cow::Owned(Encode!(self).unwrap())
     }
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
@@ -190,7 +246,7 @@ impl Storable for Metadata {
 }
 
 impl Storable for Provider {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+    fn to_bytes(&self) -> Cow<[u8]> {
         Cow::Owned(Encode!(self).unwrap())
     }
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
