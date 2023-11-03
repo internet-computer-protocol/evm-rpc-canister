@@ -229,22 +229,6 @@ pub struct SignedMessage {
     pub signature: Vec<u8>,
 }
 
-// #[derive(Clone, Debug, CandidType, Deserialize)]
-// pub enum RpcError {
-//     ProviderError(ProviderError),
-//     HttpOutcallError(HttpOutcallError),
-//     JsonRpcError { code: i64, message: String },
-// }
-
-// #[derive(Clone, Debug, CandidType, Deserialize)]
-// pub enum ProviderError {
-//     NoPermission,
-//     TooFewCycles { expected: u128, received: u128 },
-//     ServiceUrlParseError,
-//     ServiceHostNotAllowed(String),
-//     ProviderNotFound,
-// }
-
 pub type MultiCallResult<T> = Result<T, MultiCallError<T>>;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -340,7 +324,6 @@ pub mod candid_types {
     }
 
     #[derive(Clone, Debug, CandidType, Deserialize)]
-    // #[serde(rename_all = "camelCase")]
     pub struct GetLogsArgs {
         pub from_block: Option<BlockSpec>,
         pub to_block: Option<BlockSpec>,
