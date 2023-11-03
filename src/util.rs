@@ -18,3 +18,11 @@ pub fn canonicalize_json(text: &[u8]) -> Option<Vec<u8>> {
     // };
     serde_json::to_vec(&json).ok()
 }
+
+#[test]
+fn test_canonicalize_json() {
+    assert_eq!(
+        canonicalize_json(r#"{"A":1,"B":2}"#.as_bytes()).unwrap(),
+        canonicalize_json(r#"{"B":2,"A":1}"#.as_bytes()).unwrap()
+    )
+}
