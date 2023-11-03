@@ -10,8 +10,8 @@ type BlockTag = variant {
   Pending;
 };
 type CandidRpcSource = variant {
-  Ethereum : record { "service" : opt EthereumProvider };
-  Sepolia : record { "service" : opt SepoliaProvider };
+  Ethereum : opt EthereumProvider;
+  Sepolia : opt SepoliaProvider;
 };
 type DataFormatError = variant { InvalidHex : text };
 type EthereumProvider = variant { Cloudflare; Ankr };

@@ -289,8 +289,8 @@ pub type RpcResult<T> = Result<T, RpcError>;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum CandidRpcSource {
-    Ethereum { service: Option<EthereumProvider> },
-    Sepolia { service: Option<SepoliaProvider> },
+    Ethereum(Option<EthereumProvider>),
+    Sepolia(Option<SepoliaProvider>),
 }
 
 pub mod candid_types {

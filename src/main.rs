@@ -68,14 +68,14 @@ fn get_rpc_client(source: CandidRpcSource) -> Result<EthRpcClient<CanisterTransp
         return Err(ProviderError::NoPermission.into());
     }
     Ok(match source {
-        CandidRpcSource::Ethereum { service } => EthRpcClient::new(
+        CandidRpcSource::Ethereum(service) => EthRpcClient::new(
             EvmNetwork::Ethereum,
             validate_providers(Some(vec![service.unwrap_or(
-                cketh_common::eth_rpc_client::providers::EthereumProvider::Cloudflare,
+                cketh_common::eth_rpc_client::providers::EthereumProvider::Ankr,
             )]))?
             .map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
         ),
-        CandidRpcSource::Sepolia { service } => EthRpcClient::new(
+        CandidRpcSource::Sepolia(service) => EthRpcClient::new(
             EvmNetwork::Sepolia,
             validate_providers(Some(vec![service.unwrap_or(
                 cketh_common::eth_rpc_client::providers::SepoliaProvider::PublicNode,
