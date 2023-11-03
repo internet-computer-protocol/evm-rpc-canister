@@ -56,7 +56,7 @@ impl RpcTransport for CanisterTransport {
     }
 }
 
-fn get_rpc_client(source: MultiSource) -> Result<EthRpcClient<CanisterTransport>, RpcError> {
+fn get_rpc_client(source: CandidRpcSource) -> Result<EthRpcClient<CanisterTransport>, RpcError> {
     fn validate_providers<T>(opt_vec: Option<Vec<T>>) -> Result<Option<Vec<T>>, RpcError> {
         Ok(match opt_vec {
             Some(v) if v.is_empty() => Err(ProviderError::ProviderNotFound)?,
@@ -68,26 +68,30 @@ fn get_rpc_client(source: MultiSource) -> Result<EthRpcClient<CanisterTransport>
         return Err(ProviderError::NoPermission.into());
     }
     Ok(match source {
-        MultiSource::Ethereum(providers) => EthRpcClient::new(
+        CandidRpcSource::Ethereum { service } => EthRpcClient::new(
             EvmNetwork::Ethereum,
-            validate_providers(providers)?
-                .map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
+            validate_providers(Some(vec![service.unwrap_or(
+                cketh_common::eth_rpc_client::providers::EthereumProvider::Cloudflare,
+            )]))?
+            .map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
         ),
-        MultiSource::Sepolia(providers) => EthRpcClient::new(
+        CandidRpcSource::Sepolia { service } => EthRpcClient::new(
             EvmNetwork::Sepolia,
-            validate_providers(providers)?
-                .map(|p| p.into_iter().map(RpcNodeProvider::Sepolia).collect()),
+            validate_providers(Some(vec![service.unwrap_or(
+                cketh_common::eth_rpc_client::providers::SepoliaProvider::PublicNode,
+            )]))?
+            .map(|p| p.into_iter().map(RpcNodeProvider::Sepolia).collect()),
         ),
     })
 }
 
-fn wrap_result<T>(result: MultiCallResult<T>) -> MultiRpcResult<T> {
+fn wrap_result<T>(result: Result<T, MultiCallError<T>>) -> RpcResult<T> {
     match result {
-        Ok(value) => MultiRpcResult::Consistent(Ok(value)),
+        Ok(value) => Ok(value),
         Err(err) => match err {
-            MultiCallError::ConsistentError(e) => MultiRpcResult::Consistent(Err(e)),
-            MultiCallError::InconsistentResults(r) => {
-                MultiRpcResult::Inconsistent(r.results.into_iter().collect())
+            MultiCallError::ConsistentError(e) => Err(e),
+            MultiCallError::InconsistentResults(_r) => {
+                unreachable!()
             }
         },
     }
@@ -96,44 +100,35 @@ fn wrap_result<T>(result: MultiCallResult<T>) -> MultiRpcResult<T> {
 #[ic_cdk_macros::update]
 #[candid_method]
 pub async fn eth_get_logs(
-    source: MultiSource,
+    source: CandidRpcSource,
     args: candid_types::GetLogsArgs,
-) -> MultiRpcResult<Vec<LogEntry>> {
+) -> RpcResult<Vec<LogEntry>> {
     let args: GetLogsParam = match args.try_into() {
         Ok(args) => args,
-        Err(err) => return RpcError::from(err).into(),
+        Err(err) => return Err(RpcError::from(err)),
     };
-    let client = match get_rpc_client(source) {
-        Ok(client) => client,
-        Err(err) => return err.into(),
-    };
+    let client = get_rpc_client(source)?;
     wrap_result(client.eth_get_logs(args).await)
 }
 
 #[ic_cdk_macros::update]
 #[candid_method]
 pub async fn eth_get_block_by_number(
-    source: MultiSource,
+    source: CandidRpcSource,
     block: candid_types::BlockSpec,
-) -> MultiRpcResult<Block> {
+) -> RpcResult<Block> {
     let block: BlockSpec = block.into();
-    let client = match get_rpc_client(source) {
-        Ok(client) => client,
-        Err(err) => return err.into(),
-    };
+    let client = get_rpc_client(source)?;
     wrap_result(client.eth_get_block_by_number(block).await)
 }
 
 #[ic_cdk_macros::update]
 #[candid_method]
 pub async fn eth_get_transaction_receipt(
-    source: MultiSource,
+    source: CandidRpcSource,
     hash: candid_types::Hash,
-) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
-    let client = match get_rpc_client(source) {
-        Ok(client) => client,
-        Err(err) => return err.into(),
-    };
+) -> RpcResult<Option<candid_types::TransactionReceipt>> {
+    let client = get_rpc_client(source)?;
     wrap_result(client.eth_get_transaction_receipt(hash).await)
         .map(|option| option.map(|r| r.into()))
 }
@@ -141,24 +136,21 @@ pub async fn eth_get_transaction_receipt(
 #[ic_cdk_macros::update]
 #[candid_method]
 pub async fn eth_get_transaction_count(
-    source: MultiSource,
+    source: CandidRpcSource,
     args: candid_types::GetTransactionCountArgs,
-) -> MultiRpcResult<TransactionCount> {
+) -> RpcResult<TransactionCount> {
     let args: GetTransactionCountParams = match args.try_into() {
         Ok(args) => args,
-        Err(err) => return RpcError::from(err).into(),
+        Err(err) => return Err(RpcError::from(err)),
     };
-    let client = match get_rpc_client(source) {
-        Ok(client) => client,
-        Err(err) => return err.into(),
-    };
+    let client = get_rpc_client(source)?;
     wrap_result(client.eth_get_transaction_count(args).await)
 }
 
 #[ic_cdk_macros::update]
 #[candid_method]
 pub async fn eth_fee_history(
-    source: MultiSource,
+    source: CandidRpcSource,
     args: candid_types::FeeHistoryArgs,
 ) -> Result<Option<FeeHistory>, RpcError> {
     let args = args.into();
@@ -169,7 +161,7 @@ pub async fn eth_fee_history(
 #[ic_cdk_macros::update]
 #[candid_method]
 pub async fn eth_send_raw_transaction(
-    source: MultiSource,
+    source: CandidRpcSource,
     raw_signed_transaction_hex: String,
 ) -> Result<SendRawTransactionResult, RpcError> {
     let client = get_rpc_client(source)?;

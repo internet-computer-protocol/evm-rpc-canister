@@ -1,7 +1,7 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use cketh_common::eth_rpc::{ProviderError, RpcError};
-use cketh_common::eth_rpc_client::providers::{EthereumProvider, RpcNodeProvider, SepoliaProvider};
-use cketh_common::eth_rpc_client::MultiCallError;
+use cketh_common::eth_rpc_client::providers::{EthereumProvider, SepoliaProvider};
+
 use ic_eth::core::types::RecoveryMessage;
 use ic_stable_structures::{BoundedStorable, Storable};
 use num_derive::FromPrimitive;
@@ -229,45 +229,12 @@ pub struct SignedMessage {
     pub signature: Vec<u8>,
 }
 
-pub type MultiCallResult<T> = Result<T, MultiCallError<T>>;
+pub type RpcResult<T> = Result<T, RpcError>;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum MultiSource {
-    Ethereum(Option<Vec<EthereumProvider>>),
-    Sepolia(Option<Vec<SepoliaProvider>>),
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum MultiRpcResult<T> {
-    Consistent(Result<T, RpcError>),
-    Inconsistent(Vec<(RpcNodeProvider, Result<T, RpcError>)>),
-}
-
-impl<T> MultiRpcResult<T> {
-    pub fn and_then<R>(
-        self,
-        op: impl Fn(Result<T, RpcError>) -> Result<R, RpcError>,
-    ) -> MultiRpcResult<R> {
-        match self {
-            MultiRpcResult::Consistent(r) => MultiRpcResult::Consistent(op(r)),
-            MultiRpcResult::Inconsistent(rs) => {
-                MultiRpcResult::Inconsistent(rs.into_iter().map(|(p, r)| (p, op(r))).collect())
-            }
-        }
-    }
-
-    pub fn map<R>(self, op: impl Fn(T) -> R) -> MultiRpcResult<R> {
-        self.and_then(|r| match r {
-            Ok(value) => Ok(op(value)),
-            Err(err) => Err(err),
-        })
-    }
-}
-
-impl<T> From<RpcError> for MultiRpcResult<T> {
-    fn from(error: RpcError) -> Self {
-        MultiRpcResult::Consistent(Err(error))
-    }
+pub enum CandidRpcSource {
+    Ethereum { service: Option<EthereumProvider> },
+    Sepolia { service: Option<SepoliaProvider> },
 }
 
 pub mod candid_types {

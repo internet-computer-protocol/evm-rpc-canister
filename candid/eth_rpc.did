@@ -9,6 +9,10 @@ type BlockTag = variant {
   Number : nat64;
   Pending;
 };
+type CandidRpcSource = variant {
+  Ethereum : record { "service" : opt EthereumProvider };
+  Sepolia : record { "service" : opt SepoliaProvider };
+};
 type DataFormatError = variant { InvalidHex : text };
 type EthereumProvider = variant { Cloudflare; Ankr };
 type FeeHistory = record {
@@ -49,26 +53,6 @@ type LogEntry = record {
   removed : bool;
 };
 type Message = variant { Data : vec nat8; Hash : vec nat8 };
-type MultiRpcResult = variant {
-  Consistent : Result_1;
-  Inconsistent : vec record { RpcNodeProvider; Result_1 };
-};
-type MultiRpcResult_1 = variant {
-  Consistent : Result_2;
-  Inconsistent : vec record { RpcNodeProvider; Result_2 };
-};
-type MultiRpcResult_2 = variant {
-  Consistent : Result_3;
-  Inconsistent : vec record { RpcNodeProvider; Result_3 };
-};
-type MultiRpcResult_3 = variant {
-  Consistent : Result_4;
-  Inconsistent : vec record { RpcNodeProvider; Result_4 };
-};
-type MultiSource = variant {
-  Ethereum : opt vec EthereumProvider;
-  Sepolia : opt vec SepoliaProvider;
-};
 type ProviderError = variant {
   TooFewCycles : record { expected : nat; received : nat };
   ServiceUrlParseError : text;
@@ -115,10 +99,6 @@ type RpcError = variant {
   HttpOutcallError : HttpOutcallError;
   DataFormatError : DataFormatError;
 };
-type RpcNodeProvider = variant {
-  Ethereum : EthereumProvider;
-  Sepolia : SepoliaProvider;
-};
 type SendRawTransactionResult = variant {
   Ok;
   NonceTooLow;
@@ -157,14 +137,14 @@ type UpdateProvider = record {
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
-  eth_fee_history : (MultiSource, FeeHistoryArgs) -> (Result);
-  eth_get_block_by_number : (MultiSource, BlockSpec) -> (MultiRpcResult);
-  eth_get_logs : (MultiSource, GetLogsArgs) -> (MultiRpcResult_1);
-  eth_get_transaction_count : (MultiSource, GetTransactionCountArgs) -> (
-      MultiRpcResult_2,
+  eth_fee_history : (CandidRpcSource, FeeHistoryArgs) -> (Result);
+  eth_get_block_by_number : (CandidRpcSource, BlockSpec) -> (Result_1);
+  eth_get_logs : (CandidRpcSource, GetLogsArgs) -> (Result_2);
+  eth_get_transaction_count : (CandidRpcSource, GetTransactionCountArgs) -> (
+      Result_3,
     );
-  eth_get_transaction_receipt : (MultiSource, vec nat8) -> (MultiRpcResult_3);
-  eth_send_raw_transaction : (MultiSource, text) -> (Result_5);
+  eth_get_transaction_receipt : (CandidRpcSource, vec nat8) -> (Result_4);
+  eth_send_raw_transaction : (CandidRpcSource, text) -> (Result_5);
   get_accumulated_cycle_count : (nat64) -> (nat) query;
   get_authorized : (Auth) -> (vec text) query;
   get_nodes_in_subnet : () -> (nat32) query;
