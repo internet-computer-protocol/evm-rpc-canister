@@ -47,7 +47,10 @@ pub async fn test() {
     match result {
         Ok(response) => {
             // Check response structure around gas price
-            assert_eq!(&response[..36], "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x");
+            assert_eq!(
+                &response[..36],
+                "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x"
+            );
             assert_eq!(&response[response.len() - 2..], "\"}");
         }
         Err(err) => ic_cdk::trap(&format!("error in `request` with cycles: {:?}", err)),
