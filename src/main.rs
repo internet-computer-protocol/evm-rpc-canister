@@ -333,7 +333,7 @@ async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
 fn transform(args: TransformArgs) -> HttpResponse {
     HttpResponse {
         status: args.response.status,
-        body: args.response.body,
+        body: canonicalize_json(&args.response.body).unwrap_or(args.response.body),
         // Strip headers as they contain the Date which is not necessarily the same
         // and will prevent consensus on the result.
         headers: Vec::<HttpHeader>::new(),
