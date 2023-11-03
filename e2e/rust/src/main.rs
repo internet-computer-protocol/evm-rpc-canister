@@ -20,7 +20,7 @@ pub async fn test() {
 
     // Get cycles cost
     let (cycles_result,): (Result<u128, RpcError>,) =
-        ic_cdk::call(evm_rpc.0, "request_cost", params.clone())
+        ic_cdk::api::call::call(evm_rpc.0, "request_cost", params.clone())
             .await
             .unwrap();
     let cycles = cycles_result
@@ -47,8 +47,8 @@ pub async fn test() {
     match result {
         Ok(response) => {
             // Check response structure around gas price
-            assert_eq!(&response[..29], "{\"jsonrpc\":\"2.0\",\"result\":\"0x",);
-            assert_eq!(&response[response.len() - 9..], "\",\"id\":1}")
+            assert_eq!(&response[..36], "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x");
+            assert_eq!(&response[response.len() - 2..], "\"}");
         }
         Err(err) => ic_cdk::trap(&format!("error in `request` with cycles: {:?}", err)),
     }

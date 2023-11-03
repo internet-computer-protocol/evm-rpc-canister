@@ -13,6 +13,10 @@ module {
     #Number : Nat64;
     #Pending;
   };
+  public type CandidRpcSource = {
+    #Ethereum : ?EthereumProvider;
+    #Sepolia : ?SepoliaProvider;
+  };
   public type DataFormatError = { #InvalidHex : Text };
   public type EthereumProvider = { #Cloudflare; #Ankr };
   public type FeeHistory = {
@@ -53,26 +57,6 @@ module {
     removed : Bool;
   };
   public type Message = { #Data : Blob; #Hash : Blob };
-  public type MultiRpcResult = {
-    #Consistent : Result_1;
-    #Inconsistent : [(RpcNodeProvider, Result_1)];
-  };
-  public type MultiRpcResult_1 = {
-    #Consistent : Result_2;
-    #Inconsistent : [(RpcNodeProvider, Result_2)];
-  };
-  public type MultiRpcResult_2 = {
-    #Consistent : Result_3;
-    #Inconsistent : [(RpcNodeProvider, Result_3)];
-  };
-  public type MultiRpcResult_3 = {
-    #Consistent : Result_4;
-    #Inconsistent : [(RpcNodeProvider, Result_4)];
-  };
-  public type MultiSource = {
-    #Ethereum : ?[EthereumProvider];
-    #Sepolia : ?[SepoliaProvider];
-  };
   public type ProviderError = {
     #TooFewCycles : { expected : Nat; received : Nat };
     #ServiceUrlParseError : Text;
@@ -119,10 +103,6 @@ module {
     #HttpOutcallError : HttpOutcallError;
     #DataFormatError : DataFormatError;
   };
-  public type RpcNodeProvider = {
-    #Ethereum : EthereumProvider;
-    #Sepolia : SepoliaProvider;
-  };
   public type SendRawTransactionResult = {
     #Ok;
     #NonceTooLow;
@@ -161,21 +141,21 @@ module {
   public type Self = actor {
     authorize : shared (Principal, Auth) -> async ();
     deauthorize : shared (Principal, Auth) -> async ();
-    eth_fee_history : shared (MultiSource, FeeHistoryArgs) -> async Result;
+    eth_fee_history : shared (CandidRpcSource, FeeHistoryArgs) -> async Result;
     eth_get_block_by_number : shared (
-        MultiSource,
+        CandidRpcSource,
         BlockSpec,
-      ) -> async MultiRpcResult;
-    eth_get_logs : shared (MultiSource, GetLogsArgs) -> async MultiRpcResult_1;
+      ) -> async Result_1;
+    eth_get_logs : shared (CandidRpcSource, GetLogsArgs) -> async Result_2;
     eth_get_transaction_count : shared (
-        MultiSource,
+        CandidRpcSource,
         GetTransactionCountArgs,
-      ) -> async MultiRpcResult_2;
+      ) -> async Result_3;
     eth_get_transaction_receipt : shared (
-        MultiSource,
+        CandidRpcSource,
         Blob,
-      ) -> async MultiRpcResult_3;
-    eth_send_raw_transaction : shared (MultiSource, Text) -> async Result_5;
+      ) -> async Result_4;
+    eth_send_raw_transaction : shared (CandidRpcSource, Text) -> async Result_5;
     get_accumulated_cycle_count : shared query Nat64 -> async Nat;
     get_authorized : shared query Auth -> async [Text];
     get_nodes_in_subnet : shared query () -> async Nat32;
