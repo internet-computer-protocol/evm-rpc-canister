@@ -57,9 +57,10 @@ pub fn do_register_provider(caller: Principal, provider: RegisterProvider) -> u6
 
 pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
     PROVIDERS.with(|p| {
-        if let Some(provider) = p.borrow().get(&provider_id) {
+        let mut p = p.borrow_mut();
+        if let Some(provider) = p.get(&provider_id) {
             if provider.owner == caller || is_authorized(&caller, Auth::Admin) {
-                return p.borrow_mut().remove(&provider_id).is_some();
+                return p.remove(&provider_id).is_some();
             } else {
                 ic_cdk::trap("Not authorized");
             }
