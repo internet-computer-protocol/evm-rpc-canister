@@ -143,7 +143,7 @@ service : {
   eth_get_transaction_count : (CandidRpcSource, GetTransactionCountArgs) -> (
       Result_3,
     );
-  eth_get_transaction_receipt : (CandidRpcSource, vec nat8) -> (Result_4);
+  eth_get_transaction_receipt : (CandidRpcSource, text) -> (Result_4);
   eth_send_raw_transaction : (CandidRpcSource, text) -> (Result_5);
   get_accumulated_cycle_count : (nat64) -> (nat) query;
   get_authorized : (Auth) -> (vec text) query;

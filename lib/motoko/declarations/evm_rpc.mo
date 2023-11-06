@@ -153,7 +153,7 @@ module {
       ) -> async Result_3;
     eth_get_transaction_receipt : shared (
         CandidRpcSource,
-        Blob,
+        Text,
       ) -> async Result_4;
     eth_send_raw_transaction : shared (CandidRpcSource, Text) -> async Result_5;
     get_accumulated_cycle_count : shared query Nat64 -> async Nat;

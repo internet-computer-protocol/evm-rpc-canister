@@ -1,8 +1,10 @@
+use std::str::FromStr;
+
 use async_trait::async_trait;
 use candid::{candid_method, CandidType};
 use cketh_common::eth_rpc::{
-    Block, BlockSpec, FeeHistory, GetLogsParam, HttpOutcallError, JsonRpcReply, LogEntry,
-    ProviderError, RpcError, SendRawTransactionResult,
+    Block, BlockSpec, DataFormatError, FeeHistory, GetLogsParam, Hash, HttpOutcallError,
+    JsonRpcReply, LogEntry, ProviderError, RpcError, SendRawTransactionResult,
 };
 use cketh_common::eth_rpc_client::requests::GetTransactionCountParams;
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
@@ -126,11 +128,17 @@ pub async fn eth_get_block_by_number(
 #[candid_method]
 pub async fn eth_get_transaction_receipt(
     source: CandidRpcSource,
-    hash: candid_types::Hash,
+    hash: String,
 ) -> RpcResult<Option<candid_types::TransactionReceipt>> {
     let client = get_rpc_client(source)?;
-    wrap_result(client.eth_get_transaction_receipt(hash).await)
-        .map(|option| option.map(|r| r.into()))
+    wrap_result(
+        client
+            .eth_get_transaction_receipt(
+                Hash::from_str(&hash).map_err(|_| DataFormatError::InvalidHex(hash))?,
+            )
+            .await,
+    )
+    .map(|option| option.map(|r| r.into()))
 }
 
 #[ic_cdk_macros::update]
