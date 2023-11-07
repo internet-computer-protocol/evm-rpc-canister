@@ -21,17 +21,17 @@ pub async fn do_http_request(
     }
     let cycles_available = ic_cdk::api::call::msg_cycles_available128();
     let cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
-    let (service_url, provider) = match source {
-        ResolvedSource::Url(url) => (url, None),
-        ResolvedSource::Provider(provider) => (provider.service_url(), Some(provider)),
+    let (api, provider) = match source {
+        ResolvedSource::Api(api) => (api, None),
+        ResolvedSource::Provider(provider) => (provider.api(), Some(provider)),
     };
-    let parsed_url = match url::Url::parse(&service_url) {
+    let parsed_url = match url::Url::parse(&api.url) {
         Ok(url) => url,
-        Err(_) => return Err(ProviderError::ServiceUrlParseError(service_url).into()),
+        Err(_) => return Err(ProviderError::ServiceUrlParseError(api.url).into()),
     };
     let host = match parsed_url.host_str() {
         Some(host) => host,
-        None => return Err(ProviderError::ServiceUrlParseError(service_url).into()),
+        None => return Err(ProviderError::ServiceUrlParseError(api.url).into()),
     };
     if !SERVICE_HOSTS_ALLOWLIST.contains(&host) {
         log!(INFO, "host not allowed: {}", host);
@@ -60,18 +60,19 @@ pub async fn do_http_request(
         add_metric!(request_cycles_refunded, cycles_available - cost);
     }
     inc_metric_entry!(host_requests, host.to_string());
-    let request_headers = vec![
+    let mut request_headers = vec![
         HttpHeader {
             name: "Content-Type".to_string(),
             value: "application/json".to_string(),
         },
-        HttpHeader {
-            name: "Host".to_string(),
-            value: host.to_string(),
-        },
+        // HttpHeader {
+        //     name: "Host".to_string(),
+        //     value: host.to_string(),
+        // },
     ];
+    request_headers.extend(api.headers);
     let request = CanisterHttpRequestArgument {
-        url: service_url,
+        url: api.url,
         max_response_bytes: Some(max_response_bytes),
         method: HttpMethod::POST,
         headers: request_headers,

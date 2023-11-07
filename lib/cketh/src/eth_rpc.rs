@@ -4,6 +4,7 @@
 use crate::address::Address;
 use crate::checked_amount::CheckedAmountOf;
 use crate::endpoints::CandidBlockTag;
+use crate::eth_rpc_client::providers::RpcApi;
 use crate::eth_rpc_client::responses::TransactionReceipt;
 use crate::eth_rpc_client::RpcTransport;
 use crate::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
@@ -649,7 +650,7 @@ impl HttpResponsePayload for TransactionCount {}
 
 /// Calls a JSON-RPC method on an Ethereum node at the specified URL.
 pub async fn call<T, I, O>(
-    url: impl Into<String>,
+    api: RpcApi,
     method: impl Into<String>,
     params: I,
     mut response_size_estimate: ResponseSizeEstimate,
@@ -666,7 +667,12 @@ where
         method: eth_method.clone(),
         id: 1,
     };
-    let url = url.into();
+    let url = api.url;
+    let mut headers = vec![HttpHeader {
+        name: "Content-Type".to_string(),
+        value: "application/json".to_string(),
+    }];
+    headers.extend(api.headers);
 
     loop {
         rpc_request.id = mutate_state(State::next_request_id);
@@ -691,10 +697,7 @@ where
             url: url.clone(),
             max_response_bytes: Some(effective_size_estimate),
             method: HttpMethod::POST,
-            headers: vec![HttpHeader {
-                name: "Content-Type".to_string(),
-                value: "application/json".to_string(),
-            }],
+            headers: headers.clone(),
             body: Some(payload.as_bytes().to_vec()),
             transform: Some(TransformContext::from_name(
                 "cleanup_response".to_owned(),

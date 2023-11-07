@@ -1,7 +1,8 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use cketh_common::eth_rpc::{ProviderError, RpcError};
-use cketh_common::eth_rpc_client::providers::{EthereumProvider, SepoliaProvider};
+use cketh_common::eth_rpc_client::providers::{EthereumProvider, RpcApi, SepoliaProvider};
 
+use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_eth::core::types::RecoveryMessage;
 use ic_stable_structures::{BoundedStorable, Storable};
 
@@ -14,7 +15,10 @@ use crate::{AUTH_SET_STORABLE_MAX_SIZE, PROVIDERS};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum Source {
-    Url(String),
+    Custom {
+        url: String,
+        headers: Vec<(String, String)>,
+    },
     Provider(u64),
     Chain(u64),
     Service {
@@ -26,7 +30,13 @@ pub enum Source {
 impl Source {
     pub fn resolve(self) -> Result<ResolvedSource, ProviderError> {
         Ok(match self {
-            Source::Url(name) => ResolvedSource::Url(name),
+            Source::Custom { url, headers } => ResolvedSource::Api(RpcApi {
+                url,
+                headers: headers
+                    .into_iter()
+                    .map(|(name, value)| HttpHeader { name, value })
+                    .collect(),
+            }),
             Source::Provider(id) => ResolvedSource::Provider({
                 PROVIDERS.with(|providers| {
                     providers
@@ -67,7 +77,7 @@ impl Source {
 }
 
 pub enum ResolvedSource {
-    Url(String),
+    Api(RpcApi),
     Provider(Provider),
 }
 
@@ -206,6 +216,7 @@ pub struct RegisterProvider {
     pub chain_id: u64,
     pub hostname: String,
     pub credential_path: String,
+    pub credential_headers: Option<Vec<(String, String)>>,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
 }
@@ -215,6 +226,7 @@ pub struct UpdateProvider {
     pub provider_id: u64,
     pub hostname: Option<String>,
     pub credential_path: Option<String>,
+    pub credential_headers: Option<Vec<(String, String)>>,
     pub cycles_per_call: Option<u64>,
     pub cycles_per_message_byte: Option<u64>,
     pub primary: Option<bool>,
@@ -227,6 +239,7 @@ pub struct Provider {
     pub chain_id: u64,
     pub hostname: String,
     pub credential_path: String,
+    pub credential_headers: Vec<(String, String)>,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
     pub cycles_owed: u128,
@@ -234,8 +247,16 @@ pub struct Provider {
 }
 
 impl Provider {
-    pub fn service_url(&self) -> String {
-        format!("https://{}{}", self.hostname, self.credential_path)
+    pub fn api(&self) -> RpcApi {
+        RpcApi {
+            url: format!("https://{}{}", self.hostname, self.credential_path),
+            headers: self
+                .credential_headers
+                .clone()
+                .into_iter()
+                .map(|(name, value)| HttpHeader { name, value })
+                .collect(),
+        }
     }
 }
 

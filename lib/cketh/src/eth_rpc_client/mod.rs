@@ -112,7 +112,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
                 provider
             );
             let result = eth_rpc::call::<T, _, _>(
-                provider.url().to_string(),
+                provider.api::<T>(),
                 method.clone(),
                 params.clone(),
                 response_size_estimate,
@@ -157,7 +157,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
             for provider in providers {
                 log!(DEBUG, "[parallel_call]: will call provider: {:?}", provider);
                 fut.push(eth_rpc::call::<T, _, _>(
-                    provider.url().to_string(),
+                    provider.api::<T>(),
                     method.clone(),
                     params.clone(),
                     response_size_estimate,

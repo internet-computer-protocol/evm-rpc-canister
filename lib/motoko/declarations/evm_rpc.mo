@@ -74,6 +74,7 @@ module {
     cycles_per_call : Nat64;
   };
   public type RegisterProvider = {
+    credential_headers : ?[(Text, Text)];
     hostname : Text;
     cycles_per_message_byte : Nat64;
     chain_id : Nat64;
@@ -116,7 +117,7 @@ module {
     address : Blob;
   };
   public type Source = {
-    #Url : Text;
+    #Custom : { url : Text; headers : [(Text, Text)] };
     #Service : { hostname : Text; chain_id : ?Nat64 };
     #Chain : Nat64;
     #Provider : Nat64;
@@ -131,6 +132,7 @@ module {
   };
   public type TransactionStatus = { #Success; #Failure };
   public type UpdateProvider = {
+    credential_headers : ?[(Text, Text)];
     hostname : ?Text;
     provider_id : Nat64;
     cycles_per_message_byte : ?Nat64;

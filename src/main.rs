@@ -39,7 +39,7 @@ impl RpcTransport for CanisterTransport {
     ) -> Result<T, RpcError> {
         let response = do_http_request(
             ic_cdk::caller(),
-            ResolvedSource::Url(service.url().to_string()),
+            ResolvedSource::Api(service.api::<Self>()),
             json,
             max_response_bytes,
         )
