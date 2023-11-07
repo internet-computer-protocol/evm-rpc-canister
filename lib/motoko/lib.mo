@@ -17,14 +17,14 @@ module {
     };
 
     public type Source = {
-        #Url : Text;
+        #Api : { url : Text; headers : ?[(Text, Text)] };
         #Service : { hostname : Text; network : ?Network };
         #Chain : Network;
         #Provider : Nat64;
     };
 
     type ActorSource = {
-        #Url : Text;
+        #Api : { url : Text; headers : ?[(Text, Text)] };
         #Service : { hostname : Text; chain_id : ?Nat64 };
         #Chain : Nat64;
         #Provider : Nat64;
@@ -82,7 +82,7 @@ module {
 
         func wrapActorSource(source : Source) : ActorSource {
             switch source {
-                case (#Url s) { #Url s };
+                case (#Api api) { #Api api };
                 case (#Service { hostname; network }) {
                     #Service {
                         hostname;
