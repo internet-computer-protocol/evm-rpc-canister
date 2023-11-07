@@ -15,9 +15,9 @@ use crate::{AUTH_SET_STORABLE_MAX_SIZE, PROVIDERS};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum Source {
-    Custom {
+    Api {
         url: String,
-        headers: Vec<(String, String)>,
+        headers: Option<Vec<(String, String)>>,
     },
     Provider(u64),
     Chain(u64),
@@ -30,12 +30,16 @@ pub enum Source {
 impl Source {
     pub fn resolve(self) -> Result<ResolvedSource, ProviderError> {
         Ok(match self {
-            Source::Custom { url, headers } => ResolvedSource::Api(RpcApi {
+            Source::Api { url, headers } => ResolvedSource::Api(RpcApi {
                 url,
                 headers: headers
-                    .into_iter()
-                    .map(|(name, value)| HttpHeader { name, value })
-                    .collect(),
+                    .map(|headers| {
+                        headers
+                            .into_iter()
+                            .map(|(name, value)| HttpHeader { name, value })
+                            .collect()
+                    })
+                    .unwrap_or_default(),
             }),
             Source::Provider(id) => ResolvedSource::Provider({
                 PROVIDERS.with(|providers| {

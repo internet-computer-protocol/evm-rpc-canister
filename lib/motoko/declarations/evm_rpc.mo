@@ -117,7 +117,7 @@ module {
     address : Blob;
   };
   public type Source = {
-    #Custom : { url : Text; headers : [(Text, Text)] };
+    #Api : { url : Text; headers : [(Text, Text)] };
     #Service : { hostname : Text; chain_id : ?Nat64 };
     #Chain : Nat64;
     #Provider : Nat64;
