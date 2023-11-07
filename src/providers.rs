@@ -90,6 +90,10 @@ pub fn do_update_provider(caller: Principal, update: UpdateProvider) {
                     validate_credential_path(&path);
                     provider.credential_path = path;
                 }
+                if let Some(headers) = update.credential_headers {
+                    validate_credential_headers(&headers);
+                    provider.credential_headers = headers;
+                }
                 if let Some(primary) = update.primary {
                     provider.primary = primary;
                 }

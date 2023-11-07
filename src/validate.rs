@@ -14,3 +14,12 @@ pub fn validate_credential_path(credential_path: &str) {
         ic_cdk::trap("credential path must start with '/' or '?' unless empty");
     }
 }
+
+pub fn validate_credential_headers(credential_headers: &[(String, String)]) {
+    if credential_headers
+        .iter()
+        .any(|(name, _value)| name == "Content-Type")
+    {
+        ic_cdk::trap("unexpected credential header: 'Content-Type'");
+    }
+}
