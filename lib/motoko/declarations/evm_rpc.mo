@@ -14,11 +14,10 @@ module {
     #Pending;
   };
   public type CandidRpcSource = {
-    #Ethereum : ?EthereumProvider;
-    #Sepolia : ?SepoliaProvider;
+    #EthSepolia : ?SepoliaProvider;
+    #EthMainnet : ?SepoliaProvider;
   };
   public type DataFormatError = { #InvalidHex : Text };
-  public type EthereumProvider = { #Cloudflare; #Ankr };
   public type FeeHistory = {
     reward : [[Nat]];
     base_fee_per_gas : [Nat];
@@ -117,7 +116,7 @@ module {
     address : Blob;
   };
   public type Source = {
-    #Api : { url : Text; headers : [(Text, Text)] };
+    #Api : { url : Text; headers : ?[(Text, Text)] };
     #Service : { hostname : Text; chain_id : ?Nat64 };
     #Chain : Nat64;
     #Provider : Nat64;

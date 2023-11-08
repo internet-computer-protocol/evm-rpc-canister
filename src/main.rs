@@ -3,14 +3,13 @@ use std::str::FromStr;
 use async_trait::async_trait;
 use candid::{candid_method, CandidType};
 use cketh_common::eth_rpc::{
-    Block, BlockSpec, DataFormatError, FeeHistory, GetLogsParam, Hash, HttpOutcallError,
+    into_nat, Block, BlockSpec, DataFormatError, FeeHistory, GetLogsParam, Hash, HttpOutcallError,
     JsonRpcReply, LogEntry, ProviderError, RpcError, SendRawTransactionResult,
 };
 use cketh_common::eth_rpc_client::requests::GetTransactionCountParams;
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
 use cketh_common::eth_rpc_client::{MultiCallError, RpcTransport};
 use cketh_common::lifecycle::EthereumNetwork;
-use cketh_common::numeric::TransactionCount;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -146,13 +145,19 @@ pub async fn eth_get_transaction_receipt(
 pub async fn eth_get_transaction_count(
     source: CandidRpcSource,
     args: candid_types::GetTransactionCountArgs,
-) -> RpcResult<TransactionCount> {
+) -> RpcResult<candid::Nat> {
     let args: GetTransactionCountParams = match args.try_into() {
         Ok(args) => args,
         Err(err) => return Err(RpcError::from(err)),
     };
     let client = get_rpc_client(source)?;
-    wrap_result(client.eth_get_transaction_count(args).await)
+    wrap_result(
+        client
+            .eth_get_transaction_count(args)
+            .await
+            .reduce_with_equality(),
+    )
+    .map(|count| into_nat(count.into_inner()))
 }
 
 #[ic_cdk_macros::update]
@@ -160,10 +165,10 @@ pub async fn eth_get_transaction_count(
 pub async fn eth_fee_history(
     source: CandidRpcSource,
     args: candid_types::FeeHistoryArgs,
-) -> Result<Option<FeeHistory>, RpcError> {
+) -> RpcResult<Option<FeeHistory>> {
     let args = args.into();
     let client = get_rpc_client(source)?;
-    Ok(client.eth_fee_history(args).await?.into())
+    wrap_result(client.eth_fee_history(args).await).map(|history| history.into())
 }
 
 #[ic_cdk_macros::update]
@@ -171,7 +176,7 @@ pub async fn eth_fee_history(
 pub async fn eth_send_raw_transaction(
     source: CandidRpcSource,
     raw_signed_transaction_hex: String,
-) -> Result<SendRawTransactionResult, RpcError> {
+) -> RpcResult<SendRawTransactionResult> {
     let client = get_rpc_client(source)?;
     client
         .eth_send_raw_transaction(raw_signed_transaction_hex)

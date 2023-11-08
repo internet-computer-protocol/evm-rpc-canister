@@ -49,4 +49,4 @@ ic-eth = { path = "lib/rust" }
 wasm-bindgen = { git = "https://github.com/rvanasa/wasm-bindgen", rev = "2403b22aa7" }
 
 [workspace]
-members = ["lib/rust", "lib/cketh", "e2e/rust"]
+members = ["lib/rust", "e2e/rust"]

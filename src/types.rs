@@ -326,7 +326,7 @@ pub mod candid_types {
         address::Address,
         eth_rpc::{into_nat, DataFormatError, FixedSizeData},
         eth_rpc_client::responses::TransactionStatus,
-        numeric::{BlockNumber, Wei},
+        numeric::BlockNumber,
     };
     use serde::Deserialize;
 
@@ -406,7 +406,7 @@ pub mod candid_types {
     pub struct TransactionReceipt {
         pub block_hash: Hash,
         pub block_number: BlockNumber,
-        pub effective_gas_price: Wei,
+        pub effective_gas_price: candid::Nat,
         pub gas_used: candid::Nat,
         pub status: TransactionStatus,
         pub transaction_hash: Hash,
@@ -417,8 +417,8 @@ pub mod candid_types {
             TransactionReceipt {
                 block_hash: value.block_hash,
                 block_number: value.block_number,
-                effective_gas_price: value.effective_gas_price,
-                gas_used: into_nat(value.gas_used),
+                effective_gas_price: into_nat(value.effective_gas_price.into_inner()),
+                gas_used: into_nat(value.gas_used.into_inner()),
                 status: value.status,
                 transaction_hash: value.transaction_hash,
             }

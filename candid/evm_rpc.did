@@ -10,11 +10,10 @@ type BlockTag = variant {
   Pending;
 };
 type CandidRpcSource = variant {
-  Ethereum : opt EthereumProvider;
-  Sepolia : opt SepoliaProvider;
+  EthSepolia : opt SepoliaProvider;
+  EthMainnet : opt SepoliaProvider;
 };
 type DataFormatError = variant { InvalidHex : text };
-type EthereumProvider = variant { Cloudflare; Ankr };
 type FeeHistory = record {
   reward : vec vec nat;
   base_fee_per_gas : vec nat;
@@ -113,7 +112,7 @@ type SignedMessage = record {
   address : vec nat8;
 };
 type Source = variant {
-  Api : record { url : text; headers : vec record { text; text } };
+  Api : record { url : text; headers : opt vec record { text; text } };
   Service : record { hostname : text; chain_id : opt nat64 };
   Chain : nat64;
   Provider : nat64;
