@@ -22,7 +22,7 @@ ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-eth = { workspace = true }
-cketh-common = { path = "lib/cketh" }
+cketh-common = { git = "https://github.com/rvanasa/ic", branch = "evm-rpc-canister", package = "ic-cketh-minter" }
 num = "0.4"
 num-traits = "0.2"
 num-derive = "0.4"

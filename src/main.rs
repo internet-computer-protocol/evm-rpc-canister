@@ -9,7 +9,7 @@ use cketh_common::eth_rpc::{
 use cketh_common::eth_rpc_client::requests::GetTransactionCountParams;
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
 use cketh_common::eth_rpc_client::{MultiCallError, RpcTransport};
-use cketh_common::lifecycle::EvmNetwork;
+use cketh_common::lifecycle::EthereumNetwork;
 use cketh_common::numeric::TransactionCount;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
@@ -70,15 +70,15 @@ fn get_rpc_client(source: CandidRpcSource) -> Result<EthRpcClient<CanisterTransp
         return Err(ProviderError::NoPermission.into());
     }
     Ok(match source {
-        CandidRpcSource::Ethereum(service) => EthRpcClient::new(
-            EvmNetwork::Ethereum,
+        CandidRpcSource::EthMainnet(service) => EthRpcClient::new(
+            EthereumNetwork::Ethereum,
             validate_providers(Some(vec![service.unwrap_or(
                 cketh_common::eth_rpc_client::providers::EthereumProvider::Ankr,
             )]))?
             .map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
         ),
-        CandidRpcSource::Sepolia(service) => EthRpcClient::new(
-            EvmNetwork::Sepolia,
+        CandidRpcSource::EthSepolia(service) => EthRpcClient::new(
+            EthereumNetwork::Sepolia,
             validate_providers(Some(vec![service.unwrap_or(
                 cketh_common::eth_rpc_client::providers::SepoliaProvider::PublicNode,
             )]))?
