@@ -1,4 +1,4 @@
 [dependencies]
 base = "0.9.7"
-eth = "./lib/motoko"
+evm = "./lib/motoko"
 "json.mo" = "0.1.2"
