@@ -18,7 +18,7 @@ Beyond the Ethereum blockchain, this canister also supports Polygon, Avalanche, 
 
 ## Canisters
 
-* Low-cost testing: [6yxaq-riaaa-aaaap-abkpa-cai](https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.ic0.app/?id=6yxaq-riaaa-aaaap-abkpa-cai)
+* Low-cost testing: [a6d44-nyaaa-aaaap-abp7q-cai](https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.ic0.app/?id=a6d44-nyaaa-aaaap-abp7q-cai)
 
 ## Quick Start
 
@@ -33,7 +33,7 @@ Add the following to your `dfx.json` config file (replace `remote.id.ic` with an
       "wasm": "https://github.com/internet-computer-protocol/ic-eth-rpc/releases/latest/download/evm_rpc_dev.wasm.gz",
       "remote": {
         "id": {
-          "ic": "6yxaq-riaaa-aaaap-abkpa-cai"
+          "ic": "a6d44-nyaaa-aaaap-abp7q-cai"
         }
       }
     }
