@@ -10,6 +10,9 @@ edition = "2021"
 debug = false
 lto = true
 opt-level = 'z'
+# strip = true
+# codegen-units = 1
+# panic = "abort"
 
 [dependencies]
 candid = { workspace = true }
@@ -46,7 +49,7 @@ ic-cdk-bindgen = "0.1"
 ic-eth = { path = "lib/rust" }
 
 [patch.crates-io]
-wasm-bindgen = { git = "https://github.com/rvanasa/wasm-bindgen", rev = "2403b22aa7" }
+wasm-bindgen = { git = "https://github.com/rvanasa/wasm-bindgen", rev = "d50634da14c5bd031edd4f81ab4bf345cda2bc39" }
 
 [workspace]
 members = ["lib/rust", "e2e/rust"]

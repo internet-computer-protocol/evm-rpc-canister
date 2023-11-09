@@ -4473,8 +4473,7 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 [[package]]
 name = "wasm-bindgen"
 version = "0.2.88"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7daec296f25a1bae309c0cd5c29c4b260e510e6d813c286b19eaadf409d40fce"
+source = "git+https://github.com/rvanasa/wasm-bindgen?rev=d50634da14c5bd031edd4f81ab4bf345cda2bc39#d50634da14c5bd031edd4f81ab4bf345cda2bc39"
 dependencies = [
  "cfg-if",
  "wasm-bindgen-macro",
@@ -4483,8 +4482,7 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-backend"
 version = "0.2.88"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e397f4664c0e4e428e8313a469aaa58310d302159845980fd23b0f22a847f217"
+source = "git+https://github.com/rvanasa/wasm-bindgen?rev=d50634da14c5bd031edd4f81ab4bf345cda2bc39#d50634da14c5bd031edd4f81ab4bf345cda2bc39"
 dependencies = [
  "bumpalo",
  "log",
@@ -4510,8 +4508,7 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-macro"
 version = "0.2.88"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5961017b3b08ad5f3fe39f1e79877f8ee7c23c5e5fd5eb80de95abc41f1f16b2"
+source = "git+https://github.com/rvanasa/wasm-bindgen?rev=d50634da14c5bd031edd4f81ab4bf345cda2bc39#d50634da14c5bd031edd4f81ab4bf345cda2bc39"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -4520,8 +4517,7 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-macro-support"
 version = "0.2.88"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5353b8dab669f5e10f5bd76df26a9360c748f054f862ff5f3f8aae0c7fb3907"
+source = "git+https://github.com/rvanasa/wasm-bindgen?rev=d50634da14c5bd031edd4f81ab4bf345cda2bc39#d50634da14c5bd031edd4f81ab4bf345cda2bc39"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4533,8 +4529,7 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-shared"
 version = "0.2.88"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d046c5d029ba91a1ed14da14dca44b68bf2f124cfbaf741c54151fdb3e0750b"
+source = "git+https://github.com/rvanasa/wasm-bindgen?rev=d50634da14c5bd031edd4f81ab4bf345cda2bc39#d50634da14c5bd031edd4f81ab4bf345cda2bc39"
 
 [[package]]
 name = "web-sys"
@@ -4759,8 +4754,3 @@ dependencies = [
  "quote",
  "syn 2.0.39",
 ]
-
-[[patch.unused]]
-name = "wasm-bindgen"
-version = "0.2.87"
-source = "git+https://github.com/rvanasa/wasm-bindgen?rev=2403b22aa7#2403b22aa7725c22d04bc868b1d5f5fe69a44598"
