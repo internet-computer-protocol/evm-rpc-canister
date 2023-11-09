@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 WALLET=$(dfx identity get-wallet)
 CYCLES=100000000000
 JSON_SOURCE=Chain=1
