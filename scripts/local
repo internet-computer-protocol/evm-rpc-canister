@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Redeploy the canister and set up permissions in your local environment.
 
 PRINCIPAL=$(dfx identity get-principal)
 

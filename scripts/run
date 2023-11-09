@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
+# Run a variety of example RPC calls.
 
-WALLET=$(dfx identity get-wallet)
 CYCLES=100000000000
+WALLET=$(dfx identity get-wallet)
 JSON_SOURCE=Chain=1
 CANDID_SOURCE=EthMainnet
 
