@@ -37,11 +37,11 @@ impl RpcTransport for CanisterTransport {
         //     unimplemented!()
         // }
         // use RpcNodeProvider::*;
-        match provider {
-            // TODO
-            // Ethereum(EthereumProvider::PublicNode) => resolve_by_hostname(""),
-            _ => Ok(provider.api()),
-        }
+        // match provider {
+        //     // TODO
+        //     // Ethereum(EthereumProvider::PublicNode) => resolve_by_hostname(""),
+        // }
+        Ok(provider.api())
     }
 
     async fn call_json_rpc<T: DeserializeOwned>(
