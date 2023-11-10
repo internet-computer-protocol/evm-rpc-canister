@@ -153,8 +153,8 @@ type Auth = variant { Rpc; RegisterProvider; Admin };
 ```
 
 The `Auth` variant defines the following cases:
-* `Rpc`: Governs access control to the RPC methods.
+* `PriorityRpc`: Governs access control to the RPC methods.
 * `RegisterProvider`: Governs access control to the `register_provider` method.
-* `Admin`: Governs admin access to any configuration. This should be callable only by a DAO and not a principal controlled by a single person in case a decentralized deployment is envisioned.
+* `ManageService`: Governs admin access to any configuration. This should be callable only by a DAO and not a principal controlled by a single person in case a decentralized deployment is envisioned.
 
 The `authorize` method takes two parameters: The `principal` is the principal to be authorized and `Auth` defines the scope of the authorization as defined through `Auth`.
