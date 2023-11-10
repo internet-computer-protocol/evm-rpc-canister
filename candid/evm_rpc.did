@@ -1,4 +1,4 @@
-type Auth = variant { Rpc; RegisterProvider; FreeRpc; Admin };
+type Auth = variant { Rpc; RegisterProvider; FreeRpc; ManageService };
 type Block = record { base_fee_per_gas : nat; number : nat };
 type BlockSpec = variant { Tag : BlockTag; Number : nat };
 type BlockTag = variant {

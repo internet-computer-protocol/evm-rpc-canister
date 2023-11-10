@@ -2,7 +2,7 @@
 // Please use `import service "ic:canister_id"` instead to call canisters on the IC if possible.
 
 module {
-  public type Auth = { #Rpc; #RegisterProvider; #FreeRpc; #Admin };
+  public type Auth = { #Rpc; #RegisterProvider; #FreeRpc; #ManageService };
   public type Block = { base_fee_per_gas : Nat; number : Nat };
   public type BlockSpec = { #Tag : BlockTag; #Number : Nat };
   public type BlockTag = {
