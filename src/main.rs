@@ -6,6 +6,7 @@ use cketh_common::eth_rpc::{
     into_nat, Block, BlockSpec, DataFormatError, FeeHistory, GetLogsParam, Hash, HttpOutcallError,
     JsonRpcReply, LogEntry, ProviderError, RpcError, SendRawTransactionResult,
 };
+use cketh_common::eth_rpc_client::providers::RpcApi;
 use cketh_common::eth_rpc_client::requests::GetTransactionCountParams;
 use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
 use cketh_common::eth_rpc_client::{MultiCallError, RpcTransport};
@@ -31,14 +32,26 @@ impl RpcTransport for CanisterTransport {
         METADATA.with(|m| m.borrow().get().nodes_in_subnet)
     }
 
+    fn resolve_api(provider: RpcNodeProvider) -> Result<RpcApi, ProviderError> {
+        // fn resolve_by_hostname(hostname: &str) -> Result<RpcApi, ProviderError> {
+        //     unimplemented!()
+        // }
+        // use RpcNodeProvider::*;
+        match provider {
+            // TODO
+            // Ethereum(EthereumProvider::PublicNode) => resolve_by_hostname(""),
+            _ => Ok(provider.api()),
+        }
+    }
+
     async fn call_json_rpc<T: DeserializeOwned>(
-        service: RpcNodeProvider,
+        provider: RpcNodeProvider,
         json: &str,
         max_response_bytes: u64,
     ) -> Result<T, RpcError> {
         let response = do_http_request(
             ic_cdk::caller(),
-            ResolvedSource::Api(service.api::<Self>()),
+            ResolvedSource::Api(Self::resolve_api(provider)?),
             json,
             max_response_bytes,
         )
