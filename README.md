@@ -18,7 +18,7 @@ Beyond the Ethereum blockchain, this canister also supports Polygon, Avalanche, 
 
 ## Canisters
 
-* Integration (only use for testing on the mainnet): [a6d44-nyaaa-aaaap-abp7q-cai](https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.ic0.app/?id=a6d44-nyaaa-aaaap-abp7q-cai)
+* Staging (only use for testing on the mainnet): [a6d44-nyaaa-aaaap-abp7q-cai](https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.ic0.app/?id=a6d44-nyaaa-aaaap-abp7q-cai)
 
 ## Quick Start
 
