@@ -112,7 +112,7 @@ type SignedMessage = record {
   address : vec nat8;
 };
 type Source = variant {
-  Api : record { url : text; headers : opt vec record { text; text } };
+  Custom : record { url : text; headers : opt vec record { text; text } };
   Service : record { hostname : text; chain_id : opt nat64 };
   Chain : nat64;
   Provider : nat64;
