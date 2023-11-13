@@ -146,7 +146,7 @@ jobs:
         run: dfx deploy e2e_motoko && dfx canister call e2e_motoko test
 
       - name: Test (Rust)
-        run: dfx deploy e2e_motoko && dfx canister call e2e_rust test
+        run: dfx deploy e2e_rust && dfx canister call e2e_rust test
 
       - name: Check formatting
         run: cargo fmt --all -- --check
