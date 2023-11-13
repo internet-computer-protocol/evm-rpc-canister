@@ -152,9 +152,19 @@ authorize : (principal, Auth) -> ();
 type Auth = variant { Rpc; RegisterProvider; Admin };
 ```
 
-The `Auth` variant defines the following cases:
-* `PriorityRpc`: Governs access control to the RPC methods.
-* `RegisterProvider`: Governs access control to the `register_provider` method.
-* `ManageService`: Governs admin access to any configuration. This should be callable only by a DAO and not a principal controlled by a single person in case a decentralized deployment is envisioned.
+The `Auth` variant defines the following mutually inclusive capabilities:
+
+* `PriorityRpc`:
+  * Canisters with this permission may continue to use the canister when open RPC access is deactivated by an administrator (e.g. in the event of a DoS attack). 
+* `FreeRpc`:
+  * Perform RPC requests without sending cycles.
+* `RegisterProvider`:
+  * Create new RPC providers.
+  * Update and remove providers originally created by the same principal.
+* `ManageService`:
+  * Add and remove canister permissions.
+  * Read and write canister stable memory for debugging purposes.
+  * Temporarily restrict RPC access to canisters with the `PriorityRpc` permission.
+
 
 The `authorize` method takes two parameters: The `principal` is the principal to be authorized and `Auth` defines the scope of the authorization as defined through `Auth`.
