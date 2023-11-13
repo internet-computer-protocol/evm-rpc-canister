@@ -92,16 +92,18 @@ Contributions are welcome! Please check out the [contributor guidelines](https:/
 Run the following commands to set up a local development environment:
 
 ```bash
-# Clone the repository
+# Clone the repository and install dependencies
 git clone https://github.com/internet-computer-protocol/ic-eth-rpc
 cd ic-eth-rpc
+npm install
 
 # Deploy to the local replica
 dfx start --background
-dfx deploy
+npm run generate
+dfx deploy evm_rpc
 ```
 
-After making source code changes, regenerate language bindings with the `generate` [npm script](https://docs.npmjs.com/cli/v10/using-npm/scripts):
+Regenerate language bindings with the `generate` [npm script](https://docs.npmjs.com/cli/v10/using-npm/scripts):
 
 ```bash
 npm run generate
