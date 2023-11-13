@@ -3,4 +3,4 @@ target/
 .dfx/
 .mops/
 
-/src/declarations
+/lib/motoko/declarations

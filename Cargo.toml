@@ -10,9 +10,6 @@ edition = "2021"
 debug = false
 lto = true
 opt-level = 'z'
-# strip = true
-# codegen-units = 1
-# panic = "abort"
 
 [dependencies]
 candid = { workspace = true }
@@ -25,7 +22,7 @@ ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-eth = { workspace = true }
-cketh-common = { git = "https://github.com/rvanasa/ic", branch = "evm-rpc-canister", package = "ic-cketh-minter" }
+cketh-common = { git = "https://github.com/rvanasa/ic", branch = "evm-rpc-canister", package = "ic-cketh-minter" } # TODO: refactor
 num = "0.4"
 num-traits = "0.2"
 num-derive = "0.4"
