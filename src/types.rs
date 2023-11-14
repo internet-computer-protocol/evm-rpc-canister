@@ -23,7 +23,7 @@ pub enum Source {
     },
     Custom {
         url: String,
-        headers: Option<Vec<(String, String)>>,
+        headers: Option<Vec<HttpHeader>>,
     },
 }
 
@@ -32,14 +32,7 @@ impl Source {
         Ok(match self {
             Source::Custom { url, headers } => ResolvedSource::Api(RpcApi {
                 url,
-                headers: headers
-                    .map(|headers| {
-                        headers
-                            .into_iter()
-                            .map(|(name, value)| HttpHeader { name, value })
-                            .collect()
-                    })
-                    .unwrap_or_default(),
+                headers: headers.unwrap_or_default(),
             }),
             Source::Provider(id) => ResolvedSource::Provider({
                 PROVIDERS.with(|providers| {
@@ -220,7 +213,7 @@ pub struct RegisterProvider {
     pub chain_id: u64,
     pub hostname: String,
     pub credential_path: String,
-    pub credential_headers: Option<Vec<(String, String)>>,
+    pub credential_headers: Option<Vec<HttpHeader>>,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
 }
@@ -230,7 +223,7 @@ pub struct UpdateProvider {
     pub provider_id: u64,
     pub hostname: Option<String>,
     pub credential_path: Option<String>,
-    pub credential_headers: Option<Vec<(String, String)>>,
+    pub credential_headers: Option<Vec<HttpHeader>>,
     pub cycles_per_call: Option<u64>,
     pub cycles_per_message_byte: Option<u64>,
     pub primary: Option<bool>,
@@ -243,7 +236,7 @@ pub struct Provider {
     pub chain_id: u64,
     pub hostname: String,
     pub credential_path: String,
-    pub credential_headers: Vec<(String, String)>,
+    pub credential_headers: Vec<HttpHeader>,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
     pub cycles_owed: u128,
@@ -254,12 +247,7 @@ impl Provider {
     pub fn api(&self) -> RpcApi {
         RpcApi {
             url: format!("https://{}{}", self.hostname, self.credential_path),
-            headers: self
-                .credential_headers
-                .clone()
-                .into_iter()
-                .map(|(name, value)| HttpHeader { name, value })
-                .collect(),
+            headers: self.credential_headers.clone(),
         }
     }
 }

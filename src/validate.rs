@@ -1,4 +1,5 @@
 use cketh_common::eth_rpc::ValidationError;
+use ic_cdk::api::management_canister::http_request::HttpHeader;
 
 use crate::*;
 
@@ -24,11 +25,11 @@ pub fn validate_credential_path(credential_path: &str) -> Result<(), ValidationE
 }
 
 pub fn validate_credential_headers(
-    credential_headers: &[(String, String)],
+    credential_headers: &[HttpHeader],
 ) -> Result<(), ValidationError> {
     if credential_headers
         .iter()
-        .any(|(name, _value)| name == CONTENT_TYPE_HEADER)
+        .any(|HttpHeader { name, .. }| name == CONTENT_TYPE_HEADER)
     {
         Err(ValidationError::CredentialHeaderNotAllowed(
             CONTENT_TYPE_HEADER.to_string(),

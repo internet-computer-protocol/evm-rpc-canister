@@ -30,6 +30,7 @@ type GetLogsArgs = record {
   from_block : opt BlockSpec;
 };
 type GetTransactionCountArgs = record { address : text; block : BlockSpec };
+type HttpHeader = record { value : text; name : text };
 type HttpOutcallError = variant {
   IcError : record { code : RejectionCode; message : text };
   InvalidHttpJsonRpcResponse : record {
@@ -66,7 +67,7 @@ type ProviderView = record {
   cycles_per_call : nat64;
 };
 type RegisterProvider = record {
-  credential_headers : opt vec record { text; text };
+  credential_headers : opt vec HttpHeader;
   hostname : text;
   cycles_per_message_byte : nat64;
   chain_id : nat64;
@@ -109,7 +110,7 @@ type SignedMessage = record {
   address : vec nat8;
 };
 type Source = variant {
-  Custom : record { url : text; headers : opt vec record { text; text } };
+  Custom : record { url : text; headers : opt vec HttpHeader };
   Service : record { hostname : text; chain_id : opt nat64 };
   Chain : nat64;
   Provider : nat64;
@@ -124,7 +125,7 @@ type TransactionReceipt = record {
 };
 type TransactionStatus = variant { Success; Failure };
 type UpdateProvider = record {
-  credential_headers : opt vec record { text; text };
+  credential_headers : opt vec HttpHeader;
   hostname : opt text;
   provider_id : nat64;
   cycles_per_message_byte : opt nat64;
