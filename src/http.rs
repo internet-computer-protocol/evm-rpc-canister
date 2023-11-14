@@ -84,13 +84,9 @@ pub async fn do_http_request(
     };
     match make_http_request(request, cost).await {
         Ok((response,)) => Ok(response),
-        Err((r, m)) => {
+        Err((code, message)) => {
             inc_metric!(request_err_http);
-            Err(HttpOutcallError::IcError {
-                code: r,
-                message: m,
-            }
-            .into())
+            Err(HttpOutcallError::IcError { code, message }.into())
         }
     }
 }
