@@ -60,22 +60,23 @@ fn test_request_cost() {
         m.borrow_mut().set(metadata).unwrap();
     });
 
+    let url = "https://cloudflare-eth.com";
+    let payload = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
     let base_cost = get_request_cost(
         &ResolvedSource::Api(RpcApi {
-            url: "https://cloudflare-eth.com".to_string(),
+            url: url.to_string(),
             headers: vec![],
         }),
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
+        payload,
         1000,
     );
     let s10 = "0123456789";
     let base_cost_s10 = get_request_cost(
         &ResolvedSource::Api(RpcApi {
-            url: "https://cloudflare-eth.com".to_string(),
+            url: url.to_string(),
             headers: vec![],
         }),
-        &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
-            + s10),
+        &(payload.to_string() + s10),
         1000,
     );
     assert_eq!(
