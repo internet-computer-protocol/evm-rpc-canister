@@ -30,8 +30,8 @@ pub fn get_default_providers() -> Vec<RegisterProvider> {
 }
 
 pub fn do_register_provider(caller: Principal, provider: RegisterProvider) -> u64 {
-    validate_hostname(&provider.hostname);
-    validate_credential_path(&provider.credential_path);
+    validate_hostname(&provider.hostname).unwrap();
+    validate_credential_path(&provider.credential_path).unwrap();
     let provider_id = METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         let id = metadata.next_provider_id;
@@ -83,15 +83,15 @@ pub fn do_update_provider(caller: Principal, update: UpdateProvider) {
                     ic_cdk::trap("Provider owner != caller");
                 }
                 if let Some(hostname) = update.hostname {
-                    validate_hostname(&hostname);
+                    validate_hostname(&hostname).unwrap();
                     provider.hostname = hostname;
                 }
                 if let Some(path) = update.credential_path {
-                    validate_credential_path(&path);
+                    validate_credential_path(&path).unwrap();
                     provider.credential_path = path;
                 }
                 if let Some(headers) = update.credential_headers {
-                    validate_credential_headers(&headers);
+                    validate_credential_headers(&headers).unwrap();
                     provider.credential_headers = headers;
                 }
                 if let Some(primary) = update.primary {

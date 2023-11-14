@@ -1,25 +1,39 @@
+use cketh_common::eth_rpc::ValidateError;
+
 use crate::*;
 
-pub fn validate_hostname(hostname: &str) {
+pub fn validate_hostname(hostname: &str) -> Result<(), ValidateError> {
     if !SERVICE_HOSTS_ALLOWLIST.contains(&hostname) {
-        ic_cdk::trap("hostname not allowed");
+        Err(ValidateError::HostNotAllowed(hostname.to_string()))
+    } else {
+        Ok(())
     }
 }
 
-pub fn validate_credential_path(credential_path: &str) {
+pub fn validate_credential_path(credential_path: &str) -> Result<(), ValidateError> {
     if !(credential_path.is_empty()
         || credential_path.starts_with('/')
         || credential_path.starts_with('?'))
     {
-        ic_cdk::trap("credential path must start with '/' or '?' unless empty");
+        Err(ValidateError::CredentialPathNotAllowed(
+            credential_path.to_string(),
+        ))
+    } else {
+        Ok(())
     }
 }
 
-pub fn validate_credential_headers(credential_headers: &[(String, String)]) {
+pub fn validate_credential_headers(
+    credential_headers: &[(String, String)],
+) -> Result<(), ValidateError> {
     if credential_headers
         .iter()
-        .any(|(name, _value)| name == "Content-Type")
+        .any(|(name, _value)| name == CONTENT_TYPE_HEADER)
     {
-        ic_cdk::trap("unexpected credential header: 'Content-Type'");
+        Err(ValidateError::CredentialHeaderNotAllowed(
+            CONTENT_TYPE_HEADER.to_string(),
+        ))
+    } else {
+        Ok(())
     }
 }

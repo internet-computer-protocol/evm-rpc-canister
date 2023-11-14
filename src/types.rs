@@ -324,7 +324,7 @@ pub mod candid_types {
     use candid::CandidType;
     use cketh_common::{
         address::Address,
-        eth_rpc::{into_nat, DataFormatError, FixedSizeData},
+        eth_rpc::{into_nat, FixedSizeData, ValidateError},
         eth_rpc_client::responses::TransactionStatus,
         numeric::BlockNumber,
     };
@@ -380,7 +380,7 @@ pub mod candid_types {
     }
 
     impl TryFrom<GetLogsArgs> for cketh_common::eth_rpc::GetLogsParam {
-        type Error = DataFormatError;
+        type Error = ValidateError;
         fn try_from(value: GetLogsArgs) -> Result<Self, Self::Error> {
             Ok(cketh_common::eth_rpc::GetLogsParam {
                 from_block: value.from_block.map(|x| x.into()).unwrap_or_default(),
@@ -388,15 +388,13 @@ pub mod candid_types {
                 address: value
                     .addresses
                     .into_iter()
-                    .map(|s| Address::from_str(&s).map_err(|_| DataFormatError::InvalidHex(s)))
+                    .map(|s| Address::from_str(&s).map_err(|_| ValidateError::InvalidHex(s)))
                     .collect::<Result<_, _>>()?,
                 topics: value
                     .topics
                     .unwrap_or_default()
                     .into_iter()
-                    .map(|s| {
-                        FixedSizeData::from_str(&s).map_err(|_| DataFormatError::InvalidHex(s))
-                    })
+                    .map(|s| FixedSizeData::from_str(&s).map_err(|_| ValidateError::InvalidHex(s)))
                     .collect::<Result<_, _>>()?,
             })
         }
@@ -451,12 +449,12 @@ pub mod candid_types {
     impl TryFrom<GetTransactionCountArgs>
         for cketh_common::eth_rpc_client::requests::GetTransactionCountParams
     {
-        type Error = DataFormatError;
+        type Error = ValidateError;
         fn try_from(value: GetTransactionCountArgs) -> Result<Self, Self::Error> {
             Ok(
                 cketh_common::eth_rpc_client::requests::GetTransactionCountParams {
                     address: Address::from_str(&value.address)
-                        .map_err(|_| DataFormatError::InvalidHex(value.address))?,
+                        .map_err(|_| ValidateError::InvalidHex(value.address))?,
                     block: value.block.into(),
                 },
             )

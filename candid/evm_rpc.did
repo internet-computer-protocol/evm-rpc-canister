@@ -13,7 +13,6 @@ type CandidRpcSource = variant {
   EthSepolia : opt SepoliaProvider;
   EthMainnet : opt SepoliaProvider;
 };
-type DataFormatError = variant { InvalidHex : text };
 type FeeHistory = record {
   reward : vec vec nat;
   base_fee_per_gas : vec nat;
@@ -54,9 +53,7 @@ type LogEntry = record {
 type Message = variant { Data : vec nat8; Hash : vec nat8 };
 type ProviderError = variant {
   TooFewCycles : record { expected : nat; received : nat };
-  ServiceUrlParseError : text;
   ProviderNotFound;
-  ServiceHostNotAllowed : text;
   NoPermission;
 };
 type ProviderView = record {
@@ -97,7 +94,7 @@ type RpcError = variant {
   JsonRpcError : JsonRpcError;
   ProviderError : ProviderError;
   HttpOutcallError : HttpOutcallError;
-  DataFormatError : DataFormatError;
+  ValidateError : ValidateError;
 };
 type SendRawTransactionResult = variant {
   Ok;
@@ -134,6 +131,13 @@ type UpdateProvider = record {
   primary : opt bool;
   cycles_per_call : opt nat64;
   credential_path : opt text;
+};
+type ValidateError = variant {
+  CredentialPathNotAllowed : text;
+  HostNotAllowed : text;
+  CredentialHeaderNotAllowed : text;
+  UrlParseError : text;
+  InvalidHex : text;
 };
 service : {
   authorize : (principal, Auth) -> ();
