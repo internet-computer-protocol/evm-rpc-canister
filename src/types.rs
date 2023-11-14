@@ -394,7 +394,9 @@ pub mod candid_types {
                     .topics
                     .unwrap_or_default()
                     .into_iter()
-                    .map(|s| FixedSizeData::from_str(&s).map_err(|_| ValidationError::InvalidHex(s)))
+                    .map(|s| {
+                        FixedSizeData::from_str(&s).map_err(|_| ValidationError::InvalidHex(s))
+                    })
                     .collect::<Result<_, _>>()?,
             })
         }
