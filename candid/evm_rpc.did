@@ -93,8 +93,8 @@ type Result_7 = variant { Ok : nat; Err : RpcError };
 type RpcError = variant {
   JsonRpcError : JsonRpcError;
   ProviderError : ProviderError;
-  HttpOutcallError : HttpOutcallError;
   ValidationError : ValidationError;
+  HttpOutcallError : HttpOutcallError;
 };
 type SendRawTransactionResult = variant {
   Ok;
