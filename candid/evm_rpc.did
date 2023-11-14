@@ -94,7 +94,7 @@ type RpcError = variant {
   JsonRpcError : JsonRpcError;
   ProviderError : ProviderError;
   HttpOutcallError : HttpOutcallError;
-  ValidateError : ValidateError;
+  ValidationError : ValidationError;
 };
 type SendRawTransactionResult = variant {
   Ok;
@@ -132,7 +132,7 @@ type UpdateProvider = record {
   cycles_per_call : opt nat64;
   credential_path : opt text;
 };
-type ValidateError = variant {
+type ValidationError = variant {
   CredentialPathNotAllowed : text;
   HostNotAllowed : text;
   CredentialHeaderNotAllowed : text;

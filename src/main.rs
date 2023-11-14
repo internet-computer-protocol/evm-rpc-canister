@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use candid::{candid_method, CandidType};
 use cketh_common::eth_rpc::{
     into_nat, Block, BlockSpec, FeeHistory, GetLogsParam, Hash, HttpOutcallError, JsonRpcReply,
-    LogEntry, ProviderError, RpcError, SendRawTransactionResult, ValidateError,
+    LogEntry, ProviderError, RpcError, SendRawTransactionResult, ValidationError,
 };
 use cketh_common::eth_rpc_client::providers::RpcApi;
 use cketh_common::eth_rpc_client::requests::GetTransactionCountParams;
@@ -146,7 +146,7 @@ pub async fn eth_get_transaction_receipt(
     wrap_result(
         client
             .eth_get_transaction_receipt(
-                Hash::from_str(&hash).map_err(|_| ValidateError::InvalidHex(hash))?,
+                Hash::from_str(&hash).map_err(|_| ValidationError::InvalidHex(hash))?,
             )
             .await,
     )

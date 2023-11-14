@@ -1,4 +1,4 @@
-use cketh_common::eth_rpc::{HttpOutcallError, ProviderError, RpcError, ValidateError};
+use cketh_common::eth_rpc::{HttpOutcallError, ProviderError, RpcError, ValidationError};
 use ic_canister_log::log;
 use ic_cdk::api::management_canister::http_request::{
     http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
@@ -27,16 +27,16 @@ pub async fn do_http_request(
     };
     let parsed_url = match url::Url::parse(&api.url) {
         Ok(url) => url,
-        Err(_) => return Err(ValidateError::UrlParseError(api.url).into()),
+        Err(_) => return Err(ValidationError::UrlParseError(api.url).into()),
     };
     let host = match parsed_url.host_str() {
         Some(host) => host,
-        None => return Err(ValidateError::UrlParseError(api.url).into()),
+        None => return Err(ValidationError::UrlParseError(api.url).into()),
     };
     if !SERVICE_HOSTS_ALLOWLIST.contains(&host) {
         log!(INFO, "host not allowed: {}", host);
         inc_metric!(request_err_host_not_allowed);
-        return Err(ValidateError::HostNotAllowed(host.to_string()).into());
+        return Err(ValidationError::HostNotAllowed(host.to_string()).into());
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
         if cycles_available < cost {

@@ -34,9 +34,9 @@ module {
     public type JsonRpcError = EvmRpc.JsonRpcError;
     public type ProviderError = EvmRpc.ProviderError;
     public type HttpOutcallError = EvmRpc.HttpOutcallError;
-    public type ValidateError = EvmRpc.ValidateError;
+    public type ValidationError = EvmRpc.ValidationError;
 
-    public type Error = ProviderError or HttpOutcallError or ValidateError or {
+    public type Error = ProviderError or HttpOutcallError or ValidationError or {
         #JsonRpcError : JsonRpcError;
     };
 
@@ -72,7 +72,7 @@ module {
             case (#ProviderError e) { e };
             case (#HttpOutcallError e) { e };
             case (#JsonRpcError e) { #JsonRpcError e };
-            case (#ValidateError e) { e };
+            case (#ValidationError e) { e };
         };
     };
 
