@@ -164,7 +164,7 @@ The `Auth` variant defines the following mutually inclusive capabilities:
 * `ManageService`:
   * Add and remove canister permissions.
   * Read and write canister stable memory for debugging purposes.
-  * Temporarily restrict RPC access to canisters with the `PriorityRpc` permission.
+  * Restrict RPC access to canisters with the `PriorityRpc` permission as a temporary measure.
 
 
 The `authorize` method takes two parameters: The `principal` is the principal to be authorized and `Auth` defines the scope of the authorization as defined through `Auth`.
