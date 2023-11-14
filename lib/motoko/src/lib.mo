@@ -17,14 +17,19 @@ module {
     };
 
     public type Source = {
-        #Custom : { url : Text; headers : ?[(Text, Text)] };
+        #Custom : { url : Text; headers : ?[HttpHeader] };
         #Service : { hostname : Text; network : ?Network };
         #Chain : Network;
         #Provider : Nat64;
     };
 
+    type HttpHeader = {
+        name : Text;
+        value : Text;
+    };
+
     type ActorSource = {
-        #Custom : { url : Text; headers : ?[(Text, Text)] };
+        #Custom : { url : Text; headers : ?[HttpHeader] };
         #Service : { hostname : Text; chain_id : ?Nat64 };
         #Chain : Nat64;
         #Provider : Nat64;
