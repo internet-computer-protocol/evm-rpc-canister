@@ -65,10 +65,6 @@ pub async fn do_http_request(
             name: CONTENT_TYPE_HEADER.to_string(),
             value: "application/json".to_string(),
         },
-        // HttpHeader {
-        //     name: "Host".to_string(),
-        //     value: host.to_string(),
-        // },
     ];
     request_headers.extend(api.headers);
     let request = CanisterHttpRequestArgument {
