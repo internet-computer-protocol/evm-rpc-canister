@@ -22,7 +22,8 @@ ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-eth = { workspace = true }
-cketh-common = { git = "https://github.com/rvanasa/ic", branch = "evm-rpc-canister", package = "ic-cketh-minter" } # TODO: refactor
+# TODO: https://github.com/internet-computer-protocol/ic-eth-rpc/issues/74
+cketh-common = { git = "https://github.com/rvanasa/ic", branch = "evm-rpc-canister", package = "ic-cketh-minter" }
 num = "0.4"
 num-traits = "0.2"
 num-derive = "0.4"

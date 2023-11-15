@@ -60,12 +60,10 @@ pub async fn do_http_request(
         add_metric!(request_cycles_refunded, cycles_available - cost);
     }
     inc_metric_entry!(host_requests, host.to_string());
-    let mut request_headers = vec![
-        HttpHeader {
-            name: CONTENT_TYPE_HEADER.to_string(),
-            value: "application/json".to_string(),
-        },
-    ];
+    let mut request_headers = vec![HttpHeader {
+        name: CONTENT_TYPE_HEADER.to_string(),
+        value: "application/json".to_string(),
+    }];
     request_headers.extend(api.headers);
     let request = CanisterHttpRequestArgument {
         url: api.url,

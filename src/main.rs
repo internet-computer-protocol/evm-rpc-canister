@@ -33,14 +33,7 @@ impl RpcTransport for CanisterTransport {
     }
 
     fn resolve_api(provider: RpcNodeProvider) -> Result<RpcApi, ProviderError> {
-        // fn resolve_by_hostname(hostname: &str) -> Result<RpcApi, ProviderError> {
-        //     unimplemented!()
-        // }
-        // use RpcNodeProvider::*;
-        // match provider {
-        //     // TODO
-        //     // Ethereum(EthereumProvider::PublicNode) => resolve_by_hostname(""),
-        // }
+        // TODO: https://github.com/internet-computer-protocol/ic-eth-rpc/issues/73
         Ok(provider.api())
     }
 
