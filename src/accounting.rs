@@ -1,3 +1,5 @@
+use cketh_common::eth_rpc_client::providers::RpcApi;
+
 use crate::*;
 
 pub fn get_request_cost(
@@ -16,12 +18,12 @@ pub fn get_request_costs(
     max_response_bytes: u64,
 ) -> (u128, u128) {
     match source {
-        ResolvedSource::Url(s) => (
-            get_http_request_cost(s, json_rpc_payload, max_response_bytes),
+        ResolvedSource::Api(api) => (
+            get_http_request_cost(api, json_rpc_payload, max_response_bytes),
             0,
         ),
         ResolvedSource::Provider(p) => (
-            get_http_request_cost(&p.service_url(), json_rpc_payload, max_response_bytes),
+            get_http_request_cost(&p.api(), json_rpc_payload, max_response_bytes),
             get_provider_cost(p, json_rpc_payload),
         ),
     }
@@ -29,13 +31,12 @@ pub fn get_request_costs(
 
 /// Calculate the baseline cost of sending a JSON-RPC request using HTTP outcalls.
 pub fn get_http_request_cost(
-    service_url: &str,
+    api: &RpcApi,
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> u128 {
     let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
-    let ingress_bytes =
-        (json_rpc_payload.len() + service_url.len()) as u128 + INGRESS_OVERHEAD_BYTES;
+    let ingress_bytes = (json_rpc_payload.len() + api.url.len()) as u128 + INGRESS_OVERHEAD_BYTES;
     let base_cost = INGRESS_MESSAGE_RECEIVED_COST
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
         + HTTP_OUTCALL_REQUEST_COST
@@ -59,16 +60,23 @@ fn test_request_cost() {
         m.borrow_mut().set(metadata).unwrap();
     });
 
+    let url = "https://cloudflare-eth.com";
+    let payload = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
     let base_cost = get_request_cost(
-        &ResolvedSource::Url("https://cloudflare-eth.com".to_string()),
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
+        &ResolvedSource::Api(RpcApi {
+            url: url.to_string(),
+            headers: vec![],
+        }),
+        payload,
         1000,
     );
     let s10 = "0123456789";
     let base_cost_s10 = get_request_cost(
-        &ResolvedSource::Url("https://cloudflare-eth.com".to_string()),
-        &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
-            + s10),
+        &ResolvedSource::Api(RpcApi {
+            url: url.to_string(),
+            headers: vec![],
+        }),
+        &(payload.to_string() + s10),
         1000,
     );
     assert_eq!(
@@ -89,6 +97,7 @@ fn test_provider_cost() {
         provider_id: 0,
         hostname: "".to_string(),
         credential_path: "".to_string(),
+        credential_headers: vec![],
         owner: Principal::anonymous(),
         chain_id: 1,
         cycles_owed: 0,
@@ -105,6 +114,7 @@ fn test_provider_cost() {
         provider_id: 0,
         hostname: "".to_string(),
         credential_path: "".to_string(),
+        credential_headers: vec![],
         owner: Principal::anonymous(),
         chain_id: 1,
         cycles_owed: 0,

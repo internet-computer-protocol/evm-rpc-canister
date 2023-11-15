@@ -1,8 +1,10 @@
+use cketh_common::eth_rpc::{HttpOutcallError, ProviderError, RpcError, ValidationError};
 use ic_canister_log::log;
 use ic_cdk::api::management_canister::http_request::{
     http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
-    TransformContext,
+    HttpResponse, TransformContext,
 };
+use num_traits::ToPrimitive;
 
 use crate::*;
 
@@ -11,34 +13,38 @@ pub async fn do_http_request(
     source: ResolvedSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
-) -> Result<String, EthRpcError> {
+) -> Result<HttpResponse, RpcError> {
     inc_metric!(requests);
-    if !is_authorized(&caller, Auth::Rpc) && !METADATA.with(|m| m.borrow().get().open_rpc_access) {
+    if !is_rpc_allowed(&caller) {
         inc_metric!(request_err_no_permission);
-        return Err(EthRpcError::NoPermission);
+        return Err(ProviderError::NoPermission.into());
     }
     let cycles_available = ic_cdk::api::call::msg_cycles_available128();
     let cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
-    let (service_url, provider) = match source {
-        ResolvedSource::Url(url) => (url, None),
-        ResolvedSource::Provider(provider) => (provider.service_url(), Some(provider)),
+    let (api, provider) = match source {
+        ResolvedSource::Api(api) => (api, None),
+        ResolvedSource::Provider(provider) => (provider.api(), Some(provider)),
     };
-    let parsed_url = url::Url::parse(&service_url).or(Err(EthRpcError::ServiceUrlParseError))?;
-    let host = parsed_url
-        .host_str()
-        .ok_or(EthRpcError::ServiceUrlParseError)?
-        .to_string();
-    if !SERVICE_HOSTS_ALLOWLIST.contains(&host.as_str()) {
+    let parsed_url = match url::Url::parse(&api.url) {
+        Ok(url) => url,
+        Err(_) => return Err(ValidationError::UrlParseError(api.url).into()),
+    };
+    let host = match parsed_url.host_str() {
+        Some(host) => host,
+        None => return Err(ValidationError::UrlParseError(api.url).into()),
+    };
+    if !SERVICE_HOSTS_ALLOWLIST.contains(&host) {
         log!(INFO, "host not allowed: {}", host);
         inc_metric!(request_err_host_not_allowed);
-        return Err(EthRpcError::ServiceHostNotAllowed(host));
+        return Err(ValidationError::HostNotAllowed(host.to_string()).into());
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
         if cycles_available < cost {
-            return Err(EthRpcError::TooFewCycles {
+            return Err(ProviderError::TooFewCycles {
                 expected: cost,
                 received: cycles_available,
-            });
+            }
+            .into());
         }
         ic_cdk::api::call::msg_cycles_accept128(cost);
         if let Some(mut provider) = provider {
@@ -53,38 +59,43 @@ pub async fn do_http_request(
         add_metric!(request_cycles_charged, cost);
         add_metric!(request_cycles_refunded, cycles_available - cost);
     }
-    inc_metric_entry!(host_requests, host);
-    let request_headers = vec![
-        HttpHeader {
-            name: "Content-Type".to_string(),
-            value: "application/json".to_string(),
-        },
-        HttpHeader {
-            name: "Host".to_string(),
-            value: host.to_string(),
-        },
-    ];
+    inc_metric_entry!(host_requests, host.to_string());
+    let mut request_headers = vec![HttpHeader {
+        name: CONTENT_TYPE_HEADER.to_string(),
+        value: "application/json".to_string(),
+    }];
+    request_headers.extend(api.headers);
     let request = CanisterHttpRequestArgument {
-        url: service_url,
+        url: api.url,
         max_response_bytes: Some(max_response_bytes),
         method: HttpMethod::POST,
         headers: request_headers,
         body: Some(json_rpc_payload.as_bytes().to_vec()),
         transform: Some(TransformContext::from_name(
-            "__transform_eth_rpc".to_string(),
+            "__transform_evm_rpc".to_string(),
             vec![],
         )),
     };
     match make_http_request(request, cost).await {
-        Ok((result,)) => {
-            String::from_utf8(result.body).map_err(|_| EthRpcError::ResponseParseError)
-        }
-        Err((r, m)) => {
+        Ok((response,)) => Ok(response),
+        Err((code, message)) => {
             inc_metric!(request_err_http);
-            Err(EthRpcError::HttpRequestError {
-                code: r as u32,
-                message: m,
-            })
+            Err(HttpOutcallError::IcError { code, message }.into())
         }
     }
+}
+
+pub fn get_http_response_status(status: candid::Nat) -> u16 {
+    status.0.to_u16().unwrap_or(u16::MAX)
+}
+
+pub fn get_http_response_body(response: HttpResponse) -> Result<String, RpcError> {
+    String::from_utf8(response.body).map_err(|e| {
+        HttpOutcallError::InvalidHttpJsonRpcResponse {
+            status: get_http_response_status(response.status),
+            body: "".to_string(),
+            parsing_error: Some(format!("{e}")),
+        }
+        .into()
+    })
 }

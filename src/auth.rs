@@ -1,6 +1,6 @@
 use candid::Principal;
 
-use crate::{Auth, AuthSet, PrincipalStorable, AUTH};
+use crate::*;
 
 pub fn is_authorized(principal: &Principal, auth: Auth) -> bool {
     AUTH.with(|a| {
@@ -14,7 +14,7 @@ pub fn is_authorized(principal: &Principal, auth: Auth) -> bool {
 
 pub fn require_admin_or_controller() -> Result<(), String> {
     let caller = ic_cdk::caller();
-    if is_authorized(&caller, Auth::Admin) || ic_cdk::api::is_controller(&caller) {
+    if is_authorized(&caller, Auth::ManageService) || ic_cdk::api::is_controller(&caller) {
         Ok(())
     } else {
         Err("You are not authorized".to_string())
@@ -27,6 +27,10 @@ pub fn require_register_provider() -> Result<(), String> {
     } else {
         Err("You are not authorized".to_string())
     }
+}
+
+pub fn is_rpc_allowed(caller: &Principal) -> bool {
+    METADATA.with(|m| m.borrow().get().open_rpc_access) || is_authorized(caller, Auth::Rpc)
 }
 
 pub fn do_authorize(principal: Principal, auth: Auth) {
@@ -83,9 +87,9 @@ fn test_authorization() {
     do_deauthorize(principal1, Auth::RegisterProvider);
     assert!(!is_authorized(&principal1, Auth::RegisterProvider));
 
-    do_authorize(principal2, Auth::Admin);
-    assert!(!is_authorized(&principal1, Auth::Admin));
-    assert!(is_authorized(&principal2, Auth::Admin));
+    do_authorize(principal2, Auth::ManageService);
+    assert!(!is_authorized(&principal1, Auth::ManageService));
+    assert!(is_authorized(&principal2, Auth::ManageService));
 
     assert!(!is_authorized(&principal2, Auth::Rpc));
     assert!(!is_authorized(&principal2, Auth::FreeRpc));

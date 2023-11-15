@@ -2,5 +2,3 @@ node_modules/
 target/
 .dfx/
 .mops/
-
-/src/declarations

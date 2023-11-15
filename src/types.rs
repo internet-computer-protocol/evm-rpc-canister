@@ -1,4 +1,8 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+use cketh_common::eth_rpc::{ProviderError, RpcError};
+use cketh_common::eth_rpc_client::providers::{EthereumProvider, RpcApi, SepoliaProvider};
+
+use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_eth::core::types::RecoveryMessage;
 use ic_stable_structures::{BoundedStorable, Storable};
 
@@ -11,25 +15,31 @@ use crate::{AUTH_SET_STORABLE_MAX_SIZE, PROVIDERS};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum Source {
-    Url(String),
-    Provider(u64),
     Chain(u64),
+    Provider(u64),
     Service {
         hostname: String,
         chain_id: Option<u64>,
     },
+    Custom {
+        url: String,
+        headers: Option<Vec<HttpHeader>>,
+    },
 }
 
 impl Source {
-    pub fn resolve(self) -> Result<ResolvedSource, EthRpcError> {
+    pub fn resolve(self) -> Result<ResolvedSource, ProviderError> {
         Ok(match self {
-            Source::Url(name) => ResolvedSource::Url(name),
+            Source::Custom { url, headers } => ResolvedSource::Api(RpcApi {
+                url,
+                headers: headers.unwrap_or_default(),
+            }),
             Source::Provider(id) => ResolvedSource::Provider({
                 PROVIDERS.with(|providers| {
                     providers
                         .borrow()
                         .get(&id)
-                        .ok_or(EthRpcError::ProviderNotFound)
+                        .ok_or(ProviderError::ProviderNotFound)
                 })?
             }),
             Source::Chain(id) => ResolvedSource::Provider(PROVIDERS.with(|providers| {
@@ -38,7 +48,7 @@ impl Source {
                     .iter()
                     .find(|(_, p)| p.primary && p.chain_id == id)
                     .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
-                    .ok_or(EthRpcError::ProviderNotFound)?
+                    .ok_or(ProviderError::ProviderNotFound)?
                     .1)
             })?),
             Source::Service { hostname, chain_id } => {
@@ -55,7 +65,7 @@ impl Source {
                         .iter()
                         .find(|(_, p)| p.primary && matches_provider(p))
                         .or_else(|| providers.iter().find(|(_, p)| matches_provider(p)))
-                        .ok_or(EthRpcError::ProviderNotFound)?
+                        .ok_or(ProviderError::ProviderNotFound)?
                         .1)
                 })?)
             }
@@ -64,7 +74,7 @@ impl Source {
 }
 
 pub enum ResolvedSource {
-    Url(String),
+    Api(RpcApi),
     Provider(Provider),
 }
 
@@ -81,7 +91,7 @@ pub struct Metrics {
 
 #[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]
 pub enum Auth {
-    Admin,
+    ManageService,
     RegisterProvider,
     Rpc,
     FreeRpc,
@@ -187,7 +197,7 @@ impl BoundedStorable for PrincipalStorable {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(Debug, CandidType)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct ProviderView {
     pub provider_id: u64,
     pub owner: Principal,
@@ -198,20 +208,22 @@ pub struct ProviderView {
     pub primary: bool,
 }
 
-#[derive(Debug, CandidType, Deserialize)]
-pub struct RegisterProvider {
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct RegisterProviderArgs {
     pub chain_id: u64,
     pub hostname: String,
     pub credential_path: String,
+    pub credential_headers: Option<Vec<HttpHeader>>,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
 }
 
-#[derive(Debug, CandidType, Deserialize)]
-pub struct UpdateProvider {
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct UpdateProviderArgs {
     pub provider_id: u64,
     pub hostname: Option<String>,
     pub credential_path: Option<String>,
+    pub credential_headers: Option<Vec<HttpHeader>>,
     pub cycles_per_call: Option<u64>,
     pub cycles_per_message_byte: Option<u64>,
     pub primary: Option<bool>,
@@ -224,6 +236,7 @@ pub struct Provider {
     pub chain_id: u64,
     pub hostname: String,
     pub credential_path: String,
+    pub credential_headers: Vec<HttpHeader>,
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
     pub cycles_owed: u128,
@@ -231,8 +244,11 @@ pub struct Provider {
 }
 
 impl Provider {
-    pub fn service_url(&self) -> String {
-        format!("https://{}{}", self.hostname, self.credential_path)
+    pub fn api(&self) -> RpcApi {
+        RpcApi {
+            url: format!("https://{}{}", self.hostname, self.credential_path),
+            headers: self.credential_headers.clone(),
+        }
     }
 }
 
@@ -259,7 +275,7 @@ impl BoundedStorable for Provider {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(CandidType, Debug, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum Message {
     Data(Vec<u8>),
     Hash([u8; 32]),
@@ -274,7 +290,7 @@ impl From<Message> for RecoveryMessage {
     }
 }
 
-#[derive(CandidType, Debug, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct SignedMessage {
     // TODO: Candid `blob` in place of `vec nat8`
     pub address: Vec<u8>,
@@ -282,15 +298,156 @@ pub struct SignedMessage {
     pub signature: Vec<u8>,
 }
 
-#[derive(CandidType, Debug)]
-pub enum EthRpcError {
-    NoPermission,
-    TooFewCycles { expected: u128, received: u128 },
-    ServiceUrlParseError,
-    ServiceHostNotAllowed(String),
-    ResponseParseError,
-    ProviderNotFound,
-    HttpRequestError { code: u32, message: String },
+pub type RpcResult<T> = Result<T, RpcError>;
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum CandidRpcSource {
+    EthMainnet(Option<EthereumProvider>),
+    EthSepolia(Option<SepoliaProvider>),
 }
 
-// pub type AllowlistSet = HashSet<&'static &'static str>;
+pub mod candid_types {
+    use std::str::FromStr;
+
+    use candid::CandidType;
+    use cketh_common::{
+        address::Address,
+        eth_rpc::{into_nat, FixedSizeData, ValidationError},
+        eth_rpc_client::responses::TransactionStatus,
+        numeric::BlockNumber,
+    };
+    use serde::Deserialize;
+
+    pub use cketh_common::eth_rpc::Hash;
+
+    #[derive(Clone, Debug, CandidType, Deserialize)]
+    pub enum BlockSpec {
+        Number(u128),
+        Tag(BlockTag),
+    }
+
+    impl From<BlockSpec> for cketh_common::eth_rpc::BlockSpec {
+        fn from(value: BlockSpec) -> Self {
+            use cketh_common::eth_rpc::BlockSpec::*;
+            match value {
+                BlockSpec::Number(n) => Number(n.into()),
+                BlockSpec::Tag(t) => Tag(t.into()),
+            }
+        }
+    }
+
+    #[derive(Clone, Debug, CandidType, Deserialize, Default)]
+    pub enum BlockTag {
+        #[default]
+        Latest,
+        Finalized,
+        Safe,
+        Earliest,
+        Pending,
+        Number(u64),
+    }
+
+    impl From<BlockTag> for cketh_common::eth_rpc::BlockTag {
+        fn from(value: BlockTag) -> cketh_common::eth_rpc::BlockTag {
+            use cketh_common::eth_rpc::BlockTag::*;
+            match value {
+                BlockTag::Latest => Latest,
+                BlockTag::Safe => Safe,
+                BlockTag::Finalized => Finalized,
+                _ => unimplemented!(),
+            }
+        }
+    }
+
+    #[derive(Clone, Debug, CandidType, Deserialize)]
+    pub struct GetLogsArgs {
+        pub from_block: Option<BlockSpec>,
+        pub to_block: Option<BlockSpec>,
+        pub addresses: Vec<String>,
+        pub topics: Option<Vec<String>>,
+    }
+
+    impl TryFrom<GetLogsArgs> for cketh_common::eth_rpc::GetLogsParam {
+        type Error = ValidationError;
+        fn try_from(value: GetLogsArgs) -> Result<Self, Self::Error> {
+            Ok(cketh_common::eth_rpc::GetLogsParam {
+                from_block: value.from_block.map(|x| x.into()).unwrap_or_default(),
+                to_block: value.to_block.map(|x| x.into()).unwrap_or_default(),
+                address: value
+                    .addresses
+                    .into_iter()
+                    .map(|s| Address::from_str(&s).map_err(|_| ValidationError::InvalidHex(s)))
+                    .collect::<Result<_, _>>()?,
+                topics: value
+                    .topics
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(|s| {
+                        FixedSizeData::from_str(&s).map_err(|_| ValidationError::InvalidHex(s))
+                    })
+                    .collect::<Result<_, _>>()?,
+            })
+        }
+    }
+
+    #[derive(Clone, Debug, CandidType, Deserialize)]
+    pub struct TransactionReceipt {
+        pub block_hash: Hash,
+        pub block_number: BlockNumber,
+        pub effective_gas_price: candid::Nat,
+        pub gas_used: candid::Nat,
+        pub status: TransactionStatus,
+        pub transaction_hash: Hash,
+    }
+
+    impl From<cketh_common::eth_rpc_client::responses::TransactionReceipt> for TransactionReceipt {
+        fn from(value: cketh_common::eth_rpc_client::responses::TransactionReceipt) -> Self {
+            TransactionReceipt {
+                block_hash: value.block_hash,
+                block_number: value.block_number,
+                effective_gas_price: into_nat(value.effective_gas_price.into_inner()),
+                gas_used: into_nat(value.gas_used.into_inner()),
+                status: value.status,
+                transaction_hash: value.transaction_hash,
+            }
+        }
+    }
+
+    #[derive(Clone, Debug, CandidType, Deserialize)]
+    pub struct FeeHistoryArgs {
+        pub block_count: u128,
+        pub newest_block: BlockSpec,
+        pub reward_percentiles: Option<Vec<u8>>,
+    }
+
+    impl From<FeeHistoryArgs> for cketh_common::eth_rpc::FeeHistoryParams {
+        fn from(value: FeeHistoryArgs) -> Self {
+            cketh_common::eth_rpc::FeeHistoryParams {
+                block_count: value.block_count.into(),
+                highest_block: value.newest_block.into(),
+                reward_percentiles: value.reward_percentiles.unwrap_or_default(),
+            }
+        }
+    }
+
+    #[derive(Clone, Debug, CandidType, Deserialize)]
+    pub struct GetTransactionCountArgs {
+        pub address: String,
+        pub block: BlockSpec,
+    }
+
+    impl TryFrom<GetTransactionCountArgs>
+        for cketh_common::eth_rpc_client::requests::GetTransactionCountParams
+    {
+        type Error = ValidationError;
+        fn try_from(value: GetTransactionCountArgs) -> Result<Self, Self::Error> {
+            Ok(
+                cketh_common::eth_rpc_client::requests::GetTransactionCountParams {
+                    address: Address::from_str(&value.address)
+                        .map_err(|_| ValidationError::InvalidHex(value.address))?,
+                    block: value.block.into(),
+                },
+            )
+        }
+    }
+}

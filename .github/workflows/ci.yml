@@ -111,8 +111,8 @@ jobs:
   #       uses: actions/checkout@master
   #     - name: Check interface
   #       run: |
-  #         cargo run > candid/eth_rpc_expected.did
-  #         diff candid/eth_rpc.did candid/eth_rpc_expected.did
+  #         cargo run > candid/evm_rpc_expected.did
+  #         diff candid/evm_rpc.did candid/evm_rpc_expected.did
 
   e2e:
     runs-on: ubuntu-latest
@@ -136,14 +136,17 @@ jobs:
       - name: Install npm packages
         run: npm ci
 
-      - name: Deploy
-        run: dfx deploy
+      - name: Deploy EVM RPC
+        run: dfx deploy evm_rpc
+
+      - name: Generate language bindings
+        run: npm run generate
 
       - name: Test (Motoko)
-        run: dfx canister call e2e_motoko test
+        run: dfx deploy e2e_motoko && dfx canister call e2e_motoko test
 
       - name: Test (Rust)
-        run: dfx canister call e2e_rust test
+        run: dfx deploy e2e_rust && dfx canister call e2e_rust test
 
       - name: Check formatting
         run: cargo fmt --all -- --check

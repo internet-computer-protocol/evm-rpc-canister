@@ -1,4 +1,16 @@
+use std::str::FromStr;
+
+use async_trait::async_trait;
 use candid::{candid_method, CandidType};
+use cketh_common::eth_rpc::{
+    into_nat, Block, BlockSpec, FeeHistory, GetLogsParam, Hash, HttpOutcallError, JsonRpcReply,
+    LogEntry, ProviderError, RpcError, SendRawTransactionResult, ValidationError,
+};
+use cketh_common::eth_rpc_client::providers::RpcApi;
+use cketh_common::eth_rpc_client::requests::GetTransactionCountParams;
+use cketh_common::eth_rpc_client::{providers::RpcNodeProvider, EthRpcClient};
+use cketh_common::eth_rpc_client::{MultiCallError, RpcTransport};
+use cketh_common::lifecycle::EthereumNetwork;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -7,7 +19,175 @@ use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpResponse, T
 use ic_cdk::{query, update};
 use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
-use eth_rpc::*;
+use evm_rpc::*;
+use serde::de::DeserializeOwned;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct CanisterTransport;
+
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl RpcTransport for CanisterTransport {
+    fn get_subnet_size() -> u32 {
+        METADATA.with(|m| m.borrow().get().nodes_in_subnet)
+    }
+
+    fn resolve_api(provider: RpcNodeProvider) -> Result<RpcApi, ProviderError> {
+        // TODO: https://github.com/internet-computer-protocol/ic-eth-rpc/issues/73
+        Ok(provider.api())
+    }
+
+    async fn call_json_rpc<T: DeserializeOwned>(
+        provider: RpcNodeProvider,
+        json: &str,
+        max_response_bytes: u64,
+    ) -> Result<T, RpcError> {
+        let response = do_http_request(
+            ic_cdk::caller(),
+            ResolvedSource::Api(Self::resolve_api(provider)?),
+            json,
+            max_response_bytes,
+        )
+        .await
+        .unwrap();
+        let status = get_http_response_status(response.status.clone());
+        let body = get_http_response_body(response)?;
+        let json: JsonRpcReply<T> = serde_json::from_str(&body).unwrap_or_else(|e| {
+            Err(HttpOutcallError::InvalidHttpJsonRpcResponse {
+                status,
+                body,
+                parsing_error: Some(format!("JSON response parse error: {e}")),
+            })
+        })?;
+        json.result.into()
+    }
+}
+
+fn get_rpc_client(source: CandidRpcSource) -> Result<EthRpcClient<CanisterTransport>, RpcError> {
+    fn validate_providers<T>(opt_vec: Option<Vec<T>>) -> Result<Option<Vec<T>>, RpcError> {
+        Ok(match opt_vec {
+            Some(v) if v.is_empty() => Err(ProviderError::ProviderNotFound)?,
+            opt => opt,
+        })
+    }
+    if !is_rpc_allowed(&ic_cdk::caller()) {
+        // inc_metric!(eth_*_err_no_permission);
+        return Err(ProviderError::NoPermission.into());
+    }
+    Ok(match source {
+        CandidRpcSource::EthMainnet(service) => EthRpcClient::new(
+            EthereumNetwork::Ethereum,
+            validate_providers(Some(vec![service.unwrap_or(
+                cketh_common::eth_rpc_client::providers::EthereumProvider::Ankr,
+            )]))?
+            .map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
+        ),
+        CandidRpcSource::EthSepolia(service) => EthRpcClient::new(
+            EthereumNetwork::Sepolia,
+            validate_providers(Some(vec![service.unwrap_or(
+                cketh_common::eth_rpc_client::providers::SepoliaProvider::PublicNode,
+            )]))?
+            .map(|p| p.into_iter().map(RpcNodeProvider::Sepolia).collect()),
+        ),
+    })
+}
+
+fn wrap_result<T>(result: Result<T, MultiCallError<T>>) -> RpcResult<T> {
+    match result {
+        Ok(value) => Ok(value),
+        Err(err) => match err {
+            MultiCallError::ConsistentError(err) => Err(err),
+            MultiCallError::InconsistentResults(_results) => {
+                unreachable!("BUG: receieved more than one RPC provider result")
+            }
+        },
+    }
+}
+
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_get_logs(
+    source: CandidRpcSource,
+    args: candid_types::GetLogsArgs,
+) -> RpcResult<Vec<LogEntry>> {
+    let args: GetLogsParam = match args.try_into() {
+        Ok(args) => args,
+        Err(err) => return Err(RpcError::from(err)),
+    };
+    let client = get_rpc_client(source)?;
+    wrap_result(client.eth_get_logs(args).await)
+}
+
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_get_block_by_number(
+    source: CandidRpcSource,
+    block: candid_types::BlockSpec,
+) -> RpcResult<Block> {
+    let block: BlockSpec = block.into();
+    let client = get_rpc_client(source)?;
+    wrap_result(client.eth_get_block_by_number(block).await)
+}
+
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_get_transaction_receipt(
+    source: CandidRpcSource,
+    hash: String,
+) -> RpcResult<Option<candid_types::TransactionReceipt>> {
+    let client = get_rpc_client(source)?;
+    wrap_result(
+        client
+            .eth_get_transaction_receipt(
+                Hash::from_str(&hash).map_err(|_| ValidationError::InvalidHex(hash))?,
+            )
+            .await,
+    )
+    .map(|option| option.map(|r| r.into()))
+}
+
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_get_transaction_count(
+    source: CandidRpcSource,
+    args: candid_types::GetTransactionCountArgs,
+) -> RpcResult<candid::Nat> {
+    let args: GetTransactionCountParams = match args.try_into() {
+        Ok(args) => args,
+        Err(err) => return Err(RpcError::from(err)),
+    };
+    let client = get_rpc_client(source)?;
+    wrap_result(
+        client
+            .eth_get_transaction_count(args)
+            .await
+            .reduce_with_equality(),
+    )
+    .map(|count| into_nat(count.into_inner()))
+}
+
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_fee_history(
+    source: CandidRpcSource,
+    args: candid_types::FeeHistoryArgs,
+) -> RpcResult<Option<FeeHistory>> {
+    let args = args.into();
+    let client = get_rpc_client(source)?;
+    wrap_result(client.eth_fee_history(args).await).map(|history| history.into())
+}
+
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn eth_send_raw_transaction(
+    source: CandidRpcSource,
+    raw_signed_transaction_hex: String,
+) -> RpcResult<SendRawTransactionResult> {
+    let client = get_rpc_client(source)?;
+    client
+        .eth_send_raw_transaction(raw_signed_transaction_hex)
+        .await
+}
 
 #[ic_cdk_macros::query]
 #[candid_method(query)]
@@ -25,14 +205,15 @@ async fn request(
     source: Source,
     json_rpc_payload: String,
     max_response_bytes: u64,
-) -> Result<String, EthRpcError> {
-    do_http_request(
+) -> Result<String, RpcError> {
+    let response = do_http_request(
         ic_cdk::caller(),
         source.resolve()?,
         &json_rpc_payload,
         max_response_bytes,
     )
-    .await
+    .await?;
+    get_http_response_body(response)
 }
 
 #[query]
@@ -41,7 +222,7 @@ fn request_cost(
     source: Source,
     json_rpc_payload: String,
     max_response_bytes: u64,
-) -> Result<u128, EthRpcError> {
+) -> Result<u128, RpcError> {
     Ok(get_request_cost(
         &source.resolve().unwrap(),
         &json_rpc_payload,
@@ -70,7 +251,7 @@ fn get_providers() -> Vec<ProviderView> {
 
 #[update(guard = "require_register_provider")]
 #[candid_method]
-fn register_provider(provider: RegisterProvider) -> u64 {
+fn register_provider(provider: RegisterProviderArgs) -> u64 {
     do_register_provider(ic_cdk::caller(), provider)
 }
 
@@ -82,17 +263,17 @@ fn unregister_provider(provider_id: u64) -> bool {
 
 #[update(guard = "require_register_provider")]
 #[candid_method]
-fn update_provider(provider: UpdateProvider) {
+fn update_provider(provider: UpdateProviderArgs) {
     do_update_provider(ic_cdk::caller(), provider)
 }
 
 #[query(guard = "require_register_provider")]
 #[candid_method(query)]
-fn get_owed_cycles(provider_id: u64) -> u128 {
+fn get_accumulated_cycle_count(provider_id: u64) -> u128 {
     let provider = PROVIDERS.with(|p| {
         p.borrow()
             .get(&provider_id)
-            .ok_or(EthRpcError::ProviderNotFound)
+            .ok_or(ProviderError::ProviderNotFound)
     });
     let provider = provider.expect("Provider not found");
     if ic_cdk::caller() != provider.owner {
@@ -108,11 +289,11 @@ struct DepositCyclesArgs {
 
 #[update(guard = "require_register_provider")]
 #[candid_method]
-async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
+async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
     let provider = PROVIDERS.with(|p| {
         p.borrow()
             .get(&provider_id)
-            .ok_or(EthRpcError::ProviderNotFound)
+            .ok_or(ProviderError::ProviderNotFound)
     });
     let mut provider = provider.expect("Provider not found");
     if ic_cdk::caller() != provider.owner {
@@ -148,7 +329,7 @@ async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
             let provider = PROVIDERS.with(|p| {
                 p.borrow()
                     .get(&provider_id)
-                    .ok_or(EthRpcError::ProviderNotFound)
+                    .ok_or(ProviderError::ProviderNotFound)
             });
             let mut provider = provider.expect("Provider not found during refund, cycles lost.");
             PROVIDERS.with(|p| {
@@ -159,11 +340,11 @@ async fn withdraw_owed_cycles(provider_id: u64, canister_id: Principal) {
     };
 }
 
-#[query(name = "__transform_eth_rpc")]
+#[query(name = "__transform_evm_rpc")]
 fn transform(args: TransformArgs) -> HttpResponse {
     HttpResponse {
         status: args.response.status,
-        body: args.response.body,
+        body: canonicalize_json(&args.response.body).unwrap_or(args.response.body),
         // Strip headers as they contain the Date which is not necessarily the same
         // and will prevent consensus on the result.
         headers: Vec::<HttpHeader>::new(),
@@ -300,7 +481,7 @@ fn test_candid_interface() {
 
     service_compatible(
         CandidSource::Text(&new_interface),
-        CandidSource::File(Path::new("candid/eth_rpc.did")),
+        CandidSource::File(Path::new("candid/evm_rpc.did")),
     )
     .unwrap();
 }

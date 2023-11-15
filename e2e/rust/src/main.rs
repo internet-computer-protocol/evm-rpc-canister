@@ -1,7 +1,7 @@
 use candid::candid_method;
 use ic_cdk_macros::update;
 
-use e2e::declarations::eth_rpc::{eth_rpc, EthRpcError, Source};
+use e2e::declarations::evm_rpc::{evm_rpc, ProviderError, RpcError, Source};
 
 fn main() {}
 
@@ -19,37 +19,40 @@ pub async fn test() {
     );
 
     // Get cycles cost
-    let (cycles_result,): (Result<u128, EthRpcError>,) =
-        ic_cdk::call(eth_rpc.0, "request_cost", params.clone())
+    let (cycles_result,): (Result<u128, RpcError>,) =
+        ic_cdk::api::call::call(evm_rpc.0, "request_cost", params.clone())
             .await
             .unwrap();
-    let cycles =
-        cycles_result.unwrap_or_else(|e| ic_cdk::trap(&format!("error in `request_cost`: {}", e)));
+    let cycles = cycles_result
+        .unwrap_or_else(|e| ic_cdk::trap(&format!("error in `request_cost`: {:?}", e)));
 
     // Call without sending cycles
-    let (result_without_cycles,): (Result<String, EthRpcError>,) =
-        ic_cdk::api::call::call(eth_rpc.0, "request", params.clone())
+    let (result_without_cycles,): (Result<String, RpcError>,) =
+        ic_cdk::api::call::call(evm_rpc.0, "request", params.clone())
             .await
             .unwrap();
     match result_without_cycles {
         Ok(s) => ic_cdk::trap(&format!("response from `request` without cycles: {:?}", s)),
-        Err(EthRpcError::TooFewCycles { expected, .. }) => {
+        Err(RpcError::ProviderError(ProviderError::TooFewCycles { expected, .. })) => {
             assert_eq!(expected, cycles)
         }
-        Err(err) => ic_cdk::trap(&format!("error in `request` without cycles: {}", err)),
+        Err(err) => ic_cdk::trap(&format!("error in `request` without cycles: {:?}", err)),
     }
 
     // Call with expected number of cycles
-    let (result,): (Result<String, EthRpcError>,) =
-        ic_cdk::api::call::call_with_payment128(eth_rpc.0, "request", params, cycles)
+    let (result,): (Result<String, RpcError>,) =
+        ic_cdk::api::call::call_with_payment128(evm_rpc.0, "request", params, cycles)
             .await
             .unwrap();
     match result {
         Ok(response) => {
             // Check response structure around gas price
-            assert_eq!(&response[..29], "{\"jsonrpc\":\"2.0\",\"result\":\"0x",);
-            assert_eq!(&response[response.len() - 9..], "\",\"id\":1}")
+            assert_eq!(
+                &response[..36],
+                "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x"
+            );
+            assert_eq!(&response[response.len() - 2..], "\"}");
         }
-        Err(err) => ic_cdk::trap(&format!("error in `request` with cycles: {}", err)),
+        Err(err) => ic_cdk::trap(&format!("error in `request` with cycles: {:?}", err)),
     }
 }

@@ -1,12 +1,13 @@
-import EthCanister "canister:eth_rpc";
+import EvmRpcCanister "canister:evm_rpc";
 
 import Principal "mo:base/Principal";
-import Eth "mo:eth";
+import Evm "mo:evm";
 import Debug "mo:base/Debug";
+import Text "mo:base/Text";
 
 actor class Main() {
-    let rpc = Eth.Rpc(
-        #Canister EthCanister,
+    let mainnet = Evm.Rpc(
+        #Canister EvmRpcCanister,
         #Service {
             hostname = "cloudflare-eth.com";
             network = ? #EthMainnet;
@@ -21,7 +22,7 @@ actor class Main() {
         let json = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}";
         let maxResponseBytes : Nat64 = 1000;
 
-        let cyclesResult = await EthCanister.request_cost(source, json, maxResponseBytes);
+        let cyclesResult = await EvmRpcCanister.request_cost(source, json, maxResponseBytes);
         let cycles = switch cyclesResult {
             case (#Ok cycles) { cycles };
             case (#Err err) {
@@ -29,14 +30,29 @@ actor class Main() {
             };
         };
 
-        let resultWithoutCycles = await EthCanister.request(source, json, maxResponseBytes);
+        let resultWithoutCycles = await EvmRpcCanister.request(source, json, maxResponseBytes);
         assert switch resultWithoutCycles {
-            case (#Err(#TooFewCycles { expected })) expected == cycles;
+            case (#Err(#ProviderError(#TooFewCycles { expected }))) expected == cycles;
             case _ false;
         };
 
-        // TODO: call with cycles
-
-        // let result = await rpc.request("eth_gasPrice", #Array([]), 1000);
+        let result = await mainnet.request("eth_gasPrice", #Array([]), 1000);
+        label validate {
+            switch result {
+                case (#ok(#Object fields)) {
+                    for ((key, val) in fields.vals()) {
+                        switch (key, val) {
+                            case ("result", #String val) {
+                                assert Text.startsWith(val, #text "0x");
+                                break validate;
+                            };
+                            case _ {};
+                        };
+                    };
+                };
+                case _ {};
+            };
+            Debug.trap(debug_show result);
+        };
     };
 };

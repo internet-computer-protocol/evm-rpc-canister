@@ -13,6 +13,8 @@ pub const WASM_PAGE_SIZE: u64 = 65536;
 pub const DEFAULT_NODES_IN_SUBNET: u32 = 13;
 pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
 
+pub const CONTENT_TYPE_HEADER: &str = "Content-Type";
+
 pub const SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
     "cloudflare-eth.com",
     "ethereum.publicnode.com",
