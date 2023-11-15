@@ -111,9 +111,8 @@ npm run generate
 
 ## Learn More
 
-* [How this canister works behind the scenes](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/DeepDive.md)
 * [Candid interface](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/candid/evm_rpc.did)
-* [Detailed API documentation](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/API.md)
+* [API documentation](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/API.md)
 
 ## Related Projects
 
