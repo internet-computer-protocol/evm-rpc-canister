@@ -96,9 +96,9 @@ fn wrap_result<T>(result: Result<T, MultiCallError<T>>) -> RpcResult<T> {
     match result {
         Ok(value) => Ok(value),
         Err(err) => match err {
-            MultiCallError::ConsistentError(e) => Err(e),
-            MultiCallError::InconsistentResults(_r) => {
-                unreachable!()
+            MultiCallError::ConsistentError(err) => Err(err),
+            MultiCallError::InconsistentResults(_results) => {
+                unreachable!("BUG: receieved more than one RPC provider result")
             }
         },
     }
