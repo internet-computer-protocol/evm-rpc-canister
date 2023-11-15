@@ -22,7 +22,7 @@ Beyond the Ethereum blockchain, this canister also supports Polygon, Avalanche, 
 
 ## Quick Start
 
-Add the following to your `dfx.json` config file (replace `remote.id.ic` with any option from the list of available canisters above):
+Add the following to your `dfx.json` config file (replace the `ic` principal with any option from the list of available canisters above):
 
 ```json
 {
