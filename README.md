@@ -10,7 +10,7 @@ Thank you for your interest! Please feel free to [submit an issue](https://githu
 
 ## Overview
 
-**EVM RPC** is an Internet Computer canister smart contract for communicating with [Ethereum](https://ethereum.org/en/) and other [EVM blockchains](https://chainlist.org/?testnets=true) using an [on-chain API](./API.md). 
+**EVM RPC** is an Internet Computer canister smart contract for communicating with [Ethereum](https://ethereum.org/en/) and other [EVM blockchains](https://chainlist.org/?testnets=true) using an on-chain API. 
 
 This canister facilitates API requests to JSON-RPC services such as [CloudFlare](https://www.cloudflare.com/en-gb/web3/), [Alchemy](https://www.alchemy.com/), or [Gateway.fm](https://gateway.fm/) using [HTTPS outcalls](https://internetcomputer.org/docs/current/developer-docs/integrations/http_requests/). This enables functionality similar to traditional Ethereum dApps, including querying Ethereum smart contract states and submitting raw transactions.
 
@@ -112,7 +112,6 @@ npm run generate
 ## Learn More
 
 * [Candid interface](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/candid/evm_rpc.did)
-* [API documentation](https://github.com/internet-computer-protocol/ic-eth-rpc/blob/main/API.md)
 
 ## Related Projects
 
