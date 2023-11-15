@@ -209,7 +209,7 @@ pub struct ProviderView {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct RegisterProvider {
+pub struct RegisterProviderArgs {
     pub chain_id: u64,
     pub hostname: String,
     pub credential_path: String,
@@ -219,7 +219,7 @@ pub struct RegisterProvider {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct UpdateProvider {
+pub struct UpdateProviderArgs {
     pub provider_id: u64,
     pub hostname: Option<String>,
     pub credential_path: Option<String>,
