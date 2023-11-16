@@ -36,12 +36,12 @@ hex = "0.4"
 [dev-dependencies]
 # assert_matches = "1.5.0"
 # ethers-core = "2.0.8"
-ic-base-types = { path = "../../../types/base_types" }
-ic-config = { path = "../../../config" }
-ic-crypto-test-utils-reproducible-rng = { path = "../../../crypto/test_utils/reproducible_rng" }
-ic-icrc1-ledger = { path = "../../../rosetta-api/icrc1/ledger" }
-ic-state-machine-tests = { path = "../../../state_machine_tests" }
-ic-test-utilities-load-wasm = { path = "../../../test_utilities/load_wasm" }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+# ic-crypto-test-utils-reproducible-rng = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+# ic-icrc1-ledger = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 # maplit = "1"
 # proptest = "1.0"
 # rand = "0.8"
