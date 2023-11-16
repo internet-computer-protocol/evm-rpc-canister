@@ -33,6 +33,20 @@ url = "2.4"
 async-trait = "0.1"
 hex = "0.4"
 
+[dev-dependencies]
+# assert_matches = "1.5.0"
+# ethers-core = "2.0.8"
+ic-base-types = { path = "../../../types/base_types" }
+ic-config = { path = "../../../config" }
+ic-crypto-test-utils-reproducible-rng = { path = "../../../crypto/test_utils/reproducible_rng" }
+ic-icrc1-ledger = { path = "../../../rosetta-api/icrc1/ledger" }
+ic-state-machine-tests = { path = "../../../state_machine_tests" }
+ic-test-utilities-load-wasm = { path = "../../../test_utilities/load_wasm" }
+# maplit = "1"
+# proptest = "1.0"
+# rand = "0.8"
+# scraper = "0.17.1"
+
 [workspace.dependencies]
 candid = { version = "0.9", features = ["parser"] }
 ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
