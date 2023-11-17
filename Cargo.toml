@@ -39,6 +39,7 @@ hex = "0.4"
 [dev-dependencies]
 # assert_matches = "1.5.0"
 # ethers-core = "2.0.8"
+ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 # ic-crypto-test-utils-reproducible-rng = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }

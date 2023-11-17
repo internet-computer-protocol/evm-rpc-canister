@@ -1,7 +1,15 @@
-use cketh_common::eth_rpc_client::providers::SepoliaProvider;
-use evm_rpc::{Auth, CandidRpcClient, CandidRpcSource};
+use std::rc::Rc;
 
-const DEFAULT_CALLER_ID: u64 = 10352385;
+use candid::{CandidType, Decode, Encode, Nat};
+use evm_rpc::*;
+use ic_base_types::{CanisterId, PrincipalId};
+use ic_ic00_types::BoundedVec;
+use ic_state_machine_tests::{CanisterSettingsArgs, StateMachine, StateMachineBuilder, WasmResult};
+use ic_test_utilities_load_wasm::load_wasm;
+use serde::de::DeserializeOwned;
+
+const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
+const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
 
 fn evm_rpc_wasm() -> Vec<u8> {
     load_wasm(std::env::var("CARGO_MANIFEST_DIR").unwrap(), "evm_rpc", &[])
@@ -11,14 +19,16 @@ fn assert_reply(result: WasmResult) -> Vec<u8> {
     match result {
         WasmResult::Reply(bytes) => bytes,
         result => {
-            panic!("Expected a successful reply, got {}", reject)
+            panic!("Expected a successful reply, got {}", result)
         }
     }
 }
 
+#[derive(Clone)]
 pub struct EvmRpcSetup {
-    pub env: StateMachine,
+    pub env: Rc<StateMachine>,
     pub caller: PrincipalId,
+    pub controller: PrincipalId,
     pub evm_rpc_id: CanisterId,
 }
 
@@ -30,31 +40,54 @@ impl Default for EvmRpcSetup {
 
 impl EvmRpcSetup {
     pub fn new() -> Self {
-        let env = StateMachineBuilder::new()
-            .with_default_canister_range()
-            .build();
+        let env = Rc::new(
+            StateMachineBuilder::new()
+                .with_default_canister_range()
+                .build(),
+        );
 
-        let evm_rpc_id = env.create_canister(None);
+        let controller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);
+        let evm_rpc_id = env.create_canister(Some({
+            let mut args: CanisterSettingsArgs = Default::default();
+            args.controllers = Some(BoundedVec::new(vec![controller]));
+            args
+        }));
         env.install_existing_canister(evm_rpc_id, evm_rpc_wasm(), Encode!(&()).unwrap())
             .unwrap();
 
-        let caller = PrincipalId::new_user_test_id(DEFAULT_CALLER_ID);
+        let caller = PrincipalId::new_user_test_id(DEFAULT_CALLER_TEST_ID);
 
         Self {
             env,
             caller,
+            controller,
             evm_rpc_id,
         }
     }
 
-    // pub fn deposit(self, params: DepositParams) -> DepositFlow {
-    //     DepositFlow {
-    //         setup: self,
-    //         params,
-    //     }
-    // }
+    pub fn as_controller(&self) -> Self {
+        let mut setup = self.clone();
+        setup.caller = self.controller;
+        setup
+    }
 
-    pub fn call_update<T, R>(&self, method: &str, input: &T) -> R {
+    pub fn as_anonymous(&self) -> Self {
+        let mut setup = self.clone();
+        setup.caller = PrincipalId::new_anonymous();
+        setup
+    }
+
+    pub fn as_caller(&self, id: PrincipalId) -> Self {
+        let mut setup = self.clone();
+        setup.caller = id;
+        setup
+    }
+
+    pub fn call_update<T: CandidType, R: CandidType + DeserializeOwned>(
+        &self,
+        method: &str,
+        input: &T,
+    ) -> R {
         Decode!(
             &assert_reply(
                 self.env
@@ -64,14 +97,21 @@ impl EvmRpcSetup {
                         method,
                         Encode!(input).unwrap(),
                     )
-                    .expect("error during update call")
+                    .unwrap_or_else(|err| panic!(
+                        "error during update call to `{}()`: {}",
+                        method, err
+                    ))
             ),
-            T
+            R
         )
         .unwrap()
     }
 
-    pub fn call_query<T, R>(&self, method: &str, input: T) -> R {
+    pub fn call_query<T: CandidType, R: CandidType + DeserializeOwned>(
+        &self,
+        method: &str,
+        input: &T,
+    ) -> R {
         Decode!(
             &assert_reply(
                 self.env
@@ -81,15 +121,31 @@ impl EvmRpcSetup {
                         method,
                         Encode!(input).unwrap(),
                     )
-                    .expect("error during query call")
+                    .unwrap_or_else(|err| panic!(
+                        "error during query call to `{}()`: {}",
+                        method, err
+                    ))
             ),
             R
         )
         .unwrap()
     }
 
-    pub fn authorize(self, auth: Auth) -> Self {
-        assert!(self.call_update("authorize", ()));
+    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) -> bool {
+        self.call_update("authorize", &(principal.0, auth))
+    }
+
+    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) -> bool {
+        self.call_update("deauthorize", &(principal.0, auth))
+    }
+
+    pub fn authorize_caller(self, auth: Auth) -> Self {
+        assert!(self.as_controller().authorize(&self.caller, auth));
+        self
+    }
+
+    pub fn deauthorize_caller(self, auth: Auth) -> Self {
+        assert!(self.as_controller().deauthorize(&self.caller, auth));
         self
     }
 
@@ -101,9 +157,16 @@ impl EvmRpcSetup {
     ) -> Nat {
         self.call_query(
             "request_cost",
-            (source, json_rpc_payload, max_response_bytes),
+            &(source, json_rpc_payload, max_response_bytes),
         )
     }
+
+    // pub fn deposit(self, params: DepositParams) -> DepositFlow {
+    //     DepositFlow {
+    //         setup: self,
+    //         params,
+    //     }
+    // }
 
     // pub fn call_ledger_approve_minter(
     //     self,
@@ -289,8 +352,11 @@ impl EvmRpcSetup {
 }
 
 #[test]
-fn test_register_provider() {
-    let setup = EvmRpcSetup::new().authorize(Auth::RegisterProvider);
+fn test_authorize() {
+    let setup = EvmRpcSetup::new();
+    setup
+        .as_controller()
+        .authorize_caller(Auth::RegisterProvider);
 
-    // assert!(false);
+    assert!(true);
 }

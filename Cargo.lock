@@ -1680,6 +1680,7 @@ dependencies = [
  "ic-cketh-minter",
  "ic-config",
  "ic-eth",
+ "ic-ic00-types 0.8.0",
  "ic-metrics-encoder",
  "ic-nervous-system-common",
  "ic-stable-structures",
