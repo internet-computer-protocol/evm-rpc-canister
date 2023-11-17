@@ -83,20 +83,11 @@ impl EvmRpcSetup {
         setup
     }
 
-    pub fn call_update<T: CandidType, R: CandidType + DeserializeOwned>(
-        &self,
-        method: &str,
-        input: &T,
-    ) -> R {
+    fn call_update<R: CandidType + DeserializeOwned>(&self, method: &str, input: Vec<u8>) -> R {
         Decode!(
             &assert_reply(
                 self.env
-                    .execute_ingress_as(
-                        self.caller,
-                        self.evm_rpc_id,
-                        method,
-                        Encode!(input).unwrap(),
-                    )
+                    .execute_ingress_as(self.caller, self.evm_rpc_id, method, input,)
                     .unwrap_or_else(|err| panic!(
                         "error during update call to `{}()`: {}",
                         method, err
@@ -107,20 +98,11 @@ impl EvmRpcSetup {
         .unwrap()
     }
 
-    pub fn call_query<T: CandidType, R: CandidType + DeserializeOwned>(
-        &self,
-        method: &str,
-        input: &T,
-    ) -> R {
+    fn call_query<R: CandidType + DeserializeOwned>(&self, method: &str, input: Vec<u8>) -> R {
         Decode!(
             &assert_reply(
                 self.env
-                    .query_as(
-                        self.caller,
-                        self.evm_rpc_id,
-                        method,
-                        Encode!(input).unwrap(),
-                    )
+                    .query_as(self.caller, self.evm_rpc_id, method, input,)
                     .unwrap_or_else(|err| panic!(
                         "error during query call to `{}()`: {}",
                         method, err
@@ -131,21 +113,21 @@ impl EvmRpcSetup {
         .unwrap()
     }
 
-    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) -> bool {
-        self.call_update("authorize", &(principal.0, auth))
+    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) {
+        self.call_update("authorize", Encode!(&principal.0, &auth).unwrap())
     }
 
-    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) -> bool {
-        self.call_update("deauthorize", &(principal.0, auth))
+    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) {
+        self.call_update("deauthorize", Encode!(&principal.0, &auth).unwrap())
     }
 
     pub fn authorize_caller(self, auth: Auth) -> Self {
-        assert!(self.as_controller().authorize(&self.caller, auth));
+        self.as_controller().authorize(&self.caller, auth);
         self
     }
 
     pub fn deauthorize_caller(self, auth: Auth) -> Self {
-        assert!(self.as_controller().deauthorize(&self.caller, auth));
+        self.as_controller().deauthorize(&self.caller, auth);
         self
     }
 
@@ -157,7 +139,7 @@ impl EvmRpcSetup {
     ) -> Nat {
         self.call_query(
             "request_cost",
-            &(source, json_rpc_payload, max_response_bytes),
+            Encode!(&source, &json_rpc_payload, &max_response_bytes).unwrap(),
         )
     }
 
