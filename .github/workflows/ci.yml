@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@master
+      - name: Install system dependencies
+        run: apt-get install protobuf-compiler
       - run: rustup component add clippy
       - name: Cargo clippy
         # We run clippy twice (once without tests), so that it accurately reports dead code in the non-test configuration.
@@ -86,6 +88,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
+      - name: Install system dependencies
+        run: apt-get install protobuf-compiler
+
       - name: Cargo build
         uses: actions-rs/cargo@master
         with:
@@ -98,6 +103,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@master
+
+
+      - name: Install system dependencies
+        run: apt-get install protobuf-compiler
 
       - name: Cargo test
         uses: actions-rs/cargo@master
@@ -121,6 +130,9 @@ jobs:
         uses: actions/checkout@master
 
       - uses: Swatinem/rust-cache@v2
+
+      - name: Install system dependencies
+        run: apt-get install protobuf-compiler
 
       - name: Install dfx
         run: |
