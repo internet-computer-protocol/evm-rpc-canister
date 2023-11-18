@@ -121,6 +121,14 @@ impl EvmRpcSetup {
         self.call_update("deauthorize", Encode!(&principal.0, &auth).unwrap())
     }
 
+    pub fn get_providers(&self) -> Vec<ProviderView> {
+        self.call_update("get_providers", Encode!().unwrap())
+    }
+
+    pub fn register_provider(&self, args: RegisterProviderArgs) -> u64 {
+        self.call_update("register_provider", Encode!(&args).unwrap())
+    }
+
     pub fn authorize_caller(self, auth: Auth) -> Self {
         self.as_controller().authorize(&self.caller, auth);
         self
@@ -142,203 +150,51 @@ impl EvmRpcSetup {
             Encode!(&source, &json_rpc_payload, &max_response_bytes).unwrap(),
         )
     }
-
-    // pub fn deposit(self, params: DepositParams) -> DepositFlow {
-    //     DepositFlow {
-    //         setup: self,
-    //         params,
-    //     }
-    // }
-
-    // pub fn call_ledger_approve_minter(
-    //     self,
-    //     from: Principal,
-    //     amount: u64,
-    //     from_subaccount: Option<[u8; 32]>,
-    // ) -> ApprovalFlow {
-    //     let approval_response = Decode!(&assert_reply(self.env.execute_ingress_as(
-    //         PrincipalId::from(from),
-    //         self.ledger_id,
-    //         "icrc2_approve",
-    //         Encode!(&ApproveArgs {
-    //             from_subaccount,
-    //             spender: Account {
-    //                 owner: self.minter_id.into(),
-    //                 subaccount: None
-    //             },
-    //             amount: Nat::from(amount),
-    //             expected_allowance: None,
-    //             expires_at: None,
-    //             fee: None,
-    //             memo: None,
-    //             created_at_time: None,
-    //         }).unwrap()
-    //         ).expect("failed to execute token transfer")),
-    //         Result<Nat, ApproveError>
-    //     )
-    //     .unwrap();
-    //     ApprovalFlow {
-    //         setup: self,
-    //         approval_response,
-    //     }
-    // }
-
-    // pub fn call_minter_withdraw_eth(
-    //     self,
-    //     from: Principal,
-    //     amount: Nat,
-    //     recipient: String,
-    // ) -> WithdrawalFlow {
-    //     let arg = WithdrawalArg { amount, recipient };
-    //     let message_id = self.env.send_ingress(
-    //         PrincipalId::from(from),
-    //         self.minter_id,
-    //         "withdraw_eth",
-    //         Encode!(&arg).expect("failed to encode withdraw args"),
-    //     );
-    //     WithdrawalFlow {
-    //         setup: self,
-    //         message_id,
-    //     }
-    // }
-
-    // pub fn _get_logs(&self, priority: &str) -> Log {
-    //     let request = HttpRequest {
-    //         method: "".to_string(),
-    //         url: format!("/logs?priority={priority}"),
-    //         headers: vec![],
-    //         body: serde_bytes::ByteBuf::new(),
-    //     };
-    //     let response = Decode!(
-    //         &assert_reply(
-    //             self.env
-    //                 .query(self.minter_id, "http_request", Encode!(&request).unwrap(),)
-    //                 .expect("failed to get minter info")
-    //         ),
-    //         HttpResponse
-    //     )
-    //     .unwrap();
-    //     serde_json::from_slice(&response.body).expect("failed to parse ckbtc minter log")
-    // }
-
-    // pub fn assert_has_unique_events_in_order(self, expected_events: &[EventPayload]) -> Self {
-    //     let audit_events = self.get_all_events();
-    //     let mut found_event_indexes = BTreeMap::new();
-    //     for (index_expected_event, expected_event) in expected_events.iter().enumerate() {
-    //         for (index_audit_event, audit_event) in audit_events.iter().enumerate() {
-    //             if &audit_event.payload == expected_event {
-    //                 assert_eq!(
-    //                     found_event_indexes.insert(index_expected_event, index_audit_event),
-    //                     None,
-    //                     "Event {:?} occurs multiple times",
-    //                     expected_event
-    //                 );
-    //             }
-    //         }
-    //         assert!(
-    //             found_event_indexes.contains_key(&index_expected_event),
-    //             "Missing event {:?}",
-    //             expected_event
-    //         )
-    //     }
-    //     let audit_event_indexes = found_event_indexes.into_values().collect::<Vec<_>>();
-    //     let sorted_audit_event_indexes = {
-    //         let mut indexes = audit_event_indexes.clone();
-    //         indexes.sort_unstable();
-    //         indexes
-    //     };
-    //     assert_eq!(
-    //         audit_event_indexes, sorted_audit_event_indexes,
-    //         "Events were found in unexpected order"
-    //     );
-    //     self
-    // }
-
-    // pub fn assert_has_no_event_satisfying<P: Fn(&EventPayload) -> bool>(
-    //     self,
-    //     predicate: P,
-    // ) -> Self {
-    //     if let Some(unexpected_event) = self
-    //         .get_all_events()
-    //         .into_iter()
-    //         .find(|event| predicate(&event.payload))
-    //     {
-    //         panic!(
-    //             "Found an event satisfying the predicate: {:?}",
-    //             unexpected_event
-    //         )
-    //     }
-    //     self
-    // }
-
-    // fn get_events(&self, start: u64, length: u64) -> GetEventsResult {
-    //     use ic_cketh_minter::endpoints::events::GetEventsArg;
-
-    //     Decode!(
-    //         &assert_reply(
-    //             self.env
-    //                 .execute_ingress(
-    //                     self.minter_id,
-    //                     "get_events",
-    //                     Encode!(&GetEventsArg { start, length }).unwrap(),
-    //                 )
-    //                 .expect("failed to get minter info")
-    //         ),
-    //         GetEventsResult
-    //     )
-    //     .unwrap()
-    // }
-
-    // pub fn get_all_events(&self) -> Vec<Event> {
-    //     const FIRST_BATCH_SIZE: u64 = 100;
-    //     let GetEventsResult {
-    //         mut events,
-    //         total_event_count,
-    //     } = self.get_events(0, FIRST_BATCH_SIZE);
-    //     while events.len() < total_event_count as usize {
-    //         let mut next_batch =
-    //             self.get_events(events.len() as u64, total_event_count - events.len() as u64);
-    //         events.append(&mut next_batch.events);
-    //     }
-    //     events
-    // }
-
-    // fn check_audit_log(&self) {
-    //     Decode!(
-    //         &assert_reply(
-    //             self.env
-    //                 .query(self.minter_id, "check_audit_log", Encode!().unwrap())
-    //                 .unwrap(),
-    //         ),
-    //         ()
-    //     )
-    //     .unwrap()
-    // }
-
-    // fn upgrade_minter(&self) {
-    //     self.env
-    //         .upgrade_canister(
-    //             self.minter_id,
-    //             minter_wasm(),
-    //             Encode!(&MinterArg::UpgradeArg(Default::default())).unwrap(),
-    //         )
-    //         .unwrap();
-    // }
-
-    // fn check_audit_logs_and_upgrade(self) -> Self {
-    //     self.check_audit_log();
-    //     self.env.tick(); //tick before upgrade to finish current timers which are reset afterwards
-    //     self.upgrade_minter();
-    //     self
-    // }
 }
 
 #[test]
-fn test_authorize() {
-    let setup = EvmRpcSetup::new();
-    setup
-        .as_controller()
-        .authorize_caller(Auth::RegisterProvider);
+fn test_register_provider() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
 
-    assert!(true);
+    let a_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: 1,
+        hostname: "cloudflare-eth.com".to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    let b_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: 5,
+        hostname: "ethereum.publicnode.com".to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    assert_eq!(a_id + 1, b_id);
+    let providers = setup.get_providers();
+    assert_eq!(
+        providers[providers.len() - 2..],
+        vec![
+            ProviderView {
+                provider_id: 3,
+                owner: setup.caller.0,
+                chain_id: 1,
+                hostname: "cloudflare-eth.com".to_string(),
+                cycles_per_call: 0,
+                cycles_per_message_byte: 0,
+                primary: false,
+            },
+            ProviderView {
+                provider_id: 4,
+                owner: setup.caller.0,
+                chain_id: 5,
+                hostname: "ethereum.publicnode.com".to_string(),
+                cycles_per_call: 0,
+                cycles_per_message_byte: 0,
+                primary: false,
+            }
+        ]
+    )
 }

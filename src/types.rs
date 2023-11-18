@@ -197,7 +197,7 @@ impl BoundedStorable for PrincipalStorable {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize)]
 pub struct ProviderView {
     pub provider_id: u64,
     pub owner: Principal,
