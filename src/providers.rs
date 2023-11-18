@@ -1,12 +1,9 @@
 use crate::*;
 
 pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
-    const ETH_MAINNET: u64 = 1;
-    const ETH_SEPOLIA: u64 = 11155111;
-
     vec![
         RegisterProviderArgs {
-            chain_id: ETH_MAINNET,
+            chain_id: ETH_MAINNET_CHAIN_ID,
             hostname: "cloudflare-eth.com".to_string(),
             credential_path: "/v1/mainnet".to_string(),
             credential_headers: None,
@@ -14,7 +11,7 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             cycles_per_message_byte: 0,
         },
         RegisterProviderArgs {
-            chain_id: ETH_MAINNET,
+            chain_id: ETH_MAINNET_CHAIN_ID,
             hostname: "rpc.ankr.com".to_string(),
             credential_path: "/eth".to_string(),
             credential_headers: None,
@@ -22,7 +19,7 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             cycles_per_message_byte: 0,
         },
         RegisterProviderArgs {
-            chain_id: ETH_MAINNET,
+            chain_id: ETH_MAINNET_CHAIN_ID,
             hostname: "ethereum.blockpi.network".to_string(),
             credential_path: "/v1/rpc/public".to_string(),
             credential_headers: None,
@@ -30,7 +27,7 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             cycles_per_message_byte: 0,
         },
         RegisterProviderArgs {
-            chain_id: ETH_SEPOLIA,
+            chain_id: ETH_SEPOLIA_CHAIN_ID,
             hostname: "rpc.sepolia.org".to_string(),
             credential_path: "".to_string(),
             credential_headers: None,
@@ -38,7 +35,7 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             cycles_per_message_byte: 0,
         },
         RegisterProviderArgs {
-            chain_id: ETH_SEPOLIA,
+            chain_id: ETH_SEPOLIA_CHAIN_ID,
             hostname: "ethereum-sepolia.publicnode.com".to_string(),
             credential_path: "".to_string(),
             credential_headers: None,
