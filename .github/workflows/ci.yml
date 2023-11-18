@@ -26,8 +26,8 @@ jobs:
         # `manual_range_contains` is disabled because a >= x && a < y reads more clearly than (x..y).contains(a) and
         # there are additional caveats for floating point numbers (https://github.com/rust-lang/rust-clippy/issues/6455)
         run: |
-          cargo clippy -- -D clippy::all -D warnings -A clippy::manual_range_contains --target wasm32-unknown-unknown
-          cargo clippy --tests --benches -- -D clippy::all -D warnings -A clippy::manual_range_contains --target wasm32-unknown-unknown
+          cargo clippy -- -D clippy::all -D warnings -A clippy::manual_range_contains
+          cargo clippy --tests --benches -- -D clippy::all -D warnings -A clippy::manual_range_contains
 
   cargo-test:
     runs-on: ubuntu-latest
