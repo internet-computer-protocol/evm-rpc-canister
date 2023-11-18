@@ -16,6 +16,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
+      - uses: Swatinem/rust-cache@v2
+
       - name: Install Protoc
         uses: arduino/setup-protoc@v2
 
@@ -34,6 +36,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@master
+
+      - uses: Swatinem/rust-cache@v2
 
       - name: Install Protoc
         uses: arduino/setup-protoc@v2
