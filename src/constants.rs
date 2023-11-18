@@ -19,6 +19,8 @@ pub const SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
     "cloudflare-eth.com",
     "ethereum.publicnode.com",
     "ethereum-goerli.publicnode.com",
+    "ethereum-sepolia.publicnode.com",
+    "ethereum.blockpi.network",
     "eth-mainnet.g.alchemy.com",
     "eth-goerli.g.alchemy.com",
     "rpc.flashbots.net",
