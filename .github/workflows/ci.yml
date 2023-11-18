@@ -39,9 +39,7 @@ jobs:
         uses: arduino/setup-protoc@v2
 
       - name: Cargo test
-        uses: actions-rs/cargo@master
-        with:
-          command: test
+        run: unset CI && cargo test
 
   e2e:
     runs-on: ubuntu-latest
