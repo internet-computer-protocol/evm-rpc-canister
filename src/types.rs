@@ -197,7 +197,7 @@ impl BoundedStorable for PrincipalStorable {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize)]
 pub struct ProviderView {
     pub provider_id: u64,
     pub owner: Principal,
@@ -206,6 +206,20 @@ pub struct ProviderView {
     pub cycles_per_call: u64,
     pub cycles_per_message_byte: u64,
     pub primary: bool,
+}
+
+impl From<Provider> for ProviderView {
+    fn from(provider: Provider) -> Self {
+        ProviderView {
+            provider_id: provider.provider_id,
+            owner: provider.owner,
+            chain_id: provider.chain_id,
+            hostname: provider.hostname,
+            cycles_per_call: provider.cycles_per_call,
+            cycles_per_message_byte: provider.cycles_per_message_byte,
+            primary: provider.primary,
+        }
+    }
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
