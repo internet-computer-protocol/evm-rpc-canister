@@ -1,8 +1,10 @@
 use cketh_common::eth_rpc::{HttpOutcallError, ProviderError, RpcError, ValidationError};
 use ic_canister_log::log;
-use ic_cdk::api::management_canister::http_request::{
-    http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
-    HttpResponse, TransformContext,
+use ic_cdk::api::{
+    call::CallResult,
+    management_canister::http_request::{
+        CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformContext,
+    },
 };
 use num_traits::ToPrimitive;
 
@@ -77,7 +79,7 @@ pub async fn do_http_request(
         )),
     };
     match make_http_request(request, cost).await {
-        Ok((response,)) => Ok(response),
+        Ok(response) => Ok(response),
         Err((code, message)) => {
             inc_metric!(request_err_http);
             Err(HttpOutcallError::IcError { code, message }.into())
@@ -98,4 +100,19 @@ pub fn get_http_response_body(response: HttpResponse) -> Result<String, RpcError
         }
         .into()
     })
+}
+
+pub async fn make_http_request(
+    request: CanisterHttpRequestArgument,
+    cycles: u128,
+) -> CallResult<HttpResponse> {
+    #[cfg(test)]
+    {
+        // todo!("mock HTTPS outcalls")
+    }
+    Ok(
+        ic_cdk::api::management_canister::http_request::http_request(request, cycles)
+            .await?
+            .0,
+    )
 }

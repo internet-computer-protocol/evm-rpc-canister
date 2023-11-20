@@ -3,8 +3,8 @@ use std::str::FromStr;
 use async_trait::async_trait;
 use cketh_common::{
     eth_rpc::{
-        into_nat, Block, FeeHistory, GetLogsParam, Hash, HttpOutcallError, JsonRpcReply, LogEntry,
-        ProviderError, RpcError, SendRawTransactionResult, ValidationError,
+        into_nat, Block, FeeHistory, GetLogsParam, Hash, LogEntry, ProviderError, RpcError,
+        SendRawTransactionResult, ValidationError,
     },
     eth_rpc_client::{
         providers::{RpcApi, RpcNodeProvider},
@@ -13,7 +13,10 @@ use cketh_common::{
     },
     lifecycle::EthereumNetwork,
 };
-use serde::de::DeserializeOwned;
+use ic_cdk::api::{
+    call::CallResult,
+    management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse},
+};
 
 use crate::*;
 
@@ -27,34 +30,17 @@ impl RpcTransport for CanisterTransport {
         METADATA.with(|m| m.borrow().get().nodes_in_subnet)
     }
 
-    fn resolve_api(provider: RpcNodeProvider) -> Result<RpcApi, ProviderError> {
+    fn resolve_api(provider: &RpcNodeProvider) -> Result<RpcApi, ProviderError> {
         // TODO: https://github.com/internet-computer-protocol/ic-eth-rpc/issues/73
         Ok(provider.api())
     }
 
-    async fn call_json_rpc<T: DeserializeOwned>(
-        provider: RpcNodeProvider,
-        json: &str,
-        max_response_bytes: u64,
-    ) -> Result<T, RpcError> {
-        let response = do_http_request(
-            ic_cdk::caller(),
-            ResolvedSource::Api(Self::resolve_api(provider)?),
-            json,
-            max_response_bytes,
-        )
-        .await
-        .unwrap();
-        let status = get_http_response_status(response.status.clone());
-        let body = get_http_response_body(response)?;
-        let json: JsonRpcReply<T> = serde_json::from_str(&body).unwrap_or_else(|e| {
-            Err(HttpOutcallError::InvalidHttpJsonRpcResponse {
-                status,
-                body,
-                parsing_error: Some(format!("JSON response parse error: {e}")),
-            })
-        })?;
-        json.result.into()
+    async fn http_request(
+        provider: &RpcNodeProvider,
+        request: CanisterHttpRequestArgument,
+        cost: u128,
+    ) -> CallResult<HttpResponse> {
+        make_http_request(request, cost).await
     }
 }
 
