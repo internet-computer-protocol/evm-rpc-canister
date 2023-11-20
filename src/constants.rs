@@ -15,10 +15,15 @@ pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
 
 pub const CONTENT_TYPE_HEADER: &str = "Content-Type";
 
+pub const ETH_MAINNET_CHAIN_ID: u64 = 1;
+pub const ETH_SEPOLIA_CHAIN_ID: u64 = 11155111;
+
 pub const SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
     "cloudflare-eth.com",
     "ethereum.publicnode.com",
     "ethereum-goerli.publicnode.com",
+    "ethereum-sepolia.publicnode.com",
+    "ethereum.blockpi.network",
     "eth-mainnet.g.alchemy.com",
     "eth-goerli.g.alchemy.com",
     "rpc.flashbots.net",
