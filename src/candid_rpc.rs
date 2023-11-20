@@ -59,29 +59,19 @@ impl RpcTransport for CanisterTransport {
 }
 
 fn get_rpc_client(source: CandidRpcSource) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
-    fn validate_providers<T>(opt_vec: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
-        Ok(match opt_vec {
-            Some(v) if v.is_empty() => Err(ProviderError::ProviderNotFound)?,
-            opt => opt,
-        })
-    }
     if !is_rpc_allowed(&ic_cdk::caller()) {
         return Err(ProviderError::NoPermission.into());
     }
     Ok(match source {
         CandidRpcSource::EthMainnet(service) => CkEthRpcClient::new(
             EthereumNetwork::Ethereum,
-            validate_providers(Some(vec![service.unwrap_or(
-                cketh_common::eth_rpc_client::providers::EthereumProvider::Ankr,
-            )]))?
-            .map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
+            Some(vec![service.unwrap_or(DEFAULT_ETHEREUM_PROVIDER)])
+                .map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
         ),
         CandidRpcSource::EthSepolia(service) => CkEthRpcClient::new(
             EthereumNetwork::Sepolia,
-            validate_providers(Some(vec![service.unwrap_or(
-                cketh_common::eth_rpc_client::providers::SepoliaProvider::PublicNode,
-            )]))?
-            .map(|p| p.into_iter().map(RpcNodeProvider::Sepolia).collect()),
+            Some(vec![service.unwrap_or(DEFAULT_SEPOLIA_PROVIDER)])
+                .map(|p| p.into_iter().map(RpcNodeProvider::Sepolia).collect()),
         ),
     })
 }
