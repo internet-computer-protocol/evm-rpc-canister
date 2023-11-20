@@ -208,6 +208,20 @@ pub struct ProviderView {
     pub primary: bool,
 }
 
+impl From<Provider> for ProviderView {
+    fn from(provider: Provider) -> Self {
+        ProviderView {
+            provider_id: provider.provider_id,
+            owner: provider.owner,
+            chain_id: provider.chain_id,
+            hostname: provider.hostname,
+            cycles_per_call: provider.cycles_per_call,
+            cycles_per_message_byte: provider.cycles_per_message_byte,
+            primary: provider.primary,
+        }
+    }
+}
+
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct RegisterProviderArgs {
     pub chain_id: u64,
