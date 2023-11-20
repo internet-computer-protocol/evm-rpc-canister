@@ -153,9 +153,20 @@ impl EvmRpcSetup {
 }
 
 #[test]
-fn test_register_provider() {
+fn test_provider_registry() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
-
+    assert_eq!(
+        setup
+            .get_providers()
+            .into_iter()
+            .map(|p| (p.chain_id, p.hostname))
+            .collect::<Vec<_>>(),
+        get_default_providers()
+            .into_iter()
+            .map(|p| (p.chain_id, p.hostname))
+            .collect::<Vec<_>>()
+    );
+    let n_providers = 2;
     let a_id = setup.register_provider(RegisterProviderArgs {
         chain_id: 1,
         hostname: "cloudflare-eth.com".to_string(),
@@ -174,11 +185,13 @@ fn test_register_provider() {
     });
     assert_eq!(a_id + 1, b_id);
     let providers = setup.get_providers();
+    assert_eq!(providers.len(), get_default_providers().len() + n_providers);
+    let first_new_id = (providers.len() - n_providers) as u64;
     assert_eq!(
-        providers[providers.len() - 2..],
+        providers[providers.len() - n_providers..],
         vec![
             ProviderView {
-                provider_id: 3,
+                provider_id: first_new_id,
                 owner: setup.caller.0,
                 chain_id: 1,
                 hostname: "cloudflare-eth.com".to_string(),
@@ -187,7 +200,7 @@ fn test_register_provider() {
                 primary: false,
             },
             ProviderView {
-                provider_id: 4,
+                provider_id: first_new_id + 1,
                 owner: setup.caller.0,
                 chain_id: 5,
                 hostname: "ethereum.publicnode.com".to_string(),
