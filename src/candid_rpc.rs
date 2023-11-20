@@ -40,7 +40,7 @@ impl RpcTransport for CanisterTransport {
         request: CanisterHttpRequestArgument,
         cost: u128,
     ) -> CallResult<HttpResponse> {
-        make_http_request(request, cost).await
+        perform_http_request(request, cost).await
     }
 }
 

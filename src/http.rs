@@ -78,7 +78,7 @@ pub async fn do_http_request(
             vec![],
         )),
     };
-    match make_http_request(request, cost).await {
+    match perform_http_request(request, cost).await {
         Ok(response) => Ok(response),
         Err((code, message)) => {
             inc_metric!(request_err_http);
@@ -102,17 +102,130 @@ pub fn get_http_response_body(response: HttpResponse) -> Result<String, RpcError
     })
 }
 
-pub async fn make_http_request(
+pub async fn perform_http_request(
     request: CanisterHttpRequestArgument,
     cycles: u128,
 ) -> CallResult<HttpResponse> {
     #[cfg(test)]
     {
-        // todo!("mock HTTPS outcalls")
+        if let Some(response) = mock::MOCK_OUTCALL.with(|mock| {
+            let mut mock = mock.borrow_mut();
+            match mock.take() {
+                None => None,
+                Some(m) => {
+                    *mock = None;
+                    Some(m.response)
+                }
+            }
+        }) {
+            return Ok(response);
+        }
     }
     Ok(
         ic_cdk::api::management_canister::http_request::http_request(request, cycles)
             .await?
             .0,
     )
+}
+
+#[cfg(test)]
+pub mod mock {
+    use std::cell::RefCell;
+
+    use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpMethod, HttpResponse};
+    thread_local! {
+        pub static MOCK_OUTCALL: RefCell<Option<MockOutcall>> = RefCell::new(None);
+    }
+
+    pub struct MockOutcallBody(pub Vec<u8>);
+
+    impl From<String> for MockOutcallBody {
+        fn from(string: String) -> Self {
+            MockOutcallBody(string.as_bytes().to_vec())
+        }
+    }
+
+    impl From<Vec<u8>> for MockOutcallBody {
+        fn from(bytes: Vec<u8>) -> Self {
+            MockOutcallBody(bytes)
+        }
+    }
+
+    pub struct MockOutcallBuilder(MockOutcall);
+
+    impl MockOutcallBuilder {
+        pub fn new(status: u16, body: MockOutcallBody) -> Self {
+            Self(MockOutcall {
+                method: None,
+                url: None,
+                request_headers: None,
+                request_body: None,
+                response: HttpResponse {
+                    status: status.into(),
+                    headers: vec![],
+                    body: body.0,
+                },
+            })
+        }
+
+        pub fn method(mut self, method: HttpMethod) -> Self {
+            self.0.method = Some(method);
+            self
+        }
+
+        pub fn url(mut self, url: impl Into<String>) -> Self {
+            self.0.url = Some(url.into());
+            self
+        }
+
+        pub fn request_headers(mut self, headers: Vec<HttpHeader>) -> Self {
+            self.0.request_headers = Some(headers);
+            self
+        }
+
+        pub fn request_body(mut self, headers: Vec<HttpHeader>) -> Self {
+            self.0.request_headers = Some(headers);
+            self
+        }
+
+        pub fn build(self) -> MockOutcall {
+            self.0
+        }
+    }
+
+    #[derive(Clone, Debug)]
+    pub struct MockOutcall {
+        pub method: Option<HttpMethod>,
+        pub url: Option<String>,
+        pub request_headers: Option<Vec<HttpHeader>>,
+        pub request_body: Option<String>,
+        pub response: HttpResponse,
+    }
+
+    impl From<HttpResponse> for MockOutcall {
+        fn from(response: HttpResponse) -> Self {
+            Self {
+                method: None,
+                url: None,
+                request_headers: None,
+                request_body: None,
+                response,
+            }
+        }
+    }
+
+    pub fn assert_no_mock_http_request() {
+        assert!(
+            MOCK_OUTCALL.with(|mock| mock.borrow().is_none()),
+            "Previous mock HTTPS outcall was not used"
+        )
+    }
+
+    pub fn mock_http_request(mock: MockOutcall) {
+        assert_no_mock_http_request();
+        MOCK_OUTCALL.with(|current_mock| {
+            let mut current_mock = current_mock.borrow_mut();
+            *current_mock = Some(mock)
+        })
+    }
 }
