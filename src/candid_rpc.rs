@@ -66,7 +66,6 @@ fn get_rpc_client(source: CandidRpcSource) -> RpcResult<CkEthRpcClient<CanisterT
         })
     }
     if !is_rpc_allowed(&ic_cdk::caller()) {
-        // inc_metric!(eth_*_err_no_permission);
         return Err(ProviderError::NoPermission.into());
     }
     Ok(match source {

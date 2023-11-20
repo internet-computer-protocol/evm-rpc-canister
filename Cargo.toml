@@ -11,6 +11,7 @@ debug = false
 lto = true
 opt-level = 'z'
 
+# Required by `ic-test-utilities-load-wasm`
 [profile.canister-release]
 inherits = "release"
 
