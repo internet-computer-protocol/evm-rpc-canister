@@ -2,9 +2,10 @@ use std::{marker::PhantomData, rc::Rc, time::Duration};
 
 use candid::{CandidType, Decode, Encode, Nat};
 use ic_base_types::{CanisterId, PrincipalId};
-use ic_ic00_types::BoundedVec;
+use ic_ic00_types::{BoundedVec, CanisterSettingsArgsBuilder};
 use ic_state_machine_tests::{
-    CanisterSettingsArgs, MessageId, StateMachine, StateMachineBuilder, WasmResult,
+    CanisterSettingsArgs, Cycles, IngressState, IngressStatus, MessageId, StateMachine,
+    StateMachineBuilder, WasmResult,
 };
 use ic_test_utilities_load_wasm::load_wasm;
 use serde::de::DeserializeOwned;
@@ -13,6 +14,8 @@ use evm_rpc::*;
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
 const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
+
+const INITIAL_CYCLES: u128 = 100_000_000_000_000_000;
 
 const MAX_TICKS: usize = 10;
 
@@ -56,11 +59,15 @@ impl EvmRpcSetup {
         );
 
         let controller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);
-        let evm_rpc_id = env.create_canister(Some({
-            let mut args: CanisterSettingsArgs = Default::default();
-            args.controllers = Some(BoundedVec::new(vec![controller]));
-            args
-        }));
+        let evm_rpc_id = env.create_canister_with_cycles(
+            None,
+            Cycles::new(INITIAL_CYCLES),
+            Some(
+                CanisterSettingsArgsBuilder::default()
+                    .with_controller(controller)
+                    .build(),
+            ),
+        );
         env.install_existing_canister(evm_rpc_id, evm_rpc_wasm(), Encode!(&()).unwrap())
             .unwrap();
 
@@ -210,6 +217,10 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
     pub fn mock_http(self, mock: MockOutcall) -> Self {
         assert_eq!(self.setup.env.canister_http_request_contexts().len(), 0);
         self.setup.tick_until_http_request();
+        match self.setup.env.ingress_status(&self.message_id) {
+            IngressStatus::Known { state, .. } if state != IngressState::Processing => return self,
+            _ => (),
+        }
         let request = self
             .setup
             .env
