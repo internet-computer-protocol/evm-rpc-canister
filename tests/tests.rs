@@ -215,7 +215,7 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
             .env
             .canister_http_request_contexts()
             .first_entry()
-            .unwrap();
+            .expect("no pending HTTP request");
         todo!("mock_http");
         // self
     }
