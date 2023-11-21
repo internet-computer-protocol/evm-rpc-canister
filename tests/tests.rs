@@ -8,6 +8,7 @@ use ic_test_utilities_load_wasm::load_wasm;
 use serde::de::DeserializeOwned;
 
 use evm_rpc::*;
+use serde_json::json;
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
 const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
@@ -248,12 +249,12 @@ fn should_allow_free_rpc() {
     let mut setup = EvmRpcSetup::new();
     setup.authorize_caller(Auth::FreeRpc);
 
-    let expected_result = "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x00112233\"}";
+    let expected_result = r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#;
     setup.mock_http(200, expected_result).build().mock_once();
     let result = setup
         .request(
             Source::Provider(0),
-            "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null}",
+            r#"{"id":1,"jsonrpc":"2.0","method":"eth_gasPrice","params":null}"#,
             1000,
         )
         .expect("request()");
