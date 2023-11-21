@@ -45,7 +45,7 @@ impl RpcTransport for CanisterTransport {
                 ETH_SEPOLIA_CHAIN_ID,
                 match provider {
                     SepoliaProvider::Ankr => "rpc.ankr.com",
-                    SepoliaProvider::BlockPi => "ethereum.blockpi.network",
+                    SepoliaProvider::BlockPi => "sepolia.blockpi.network",
                     SepoliaProvider::PublicNode => "ethereum-sepolia.publicnode.com",
                 },
             ),
