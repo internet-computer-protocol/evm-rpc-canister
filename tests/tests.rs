@@ -13,7 +13,11 @@ const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
 const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
 
 fn evm_rpc_wasm() -> Vec<u8> {
-    load_wasm(std::env::var("CARGO_MANIFEST_DIR").unwrap(), "evm_rpc", &[])
+    load_wasm(
+        std::env::var("CARGO_MANIFEST_DIR").unwrap(),
+        "evm_rpc",
+        &["mock"],
+    )
 }
 
 fn assert_reply(result: WasmResult) -> Vec<u8> {
