@@ -36,6 +36,22 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
         },
         RegisterProviderArgs {
             chain_id: ETH_SEPOLIA_CHAIN_ID,
+            hostname: "rpc.ankr.com".to_string(),
+            credential_path: "/eth_sepolia".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: ETH_SEPOLIA_CHAIN_ID,
+            hostname: "ethereum-sepolia.blockpi.network".to_string(),
+            credential_path: "/v1/rpc/public".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: ETH_SEPOLIA_CHAIN_ID,
             hostname: "ethereum-sepolia.publicnode.com".to_string(),
             credential_path: "".to_string(),
             credential_headers: None,
