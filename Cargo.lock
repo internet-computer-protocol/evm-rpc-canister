@@ -1671,7 +1671,6 @@ dependencies = [
  "assert_matches",
  "async-trait",
  "candid",
- "futures",
  "hex",
  "ic-base-types 0.8.0",
  "ic-canister-log 0.2.0 (git+https://github.com/dfinity/ic?rev=release-2023-09-27_23-01)",
