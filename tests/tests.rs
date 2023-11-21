@@ -1,17 +1,20 @@
-use std::rc::Rc;
+use std::{marker::PhantomData, rc::Rc, time::Duration};
 
 use candid::{CandidType, Decode, Encode, Nat};
 use ic_base_types::{CanisterId, PrincipalId};
 use ic_ic00_types::BoundedVec;
-use ic_state_machine_tests::{CanisterSettingsArgs, StateMachine, StateMachineBuilder, WasmResult};
+use ic_state_machine_tests::{
+    CanisterSettingsArgs, MessageId, StateMachine, StateMachineBuilder, WasmResult,
+};
 use ic_test_utilities_load_wasm::load_wasm;
 use serde::de::DeserializeOwned;
 
-use evm_rpc::{*, mock_http::MockOutcall};
-use serde_json::json;
+use evm_rpc::*;
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
 const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
+
+const MAX_TICKS: usize = 10;
 
 fn evm_rpc_wasm() -> Vec<u8> {
     load_wasm(
@@ -35,7 +38,7 @@ pub struct EvmRpcSetup {
     pub env: Rc<StateMachine>,
     pub caller: PrincipalId,
     pub controller: PrincipalId,
-    pub evm_rpc_id: CanisterId,
+    pub canister_id: CanisterId,
 }
 
 impl Default for EvmRpcSetup {
@@ -67,7 +70,7 @@ impl EvmRpcSetup {
             env,
             caller,
             controller,
-            evm_rpc_id,
+            canister_id: evm_rpc_id,
         }
     }
 
@@ -89,26 +92,19 @@ impl EvmRpcSetup {
         setup
     }
 
-    fn call_update<R: CandidType + DeserializeOwned>(&self, method: &str, input: Vec<u8>) -> R {
-        Decode!(
-            &assert_reply(
-                self.env
-                    .execute_ingress_as(self.caller, self.evm_rpc_id, method, input,)
-                    .unwrap_or_else(|err| panic!(
-                        "error during update call to `{}()`: {}",
-                        method, err
-                    ))
-            ),
-            R
-        )
-        .unwrap()
+    fn call_update<R: CandidType + DeserializeOwned>(
+        &self,
+        method: &str,
+        input: Vec<u8>,
+    ) -> MessageFlow<R> {
+        MessageFlow::from_update(self, method, input)
     }
 
     fn call_query<R: CandidType + DeserializeOwned>(&self, method: &str, input: Vec<u8>) -> R {
         Decode!(
             &assert_reply(
                 self.env
-                    .query_as(self.caller, self.evm_rpc_id, method, input,)
+                    .query_as(self.caller, self.canister_id, method, input,)
                     .unwrap_or_else(|err| panic!(
                         "error during query call to `{}()`: {}",
                         method, err
@@ -119,35 +115,38 @@ impl EvmRpcSetup {
         .unwrap()
     }
 
-    pub fn mock_http(
-        &self,
-       mock:MockOutcall,
-    ) {
-        self.env.canister_http_request_contexts()
+    pub fn tick_until_http_request(&self) {
+        for _ in 0..MAX_TICKS {
+            if !self.env.canister_http_request_contexts().is_empty() {
+                break;
+            }
+            self.env.tick();
+            self.env.advance_time(Duration::from_nanos(1));
+        }
     }
 
-    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) {
+    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) -> MessageFlow<()> {
         self.call_update("authorize", Encode!(&principal.0, &auth).unwrap())
     }
 
-    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) {
+    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) -> MessageFlow<()> {
         self.call_update("deauthorize", Encode!(&principal.0, &auth).unwrap())
     }
 
     pub fn get_providers(&self) -> Vec<ProviderView> {
-        self.call_update("get_providers", Encode!().unwrap())
+        self.call_query("get_providers", Encode!().unwrap())
     }
 
-    pub fn register_provider(&self, args: RegisterProviderArgs) -> u64 {
+    pub fn register_provider(&self, args: RegisterProviderArgs) -> MessageFlow<u64> {
         self.call_update("register_provider", Encode!(&args).unwrap())
     }
 
-    pub fn authorize_caller(&self, auth: Auth) {
-        self.as_controller().authorize(&self.caller, auth);
+    pub fn authorize_caller(&self, auth: Auth) -> MessageFlow<()> {
+        self.as_controller().authorize(&self.caller, auth)
     }
 
-    pub fn deauthorize_caller(&self, auth: Auth) {
-        self.as_controller().deauthorize(&self.caller, auth);
+    pub fn deauthorize_caller(&self, auth: Auth) -> MessageFlow<()> {
+        self.as_controller().deauthorize(&self.caller, auth)
     }
 
     pub fn request_cost(
@@ -167,7 +166,7 @@ impl EvmRpcSetup {
         source: Source,
         json_rpc_payload: &str,
         max_response_bytes: u64,
-    ) -> RpcResult<String> {
+    ) -> MessageFlow<RpcResult<String>> {
         self.call_update(
             "request",
             Encode!(&source, &json_rpc_payload, &max_response_bytes).unwrap(),
@@ -181,9 +180,62 @@ impl Drop for EvmRpcSetup {
     }
 }
 
+struct MessageFlow<'a, 'b, R> {
+    setup: &'a EvmRpcSetup,
+    method: &'b str,
+    message_id: MessageId,
+    phantom: PhantomData<R>,
+}
+
+impl<'setup, 'method, R: CandidType + DeserializeOwned> MessageFlow<'setup, 'method, R> {
+    pub fn from_update(setup: &'setup EvmRpcSetup, method: &str, input: Vec<u8>) -> Self {
+        let message_id = setup
+            .env
+            .send_ingress(setup.caller, setup.canister_id, method, input);
+        MessageFlow::new(setup, method, message_id)
+    }
+
+    pub fn new(setup: &'setup EvmRpcSetup, method: &'method str, message_id: MessageId) -> Self {
+        Self {
+            setup,
+            method,
+            message_id,
+            phantom: Default::default(),
+        }
+    }
+
+    pub fn mock_http(self, mock: MockOutcall) -> Self {
+        assert_eq!(self.setup.env.canister_http_request_contexts().len(), 0);
+        self.setup.tick_until_http_request();
+        let request = self
+            .setup
+            .env
+            .canister_http_request_contexts()
+            .first_entry()
+            .unwrap();
+        todo!("mock_http");
+        // self
+    }
+
+    pub fn wait(self) -> R {
+        Decode!(
+            &assert_reply(
+                self.setup
+                    .env
+                    .await_ingress(self.message_id, MAX_TICKS)
+                    .unwrap_or_else(|err| {
+                        panic!("error during update call to `{}()`: {}", self.method, err)
+                    })
+            ),
+            R
+        )
+        .unwrap()
+    }
+}
+
 #[test]
 fn should_register_providers() {
-    let mut setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new();
     setup.authorize_caller(Auth::RegisterProvider);
 
     assert_eq!(
@@ -198,22 +250,26 @@ fn should_register_providers() {
             .collect::<Vec<_>>()
     );
     let n_providers = 2;
-    let a_id = setup.register_provider(RegisterProviderArgs {
-        chain_id: 1,
-        hostname: "cloudflare-eth.com".to_string(),
-        credential_path: "".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
-    let b_id = setup.register_provider(RegisterProviderArgs {
-        chain_id: 5,
-        hostname: "ethereum.publicnode.com".to_string(),
-        credential_path: "".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
+    let a_id = setup
+        .register_provider(RegisterProviderArgs {
+            chain_id: 1,
+            hostname: "cloudflare-eth.com".to_string(),
+            credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        })
+        .wait();
+    let b_id = setup
+        .register_provider(RegisterProviderArgs {
+            chain_id: 5,
+            hostname: "ethereum.publicnode.com".to_string(),
+            credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        })
+        .wait();
     assert_eq!(a_id + 1, b_id);
     let providers = setup.get_providers();
     assert_eq!(providers.len(), get_default_providers().len() + n_providers);
@@ -245,17 +301,18 @@ fn should_register_providers() {
 
 #[test]
 fn should_allow_free_rpc() {
-    let mut setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new();
     setup.authorize_caller(Auth::FreeRpc);
 
     let expected_result = r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#;
-    setup.mock_http(mock_http::MockOutcallBuilder::new(200, expected_result).build());
     let result = setup
         .request(
             Source::Provider(0),
             r#"{"id":1,"jsonrpc":"2.0","method":"eth_gasPrice","params":null}"#,
             1000,
         )
+        .mock_http(MockOutcallBuilder::new(200, expected_result).build())
+        .wait()
         .expect("request()");
     assert_eq!(result, expected_result);
 }

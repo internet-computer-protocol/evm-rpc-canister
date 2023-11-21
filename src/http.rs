@@ -129,6 +129,9 @@ pub async fn perform_http_request(
 }
 
 #[cfg(any(feature = "mock", test))]
+pub use mock_http::*;
+
+#[cfg(any(feature = "mock", test))]
 pub mod mock_http {
     use std::cell::RefCell;
 
