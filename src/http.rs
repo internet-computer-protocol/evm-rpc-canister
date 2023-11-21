@@ -1,9 +1,11 @@
+use candid::Decode;
 use cketh_common::eth_rpc::{HttpOutcallError, ProviderError, RpcError, ValidationError};
 use ic_canister_log::log;
 use ic_cdk::api::{
     call::CallResult,
     management_canister::http_request::{
-        CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformContext,
+        CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs,
+        TransformContext,
     },
 };
 use num_traits::ToPrimitive;
@@ -21,7 +23,6 @@ pub async fn do_http_request(
         inc_metric!(request_err_no_permission);
         return Err(ProviderError::NoPermission.into());
     }
-    let cycles_available = ic_cdk::api::call::msg_cycles_available128();
     let cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
     let (api, provider) = match source {
         ResolvedSource::Api(api) => (api, None),
@@ -41,6 +42,7 @@ pub async fn do_http_request(
         return Err(ValidationError::HostNotAllowed(host.to_string()).into());
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
+        let cycles_available = ic_cdk::api::call::msg_cycles_available128();
         if cycles_available < cost {
             return Err(ProviderError::TooFewCycles {
                 expected: cost,
@@ -74,7 +76,7 @@ pub async fn do_http_request(
         headers: request_headers,
         body: Some(json_rpc_payload.as_bytes().to_vec()),
         transform: Some(TransformContext::from_name(
-            "__transform_evm_rpc".to_string(),
+            "__transform_json_rpc".to_string(),
             vec![],
         )),
     };
@@ -84,6 +86,16 @@ pub async fn do_http_request(
             inc_metric!(request_err_http);
             Err(HttpOutcallError::IcError { code, message }.into())
         }
+    }
+}
+
+pub fn do_transform_http_request(args: TransformArgs) -> HttpResponse {
+    HttpResponse {
+        status: args.response.status,
+        body: canonicalize_json(&args.response.body).unwrap_or(args.response.body),
+        // Strip headers as they contain the Date which is not necessarily the same
+        // and will prevent consensus on the result.
+        headers: Vec::<HttpHeader>::new(),
     }
 }
 
@@ -104,28 +116,35 @@ pub fn get_http_response_body(response: HttpResponse) -> Result<String, RpcError
 
 pub async fn perform_http_request(
     request: CanisterHttpRequestArgument,
-    cycles: u128,
+    #[allow(unused_variables)] cycles: u128,
 ) -> CallResult<HttpResponse> {
     #[cfg(any(feature = "mock", test))]
     {
-        if let Some(response) = mock_http::MOCK_OUTCALL.with(|mock| {
-            let mut mock = mock.borrow_mut();
-            match mock.take() {
-                None => None,
-                Some(m) => {
-                    *mock = None;
-                    Some(m.response)
+        if let Some(mock) = mock_http::MOCK_OUTCALL.with(|mock| mock.borrow_mut().take()) {
+            mock.assert_matches(&request);
+            let mut response = mock.response;
+            if let Some(transform) = request.transform {
+                let method = transform.function.0.method;
+                response = match method.as_str() {
+                    "__transform_json_rpc" => do_transform_http_request(
+                        Decode!(&transform.context, TransformArgs).unwrap(),
+                    ),
+                    _ => panic!("Unsupported transform: {}", method),
                 }
             }
-        }) {
-            return Ok(response);
+            Ok(response)
+        } else {
+            panic!("No mock configured for HTTP request")
         }
     }
-    Ok(
-        ic_cdk::api::management_canister::http_request::http_request(request, cycles)
-            .await?
-            .0,
-    )
+    #[cfg(not(any(feature = "mock", test)))]
+    {
+        Ok(
+            ic_cdk::api::management_canister::http_request::http_request(request, cycles)
+                .await?
+                .0,
+        )
+    }
 }
 
 #[cfg(any(feature = "mock", test))]
@@ -135,7 +154,9 @@ pub use mock_http::*;
 pub mod mock_http {
     use std::cell::RefCell;
 
-    use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpMethod, HttpResponse};
+    use ic_cdk::api::management_canister::http_request::{
+        CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse,
+    };
     thread_local! {
         pub static MOCK_OUTCALL: RefCell<Option<MockOutcall>> = RefCell::new(None);
     }
@@ -180,18 +201,18 @@ pub mod mock_http {
             self
         }
 
-        pub fn url(mut self, url: impl Into<String>) -> Self {
-            self.0.url = Some(url.into());
+        pub fn expect_url(mut self, url: impl ToString) -> Self {
+            self.0.url = Some(url.to_string());
             self
         }
 
-        pub fn request_headers(mut self, headers: Vec<HttpHeader>) -> Self {
+        pub fn expect_headers(mut self, headers: Vec<HttpHeader>) -> Self {
             self.0.request_headers = Some(headers);
             self
         }
 
-        pub fn request_body(mut self, headers: Vec<HttpHeader>) -> Self {
-            self.0.request_headers = Some(headers);
+        pub fn expect_body(mut self, body: impl Into<MockOutcallBody>) -> Self {
+            self.0.request_body = Some(body.into().0);
             self
         }
 
@@ -205,13 +226,25 @@ pub mod mock_http {
         pub method: Option<HttpMethod>,
         pub url: Option<String>,
         pub request_headers: Option<Vec<HttpHeader>>,
-        pub request_body: Option<String>,
+        pub request_body: Option<Vec<u8>>,
         pub response: HttpResponse,
     }
 
     impl MockOutcall {
         pub fn mock_once(self) {
             mock_http_request(self)
+        }
+
+        pub fn assert_matches(&self, request: &CanisterHttpRequestArgument) {
+            if let Some(ref url) = self.url {
+                assert_eq!(url, &request.url);
+            }
+            if let Some(ref headers) = self.request_headers {
+                assert_eq!(headers, &request.headers);
+            }
+            if let Some(ref body) = self.request_body {
+                assert_eq!(body, &request.body.as_deref().unwrap_or_default());
+            }
         }
     }
 
@@ -240,5 +273,49 @@ pub mod mock_http {
             let mut current_mock = current_mock.borrow_mut();
             *current_mock = Some(mock)
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use assert_matches::assert_matches;
+    use cketh_common::eth_rpc_client::providers::RpcApi;
+    use futures::executor::block_on;
+    use ic_cdk::api::management_canister::http_request::HttpHeader;
+
+    use crate::*;
+
+    #[test]
+    fn test_do_http_request() {
+        let principal = Principal::anonymous();
+        do_authorize(principal, Auth::Rpc);
+        do_authorize(principal, Auth::FreeRpc);
+
+        let payload = r#"{"id":1,"jsonrpc":"2.0","method":"eth_gasPrice","params":null}"#;
+        let expected_result = r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#;
+        let url = "https://cloudflare-eth.com";
+        let headers = vec![HttpHeader {
+            name: CONTENT_TYPE_HEADER.to_string(),
+            value: "application/json".to_string(),
+        }];
+        MockOutcallBuilder::new(200, expected_result)
+            .expect_url(url)
+            .expect_body(payload)
+            .expect_headers(headers.clone())
+            .build()
+            .mock_once();
+
+        assert_matches!(
+            block_on(do_http_request(
+                principal,
+                ResolvedSource::Api(RpcApi {
+                    url: url.to_string(),
+                    headers
+                }),
+                payload,
+                1000
+            )),
+            Ok(_)
+        );
     }
 }

@@ -7,7 +7,7 @@ use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
-use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpResponse, TransformArgs};
+use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
 use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
@@ -222,15 +222,9 @@ async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
     };
 }
 
-#[query(name = "__transform_evm_rpc")]
+#[query(name = "__transform_json_rpc")]
 fn transform(args: TransformArgs) -> HttpResponse {
-    HttpResponse {
-        status: args.response.status,
-        body: canonicalize_json(&args.response.body).unwrap_or(args.response.body),
-        // Strip headers as they contain the Date which is not necessarily the same
-        // and will prevent consensus on the result.
-        headers: Vec::<HttpHeader>::new(),
-    }
+    do_transform_http_request(args)
 }
 
 #[ic_cdk::init]

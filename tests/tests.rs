@@ -24,11 +24,7 @@ const INITIAL_CYCLES: u128 = 100_000_000_000_000_000;
 const MAX_TICKS: usize = 10;
 
 fn evm_rpc_wasm() -> Vec<u8> {
-    load_wasm(
-        std::env::var("CARGO_MANIFEST_DIR").unwrap(),
-        "evm_rpc",
-        &["mock"],
-    )
+    load_wasm(std::env::var("CARGO_MANIFEST_DIR").unwrap(), "evm_rpc", &[])
 }
 
 fn assert_reply(result: WasmResult) -> Vec<u8> {
@@ -188,12 +184,6 @@ impl EvmRpcSetup {
     }
 }
 
-impl Drop for EvmRpcSetup {
-    fn drop(&mut self) {
-        mock_http::assert_no_mock_http_request();
-    }
-}
-
 pub struct CallFlow<R> {
     setup: EvmRpcSetup,
     method: String,
@@ -228,6 +218,23 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
         let contexts = self.setup.env.canister_http_request_contexts();
         let (id, context) = contexts.first_key_value().expect("no pending HTTP request");
 
+        // mock.assert_matches(&CanisterHttpRequestArgument {
+        //     url: context.url,
+        //     max_response_bytes: context.max_response_bytes.map(|n|n.),
+        //     method: match context.http_method {
+        //         HttpMethod::GET => CanisterHttpMethod::GET,
+        //     },
+        //     headers: context
+        //         .headers
+        //         .iter()
+        //         .map(|h| HttpHeader {
+        //             name: h.name,
+        //             value: h.value,
+        //         })
+        //         .collect(),
+        //     body: context.body,
+        //     transform: context.transform,
+        // });
         let mut response = OutCallHttpResponse {
             status: mock.response.status.into(),
             headers: mock.response.headers,

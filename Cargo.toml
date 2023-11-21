@@ -39,22 +39,16 @@ serde_json = "1.0"
 url = "2.4"
 async-trait = "0.1"
 hex = "0.4"
+futures = "0.3"
 
 [dev-dependencies]
 evm_rpc = { path = ".", features = ["mock"] }
-# assert_matches = "1.5.0"
-# ethers-core = "2.0.8"
 ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-# ic-crypto-test-utils-reproducible-rng = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-# ic-icrc1-ledger = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-# maplit = "1"
-# proptest = "1.0"
-# rand = "0.8"
-# scraper = "0.17.1"
+assert_matches = "1.5"
 
 [workspace.dependencies]
 candid = { version = "0.9", features = ["parser"] }
