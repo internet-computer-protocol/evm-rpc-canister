@@ -3,17 +3,20 @@ use std::str::FromStr;
 use async_trait::async_trait;
 use cketh_common::{
     eth_rpc::{
-        into_nat, Block, FeeHistory, GetLogsParam, Hash, HttpOutcallError, JsonRpcReply, LogEntry,
-        ProviderError, RpcError, SendRawTransactionResult, ValidationError,
+        into_nat, Block, FeeHistory, GetLogsParam, Hash, LogEntry, ProviderError, RpcError,
+        SendRawTransactionResult, ValidationError,
     },
     eth_rpc_client::{
-        providers::{RpcApi, RpcNodeProvider},
+        providers::{EthereumProvider, RpcApi, RpcNodeProvider, SepoliaProvider},
         requests::GetTransactionCountParams,
         EthRpcClient as CkEthRpcClient, MultiCallError, RpcTransport,
     },
     lifecycle::EthereumNetwork,
 };
-use serde::de::DeserializeOwned;
+use ic_cdk::api::{
+    call::CallResult,
+    management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse},
+};
 
 use crate::*;
 
@@ -27,34 +30,43 @@ impl RpcTransport for CanisterTransport {
         METADATA.with(|m| m.borrow().get().nodes_in_subnet)
     }
 
-    fn resolve_api(provider: RpcNodeProvider) -> Result<RpcApi, ProviderError> {
-        // TODO: https://github.com/internet-computer-protocol/ic-eth-rpc/issues/73
-        Ok(provider.api())
+    fn resolve_api(provider: &RpcNodeProvider) -> Result<RpcApi, ProviderError> {
+        use RpcNodeProvider::*;
+        let (chain_id, hostname) = match provider {
+            Ethereum(provider) => (
+                ETH_MAINNET_CHAIN_ID,
+                match provider {
+                    EthereumProvider::Ankr => "rpc.ankr.com",
+                    EthereumProvider::BlockPi => "ethereum.blockpi.network",
+                    EthereumProvider::Cloudflare => "cloudflare-eth.com",
+                },
+            ),
+            Sepolia(provider) => (
+                ETH_SEPOLIA_CHAIN_ID,
+                match provider {
+                    SepoliaProvider::Ankr => "rpc.ankr.com",
+                    SepoliaProvider::BlockPi => "ethereum.blockpi.network",
+                    SepoliaProvider::PublicNode => "ethereum-sepolia.publicnode.com",
+                },
+            ),
+        };
+        Ok(
+            find_provider(|p| p.chain_id == chain_id && p.hostname == hostname)
+                .ok_or(ProviderError::ProviderNotFound)?
+                .api(),
+        )
     }
 
-    async fn call_json_rpc<T: DeserializeOwned>(
-        provider: RpcNodeProvider,
-        json: &str,
-        max_response_bytes: u64,
-    ) -> Result<T, RpcError> {
-        let response = do_http_request(
-            ic_cdk::caller(),
-            ResolvedSource::Api(Self::resolve_api(provider)?),
-            json,
-            max_response_bytes,
+    async fn http_request(
+        _provider: &RpcNodeProvider,
+        request: CanisterHttpRequestArgument,
+        cost: u128,
+    ) -> CallResult<HttpResponse> {
+        Ok(
+            ic_cdk::api::management_canister::http_request::http_request(request, cost)
+                .await?
+                .0,
         )
-        .await
-        .unwrap();
-        let status = get_http_response_status(response.status.clone());
-        let body = get_http_response_body(response)?;
-        let json: JsonRpcReply<T> = serde_json::from_str(&body).unwrap_or_else(|e| {
-            Err(HttpOutcallError::InvalidHttpJsonRpcResponse {
-                status,
-                body,
-                parsing_error: Some(format!("JSON response parse error: {e}")),
-            })
-        })?;
-        json.result.into()
     }
 }
 

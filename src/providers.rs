@@ -45,6 +45,19 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
     ]
 }
 
+pub fn find_provider(f: impl Fn(&Provider) -> bool) -> Option<Provider> {
+    PROVIDERS.with(|providers| {
+        let providers = providers.borrow();
+        Some(
+            providers
+                .iter()
+                .find(|(_, p)| p.primary && f(p))
+                .or_else(|| providers.iter().find(|(_, p)| f(p)))?
+                .1,
+        )
+    })
+}
+
 pub fn do_register_provider(caller: Principal, provider: RegisterProviderArgs) -> u64 {
     validate_hostname(&provider.hostname).unwrap();
     validate_credential_path(&provider.credential_path).unwrap();
