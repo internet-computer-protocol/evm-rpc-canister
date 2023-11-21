@@ -74,18 +74,21 @@ impl EvmRpcSetup {
         }
     }
 
+    /// Shorthand for deriving an `EvmRpcSetup` with the caller as the canister controller.
     pub fn as_controller(&self) -> Self {
         let mut setup = self.clone();
         setup.caller = self.controller;
         setup
     }
 
+    /// Shorthand for deriving an `EvmRpcSetup` with an anonymous caller.
     pub fn as_anonymous(&self) -> Self {
         let mut setup = self.clone();
         setup.caller = PrincipalId::new_anonymous();
         setup
     }
 
+    /// Shorthand for deriving an `EvmRpcSetup` with an arbitrary caller.
     pub fn as_caller(&self, id: PrincipalId) -> Self {
         let mut setup = self.clone();
         setup.caller = id;
@@ -97,7 +100,7 @@ impl EvmRpcSetup {
         method: &str,
         input: Vec<u8>,
     ) -> CallFlow<R> {
-        CallFlow::from_update(self, method, input)
+        CallFlow::from_update(self.clone(), method, input)
     }
 
     fn call_query<R: CandidType + DeserializeOwned>(&self, method: &str, input: Vec<u8>) -> R {
@@ -180,25 +183,25 @@ impl Drop for EvmRpcSetup {
     }
 }
 
-struct CallFlow<'a, 'b, R> {
-    setup: &'a EvmRpcSetup,
-    method: &'b str,
+pub struct CallFlow<R> {
+    setup: EvmRpcSetup,
+    method: String,
     message_id: MessageId,
     phantom: PhantomData<R>,
 }
 
-impl<'setup, 'method, R: CandidType + DeserializeOwned> CallFlow<'setup, 'method, R> {
-    pub fn from_update(setup: &'setup EvmRpcSetup, method: &str, input: Vec<u8>) -> Self {
+impl<R: CandidType + DeserializeOwned> CallFlow<R> {
+    pub fn from_update(setup: EvmRpcSetup, method: &str, input: Vec<u8>) -> Self {
         let message_id = setup
             .env
             .send_ingress(setup.caller, setup.canister_id, method, input);
         CallFlow::new(setup, method, message_id)
     }
 
-    pub fn new(setup: &'setup EvmRpcSetup, method: &'method str, message_id: MessageId) -> Self {
+    pub fn new(setup: EvmRpcSetup, method: impl ToString, message_id: MessageId) -> Self {
         Self {
             setup,
-            method,
+            method: method.to_string(),
             message_id,
             phantom: Default::default(),
         }
