@@ -399,7 +399,6 @@ fn free_rpc_auth() {
                 }])
                 .build(),
         )
-        .wait()
-        .expect("request()");
-    assert_eq!(result, expected_result);
+        .wait();
+    assert_eq!(result, Ok(expected_result.to_string()));
 }
