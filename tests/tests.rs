@@ -7,7 +7,7 @@ use ic_state_machine_tests::{CanisterSettingsArgs, StateMachine, StateMachineBui
 use ic_test_utilities_load_wasm::load_wasm;
 use serde::de::DeserializeOwned;
 
-use evm_rpc::*;
+use evm_rpc::{*, mock_http::MockOutcall};
 use serde_json::json;
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
@@ -121,10 +121,9 @@ impl EvmRpcSetup {
 
     pub fn mock_http(
         &self,
-        status: u16,
-        body: impl Into<mock_http::MockOutcallBody>,
-    ) -> mock_http::MockOutcallBuilder {
-        mock_http::MockOutcallBuilder::new(status, body)
+       mock:MockOutcall,
+    ) {
+        self.env.canister_http_request_contexts()
     }
 
     pub fn authorize(&self, principal: &PrincipalId, auth: Auth) {
@@ -250,7 +249,7 @@ fn should_allow_free_rpc() {
     setup.authorize_caller(Auth::FreeRpc);
 
     let expected_result = r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#;
-    setup.mock_http(200, expected_result).build().mock_once();
+    setup.mock_http(mock_http::MockOutcallBuilder::new(200, expected_result).build());
     let result = setup
         .request(
             Source::Provider(0),

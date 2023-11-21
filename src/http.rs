@@ -106,7 +106,7 @@ pub async fn perform_http_request(
     request: CanisterHttpRequestArgument,
     cycles: u128,
 ) -> CallResult<HttpResponse> {
-    #[cfg(feature = "mock")]
+    #[cfg(any(feature = "mock", test))]
     {
         if let Some(response) = mock_http::MOCK_OUTCALL.with(|mock| {
             let mut mock = mock.borrow_mut();
@@ -128,7 +128,7 @@ pub async fn perform_http_request(
     )
 }
 
-#[cfg(feature = "mock")]
+#[cfg(any(feature = "mock", test))]
 pub mod mock_http {
     use std::cell::RefCell;
 
