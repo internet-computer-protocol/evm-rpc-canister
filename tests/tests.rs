@@ -247,7 +247,7 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
             }),
         });
         let mut response = OutCallHttpResponse {
-            status: mock.response.status.into(),
+            status: mock.response.status,
             headers: mock.response.headers,
             body: mock.response.body,
         };
@@ -283,7 +283,7 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
                 .collect(),
             body: response.body,
         };
-        let payload = PayloadBuilder::new().http_response(id.clone(), &http_response);
+        let payload = PayloadBuilder::new().http_response(*id, &http_response);
         self.setup.env.execute_payload(payload);
 
         self
