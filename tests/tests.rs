@@ -142,14 +142,12 @@ impl EvmRpcSetup {
         self.call_update("register_provider", Encode!(&args).unwrap())
     }
 
-    pub fn authorize_caller(self, auth: Auth) -> Self {
+    pub fn authorize_caller(&self, auth: Auth) {
         self.as_controller().authorize(&self.caller, auth);
-        self
     }
 
-    pub fn deauthorize_caller(self, auth: Auth) -> Self {
+    pub fn deauthorize_caller(&self, auth: Auth) {
         self.as_controller().deauthorize(&self.caller, auth);
-        self
     }
 
     pub fn request_cost(
@@ -184,8 +182,10 @@ impl Drop for EvmRpcSetup {
 }
 
 #[test]
-fn test_provider_registry() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+fn should_register_providers() {
+    let mut setup = EvmRpcSetup::new();
+    setup.authorize_caller(Auth::RegisterProvider);
+
     assert_eq!(
         setup
             .get_providers()
@@ -244,14 +244,16 @@ fn test_provider_registry() {
 }
 
 #[test]
-fn test_free_rpc() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-    let expected_result = "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x112233\"}";
+fn should_allow_free_rpc() {
+    let mut setup = EvmRpcSetup::new();
+    setup.authorize_caller(Auth::FreeRpc);
+
+    let expected_result = "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x00112233\"}";
     setup.mock_http(200, expected_result).build().mock_once();
     let result = setup
         .request(
             Source::Provider(0),
-            "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}",
+            "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null}",
             1000,
         )
         .expect("request()");
