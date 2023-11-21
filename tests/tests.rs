@@ -96,8 +96,8 @@ impl EvmRpcSetup {
         &self,
         method: &str,
         input: Vec<u8>,
-    ) -> MessageFlow<R> {
-        MessageFlow::from_update(self, method, input)
+    ) -> CallFlow<R> {
+        CallFlow::from_update(self, method, input)
     }
 
     fn call_query<R: CandidType + DeserializeOwned>(&self, method: &str, input: Vec<u8>) -> R {
@@ -125,11 +125,11 @@ impl EvmRpcSetup {
         }
     }
 
-    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) -> MessageFlow<()> {
+    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) -> CallFlow<()> {
         self.call_update("authorize", Encode!(&principal.0, &auth).unwrap())
     }
 
-    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) -> MessageFlow<()> {
+    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) -> CallFlow<()> {
         self.call_update("deauthorize", Encode!(&principal.0, &auth).unwrap())
     }
 
@@ -137,15 +137,15 @@ impl EvmRpcSetup {
         self.call_query("get_providers", Encode!().unwrap())
     }
 
-    pub fn register_provider(&self, args: RegisterProviderArgs) -> MessageFlow<u64> {
+    pub fn register_provider(&self, args: RegisterProviderArgs) -> CallFlow<u64> {
         self.call_update("register_provider", Encode!(&args).unwrap())
     }
 
-    pub fn authorize_caller(&self, auth: Auth) -> MessageFlow<()> {
+    pub fn authorize_caller(&self, auth: Auth) -> CallFlow<()> {
         self.as_controller().authorize(&self.caller, auth)
     }
 
-    pub fn deauthorize_caller(&self, auth: Auth) -> MessageFlow<()> {
+    pub fn deauthorize_caller(&self, auth: Auth) -> CallFlow<()> {
         self.as_controller().deauthorize(&self.caller, auth)
     }
 
@@ -166,7 +166,7 @@ impl EvmRpcSetup {
         source: Source,
         json_rpc_payload: &str,
         max_response_bytes: u64,
-    ) -> MessageFlow<RpcResult<String>> {
+    ) -> CallFlow<RpcResult<String>> {
         self.call_update(
             "request",
             Encode!(&source, &json_rpc_payload, &max_response_bytes).unwrap(),
@@ -180,19 +180,19 @@ impl Drop for EvmRpcSetup {
     }
 }
 
-struct MessageFlow<'a, 'b, R> {
+struct CallFlow<'a, 'b, R> {
     setup: &'a EvmRpcSetup,
     method: &'b str,
     message_id: MessageId,
     phantom: PhantomData<R>,
 }
 
-impl<'setup, 'method, R: CandidType + DeserializeOwned> MessageFlow<'setup, 'method, R> {
+impl<'setup, 'method, R: CandidType + DeserializeOwned> CallFlow<'setup, 'method, R> {
     pub fn from_update(setup: &'setup EvmRpcSetup, method: &str, input: Vec<u8>) -> Self {
         let message_id = setup
             .env
             .send_ingress(setup.caller, setup.canister_id, method, input);
-        MessageFlow::new(setup, method, message_id)
+        CallFlow::new(setup, method, message_id)
     }
 
     pub fn new(setup: &'setup EvmRpcSetup, method: &'method str, message_id: MessageId) -> Self {
