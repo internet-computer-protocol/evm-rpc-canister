@@ -1,9 +1,12 @@
+mod mock;
+
 use std::{marker::PhantomData, rc::Rc, time::Duration};
 
 use candid::{CandidType, Decode, Encode, Nat};
 use ic_base_types::{CanisterId, PrincipalId};
 use ic_cdk::api::management_canister::http_request::{
-    HttpResponse as OutCallHttpResponse, TransformArgs,
+    CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse as OutCallHttpResponse,
+    TransformArgs, TransformContext, TransformFunc,
 };
 use ic_ic00_types::CanisterSettingsArgsBuilder;
 use ic_state_machine_tests::{
@@ -15,6 +18,7 @@ use ic_test_utilities_load_wasm::load_wasm;
 use serde::de::DeserializeOwned;
 
 use evm_rpc::*;
+use mock::*;
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
 const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
@@ -218,23 +222,30 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
         let contexts = self.setup.env.canister_http_request_contexts();
         let (id, context) = contexts.first_key_value().expect("no pending HTTP request");
 
-        // mock.assert_matches(&CanisterHttpRequestArgument {
-        //     url: context.url,
-        //     max_response_bytes: context.max_response_bytes.map(|n|n.),
-        //     method: match context.http_method {
-        //         HttpMethod::GET => CanisterHttpMethod::GET,
-        //     },
-        //     headers: context
-        //         .headers
-        //         .iter()
-        //         .map(|h| HttpHeader {
-        //             name: h.name,
-        //             value: h.value,
-        //         })
-        //         .collect(),
-        //     body: context.body,
-        //     transform: context.transform,
-        // });
+        mock.assert_matches(&CanisterHttpRequestArgument {
+            url: context.url.clone(),
+            max_response_bytes: context.max_response_bytes.map(|n| n.get()),
+            // Convert HTTP method type by name
+            method: serde_json::from_str(
+                &serde_json::to_string(&context.http_method)
+                    .unwrap()
+                    .to_lowercase(),
+            )
+            .unwrap(),
+            headers: context
+                .headers
+                .iter()
+                .map(|h| HttpHeader {
+                    name: h.name.clone(),
+                    value: h.value.clone(),
+                })
+                .collect(),
+            body: context.body.clone(),
+            transform: context.transform.clone().map(|t| TransformContext {
+                context: t.context,
+                function: TransformFunc::new(self.setup.canister_id.get().0, t.method_name),
+            }),
+        });
         let mut response = OutCallHttpResponse {
             status: mock.response.status.into(),
             headers: mock.response.headers,
@@ -295,7 +306,7 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
 }
 
 #[test]
-fn should_register_providers() {
+fn register_provider() {
     let setup = EvmRpcSetup::new();
     setup.authorize_caller(Auth::RegisterProvider);
 
@@ -361,18 +372,33 @@ fn should_register_providers() {
 }
 
 #[test]
-fn should_allow_free_rpc() {
+fn free_rpc_auth() {
     let setup = EvmRpcSetup::new();
     setup.authorize_caller(Auth::FreeRpc);
 
+    let url = "https://cloudflare-eth.com";
+    let payload = r#"{"id":1,"jsonrpc":"2.0","method":"eth_gasPrice","params":null}"#;
     let expected_result = r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#;
     let result = setup
         .request(
-            Source::Provider(0),
-            r#"{"id":1,"jsonrpc":"2.0","method":"eth_gasPrice","params":null}"#,
+            Source::Custom {
+                url: url.to_string(),
+                headers: None,
+            },
+            payload,
             1000,
         )
-        .mock_http(MockOutcallBuilder::new(200, expected_result).build())
+        .mock_http(
+            MockOutcallBuilder::new(200, expected_result)
+                .expect_url(url.to_string())
+                .expect_method(HttpMethod::GET)
+                .expect_body(payload)
+                .expect_headers(vec![HttpHeader {
+                    name: CONTENT_TYPE_HEADER.to_string(),
+                    value: CONTENT_TYPE_VALUE.to_string(),
+                }])
+                .build(),
+        )
         .wait()
         .expect("request()");
     assert_eq!(result, expected_result);

@@ -1671,7 +1671,6 @@ dependencies = [
  "assert_matches",
  "async-trait",
  "candid",
- "evm_rpc",
  "futures",
  "hex",
  "ic-base-types 0.8.0",
