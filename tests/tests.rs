@@ -1,12 +1,13 @@
 use std::rc::Rc;
 
 use candid::{CandidType, Decode, Encode, Nat};
-use evm_rpc::*;
 use ic_base_types::{CanisterId, PrincipalId};
 use ic_ic00_types::BoundedVec;
 use ic_state_machine_tests::{CanisterSettingsArgs, StateMachine, StateMachineBuilder, WasmResult};
 use ic_test_utilities_load_wasm::load_wasm;
 use serde::de::DeserializeOwned;
+
+use evm_rpc::*;
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
 const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
@@ -113,6 +114,14 @@ impl EvmRpcSetup {
         .unwrap()
     }
 
+    pub fn mock_http(
+        &self,
+        status: u16,
+        body: impl Into<mock_http::MockOutcallBody>,
+    ) -> mock_http::MockOutcallBuilder {
+        mock_http::MockOutcallBuilder::new(status, body)
+    }
+
     pub fn authorize(&self, principal: &PrincipalId, auth: Auth) {
         self.call_update("authorize", Encode!(&principal.0, &auth).unwrap())
     }
@@ -149,6 +158,24 @@ impl EvmRpcSetup {
             "request_cost",
             Encode!(&source, &json_rpc_payload, &max_response_bytes).unwrap(),
         )
+    }
+
+    pub fn request(
+        &self,
+        source: Source,
+        json_rpc_payload: &str,
+        max_response_bytes: u64,
+    ) -> RpcResult<String> {
+        self.call_update(
+            "request",
+            Encode!(&source, &json_rpc_payload, &max_response_bytes).unwrap(),
+        )
+    }
+}
+
+impl Drop for EvmRpcSetup {
+    fn drop(&mut self) {
+        mock_http::assert_no_mock_http_request();
     }
 }
 
@@ -210,4 +237,19 @@ fn test_provider_registry() {
             }
         ]
     )
+}
+
+#[test]
+fn test_free_rpc() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let expected_result = "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"0x112233\"}";
+    setup.mock_http(200, expected_result).build().mock_once();
+    let result = setup
+        .request(
+            Source::Provider(0),
+            "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}",
+            1000,
+        )
+        .expect("request()");
+    assert_eq!(result, expected_result);
 }

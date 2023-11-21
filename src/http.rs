@@ -106,9 +106,9 @@ pub async fn perform_http_request(
     request: CanisterHttpRequestArgument,
     cycles: u128,
 ) -> CallResult<HttpResponse> {
-    #[cfg(test)]
+    #[cfg(feature = "mock")]
     {
-        if let Some(response) = mock::MOCK_OUTCALL.with(|mock| {
+        if let Some(response) = mock_http::MOCK_OUTCALL.with(|mock| {
             let mut mock = mock.borrow_mut();
             match mock.take() {
                 None => None,
@@ -128,8 +128,8 @@ pub async fn perform_http_request(
     )
 }
 
-#[cfg(test)]
-pub mod mock {
+#[cfg(feature = "mock")]
+pub mod mock_http {
     use std::cell::RefCell;
 
     use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpMethod, HttpResponse};
@@ -141,10 +141,14 @@ pub mod mock {
 
     impl From<String> for MockOutcallBody {
         fn from(string: String) -> Self {
-            MockOutcallBody(string.as_bytes().to_vec())
+            string.as_bytes().to_vec().into()
         }
     }
-
+    impl<'a> From<&'a str> for MockOutcallBody {
+        fn from(string: &'a str) -> Self {
+            string.to_string().into()
+        }
+    }
     impl From<Vec<u8>> for MockOutcallBody {
         fn from(bytes: Vec<u8>) -> Self {
             MockOutcallBody(bytes)
@@ -154,7 +158,7 @@ pub mod mock {
     pub struct MockOutcallBuilder(MockOutcall);
 
     impl MockOutcallBuilder {
-        pub fn new(status: u16, body: MockOutcallBody) -> Self {
+        pub fn new(status: u16, body: impl Into<MockOutcallBody>) -> Self {
             Self(MockOutcall {
                 method: None,
                 url: None,
@@ -163,7 +167,7 @@ pub mod mock {
                 response: HttpResponse {
                     status: status.into(),
                     headers: vec![],
-                    body: body.0,
+                    body: body.into().0,
                 },
             })
         }
@@ -202,6 +206,12 @@ pub mod mock {
         pub response: HttpResponse,
     }
 
+    impl MockOutcall {
+        pub fn mock_once(self) {
+            mock_http_request(self)
+        }
+    }
+
     impl From<HttpResponse> for MockOutcall {
         fn from(response: HttpResponse) -> Self {
             Self {
@@ -221,7 +231,7 @@ pub mod mock {
         )
     }
 
-    pub fn mock_http_request(mock: MockOutcall) {
+    fn mock_http_request(mock: MockOutcall) {
         assert_no_mock_http_request();
         MOCK_OUTCALL.with(|current_mock| {
             let mut current_mock = current_mock.borrow_mut();

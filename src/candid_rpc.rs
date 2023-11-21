@@ -36,7 +36,7 @@ impl RpcTransport for CanisterTransport {
     }
 
     async fn http_request(
-        provider: &RpcNodeProvider,
+        _provider: &RpcNodeProvider,
         request: CanisterHttpRequestArgument,
         cost: u128,
     ) -> CallResult<HttpResponse> {

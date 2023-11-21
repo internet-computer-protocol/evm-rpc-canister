@@ -15,6 +15,9 @@ opt-level = 'z'
 [profile.canister-release]
 inherits = "release"
 
+[features]
+mock = []
+
 [dependencies]
 candid = { workspace = true }
 ic-canister-log = { workspace = true }
@@ -38,6 +41,7 @@ async-trait = "0.1"
 hex = "0.4"
 
 [dev-dependencies]
+evm_rpc = { path = ".", features = ["mock"] }
 # assert_matches = "1.5.0"
 # ethers-core = "2.0.8"
 ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
