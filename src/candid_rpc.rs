@@ -40,7 +40,11 @@ impl RpcTransport for CanisterTransport {
         request: CanisterHttpRequestArgument,
         cost: u128,
     ) -> CallResult<HttpResponse> {
-        perform_http_request(request, cost).await
+        Ok(
+            ic_cdk::api::management_canister::http_request::http_request(request, cost)
+                .await?
+                .0,
+        )
     }
 }
 
