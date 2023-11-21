@@ -2,11 +2,15 @@ use std::{marker::PhantomData, rc::Rc, time::Duration};
 
 use candid::{CandidType, Decode, Encode, Nat};
 use ic_base_types::{CanisterId, PrincipalId};
-use ic_ic00_types::{BoundedVec, CanisterSettingsArgsBuilder};
-use ic_state_machine_tests::{
-    CanisterSettingsArgs, Cycles, IngressState, IngressStatus, MessageId, StateMachine,
-    StateMachineBuilder, WasmResult,
+use ic_cdk::api::management_canister::http_request::{
+    HttpResponse as OutCallHttpResponse, TransformArgs,
 };
+use ic_ic00_types::CanisterSettingsArgsBuilder;
+use ic_state_machine_tests::{
+    CanisterHttpResponsePayload, Cycles, IngressState, IngressStatus, MessageId, PayloadBuilder,
+    StateMachine, StateMachineBuilder, WasmResult,
+};
+
 use ic_test_utilities_load_wasm::load_wasm;
 use serde::de::DeserializeOwned;
 
@@ -221,14 +225,50 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
             IngressStatus::Known { state, .. } if state != IngressState::Processing => return self,
             _ => (),
         }
-        let request = self
-            .setup
-            .env
-            .canister_http_request_contexts()
-            .first_entry()
-            .expect("no pending HTTP request");
-        todo!("mock_http");
-        // self
+        let contexts = self.setup.env.canister_http_request_contexts();
+        let (id, context) = contexts.first_key_value().expect("no pending HTTP request");
+
+        let mut response = OutCallHttpResponse {
+            status: mock.response.status.into(),
+            headers: mock.response.headers,
+            body: mock.response.body,
+        };
+        if let Some(transform) = &context.transform {
+            let transform_args = TransformArgs {
+                response,
+                context: transform.context.to_vec(),
+            };
+            response = Decode!(
+                &assert_reply(
+                    self.setup
+                        .env
+                        .execute_ingress(
+                            self.setup.canister_id,
+                            transform.method_name.clone(),
+                            Encode!(&transform_args).unwrap(),
+                        )
+                        .expect("failed to query transform HTTP response")
+                ),
+                OutCallHttpResponse
+            )
+            .unwrap();
+        }
+        let http_response = CanisterHttpResponsePayload {
+            status: response.status.0.try_into().unwrap(),
+            headers: response
+                .headers
+                .into_iter()
+                .map(|h| ic_ic00_types::HttpHeader {
+                    name: h.name,
+                    value: h.value,
+                })
+                .collect(),
+            body: response.body,
+        };
+        let payload = PayloadBuilder::new().http_response(id.clone(), &http_response);
+        self.setup.env.execute_payload(payload);
+
+        self
     }
 
     pub fn wait(self) -> R {
