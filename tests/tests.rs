@@ -63,7 +63,7 @@ impl EvmRpcSetup {
         );
 
         let controller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);
-        let evm_rpc_id = env.create_canister_with_cycles(
+        let canister_id = env.create_canister_with_cycles(
             None,
             Cycles::new(INITIAL_CYCLES),
             Some(
@@ -72,7 +72,7 @@ impl EvmRpcSetup {
                     .build(),
             ),
         );
-        env.install_existing_canister(evm_rpc_id, evm_rpc_wasm(), Encode!(&()).unwrap())
+        env.install_existing_canister(canister_id, evm_rpc_wasm(), Encode!(&()).unwrap())
             .unwrap();
 
         let caller = PrincipalId::new_user_test_id(DEFAULT_CALLER_TEST_ID);
@@ -81,7 +81,7 @@ impl EvmRpcSetup {
             env,
             caller,
             controller,
-            canister_id: evm_rpc_id,
+            canister_id,
         }
     }
 
