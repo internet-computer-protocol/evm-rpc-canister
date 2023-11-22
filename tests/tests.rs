@@ -2,6 +2,7 @@ mod mock;
 
 use std::{marker::PhantomData, rc::Rc, time::Duration};
 
+use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
 use ic_base_types::{CanisterId, PrincipalId};
 use ic_cdk::api::management_canister::http_request::{
@@ -13,7 +14,6 @@ use ic_state_machine_tests::{
     CanisterHttpResponsePayload, Cycles, IngressState, IngressStatus, MessageId, PayloadBuilder,
     StateMachine, StateMachineBuilder, WasmResult,
 };
-
 use ic_test_utilities_load_wasm::load_wasm;
 use serde::de::DeserializeOwned;
 
@@ -26,6 +26,11 @@ const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
 const INITIAL_CYCLES: u128 = 100_000_000_000_000_000;
 
 const MAX_TICKS: usize = 10;
+
+const GAS_PRICE_URL: &str = "https://cloudflare-eth.com";
+const GAS_PRICE_PAYLOAD: &str = r#"{"id":1,"jsonrpc":"2.0","method":"eth_gasPrice","params":null}"#;
+const GAS_PRICE_RESPONSE: &str = r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#;
+const GAS_PRICE_RESPONSE_BYTES: u64 = 1000;
 
 fn evm_rpc_wasm() -> Vec<u8> {
     load_wasm(std::env::var("CARGO_MANIFEST_DIR").unwrap(), "evm_rpc", &[])
@@ -212,7 +217,8 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
         }
     }
 
-    pub fn mock_http(self, mock: MockOutcall) -> Self {
+    pub fn mock_http(self, mock: impl Into<MockOutcall>) -> Self {
+        let mock = mock.into();
         assert_eq!(self.setup.env.canister_http_request_contexts().len(), 0);
         self.setup.tick_until_http_request();
         match self.setup.env.ingress_status(&self.message_id) {
@@ -371,34 +377,74 @@ fn should_register_provider() {
     )
 }
 
-#[test]
-fn should_query_gas_price_from_free_rpc_provider() {
+fn setup_gas_price_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
     let setup = EvmRpcSetup::new();
     setup.authorize_caller(Auth::FreeRpc);
 
-    let url = "https://cloudflare-eth.com";
-    let payload = r#"{"id":1,"jsonrpc":"2.0","method":"eth_gasPrice","params":null}"#;
-    let expected_result = r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#;
-    let result = setup
-        .request(
-            Source::Custom {
-                url: url.to_string(),
-                headers: None,
-            },
-            payload,
-            1000,
-        )
-        .mock_http(
-            MockOutcallBuilder::new(200, expected_result)
-                .expect_url(url.to_string())
-                .expect_method(HttpMethod::GET)
-                .expect_body(payload)
-                .expect_headers(vec![HttpHeader {
-                    name: CONTENT_TYPE_HEADER.to_string(),
-                    value: CONTENT_TYPE_VALUE.to_string(),
-                }])
-                .build(),
-        )
-        .wait();
-    assert_eq!(result, Ok(expected_result.to_string()));
+    assert_matches!(
+        setup
+            .request(
+                Source::Custom {
+                    url: GAS_PRICE_URL.to_string(),
+                    headers: Some(vec![HttpHeader {
+                        name: "Custom".to_string(),
+                        value: "Value".to_string(),
+                    }]),
+                },
+                GAS_PRICE_PAYLOAD,
+                GAS_PRICE_RESPONSE_BYTES,
+            )
+            .mock_http(builder_fn(MockOutcallBuilder::new(200, GAS_PRICE_RESPONSE)))
+            .wait(),
+        Ok(_)
+    );
+}
+
+#[test]
+fn should_request_succeed() {
+    setup_gas_price_request(|builder| builder)
+}
+
+#[test]
+fn should_request_succeed_with_method() {
+    setup_gas_price_request(|builder| builder.with_method(HttpMethod::POST))
+}
+
+#[test]
+fn should_request_succeed_with_request_headers() {
+    setup_gas_price_request(|builder| {
+        builder.with_request_headers(vec![
+            (CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE),
+            ("Custom", "Value"),
+        ])
+    })
+}
+
+#[test]
+fn should_request_succeed_with_request_body() {
+    setup_gas_price_request(|builder| builder.with_request_body(GAS_PRICE_PAYLOAD))
+}
+
+#[test]
+#[should_panic(expected = "assertion failed: `(left == right)`")]
+fn should_request_fail_with_url() {
+    setup_gas_price_request(|builder| builder.with_url("https://not-the-url.com"))
+}
+
+#[test]
+#[should_panic(expected = "assertion failed: `(left == right)`")]
+fn should_request_fail_with_method() {
+    setup_gas_price_request(|builder| builder.with_method(HttpMethod::GET))
+}
+
+#[test]
+#[should_panic(expected = "assertion failed: `(left == right)`")]
+fn should_request_fail_with_request_headers() {
+    setup_gas_price_request(|builder| builder.with_request_headers(vec![("Custom", "NotValue")]))
+}
+
+#[test]
+#[should_panic(expected = "assertion failed: `(left == right)`")]
+fn should_request_fail_with_request_body() {
+    setup_gas_price_request(|builder| builder.with_request_body(r#"{"different":"body"}"#))
 }

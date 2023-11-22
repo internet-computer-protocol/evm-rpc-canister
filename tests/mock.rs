@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse,
 };
@@ -20,6 +22,7 @@ impl From<Vec<u8>> for MockOutcallBody {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct MockOutcallBuilder(MockOutcall);
 
 impl MockOutcallBuilder {
@@ -37,28 +40,47 @@ impl MockOutcallBuilder {
         })
     }
 
-    pub fn expect_method(mut self, method: HttpMethod) -> Self {
+    pub fn with_method(mut self, method: HttpMethod) -> Self {
         self.0.method = Some(method);
         self
     }
 
-    pub fn expect_url(mut self, url: impl ToString) -> Self {
+    pub fn with_url(mut self, url: impl ToString) -> Self {
         self.0.url = Some(url.to_string());
         self
     }
 
-    pub fn expect_headers(mut self, headers: Vec<HttpHeader>) -> Self {
-        self.0.request_headers = Some(headers);
+    pub fn with_request_headers(mut self, headers: Vec<(impl ToString, impl ToString)>) -> Self {
+        self.0.request_headers = Some(
+            headers
+                .into_iter()
+                .map(|(name, value)| HttpHeader {
+                    name: name.to_string(),
+                    value: value.to_string(),
+                })
+                .collect(),
+        );
         self
     }
 
-    pub fn expect_body(mut self, body: impl Into<MockOutcallBody>) -> Self {
+    pub fn with_request_body(mut self, body: impl Into<MockOutcallBody>) -> Self {
         self.0.request_body = Some(body.into().0);
+        self
+    }
+
+    pub fn with_response_header(mut self, name: String, value: String) -> Self {
+        self.0.response.headers.push(HttpHeader { name, value });
         self
     }
 
     pub fn build(self) -> MockOutcall {
         self.0
+    }
+}
+
+impl From<MockOutcallBuilder> for MockOutcall {
+    fn from(builder: MockOutcallBuilder) -> Self {
+        builder.build()
     }
 }
 
@@ -76,8 +98,14 @@ impl MockOutcall {
         if let Some(ref url) = self.url {
             assert_eq!(url, &request.url);
         }
+        if let Some(ref method) = self.method {
+            assert_eq!(method, &request.method);
+        }
         if let Some(ref headers) = self.request_headers {
-            assert_eq!(headers, &request.headers);
+            assert_eq!(
+                headers.iter().collect::<HashSet<_>>(),
+                request.headers.iter().collect::<HashSet<_>>()
+            );
         }
         if let Some(ref body) = self.request_body {
             assert_eq!(body, &request.body.as_deref().unwrap_or_default());
