@@ -36,6 +36,22 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
         },
         RegisterProviderArgs {
             chain_id: ETH_SEPOLIA_CHAIN_ID,
+            hostname: "rpc.ankr.com".to_string(),
+            credential_path: "/eth_sepolia".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: ETH_SEPOLIA_CHAIN_ID,
+            hostname: "ethereum-sepolia.blockpi.network".to_string(),
+            credential_path: "/v1/rpc/public".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: ETH_SEPOLIA_CHAIN_ID,
             hostname: "ethereum-sepolia.publicnode.com".to_string(),
             credential_path: "".to_string(),
             credential_headers: None,
@@ -43,6 +59,19 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             cycles_per_message_byte: 0,
         },
     ]
+}
+
+pub fn find_provider(f: impl Fn(&Provider) -> bool) -> Option<Provider> {
+    PROVIDERS.with(|providers| {
+        let providers = providers.borrow();
+        Some(
+            providers
+                .iter()
+                .find(|(_, p)| p.primary && f(p))
+                .or_else(|| providers.iter().find(|(_, p)| f(p)))?
+                .1,
+        )
+    })
 }
 
 pub fn do_register_provider(caller: Principal, provider: RegisterProviderArgs) -> u64 {

@@ -31,6 +31,7 @@ pub const SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
     "ethereum-goerli.publicnode.com",
     "ethereum-sepolia.publicnode.com",
     "ethereum.blockpi.network",
+    "ethereum-sepolia.blockpi.network",
     "eth-mainnet.g.alchemy.com",
     "eth-goerli.g.alchemy.com",
     "rpc.flashbots.net",

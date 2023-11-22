@@ -7,7 +7,7 @@ use cketh_common::{
         SendRawTransactionResult, ValidationError,
     },
     eth_rpc_client::{
-        providers::{RpcApi, RpcNodeProvider},
+        providers::{EthereumProvider, RpcApi, RpcNodeProvider, SepoliaProvider},
         requests::GetTransactionCountParams,
         EthRpcClient as CkEthRpcClient, MultiCallError, RpcTransport,
     },
@@ -31,8 +31,30 @@ impl RpcTransport for CanisterTransport {
     }
 
     fn resolve_api(provider: &RpcNodeProvider) -> Result<RpcApi, ProviderError> {
-        // TODO: https://github.com/internet-computer-protocol/ic-eth-rpc/issues/73
-        Ok(provider.api())
+        use RpcNodeProvider::*;
+        let (chain_id, hostname) = match provider {
+            Ethereum(provider) => (
+                ETH_MAINNET_CHAIN_ID,
+                match provider {
+                    EthereumProvider::Ankr => "rpc.ankr.com",
+                    EthereumProvider::BlockPi => "ethereum.blockpi.network",
+                    EthereumProvider::Cloudflare => "cloudflare-eth.com",
+                },
+            ),
+            Sepolia(provider) => (
+                ETH_SEPOLIA_CHAIN_ID,
+                match provider {
+                    SepoliaProvider::Ankr => "rpc.ankr.com",
+                    SepoliaProvider::BlockPi => "ethereum-sepolia.blockpi.network",
+                    SepoliaProvider::PublicNode => "ethereum-sepolia.publicnode.com",
+                },
+            ),
+        };
+        Ok(
+            find_provider(|p| p.chain_id == chain_id && p.hostname == hostname)
+                .ok_or(ProviderError::ProviderNotFound)?
+                .api(),
+        )
     }
 
     async fn http_request(
