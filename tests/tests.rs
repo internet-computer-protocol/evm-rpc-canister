@@ -377,7 +377,7 @@ fn should_register_provider() {
     )
 }
 
-fn setup_gas_price_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
+fn gas_price_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
     let setup = EvmRpcSetup::new();
     setup.authorize_caller(Auth::FreeRpc);
 
@@ -402,17 +402,17 @@ fn setup_gas_price_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcal
 
 #[test]
 fn should_request_succeed() {
-    setup_gas_price_request(|builder| builder)
+    gas_price_request(|builder| builder)
 }
 
 #[test]
 fn should_request_succeed_with_method() {
-    setup_gas_price_request(|builder| builder.with_method(HttpMethod::POST))
+    gas_price_request(|builder| builder.with_method(HttpMethod::POST))
 }
 
 #[test]
 fn should_request_succeed_with_request_headers() {
-    setup_gas_price_request(|builder| {
+    gas_price_request(|builder| {
         builder.with_request_headers(vec![
             (CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE),
             ("Custom", "Value"),
@@ -422,29 +422,58 @@ fn should_request_succeed_with_request_headers() {
 
 #[test]
 fn should_request_succeed_with_request_body() {
-    setup_gas_price_request(|builder| builder.with_request_body(GAS_PRICE_PAYLOAD))
+    gas_price_request(|builder| builder.with_request_body(GAS_PRICE_PAYLOAD))
 }
 
 #[test]
-#[should_panic(expected = "assertion failed: `(left == right)`")]
+#[should_panic(
+    expected = "assertion failed: `(left == right)`"
+)]
 fn should_request_fail_with_url() {
-    setup_gas_price_request(|builder| builder.with_url("https://not-the-url.com"))
+    gas_price_request(|builder| builder.with_url("https://not-the-url.com"))
 }
 
 #[test]
 #[should_panic(expected = "assertion failed: `(left == right)`")]
 fn should_request_fail_with_method() {
-    setup_gas_price_request(|builder| builder.with_method(HttpMethod::GET))
+    gas_price_request(|builder| builder.with_method(HttpMethod::GET))
 }
 
 #[test]
-#[should_panic(expected = "assertion failed: `(left == right)`")]
+#[should_panic(
+    expected = "assertion failed: `(left == right)`"
+)]
 fn should_request_fail_with_request_headers() {
-    setup_gas_price_request(|builder| builder.with_request_headers(vec![("Custom", "NotValue")]))
+    gas_price_request(|builder| builder.with_request_headers(vec![("Custom", "NotValue")]))
 }
 
 #[test]
 #[should_panic(expected = "assertion failed: `(left == right)`")]
 fn should_request_fail_with_request_body() {
-    setup_gas_price_request(|builder| builder.with_request_body(r#"{"different":"body"}"#))
+    gas_price_request(|builder| builder.with_request_body(r#"{"different":"body"}"#))
+}
+
+#[test]
+fn should_gas_price_request_succeed_from_free_rpc_caller() {
+    let setup = EvmRpcSetup::new();
+    setup.authorize_caller(Auth::FreeRpc);
+
+    let result = setup
+        .request(
+            Source::Custom {
+                url: GAS_PRICE_URL.to_string(),
+                headers: None,
+            },
+            GAS_PRICE_PAYLOAD,
+            GAS_PRICE_RESPONSE_BYTES,
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, GAS_PRICE_RESPONSE)
+                .with_url(GAS_PRICE_URL.to_string())
+                .with_method(HttpMethod::POST)
+                .with_request_body(GAS_PRICE_PAYLOAD)
+                .with_request_headers(vec![(CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE)]),
+        )
+        .wait();
+    assert_eq!(result, Ok(GAS_PRICE_RESPONSE.to_string()));
 }
