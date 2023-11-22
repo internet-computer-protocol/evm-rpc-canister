@@ -89,9 +89,8 @@ pub fn do_transform_http_request(args: TransformArgs) -> HttpResponse {
     HttpResponse {
         status: args.response.status,
         body: canonicalize_json(&args.response.body).unwrap_or(args.response.body),
-        // Strip headers as they contain the date which is not necessarily the same
-        // and will prevent consensus on the result.
-        headers: Vec::<HttpHeader>::new(),
+        // Remove headers (which may contain a timestamp) for consensus
+        headers: vec![],
     }
 }
 
