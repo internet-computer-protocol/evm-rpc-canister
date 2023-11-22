@@ -406,6 +406,11 @@ fn should_request_succeed() {
 }
 
 #[test]
+fn should_request_succeed_with_url() {
+    gas_price_request(|builder| builder.with_url(GAS_PRICE_URL))
+}
+
+#[test]
 fn should_request_succeed_with_method() {
     gas_price_request(|builder| builder.with_method(HttpMethod::POST))
 }
@@ -426,9 +431,7 @@ fn should_request_succeed_with_request_body() {
 }
 
 #[test]
-#[should_panic(
-    expected = "assertion failed: `(left == right)`"
-)]
+#[should_panic(expected = "assertion failed: `(left == right)`")]
 fn should_request_fail_with_url() {
     gas_price_request(|builder| builder.with_url("https://not-the-url.com"))
 }
@@ -440,9 +443,7 @@ fn should_request_fail_with_method() {
 }
 
 #[test]
-#[should_panic(
-    expected = "assertion failed: `(left == right)`"
-)]
+#[should_panic(expected = "assertion failed: `(left == right)`")]
 fn should_request_fail_with_request_headers() {
     gas_price_request(|builder| builder.with_request_headers(vec![("Custom", "NotValue")]))
 }
