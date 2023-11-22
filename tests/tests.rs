@@ -27,10 +27,10 @@ const INITIAL_CYCLES: u128 = 100_000_000_000_000_000;
 
 const MAX_TICKS: usize = 10;
 
-const GAS_PRICE_URL: &str = "https://cloudflare-eth.com";
-const GAS_PRICE_PAYLOAD: &str = r#"{"id":1,"jsonrpc":"2.0","method":"eth_gasPrice","params":null}"#;
-const GAS_PRICE_RESPONSE: &str = r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#;
-const GAS_PRICE_RESPONSE_BYTES: u64 = 1000;
+const MOCK_REQUEST_URL: &str = "https://cloudflare-eth.com";
+const MOCK_REQUEST_PAYLOAD: &str = r#"{"id":1,"jsonrpc":"2.0","method":"eth_gasPrice"}"#;
+const MOCK_REQUEST_RESPONSE: &str = r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#;
+const MOCK_REQUEST_RESPONSE_BYTES: u64 = 1000;
 
 fn evm_rpc_wasm() -> Vec<u8> {
     load_wasm(std::env::var("CARGO_MANIFEST_DIR").unwrap(), "evm_rpc", &[])
@@ -377,7 +377,7 @@ fn should_register_provider() {
     )
 }
 
-fn gas_price_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
+fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
     let setup = EvmRpcSetup::new();
     setup.authorize_caller(Auth::FreeRpc);
 
@@ -385,39 +385,42 @@ fn gas_price_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuild
         setup
             .request(
                 Source::Custom {
-                    url: GAS_PRICE_URL.to_string(),
+                    url: MOCK_REQUEST_URL.to_string(),
                     headers: Some(vec![HttpHeader {
                         name: "Custom".to_string(),
                         value: "Value".to_string(),
                     }]),
                 },
-                GAS_PRICE_PAYLOAD,
-                GAS_PRICE_RESPONSE_BYTES,
+                MOCK_REQUEST_PAYLOAD,
+                MOCK_REQUEST_RESPONSE_BYTES,
             )
-            .mock_http(builder_fn(MockOutcallBuilder::new(200, GAS_PRICE_RESPONSE)))
+            .mock_http(builder_fn(MockOutcallBuilder::new(
+                200,
+                MOCK_REQUEST_RESPONSE
+            )))
             .wait(),
         Ok(_)
     );
 }
 
 #[test]
-fn should_request_succeed() {
-    gas_price_request(|builder| builder)
+fn mock_request_should_succeed() {
+    mock_request(|builder| builder)
 }
 
 #[test]
-fn should_request_succeed_with_url() {
-    gas_price_request(|builder| builder.with_url(GAS_PRICE_URL))
+fn mock_request_should_succeed_with_url() {
+    mock_request(|builder| builder.with_url(MOCK_REQUEST_URL))
 }
 
 #[test]
-fn should_request_succeed_with_method() {
-    gas_price_request(|builder| builder.with_method(HttpMethod::POST))
+fn mock_request_should_succeed_with_method() {
+    mock_request(|builder| builder.with_method(HttpMethod::POST))
 }
 
 #[test]
-fn should_request_succeed_with_request_headers() {
-    gas_price_request(|builder| {
+fn mock_request_should_succeed_with_request_headers() {
+    mock_request(|builder| {
         builder.with_request_headers(vec![
             (CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE),
             ("Custom", "Value"),
@@ -426,55 +429,71 @@ fn should_request_succeed_with_request_headers() {
 }
 
 #[test]
-fn should_request_succeed_with_request_body() {
-    gas_price_request(|builder| builder.with_request_body(GAS_PRICE_PAYLOAD))
+fn mock_request_should_succeed_with_request_body() {
+    mock_request(|builder| builder.with_request_body(MOCK_REQUEST_PAYLOAD))
+}
+
+#[test]
+fn mock_request_should_succeed_with_all() {
+    mock_request(|builder| {
+        builder
+            .with_url(MOCK_REQUEST_URL)
+            .with_method(HttpMethod::POST)
+            .with_request_headers(vec![
+                (CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE),
+                ("Custom", "Value"),
+            ])
+            .with_request_body(MOCK_REQUEST_PAYLOAD)
+    })
 }
 
 #[test]
 #[should_panic(expected = "assertion failed: `(left == right)`")]
-fn should_request_fail_with_url() {
-    gas_price_request(|builder| builder.with_url("https://not-the-url.com"))
+fn mock_request_should_fail_with_url() {
+    mock_request(|builder| builder.with_url("https://not-the-url.com"))
 }
 
 #[test]
 #[should_panic(expected = "assertion failed: `(left == right)`")]
-fn should_request_fail_with_method() {
-    gas_price_request(|builder| builder.with_method(HttpMethod::GET))
+fn mock_request_should_fail_with_method() {
+    mock_request(|builder| builder.with_method(HttpMethod::GET))
 }
 
 #[test]
 #[should_panic(expected = "assertion failed: `(left == right)`")]
-fn should_request_fail_with_request_headers() {
-    gas_price_request(|builder| builder.with_request_headers(vec![("Custom", "NotValue")]))
+fn mock_request_should_fail_with_request_headers() {
+    mock_request(|builder| builder.with_request_headers(vec![("Custom", "NotValue")]))
 }
 
 #[test]
 #[should_panic(expected = "assertion failed: `(left == right)`")]
-fn should_request_fail_with_request_body() {
-    gas_price_request(|builder| builder.with_request_body(r#"{"different":"body"}"#))
+fn mock_request_should_fail_with_request_body() {
+    mock_request(|builder| builder.with_request_body(r#"{"different":"body"}"#))
 }
 
 #[test]
-fn should_gas_price_request_succeed_from_free_rpc_caller() {
+fn should_canonicalize_json_response() {
     let setup = EvmRpcSetup::new();
     setup.authorize_caller(Auth::FreeRpc);
-
-    let result = setup
-        .request(
-            Source::Custom {
-                url: GAS_PRICE_URL.to_string(),
-                headers: None,
-            },
-            GAS_PRICE_PAYLOAD,
-            GAS_PRICE_RESPONSE_BYTES,
-        )
-        .mock_http(
-            MockOutcallBuilder::new(200, GAS_PRICE_RESPONSE)
-                .with_url(GAS_PRICE_URL.to_string())
-                .with_method(HttpMethod::POST)
-                .with_request_body(GAS_PRICE_PAYLOAD)
-                .with_request_headers(vec![(CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE)]),
-        )
-        .wait();
-    assert_eq!(result, Ok(GAS_PRICE_RESPONSE.to_string()));
+    let responses = [
+        r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#,
+        r#"{"result":"0x00112233","id":1,"jsonrpc":"2.0"}"#,
+        r#"{"result":"0x00112233","jsonrpc":"2.0","id":1}"#,
+    ]
+    .into_iter()
+    .map(|response| {
+        setup
+            .request(
+                Source::Custom {
+                    url: MOCK_REQUEST_URL.to_string(),
+                    headers: None,
+                },
+                MOCK_REQUEST_PAYLOAD,
+                MOCK_REQUEST_RESPONSE_BYTES,
+            )
+            .mock_http(MockOutcallBuilder::new(200, response))
+            .wait()
+    })
+    .collect::<Vec<_>>();
+    assert!(responses.windows(2).all(|w| w[0] == w[1]));
 }
