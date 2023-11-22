@@ -11,8 +11,9 @@ type BlockTag = variant {
 };
 type CandidRpcSource = variant {
   EthSepolia : opt SepoliaProvider;
-  EthMainnet : opt SepoliaProvider;
+  EthMainnet : opt EthereumProvider;
 };
+type EthereumProvider = variant { BlockPi; Cloudflare; Ankr };
 type FeeHistory = record {
   reward : vec vec nat;
   base_fee_per_gas : vec nat;
