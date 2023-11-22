@@ -8,8 +8,8 @@ pub use ethers_core as core;
 
 pub use rpc::{call_contract, get_provider, request};
 
-#[ic_cdk_macros::query(name = "__transform_ic_evm_rpc")]
-pub fn transform_evm_rpc(args: TransformArgs) -> HttpResponse {
+#[ic_cdk_macros::query(name = "__ic_evm_transform_json_rpc")]
+pub fn transform_json_rpc(args: TransformArgs) -> HttpResponse {
     HttpResponse {
         status: args.response.status,
         body: args.response.body,

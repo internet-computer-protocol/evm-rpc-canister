@@ -1,8 +1,8 @@
 use cketh_common::eth_rpc::{HttpOutcallError, ProviderError, RpcError, ValidationError};
 use ic_canister_log::log;
 use ic_cdk::api::management_canister::http_request::{
-    http_request as make_http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
-    HttpResponse, TransformContext,
+    CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs,
+    TransformContext,
 };
 use num_traits::ToPrimitive;
 
@@ -19,7 +19,6 @@ pub async fn do_http_request(
         inc_metric!(request_err_no_permission);
         return Err(ProviderError::NoPermission.into());
     }
-    let cycles_available = ic_cdk::api::call::msg_cycles_available128();
     let cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
     let (api, provider) = match source {
         ResolvedSource::Api(api) => (api, None),
@@ -39,6 +38,7 @@ pub async fn do_http_request(
         return Err(ValidationError::HostNotAllowed(host.to_string()).into());
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
+        let cycles_available = ic_cdk::api::call::msg_cycles_available128();
         if cycles_available < cost {
             return Err(ProviderError::TooFewCycles {
                 expected: cost,
@@ -62,7 +62,7 @@ pub async fn do_http_request(
     inc_metric_entry!(host_requests, host.to_string());
     let mut request_headers = vec![HttpHeader {
         name: CONTENT_TYPE_HEADER.to_string(),
-        value: "application/json".to_string(),
+        value: CONTENT_TYPE_VALUE.to_string(),
     }];
     request_headers.extend(api.headers);
     let request = CanisterHttpRequestArgument {
@@ -72,16 +72,25 @@ pub async fn do_http_request(
         headers: request_headers,
         body: Some(json_rpc_payload.as_bytes().to_vec()),
         transform: Some(TransformContext::from_name(
-            "__transform_evm_rpc".to_string(),
+            "__transform_json_rpc".to_string(),
             vec![],
         )),
     };
-    match make_http_request(request, cost).await {
+    match ic_cdk::api::management_canister::http_request::http_request(request, cost).await {
         Ok((response,)) => Ok(response),
         Err((code, message)) => {
             inc_metric!(request_err_http);
             Err(HttpOutcallError::IcError { code, message }.into())
         }
+    }
+}
+
+pub fn do_transform_http_request(args: TransformArgs) -> HttpResponse {
+    HttpResponse {
+        status: args.response.status,
+        body: canonicalize_json(&args.response.body).unwrap_or(args.response.body),
+        // Remove headers (which may contain a timestamp) for consensus
+        headers: vec![],
     }
 }
 
