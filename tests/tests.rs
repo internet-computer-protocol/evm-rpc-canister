@@ -306,7 +306,7 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
 }
 
 #[test]
-fn register_provider() {
+fn should_register_provider() {
     let setup = EvmRpcSetup::new();
     setup.authorize_caller(Auth::RegisterProvider);
 
@@ -372,7 +372,7 @@ fn register_provider() {
 }
 
 #[test]
-fn free_rpc_auth() {
+fn should_query_gas_price_from_free_rpc_provider() {
     let setup = EvmRpcSetup::new();
     setup.authorize_caller(Auth::FreeRpc);
 
