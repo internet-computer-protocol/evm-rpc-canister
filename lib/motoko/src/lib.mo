@@ -28,12 +28,7 @@ module {
         value : Text;
     };
 
-    type ActorSource = {
-        #Custom : { url : Text; headers : ?[HttpHeader] };
-        #Service : { hostname : Text; chain_id : ?Nat64 };
-        #Chain : Nat64;
-        #Provider : Nat64;
-    };
+    type ActorSource = EvmRpc.Source;
 
     public type RpcError = EvmRpc.RpcError;
     public type JsonRpcError = EvmRpc.JsonRpcError;
@@ -50,7 +45,12 @@ module {
         #err : Error;
     };
 
-    public type RpcActor = EvmRpc.Self;
+    public type RpcActor = actor {
+        request : shared (ActorSource, Text, Nat64) -> async {
+            #Ok : Text;
+            #Err : RpcError;
+        };
+    };
 
     public type Provider = {
         #Canister : RpcActor;
@@ -149,10 +149,6 @@ module {
                 };
                 case r r;
             };
-        };
-
-        public func verifyMessageSignature(signedMessage : EvmRpc.SignedMessage) : async Bool {
-            await actor_.verify_message_signature(signedMessage);
         };
     };
 };
