@@ -1,6 +1,6 @@
 use ic_eth::core::types::{RecoveryMessage, Signature};
 
-pub fn do_verify_signature(
+pub fn do_verify_message_signature(
     eth_address: &[u8],
     message: RecoveryMessage,
     signature: Vec<u8>,
@@ -31,12 +31,12 @@ fn test_verify_signature() {
     let s2 = hex::decode("27ae1f90fd65c86b07aae1287dba8715db7e429ff9bf700205cb8ac904c6ba071c8fb7c6f8b5e15338521fee95a452c6a688f1c6fec5eeddbfa680a2abf300341b").unwrap();
 
     // Invalid message
-    assert!(!do_verify_signature(address, m2.clone(), s1.clone()));
+    assert!(!do_verify_message_signature(address, m2.clone(), s1.clone()));
 
     // Invalid signature
-    assert!(!do_verify_signature(address, m1.clone(), s2.clone()));
+    assert!(!do_verify_message_signature(address, m1.clone(), s2.clone()));
 
     // Valid signature
-    assert!(do_verify_signature(address, m1, s1));
-    assert!(do_verify_signature(address, m2, s2));
+    assert!(do_verify_message_signature(address, m1, s1));
+    assert!(do_verify_message_signature(address, m2, s2));
 }
