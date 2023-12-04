@@ -50,12 +50,7 @@ module {
         #err : Error;
     };
 
-    public type RpcActor = actor {
-        request : shared (ActorSource, Text, Nat64) -> async {
-            #Ok : Text;
-            #Err : RpcError;
-        };
-    };
+    public type RpcActor = EvmRpc.Self;
 
     public type Provider = {
         #Canister : RpcActor;
@@ -156,11 +151,8 @@ module {
             };
         };
 
-        // public func gasPrice() : async Nat {
-        //     let result = request("eth_gasPrice", #Array([]), 256);
-        //     // TODO: decode
-        //     assert false;
-        //     0;
-        // };
+        public func verifyMessageSignature(signedMessage : EvmRpc.SignedMessage) : async Bool {
+            await actor_.verify_message_signature(signedMessage);
+        };
     };
 };

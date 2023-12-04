@@ -85,7 +85,7 @@ pub fn verify_message_signature(signed_message: SignedMessage) -> bool {
     do_verify_message_signature(
         &signed_message.address,
         signed_message.message.into(),
-        signed_message.signature,
+        &signed_message.signature,
     )
 }
 

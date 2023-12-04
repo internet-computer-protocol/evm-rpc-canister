@@ -106,9 +106,9 @@ type SendRawTransactionResult = variant {
 };
 type SepoliaProvider = variant { BlockPi; PublicNode; Ankr };
 type SignedMessage = record {
-  signature : vec nat8;
+  signature : text;
   message : Message;
-  address : vec nat8;
+  address : text;
 };
 type Source = variant {
   Custom : record { url : text; headers : opt vec HttpHeader };
