@@ -36,18 +36,18 @@ impl RpcTransport for CanisterTransport {
             EthMainnet(provider) => (
                 ETH_MAINNET_CHAIN_ID,
                 match provider {
-                    EthMainnetService::Ankr => "rpc.ankr.com",
-                    EthMainnetService::BlockPi => "ethereum.blockpi.network",
-                    EthMainnetService::PublicNode => "ethereum.publicnode.com",
-                    EthMainnetService::Cloudflare => "cloudflare-eth.com",
+                    EthMainnetService::Ankr => ANKR_HOSTNAME,
+                    EthMainnetService::BlockPi => BLOCKPI_ETH_MAINNET_HOSTNAME,
+                    EthMainnetService::PublicNode => PUBLICNODE_ETH_MAINNET_HOSTNAME,
+                    EthMainnetService::Cloudflare => CLOUDFLARE_ETH_HOSTNAME,
                 },
             ),
             EthSepolia(provider) => (
                 ETH_SEPOLIA_CHAIN_ID,
                 match provider {
-                    EthSepoliaService::Ankr => "rpc.ankr.com",
-                    EthSepoliaService::BlockPi => "ethereum-sepolia.blockpi.network",
-                    EthSepoliaService::PublicNode => "ethereum-sepolia.publicnode.com",
+                    EthSepoliaService::Ankr => ANKR_HOSTNAME,
+                    EthSepoliaService::BlockPi => BLOCKPI_ETH_SEPOLIA_HOSTNAME,
+                    EthSepoliaService::PublicNode => PUBLICNODE_ETH_SEPOLIA_HOSTNAME,
                 },
             ),
         };
