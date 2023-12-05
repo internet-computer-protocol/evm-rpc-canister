@@ -28,12 +28,7 @@ module {
         value : Text;
     };
 
-    type ActorSource = {
-        #Custom : { url : Text; headers : ?[HttpHeader] };
-        #Service : { hostname : Text; chain_id : ?Nat64 };
-        #Chain : Nat64;
-        #Provider : Nat64;
-    };
+    type ActorSource = EvmRpc.Source;
 
     public type RpcError = EvmRpc.RpcError;
     public type JsonRpcError = EvmRpc.JsonRpcError;
@@ -155,12 +150,5 @@ module {
                 case r r;
             };
         };
-
-        // public func gasPrice() : async Nat {
-        //     let result = request("eth_gasPrice", #Array([]), 256);
-        //     // TODO: decode
-        //     assert false;
-        //     0;
-        // };
     };
 };
