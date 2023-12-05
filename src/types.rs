@@ -306,10 +306,9 @@ impl From<Message> for RecoveryMessage {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct SignedMessage {
-    // TODO: Candid `blob` in place of `vec nat8`
-    pub address: Vec<u8>,
+    pub address: String,
     pub message: Message,
-    pub signature: Vec<u8>,
+    pub signature: String,
 }
 
 pub type RpcResult<T> = Result<T, RpcError>;

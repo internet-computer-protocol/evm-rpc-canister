@@ -106,9 +106,9 @@ type SendRawTransactionResult = variant {
   InsufficientFunds;
 };
 type SignedMessage = record {
-  signature : vec nat8;
+  signature : text;
   message : Message;
-  address : vec nat8;
+  address : text;
 };
 type Source = variant {
   Custom : record { url : text; headers : opt vec HttpHeader };
@@ -164,6 +164,6 @@ service : {
   set_open_rpc_access : (bool) -> ();
   unregister_provider : (nat64) -> (bool);
   update_provider : (UpdateProviderArgs) -> ();
-  verify_signature : (SignedMessage) -> (bool) query;
+  verify_message_signature : (SignedMessage) -> (bool) query;
   withdraw_accumulated_cycles : (nat64, principal) -> ();
 }
