@@ -331,7 +331,7 @@ fn should_register_provider() {
     let a_id = setup
         .register_provider(RegisterProviderArgs {
             chain_id: 1,
-            hostname: "example.com".to_string(),
+            hostname: ANKR_HOSTNAME.to_string(),
             credential_path: "".to_string(),
             credential_headers: None,
             cycles_per_call: 0,
@@ -362,7 +362,7 @@ fn should_register_provider() {
                 provider_id: first_new_id,
                 owner: setup.caller.0,
                 chain_id: 1,
-                hostname: "example.com".to_string(),
+                hostname: ANKR_HOSTNAME.to_string(),
                 cycles_per_call: 0,
                 cycles_per_message_byte: 0,
                 primary: false,
