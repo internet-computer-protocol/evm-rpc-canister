@@ -1,6 +1,6 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use cketh_common::eth_rpc::{ProviderError, RpcError};
-use cketh_common::eth_rpc_client::providers::{EthereumProvider, RpcApi, SepoliaProvider};
+use cketh_common::eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcApi};
 
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_eth::core::types::RecoveryMessage;
@@ -316,8 +316,8 @@ pub type RpcResult<T> = Result<T, RpcError>;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum CandidRpcSource {
-    EthMainnet(Option<EthereumProvider>),
-    EthSepolia(Option<SepoliaProvider>),
+    EthMainnet(Option<EthMainnetService>),
+    EthSepolia(Option<EthSepoliaService>),
 }
 
 pub mod candid_types {

@@ -1,4 +1,4 @@
-use cketh_common::eth_rpc_client::providers::{EthereumProvider, SepoliaProvider};
+use cketh_common::eth_rpc_client::providers::{EthMainnetService, EthSepoliaService};
 
 pub const INGRESS_OVERHEAD_BYTES: u128 = 100;
 pub const INGRESS_MESSAGE_RECEIVED_COST: u128 = 1_200_000;
@@ -16,8 +16,8 @@ pub const DEFAULT_NODES_IN_SUBNET: u32 = 13;
 pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
 
 // Providers used by default (when passing `null` with `CandidRpcSource`)
-pub const DEFAULT_ETHEREUM_PROVIDER: EthereumProvider = EthereumProvider::Ankr;
-pub const DEFAULT_SEPOLIA_PROVIDER: SepoliaProvider = SepoliaProvider::PublicNode;
+pub const DEFAULT_ETHEREUM_PROVIDER: EthMainnetService = EthMainnetService::Ankr;
+pub const DEFAULT_SEPOLIA_PROVIDER: EthSepoliaService = EthSepoliaService::PublicNode;
 
 pub const CONTENT_TYPE_HEADER: &str = "Content-Type";
 pub const CONTENT_TYPE_VALUE: &str = "application/json";

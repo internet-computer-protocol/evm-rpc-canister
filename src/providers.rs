@@ -19,6 +19,14 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             cycles_per_message_byte: 0,
         },
         RegisterProviderArgs {
+            chain_id: ETH_SEPOLIA_CHAIN_ID,
+            hostname: "ethereum.publicnode.com".to_string(),
+            credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
             chain_id: ETH_MAINNET_CHAIN_ID,
             hostname: "ethereum.blockpi.network".to_string(),
             credential_path: "/v1/rpc/public".to_string(),

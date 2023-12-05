@@ -7,7 +7,7 @@ use cketh_common::{
         SendRawTransactionResult, ValidationError,
     },
     eth_rpc_client::{
-        providers::{EthereumProvider, RpcApi, RpcNodeProvider, SepoliaProvider},
+        providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
         requests::GetTransactionCountParams,
         EthRpcClient as CkEthRpcClient, MultiCallError, RpcTransport,
     },
@@ -30,23 +30,24 @@ impl RpcTransport for CanisterTransport {
         METADATA.with(|m| m.borrow().get().nodes_in_subnet)
     }
 
-    fn resolve_api(provider: &RpcNodeProvider) -> Result<RpcApi, ProviderError> {
-        use RpcNodeProvider::*;
+    fn resolve_api(provider: &RpcService) -> Result<RpcApi, ProviderError> {
+        use RpcService::*;
         let (chain_id, hostname) = match provider {
-            Ethereum(provider) => (
+            EthMainnet(provider) => (
                 ETH_MAINNET_CHAIN_ID,
                 match provider {
-                    EthereumProvider::Ankr => "rpc.ankr.com",
-                    EthereumProvider::BlockPi => "ethereum.blockpi.network",
-                    EthereumProvider::Cloudflare => "cloudflare-eth.com",
+                    EthMainnetService::Ankr => "rpc.ankr.com",
+                    EthMainnetService::BlockPi => "ethereum.blockpi.network",
+                    EthMainnetService::PublicNode => "ethereum.publicnode.com",
+                    EthMainnetService::Cloudflare => "cloudflare-eth.com",
                 },
             ),
-            Sepolia(provider) => (
+            EthSepolia(provider) => (
                 ETH_SEPOLIA_CHAIN_ID,
                 match provider {
-                    SepoliaProvider::Ankr => "rpc.ankr.com",
-                    SepoliaProvider::BlockPi => "ethereum-sepolia.blockpi.network",
-                    SepoliaProvider::PublicNode => "ethereum-sepolia.publicnode.com",
+                    EthSepoliaService::Ankr => "rpc.ankr.com",
+                    EthSepoliaService::BlockPi => "ethereum-sepolia.blockpi.network",
+                    EthSepoliaService::PublicNode => "ethereum-sepolia.publicnode.com",
                 },
             ),
         };
@@ -58,7 +59,7 @@ impl RpcTransport for CanisterTransport {
     }
 
     async fn http_request(
-        _provider: &RpcNodeProvider,
+        _provider: &RpcService,
         request: CanisterHttpRequestArgument,
         cost: u128,
     ) -> CallResult<HttpResponse> {
@@ -76,14 +77,14 @@ fn get_rpc_client(source: CandidRpcSource) -> RpcResult<CkEthRpcClient<CanisterT
     }
     Ok(match source {
         CandidRpcSource::EthMainnet(service) => CkEthRpcClient::new(
-            EthereumNetwork::Ethereum,
+            EthereumNetwork::Mainnet,
             Some(vec![service.unwrap_or(DEFAULT_ETHEREUM_PROVIDER)])
-                .map(|p| p.into_iter().map(RpcNodeProvider::Ethereum).collect()),
+                .map(|p| p.into_iter().map(RpcService::EthMainnet).collect()),
         ),
         CandidRpcSource::EthSepolia(service) => CkEthRpcClient::new(
             EthereumNetwork::Sepolia,
             Some(vec![service.unwrap_or(DEFAULT_SEPOLIA_PROVIDER)])
-                .map(|p| p.into_iter().map(RpcNodeProvider::Sepolia).collect()),
+                .map(|p| p.into_iter().map(RpcService::EthSepolia).collect()),
         ),
     })
 }
