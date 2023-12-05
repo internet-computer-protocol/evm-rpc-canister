@@ -10,10 +10,11 @@ type BlockTag = variant {
   Pending;
 };
 type CandidRpcSource = variant {
-  EthSepolia : opt SepoliaProvider;
-  EthMainnet : opt EthereumProvider;
+  EthSepolia : opt EthSepoliaService;
+  EthMainnet : opt EthMainnetService;
 };
-type EthereumProvider = variant { BlockPi; Cloudflare; Ankr };
+type EthMainnetService = variant { BlockPi; Cloudflare; PublicNode; Ankr };
+type EthSepoliaService = variant { BlockPi; PublicNode; Ankr };
 type FeeHistory = record {
   reward : vec vec nat;
   base_fee_per_gas : vec nat;
@@ -104,7 +105,6 @@ type SendRawTransactionResult = variant {
   NonceTooHigh;
   InsufficientFunds;
 };
-type SepoliaProvider = variant { BlockPi; PublicNode; Ankr };
 type SignedMessage = record {
   signature : text;
   message : Message;

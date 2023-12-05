@@ -46,7 +46,7 @@ ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "re
 assert_matches = "1.5"
 
 [workspace.dependencies]
-candid = { version = "0.9", features = ["parser"] }
+candid = { version = "0.9" }
 ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
@@ -59,7 +59,7 @@ ic-cdk-bindgen = "0.1"
 ic-eth = { path = "lib/rust" }
 
 [patch.crates-io]
-wasm-bindgen = { git = "https://github.com/rvanasa/wasm-bindgen", rev = "d50634da14c5bd031edd4f81ab4bf345cda2bc39" }
+wasm-bindgen = { git = "https://github.com/rvanasa/wasm-bindgen", rev = "62965b0749ca68237e2ab3da487c141a5b3dbd2d" }
 
 [workspace]
 members = ["lib/rust", "e2e/rust"]
