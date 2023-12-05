@@ -92,7 +92,7 @@ actor class Main() {
             })
         );
 
-        // Valid signature
+        // Valid signatures
         assert (
             await EvmRpcCanister.verify_message_signature({
                 address = a1;
