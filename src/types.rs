@@ -333,7 +333,7 @@ pub mod candid_types {
 
     pub use cketh_common::eth_rpc::Hash;
 
-    #[derive(Clone, Debug, CandidType, Deserialize)]
+    #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
     pub enum BlockSpec {
         Number(u128),
         Tag(BlockTag),
@@ -349,7 +349,7 @@ pub mod candid_types {
         }
     }
 
-    #[derive(Clone, Debug, CandidType, Deserialize, Default)]
+    #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
     pub enum BlockTag {
         #[default]
         Latest,
@@ -372,7 +372,7 @@ pub mod candid_types {
         }
     }
 
-    #[derive(Clone, Debug, CandidType, Deserialize)]
+    #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
     pub struct GetLogsArgs {
         pub from_block: Option<BlockSpec>,
         pub to_block: Option<BlockSpec>,
@@ -403,7 +403,7 @@ pub mod candid_types {
         }
     }
 
-    #[derive(Clone, Debug, CandidType, Deserialize)]
+    #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
     pub struct TransactionReceipt {
         pub block_hash: Hash,
         pub block_number: BlockNumber,
@@ -426,7 +426,7 @@ pub mod candid_types {
         }
     }
 
-    #[derive(Clone, Debug, CandidType, Deserialize)]
+    #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
     pub struct FeeHistoryArgs {
         pub block_count: u128,
         pub newest_block: BlockSpec,
@@ -443,7 +443,7 @@ pub mod candid_types {
         }
     }
 
-    #[derive(Clone, Debug, CandidType, Deserialize)]
+    #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
     pub struct GetTransactionCountArgs {
         pub address: String,
         pub block: BlockSpec,
