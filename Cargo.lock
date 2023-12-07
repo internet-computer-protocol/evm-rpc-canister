@@ -512,7 +512,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f404657a7ea7b5249e36808dff544bc88a28f26e0ac40009f674b7a009d14be3"
 dependencies = [
  "once_cell",
- "proc-macro-crate 2.0.0",
+ "proc-macro-crate 2.0.1",
  "proc-macro2",
  "quote",
  "syn 2.0.39",
@@ -2359,7 +2359,7 @@ dependencies = [
 [[package]]
 name = "ic-base-types"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "base32",
  "byte-unit",
@@ -2402,7 +2402,7 @@ dependencies = [
 [[package]]
 name = "ic-btc-types-internal"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "candid",
  "ic-btc-interface",
@@ -2520,7 +2520,7 @@ dependencies = [
 [[package]]
 name = "ic-canisters-http-types"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "candid",
  "serde",
@@ -2652,7 +2652,7 @@ dependencies = [
 [[package]]
 name = "ic-cketh-minter"
 version = "0.1.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "askama",
  "async-trait",
@@ -2787,7 +2787,7 @@ dependencies = [
 [[package]]
 name = "ic-crypto-ecdsa-secp256k1"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "k256",
  "lazy_static",
@@ -3106,7 +3106,7 @@ dependencies = [
 [[package]]
 name = "ic-crypto-internal-sha2"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "sha2 0.10.8",
 ]
@@ -3272,7 +3272,7 @@ dependencies = [
 [[package]]
 name = "ic-crypto-sha2"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "ic-crypto-internal-sha2 0.9.0",
 ]
@@ -3280,7 +3280,7 @@ dependencies = [
 [[package]]
 name = "ic-crypto-sha3"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "sha3 0.9.1",
 ]
@@ -3494,7 +3494,7 @@ dependencies = [
 [[package]]
 name = "ic-error-types"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "ic-utils 0.9.0",
  "serde",
@@ -3597,7 +3597,7 @@ dependencies = [
 [[package]]
 name = "ic-ic00-types"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "candid",
  "ic-base-types 0.9.0",
@@ -3887,7 +3887,7 @@ dependencies = [
 [[package]]
 name = "ic-protobuf"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "bincode",
  "candid",
@@ -4209,7 +4209,7 @@ dependencies = [
 [[package]]
 name = "ic-sys"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "hex",
  "ic-crypto-sha2 0.9.0",
@@ -4351,7 +4351,7 @@ dependencies = [
 [[package]]
 name = "ic-utils"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "cvt",
  "hex",
@@ -4368,7 +4368,7 @@ dependencies = [
 [[package]]
 name = "ic-utils-ensure"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 
 [[package]]
 name = "ic-utils-lru-cache"
@@ -4446,7 +4446,7 @@ dependencies = [
 [[package]]
 name = "icrc-ledger-client"
 version = "0.1.2"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "async-trait",
  "candid",
@@ -4457,7 +4457,7 @@ dependencies = [
 [[package]]
 name = "icrc-ledger-client-cdk"
 version = "0.1.2"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "async-trait",
  "candid",
@@ -4483,7 +4483,7 @@ dependencies = [
 [[package]]
 name = "icrc-ledger-types"
 version = "0.1.4"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "base32",
  "candid",
@@ -4989,9 +4989,9 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "0.8.9"
+version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3dce281c5e46beae905d4de1870d8b1509a9142b62eedf18b443b011ca8343d0"
+checksum = "8f3d0b296e374a4e6f3c7b0a1f5a51d748a0d34c85e7dc48fc3fa9a87657fe09"
 dependencies = [
  "libc",
  "wasi 0.11.0+wasi-snapshot-preview1",
@@ -5254,7 +5254,7 @@ version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c11e44798ad209ccdd91fc192f0526a369a01234f7373e1b141c96d7cee4f0e"
 dependencies = [
- "proc-macro-crate 2.0.0",
+ "proc-macro-crate 2.0.1",
  "proc-macro2",
  "quote",
  "syn 2.0.39",
@@ -5407,7 +5407,7 @@ version = "3.6.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be30eaf4b0a9fba5336683b38de57bb86d179a35862ba6bfcf57625d006bde5b"
 dependencies = [
- "proc-macro-crate 2.0.0",
+ "proc-macro-crate 2.0.1",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -5569,7 +5569,7 @@ dependencies = [
 [[package]]
 name = "phantom_newtype"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#762850168e8fa6168ce6d4255de86e39b24a4f36"
+source = "git+https://github.com/rvanasa/ic?branch=evm-rpc-canister#72e704b1b09b2eb6e94b605d2773335bcbaac439"
 dependencies = [
  "candid",
  "serde",
@@ -5784,11 +5784,12 @@ dependencies = [
 
 [[package]]
 name = "proc-macro-crate"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e8366a6159044a37876a2b9817124296703c586a5c92e2c53751fa06d8d43e8"
+checksum = "97dc5fea232fc28d2f597b37c4876b348a40e33f3b02cc975c8d006d78d94b1a"
 dependencies = [
- "toml_edit 0.20.7",
+ "toml_datetime",
+ "toml_edit 0.20.2",
 ]
 
 [[package]]
@@ -6251,9 +6252,9 @@ dependencies = [
 
 [[package]]
 name = "ring"
-version = "0.17.6"
+version = "0.17.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "684d5e6e18f669ccebf64a92236bb7db9a34f07be010e3627368182027180866"
+checksum = "688c63d65483050968b2a8937f7995f443e27041a0f7700aa59b0822aedebb74"
 dependencies = [
  "cc",
  "getrandom 0.2.11",
@@ -6426,7 +6427,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "629648aced5775d558af50b2b4c7b02983a04b312126d45eeead26e7caa498b9"
 dependencies = [
  "log",
- "ring 0.17.6",
+ "ring 0.17.7",
  "rustls-webpki",
  "sct",
 ]
@@ -6437,7 +6438,7 @@ version = "0.101.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b6275d1ee7a1cd780b64aca7726599a1dbc893b1e64144529e55c3c2f745765"
 dependencies = [
- "ring 0.17.6",
+ "ring 0.17.7",
  "untrusted 0.9.0",
 ]
 
@@ -6495,7 +6496,7 @@ version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "da046153aa2352493d6cb7da4b6e5c0c057d8a1d0a9aa8560baffdd945acd414"
 dependencies = [
- "ring 0.17.6",
+ "ring 0.17.7",
  "untrusted 0.9.0",
 ]
 
@@ -7376,9 +7377,9 @@ dependencies = [
 
 [[package]]
 name = "toml_datetime"
-version = "0.6.5"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3550f4e9685620ac18a50ed434eb3aec30db8ba93b0287467bca5826ea25baf1"
+checksum = "7cda73e2f1397b1262d6dfdcef8aafae14d1de7748d66822d3bfeeb6d03e5e4b"
 
 [[package]]
 name = "toml_edit"
@@ -7393,9 +7394,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.20.7"
+version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70f427fce4d84c72b5b732388bf4a9f4531b53f74e2887e3ecb2481f68f66d81"
+checksum = "396e4d48bbb2b7554c944bde63101b5ae446cff6ec4a24227428f15eb72ef338"
 dependencies = [
  "indexmap 2.1.0",
  "toml_datetime",
@@ -8210,9 +8211,9 @@ checksum = "dff9641d1cd4be8d1a070daf9e3773c5f67e78b4d9d42263020c057706765c04"
 
 [[package]]
 name = "winnow"
-version = "0.5.24"
+version = "0.5.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0383266b19108dfc6314a56047aa545a1b4d1be60e799b4dbdd407b56402704b"
+checksum = "b7e87b8dfbe3baffbe687eef2e164e32286eff31a5ee16463ce03d991643ec94"
 dependencies = [
  "memchr",
 ]
@@ -8323,18 +8324,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.7.28"
+version = "0.7.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d6f15f7ade05d2a4935e34a457b936c23dc70a05cc1d97133dc99e7a3fe0f0e"
+checksum = "5d075cf85bbb114e933343e087b92f2146bac0d55b534cbb8188becf0039948e"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.7.28"
+version = "0.7.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbbad221e3f78500350ecbd7dfa4e63ef945c05f4c61cb7f4d3f84cd0bba649b"
+checksum = "86cd5ca076997b97ef09d3ad65efe811fa68c9e874cb636ccb211223a813b0c2"
 dependencies = [
  "proc-macro2",
  "quote",
