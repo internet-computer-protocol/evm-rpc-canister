@@ -331,18 +331,15 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
     }
 
     pub fn wait(self) -> R {
-        Decode!(
-            &assert_reply(
-                self.setup
-                    .env
-                    .await_ingress(self.message_id, MAX_TICKS)
-                    .unwrap_or_else(|err| {
-                        panic!("error during update call to `{}()`: {}", self.method, err)
-                    })
-            ),
-            R
-        )
-        .unwrap()
+        let candid = &assert_reply(
+            self.setup
+                .env
+                .await_ingress(self.message_id, MAX_TICKS)
+                .unwrap_or_else(|err| {
+                    panic!("error during update call to `{}()`: {}", self.method, err)
+                }),
+        );
+        Decode!(candid, R).expect("error while decoding Candid response from update call")
     }
 }
 
