@@ -4,7 +4,7 @@ use ic_cdk::api::management_canister::http_request::HttpHeader;
 use crate::*;
 
 pub fn validate_hostname(hostname: &str) -> Result<(), ValidationError> {
-    if !SERVICE_HOSTS_ALLOWLIST.contains(&hostname) {
+    if SERVICE_HOSTS_BLOCKLIST.contains(&hostname) {
         Err(ValidationError::HostNotAllowed(hostname.to_string()))
     } else {
         Ok(())
