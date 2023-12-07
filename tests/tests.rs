@@ -121,18 +121,12 @@ impl EvmRpcSetup {
     }
 
     fn call_query<R: CandidType + DeserializeOwned>(&self, method: &str, input: Vec<u8>) -> R {
-        Decode!(
-            &assert_reply(
-                self.env
-                    .query_as(self.caller, self.canister_id, method, input,)
-                    .unwrap_or_else(|err| panic!(
-                        "error during query call to `{}()`: {}",
-                        method, err
-                    ))
-            ),
-            R
-        )
-        .unwrap()
+        let candid = &assert_reply(
+            self.env
+                .query_as(self.caller, self.canister_id, method, input)
+                .unwrap_or_else(|err| panic!("error during query call to `{}()`: {}", method, err)),
+        );
+        Decode!(candid, R).expect("error while decoding Candid response from query call")
     }
 
     pub fn tick_until_http_request(&self) {
