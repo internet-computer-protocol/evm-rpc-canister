@@ -25,34 +25,4 @@ pub const CONTENT_TYPE_VALUE: &str = "application/json";
 pub const ETH_MAINNET_CHAIN_ID: u64 = 1;
 pub const ETH_SEPOLIA_CHAIN_ID: u64 = 11155111;
 
-pub const SERVICE_HOSTS_ALLOWLIST: &[&str] = &[
-    "cloudflare-eth.com",
-    "ethereum.publicnode.com",
-    "ethereum-goerli.publicnode.com",
-    "ethereum-sepolia.publicnode.com",
-    "ethereum.blockpi.network",
-    "ethereum-sepolia.blockpi.network",
-    "eth-mainnet.g.alchemy.com",
-    "eth-goerli.g.alchemy.com",
-    "rpc.flashbots.net",
-    "eth-mainnet.blastapi.io",
-    "ethereumnodelight.app.runonflux.io",
-    "eth.nownodes.io",
-    "rpc.ankr.com",
-    "mainnet.infura.io",
-    "eth.getblock.io",
-    "rpc.kriptonio.com",
-    "rpc.sepolia.org",
-    "api.0x.org",
-    "erigon-mainnet--rpc.datahub.figment.io",
-    "archivenode.io",
-    "eth-mainnet.nodereal.io",
-    "ethereum-mainnet.s.chainbase.online",
-    "eth.llamarpc.com",
-    "ethereum-mainnet-rpc.allthatnode.com",
-    "api.zmok.io",
-    "in-light.eth.linkpool.iono",
-    "api.mycryptoapi.com",
-    "mainnet.eth.cloud.ava.dono",
-    "eth-mainnet.gateway.pokt.network",
-];
+pub const SERVICE_HOSTS_BLOCKLIST: &[&str] = &[];
