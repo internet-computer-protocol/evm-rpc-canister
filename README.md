@@ -18,7 +18,9 @@ Beyond the Ethereum blockchain, this canister also supports Polygon, Avalanche, 
 
 ## Canisters
 
-* Staging (only use for testing on the mainnet): [a6d44-nyaaa-aaaap-abp7q-cai](https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.ic0.app/?id=a6d44-nyaaa-aaaap-abp7q-cai)
+* Test canisters (no API keys):
+  * Standard subnet (13 nodes): [`a6d44-nyaaa-aaaap-abp7q-cai`](https://dashboard.internetcomputer.org/canister/a6d44-nyaaa-aaaap-abp7q-cai)
+  * Fiduciary subnet (28 nodes): [`xhcuo-6yaaa-aaaar-qacqq-cai`](https://dashboard.internetcomputer.org/canister/xhcuo-6yaaa-aaaar-qacqq-cai)
 
 ## Quick Start
 
