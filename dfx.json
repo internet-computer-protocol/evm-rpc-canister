@@ -9,6 +9,11 @@
         "output": "lib/motoko/src/declarations"
       }
     },
+    "evm_rpc_fiduciary": {
+      "candid": "candid/evm_rpc.did",
+      "type": "rust",
+      "package": "evm_rpc"
+    },
     "e2e_rust": {
       "dependencies": ["evm_rpc"],
       "candid": "e2e/rust/e2e_rust.did",

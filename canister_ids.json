@@ -1,5 +1,8 @@
 {
   "evm_rpc": {
     "ic": "a6d44-nyaaa-aaaap-abp7q-cai"
+  },
+  "evm_rpc_fiduciary": {
+    "ic": "xhcuo-6yaaa-aaaar-qacqq-cai"
   }
 }
