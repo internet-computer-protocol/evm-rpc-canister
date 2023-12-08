@@ -221,6 +221,17 @@ impl EvmRpcSetup {
             Encode!(&source, &address).unwrap(),
         )
     }
+
+    pub fn eth_get_transaction_count(
+        &self,
+        source: CandidRpcSource,
+        address: &str,
+    ) -> CallFlow<RpcResult<Nat>> {
+        self.call_update(
+            "eth_get_transaction_count",
+            Encode!(&source, &address).unwrap(),
+        )
+    }
 }
 
 pub struct CallFlow<R> {
@@ -526,7 +537,7 @@ fn should_canonicalize_json_response() {
 #[test]
 fn eth_get_logs_should_succeed() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-    let logs = setup
+    let result = setup
         .eth_get_logs(
             CandidRpcSource::EthMainnet(None),
             candid_types::GetLogsArgs {
@@ -538,13 +549,13 @@ fn eth_get_logs_should_succeed() {
         )
         .mock_http(MockOutcallBuilder::new(200, r#"{"id":5,"jsonrpc":"2.0","result":[{"address":"0xdac17f958d2ee523a2206206994597c13d831ec7","topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef","0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43","0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"],"data":"0x000000000000000000000000000000000000000000000000000000003b9c6433","blockNumber":"0x11dc77e","transactionHash":"0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678","transactionIndex":"0x65","blockHash":"0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629","logIndex":"0xe8","removed":false}]}"#))
         .wait().unwrap();
-    assert_eq!(logs.len(), 1);
+    assert_eq!(result.len(), 1);
 }
 
 #[test]
 fn eth_get_block_by_number_should_succeed() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-    let receipt = setup
+    let result = setup
         .eth_get_block_by_number(
             CandidRpcSource::EthMainnet(None),
             candid_types::BlockSpec::Tag(candid_types::BlockTag::Latest),
@@ -552,12 +563,42 @@ fn eth_get_block_by_number_should_succeed() {
         .mock_http(MockOutcallBuilder::new(200, "{\"jsonrpc\":\"2.0\",\"result\":{\"baseFeePerGas\":\"0xd7232aa34\",\"difficulty\":\"0x0\",\"extraData\":\"0x546974616e2028746974616e6275696c6465722e78797a29\",\"gasLimit\":\"0x1c9c380\",\"gasUsed\":\"0xa768c4\",\"hash\":\"0xc3674be7b9d95580d7f23c03d32e946f2b453679ee6505e3a778f003c5a3cfae\",\"logsBloom\":\"0x3e6b8420e1a13038902c24d6c2a9720a7ad4860cdc870cd5c0490011e43631134f608935bd83171247407da2c15d85014f9984608c03684c74aad48b20bc24022134cdca5f2e9d2dee3b502a8ccd39eff8040b1d96601c460e119c408c620b44fa14053013220847045556ea70484e67ec012c322830cf56ef75e09bd0db28a00f238adfa587c9f80d7e30d3aba2863e63a5cad78954555966b1055a4936643366a0bb0b1bac68d0e6267fc5bf8304d404b0c69041125219aa70562e6a5a6362331a414a96d0716990a10161b87dd9568046a742d4280014975e232b6001a0360970e569d54404b27807d7a44c949ac507879d9d41ec8842122da6772101bc8b\",\"miner\":\"0x388c818ca8b9251b393131c08a736a67ccb19297\",\"mixHash\":\"0x516a58424d4883a3614da00a9c6f18cd5cd54335a08388229a993a8ecf05042f\",\"nonce\":\"0x0000000000000000\",\"number\":\"0x11db01d\",\"parentHash\":\"0x43325027f6adf9befb223f8ae80db057daddcd7b48e41f60cd94bfa8877181ae\",\"receiptsRoot\":\"0x66934c3fd9c547036fe0e56ad01bc43c84b170be7c4030a86805ddcdab149929\",\"sha3Uncles\":\"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347\",\"size\":\"0xcd35\",\"stateRoot\":\"0x13552447dd62f11ad885f21a583c4fa34144efe923c7e35fb018d6710f06b2b6\",\"timestamp\":\"0x656f96f3\",\"totalDifficulty\":\"0xc70d815d562d3cfa955\",\"withdrawalsRoot\":\"0xecae44b2c53871003c5cc75285995764034c9b5978a904229d36c1280b141d48\"},\"id\":0}"))
         .wait().unwrap();
     assert_eq!(
-        receipt,
+        result,
         Block {
             number: BlockNumber::new(18_722_845),
             base_fee_per_gas: Wei::new(57_750_497_844),
         }
     );
+}
+
+#[test]
+fn eth_get_transaction_receipt_should_succeed() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_get_transaction_receipt(
+            CandidRpcSource::EthMainnet(None),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .mock_http(MockOutcallBuilder::new(200, "{\"jsonrpc\":\"2.0\",\"result\":{\"baseFeePerGas\":\"0xd7232aa34\",\"difficulty\":\"0x0\",\"extraData\":\"0x546974616e2028746974616e6275696c6465722e78797a29\",\"gasLimit\":\"0x1c9c380\",\"gasUsed\":\"0xa768c4\",\"hash\":\"0xc3674be7b9d95580d7f23c03d32e946f2b453679ee6505e3a778f003c5a3cfae\",\"logsBloom\":\"0x3e6b8420e1a13038902c24d6c2a9720a7ad4860cdc870cd5c0490011e43631134f608935bd83171247407da2c15d85014f9984608c03684c74aad48b20bc24022134cdca5f2e9d2dee3b502a8ccd39eff8040b1d96601c460e119c408c620b44fa14053013220847045556ea70484e67ec012c322830cf56ef75e09bd0db28a00f238adfa587c9f80d7e30d3aba2863e63a5cad78954555966b1055a4936643366a0bb0b1bac68d0e6267fc5bf8304d404b0c69041125219aa70562e6a5a6362331a414a96d0716990a10161b87dd9568046a742d4280014975e232b6001a0360970e569d54404b27807d7a44c949ac507879d9d41ec8842122da6772101bc8b\",\"miner\":\"0x388c818ca8b9251b393131c08a736a67ccb19297\",\"mixHash\":\"0x516a58424d4883a3614da00a9c6f18cd5cd54335a08388229a993a8ecf05042f\",\"nonce\":\"0x0000000000000000\",\"number\":\"0x11db01d\",\"parentHash\":\"0x43325027f6adf9befb223f8ae80db057daddcd7b48e41f60cd94bfa8877181ae\",\"receiptsRoot\":\"0x66934c3fd9c547036fe0e56ad01bc43c84b170be7c4030a86805ddcdab149929\",\"sha3Uncles\":\"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347\",\"size\":\"0xcd35\",\"stateRoot\":\"0x13552447dd62f11ad885f21a583c4fa34144efe923c7e35fb018d6710f06b2b6\",\"timestamp\":\"0x656f96f3\",\"totalDifficulty\":\"0xc70d815d562d3cfa955\",\"withdrawalsRoot\":\"0xecae44b2c53871003c5cc75285995764034c9b5978a904229d36c1280b141d48\"},\"id\":0}"))
+        .wait().unwrap().expect("receipt was None");
+    assert_eq!(result.block_number, BlockNumber::new(18_515_371));
+}
+
+#[test]
+fn eth_get_transaction_count_should_succeed() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_get_transaction_count(
+            CandidRpcSource::EthMainnet(None),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .mock_http(MockOutcallBuilder::new(
+            200,
+            r#"{"jsonrpc":"2.0","id":1,"result":"0x1"}"#,
+        ))
+        .wait()
+        .unwrap();
+    assert_eq!(result, 1);
 }
 
 #[test]

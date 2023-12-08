@@ -1,5 +1,5 @@
 type Auth = variant { Rpc; RegisterProvider; FreeRpc; ManageService };
-type Block = record { baseFeePerGas : nat; number : nat };
+type Block = record { baseFeePerGas : text; number : text };
 type BlockSpec = variant { Tag : BlockTag; Number : nat };
 type BlockTag = variant {
   Earliest;
@@ -16,9 +16,9 @@ type CandidRpcSource = variant {
 type EthMainnetService = variant { BlockPi; Cloudflare; PublicNode; Ankr };
 type EthSepoliaService = variant { BlockPi; PublicNode; Ankr };
 type FeeHistory = record {
-  reward : vec vec nat;
-  base_fee_per_gas : vec nat;
-  oldest_block : nat;
+  reward : vec vec text;
+  base_fee_per_gas : vec text;
+  oldest_block : text;
 };
 type FeeHistoryArgs = record {
   block_count : nat;
@@ -45,10 +45,10 @@ type JsonRpcError = record { code : int64; message : text };
 type LogEntry = record {
   transaction_hash : opt vec nat8;
   block_hash : opt vec nat8;
-  log_index : opt nat;
+  log_index : opt text;
   data : vec nat8;
-  transaction_index : opt nat;
-  block_number : opt nat;
+  transaction_index : opt text;
+  block_number : opt text;
   topics : vec vec nat8;
   address : vec nat8;
   removed : bool;
@@ -121,7 +121,7 @@ type TransactionReceipt = record {
   status : TransactionStatus;
   transaction_hash : vec nat8;
   block_hash : vec nat8;
-  block_number : nat;
+  block_number : text;
   gas_used : nat;
 };
 type TransactionStatus = variant { Success; Failure };
