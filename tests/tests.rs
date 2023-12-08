@@ -590,7 +590,7 @@ fn eth_get_transaction_count_should_succeed() {
     let result = setup
         .eth_get_transaction_count(
             CandidRpcSource::EthMainnet(None),
-            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+            "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         )
         .mock_http(MockOutcallBuilder::new(
             200,
