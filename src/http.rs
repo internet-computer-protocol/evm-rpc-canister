@@ -32,7 +32,7 @@ pub async fn do_http_request(
         Some(host) => host,
         None => return Err(ValidationError::UrlParseError(api.url).into()),
     };
-    if !SERVICE_HOSTS_ALLOWLIST.contains(&host) {
+    if SERVICE_HOSTS_BLOCKLIST.contains(&host) {
         log!(INFO, "host not allowed: {}", host);
         inc_metric!(request_err_host_not_allowed);
         return Err(ValidationError::HostNotAllowed(host.to_string()).into());
