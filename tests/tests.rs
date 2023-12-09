@@ -509,6 +509,22 @@ fn mock_request_should_fail_with_request_body() {
 }
 
 #[test]
+fn should_decode_checked_amount() {
+    use candid::{CandidType, Decode, Encode};
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
+    pub struct Struct {
+        #[serde(rename = "fieldName")]
+        pub field_name: Wei,
+    }
+    let value = Struct {
+        field_name: Wei::new(123),
+    };
+    assert_eq!(Decode!(&Encode!(&value).unwrap(), Struct).unwrap(), value);
+}
+
+#[test]
 fn should_canonicalize_json_response() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let responses = [
