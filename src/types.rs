@@ -19,6 +19,7 @@ pub enum Source {
     Provider(u64),
     Service {
         hostname: String,
+        #[serde(rename = "chainId")]
         chain_id: Option<u64>,
     },
     Custom {
@@ -199,11 +200,15 @@ impl BoundedStorable for PrincipalStorable {
 
 #[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize)]
 pub struct ProviderView {
+    #[serde(rename = "providerId")]
     pub provider_id: u64,
     pub owner: Principal,
+    #[serde(rename = "chainId")]
     pub chain_id: u64,
     pub hostname: String,
+    #[serde(rename = "cyclesPerCall")]
     pub cycles_per_call: u64,
+    #[serde(rename = "cyclesPerMessageByte")]
     pub cycles_per_message_byte: u64,
     pub primary: bool,
 }
@@ -224,35 +229,52 @@ impl From<Provider> for ProviderView {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct RegisterProviderArgs {
+    #[serde(rename = "chainId")]
     pub chain_id: u64,
     pub hostname: String,
+    #[serde(rename = "credentialPath")]
     pub credential_path: String,
+    #[serde(rename = "credentialHeaders")]
     pub credential_headers: Option<Vec<HttpHeader>>,
+    #[serde(rename = "cyclesPerCall")]
     pub cycles_per_call: u64,
+    #[serde(rename = "cyclesPerMessageByte")]
     pub cycles_per_message_byte: u64,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct UpdateProviderArgs {
+    #[serde(rename = "providerId")]
     pub provider_id: u64,
     pub hostname: Option<String>,
+    #[serde(rename = "credentialPath")]
     pub credential_path: Option<String>,
+    #[serde(rename = "credentialHeaders")]
     pub credential_headers: Option<Vec<HttpHeader>>,
+    #[serde(rename = "cyclesPerCall")]
     pub cycles_per_call: Option<u64>,
+    #[serde(rename = "cyclesPerMessageByte")]
     pub cycles_per_message_byte: Option<u64>,
     pub primary: Option<bool>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Provider {
+    #[serde(rename = "providerId")]
     pub provider_id: u64,
     pub owner: Principal,
+    #[serde(rename = "chainId")]
     pub chain_id: u64,
     pub hostname: String,
+    #[serde(rename = "credentialPath")]
     pub credential_path: String,
+    #[serde(rename = "credentialHeaders")]
     pub credential_headers: Vec<HttpHeader>,
+    #[serde(rename = "cyclesPerCall")]
     pub cycles_per_call: u64,
+    #[serde(rename = "cyclesPerMessageByte")]
     pub cycles_per_message_byte: u64,
+    #[serde(rename = "cyclesOwed")]
     pub cycles_owed: u128,
     pub primary: bool,
 }
@@ -374,7 +396,9 @@ pub mod candid_types {
 
     #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
     pub struct GetLogsArgs {
+        #[serde(rename = "fromBlock")]
         pub from_block: Option<BlockSpec>,
+        #[serde(rename = "toBlock")]
         pub to_block: Option<BlockSpec>,
         pub addresses: Vec<String>,
         pub topics: Option<Vec<String>>,
@@ -405,11 +429,16 @@ pub mod candid_types {
 
     #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
     pub struct TransactionReceipt {
+        #[serde(rename = "blockHash")]
         pub block_hash: Hash,
+        #[serde(rename = "blockNumber")]
         pub block_number: BlockNumber,
+        #[serde(rename = "effectiveGasPrice")]
         pub effective_gas_price: candid::Nat,
+        #[serde(rename = "gasUsed")]
         pub gas_used: candid::Nat,
         pub status: TransactionStatus,
+        #[serde(rename = "transactionHash")]
         pub transaction_hash: Hash,
     }
 
@@ -428,8 +457,11 @@ pub mod candid_types {
 
     #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
     pub struct FeeHistoryArgs {
+        #[serde(rename = "blockCount")]
         pub block_count: u128,
+        #[serde(rename = "newestBlock")]
         pub newest_block: BlockSpec,
+        #[serde(rename = "rewardPercentiles")]
         pub reward_percentiles: Option<Vec<u8>>,
     }
 
