@@ -85,8 +85,8 @@ type RejectionCode = variant {
   SysFatal;
   CanisterReject;
 };
-type Result = variant { Ok : Block; Err : RpcError };
-type Result_1 = variant { Ok : opt FeeHistory; Err : RpcError };
+type Result = variant { Ok : opt FeeHistory; Err : RpcError };
+type Result_1 = variant { Ok : Block; Err : RpcError };
 type Result_2 = variant { Ok : vec LogEntry; Err : RpcError };
 type Result_3 = variant { Ok : nat; Err : RpcError };
 type Result_4 = variant { Ok : opt TransactionReceipt; Err : RpcError };
@@ -144,26 +144,26 @@ type ValidationError = variant {
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
-  eth_getBlockByNumber : (CandidRpcSource, BlockSpec) -> (Result);
-  eth_getFeeHistory : (CandidRpcSource, FeeHistoryArgs) -> (Result_1);
-  eth_getLogs : (CandidRpcSource, GetLogsArgs) -> (Result_2);
-  eth_getTransactionCount : (CandidRpcSource, GetTransactionCountArgs) -> (
+  eth_fee_history : (CandidRpcSource, FeeHistoryArgs) -> (Result);
+  eth_get_block_by_number : (CandidRpcSource, BlockSpec) -> (Result_1);
+  eth_get_logs : (CandidRpcSource, GetLogsArgs) -> (Result_2);
+  eth_get_transaction_count : (CandidRpcSource, GetTransactionCountArgs) -> (
       Result_3,
     );
-  eth_getTransactionReceipt : (CandidRpcSource, text) -> (Result_4);
-  eth_sendRawTransaction : (CandidRpcSource, text) -> (Result_5);
-  getAccumulatedCycleCount : (nat64) -> (nat) query;
+  eth_get_transaction_receipt : (CandidRpcSource, text) -> (Result_4);
+  eth_send_raw_transaction : (CandidRpcSource, text) -> (Result_5);
   getAuthorized : (Auth) -> (vec text) query;
   getNodesInSubnet : () -> (nat32) query;
   getOpenRpcAccess : () -> (bool) query;
-  getProviders : () -> (vec ProviderView) query;
-  registerProvider : (RegisterProviderArgs) -> (nat64);
+  get_accumulated_cycle_count : (nat64) -> (nat) query;
+  get_providers : () -> (vec ProviderView) query;
+  register_provider : (RegisterProviderArgs) -> (nat64);
   request : (Source, text, nat64) -> (Result_6);
-  requestCost : (Source, text, nat64) -> (Result_7) query;
+  request_cost : (Source, text, nat64) -> (Result_7) query;
   setNodesInSubnet : (nat32) -> ();
   setOpenRpcAccess : (bool) -> ();
-  unregisterProvider : (nat64) -> (bool);
-  updateProvider : (UpdateProviderArgs) -> ();
-  verifyMessageSignature : (SignedMessage) -> (bool) query;
-  withdrawAccumulatedCycles : (nat64, principal) -> ();
+  unregister_provider : (nat64) -> (bool);
+  update_provider : (UpdateProviderArgs) -> ();
+  verify_message_signature : (SignedMessage) -> (bool) query;
+  withdraw_accumulated_cycles : (nat64, principal) -> ();
 }
