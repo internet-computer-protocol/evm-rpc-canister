@@ -1,0 +1,169 @@
+type Auth = variant { Rpc; RegisterProvider; FreeRpc; ManageService };
+type Block = record { baseFeePerGas : nat; number : nat };
+type BlockSpec = variant { Tag : BlockTag; Number : nat };
+type BlockTag = variant {
+  Earliest;
+  Safe;
+  Finalized;
+  Latest;
+  Number : nat64;
+  Pending;
+};
+type CandidRpcSource = variant {
+  EthSepolia : opt EthSepoliaService;
+  EthMainnet : opt EthMainnetService;
+};
+type EthMainnetService = variant { BlockPi; Cloudflare; PublicNode; Ankr };
+type EthSepoliaService = variant { BlockPi; PublicNode; Ankr };
+type FeeHistory = record {
+  reward : vec vec nat;
+  oldestBlock : nat;
+  baseFeePerGas : vec nat;
+};
+type FeeHistoryArgs = record {
+  blockCount : nat;
+  newestBlock : BlockSpec;
+  rewardPercentiles : opt vec nat8;
+};
+type GetLogsArgs = record {
+  fromBlock : opt BlockSpec;
+  toBlock : opt BlockSpec;
+  addresses : vec text;
+  topics : opt vec text;
+};
+type GetTransactionCountArgs = record { address : text; block : BlockSpec };
+type HttpHeader = record { value : text; name : text };
+type HttpOutcallError = variant {
+  IcError : record { code : RejectionCode; message : text };
+  InvalidHttpJsonRpcResponse : record {
+    status : nat16;
+    body : text;
+    parsingError : opt text;
+  };
+};
+type JsonRpcError = record { code : int64; message : text };
+type LogEntry = record {
+  transactionHash : opt vec nat8;
+  blockNumber : opt nat;
+  data : vec nat8;
+  blockHash : opt vec nat8;
+  transactionIndex : opt nat;
+  topics : vec vec nat8;
+  address : vec nat8;
+  logIndex : opt nat;
+  removed : bool;
+};
+type Message = variant { Data : vec nat8; Hash : vec nat8 };
+type ProviderError = variant {
+  TooFewCycles : record { expected : nat; received : nat };
+  ProviderNotFound;
+  NoPermission;
+};
+type ProviderView = record {
+  cyclesPerCall : nat64;
+  owner : principal;
+  hostname : text;
+  primary : bool;
+  chainId : nat64;
+  cyclesPerMessageByte : nat64;
+  providerId : nat64;
+};
+type RegisterProviderArgs = record {
+  cyclesPerCall : nat64;
+  credentialPath : text;
+  hostname : text;
+  credentialHeaders : opt vec HttpHeader;
+  chainId : nat64;
+  cyclesPerMessageByte : nat64;
+};
+type RejectionCode = variant {
+  NoError;
+  CanisterError;
+  SysTransient;
+  DestinationInvalid;
+  Unknown;
+  SysFatal;
+  CanisterReject;
+};
+type Result = variant { Ok : Block; Err : RpcError };
+type Result_1 = variant { Ok : opt FeeHistory; Err : RpcError };
+type Result_2 = variant { Ok : vec LogEntry; Err : RpcError };
+type Result_3 = variant { Ok : nat; Err : RpcError };
+type Result_4 = variant { Ok : opt TransactionReceipt; Err : RpcError };
+type Result_5 = variant { Ok : SendRawTransactionResult; Err : RpcError };
+type Result_6 = variant { Ok : text; Err : RpcError };
+type Result_7 = variant { Ok : nat; Err : RpcError };
+type RpcError = variant {
+  JsonRpcError : JsonRpcError;
+  ProviderError : ProviderError;
+  ValidationError : ValidationError;
+  HttpOutcallError : HttpOutcallError;
+};
+type SendRawTransactionResult = variant {
+  Ok;
+  NonceTooLow;
+  NonceTooHigh;
+  InsufficientFunds;
+};
+type SignedMessage = record {
+  signature : text;
+  message : Message;
+  address : text;
+};
+type Source = variant {
+  Custom : record { url : text; headers : opt vec HttpHeader };
+  Service : record { hostname : text; chainId : opt nat64 };
+  Chain : nat64;
+  Provider : nat64;
+};
+type TransactionReceipt = record {
+  status : TransactionStatus;
+  transactionHash : vec nat8;
+  blockNumber : nat;
+  blockHash : vec nat8;
+  effectiveGasPrice : nat;
+  gasUsed : nat;
+};
+type TransactionStatus = variant { Success; Failure };
+type UpdateProviderArgs = record {
+  cyclesPerCall : opt nat64;
+  credentialPath : opt text;
+  hostname : opt text;
+  credentialHeaders : opt vec HttpHeader;
+  primary : opt bool;
+  cyclesPerMessageByte : opt nat64;
+  providerId : nat64;
+};
+type ValidationError = variant {
+  CredentialPathNotAllowed : text;
+  HostNotAllowed : text;
+  CredentialHeaderNotAllowed : text;
+  UrlParseError : text;
+  InvalidHex : text;
+};
+service : {
+  authorize : (principal, Auth) -> ();
+  deauthorize : (principal, Auth) -> ();
+  eth_getBlockByNumber : (CandidRpcSource, BlockSpec) -> (Result);
+  eth_getFeeHistory : (CandidRpcSource, FeeHistoryArgs) -> (Result_1);
+  eth_getLogs : (CandidRpcSource, GetLogsArgs) -> (Result_2);
+  eth_getTransactionCount : (CandidRpcSource, GetTransactionCountArgs) -> (
+      Result_3,
+    );
+  eth_getTransactionReceipt : (CandidRpcSource, text) -> (Result_4);
+  eth_sendRawTransaction : (CandidRpcSource, text) -> (Result_5);
+  get_accumulated_cycle_count : (nat64) -> (nat) query;
+  get_authorized : (Auth) -> (vec text) query;
+  get_nodes_in_subnet : () -> (nat32) query;
+  get_open_rpc_access : () -> (bool) query;
+  get_providers : () -> (vec ProviderView) query;
+  register_provider : (RegisterProviderArgs) -> (nat64);
+  request : (Source, text, nat64) -> (Result_6);
+  request_cost : (Source, text, nat64) -> (Result_7) query;
+  set_nodes_in_subnet : (nat32) -> ();
+  set_open_rpc_access : (bool) -> ();
+  unregister_provider : (nat64) -> (bool);
+  update_provider : (UpdateProviderArgs) -> ();
+  verify_message_signature : (SignedMessage) -> (bool) query;
+  withdraw_accumulated_cycles : (nat64, principal) -> ();
+}

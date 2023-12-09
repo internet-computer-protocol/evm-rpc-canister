@@ -14,7 +14,7 @@ use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 use evm_rpc::*;
 
 #[ic_cdk_macros::update]
-#[candid_method]
+#[candid_method(rename = "eth_getLogs")]
 pub async fn eth_get_logs(
     source: CandidRpcSource,
     args: candid_types::GetLogsArgs,
@@ -25,7 +25,7 @@ pub async fn eth_get_logs(
 }
 
 #[ic_cdk_macros::update]
-#[candid_method]
+#[candid_method(rename = "eth_getBlockByNumber")]
 pub async fn eth_get_block_by_number(
     source: CandidRpcSource,
     block: candid_types::BlockSpec,
@@ -36,7 +36,7 @@ pub async fn eth_get_block_by_number(
 }
 
 #[ic_cdk_macros::update]
-#[candid_method]
+#[candid_method(rename = "eth_getTransactionReceipt")]
 pub async fn eth_get_transaction_receipt(
     source: CandidRpcSource,
     hash: String,
@@ -47,7 +47,7 @@ pub async fn eth_get_transaction_receipt(
 }
 
 #[ic_cdk_macros::update]
-#[candid_method]
+#[candid_method(rename = "eth_getTransactionCount")]
 pub async fn eth_get_transaction_count(
     source: CandidRpcSource,
     args: candid_types::GetTransactionCountArgs,
@@ -58,7 +58,7 @@ pub async fn eth_get_transaction_count(
 }
 
 #[ic_cdk_macros::update]
-#[candid_method]
+#[candid_method(rename = "eth_getFeeHistory")]
 pub async fn eth_fee_history(
     source: CandidRpcSource,
     args: candid_types::FeeHistoryArgs,
@@ -69,7 +69,7 @@ pub async fn eth_fee_history(
 }
 
 #[ic_cdk_macros::update]
-#[candid_method]
+#[candid_method(rename = "eth_sendRawTransaction")]
 pub async fn eth_send_raw_transaction(
     source: CandidRpcSource,
     raw_signed_transaction_hex: String,
