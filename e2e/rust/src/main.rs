@@ -12,7 +12,7 @@ pub async fn test() {
     let params = (
         &Source::Service {
             hostname: "cloudflare-eth.com".to_string(),
-            chain_id: Some(1), // Ethereum mainnet
+            chainId: Some(1), // Ethereum mainnet
         },
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}".to_string(),
         1000 as u64,
@@ -20,7 +20,7 @@ pub async fn test() {
 
     // Get cycles cost
     let (cycles_result,): (Result<u128, RpcError>,) =
-        ic_cdk::api::call::call(evm_rpc.0, "request_cost", params.clone())
+        ic_cdk::api::call::call(evm_rpc.0, "requestCost", params.clone())
             .await
             .unwrap();
     let cycles = cycles_result
