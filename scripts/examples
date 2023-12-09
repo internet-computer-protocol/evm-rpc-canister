@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run a variety of example RPC calls.
 
-CANISTER_NAME=evm_rpc
+CANISTER_ID=evm_rpc
 CYCLES=100000000000
 WALLET=$(dfx identity get-wallet)
 JSON_SOURCE=Chain=1
@@ -10,11 +10,11 @@ CANDID_SOURCE=EthMainnet
 FLAGS="--with-cycles=$CYCLES --wallet=$WALLET"
 
 
-dfx canister call $CANISTER_NAME request "(variant {$JSON_SOURCE}, "'"{ \"jsonrpc\": \"2.0\", \"method\": \"eth_gasPrice\", \"params\": [], \"id\": 1 }"'", 1000)" $FLAGS || exit 1
+dfx canister call $CANISTER_ID request "(variant {$JSON_SOURCE}, "'"{ \"jsonrpc\": \"2.0\", \"method\": \"eth_gasPrice\", \"params\": [], \"id\": 1 }"'", 1000)" $FLAGS || exit 1
 
-dfx canister call evm_rpc eth_getLogs "(variant {$CANDID_SOURCE}, record {addresses = vec {\"0xdAC17F958D2ee523a2206206994597C13D831ec7\"}})" $FLAGS || exit 1
-dfx canister call evm_rpc eth_getBlockByNumber "(variant {$CANDID_SOURCE}, variant {Tag=variant {Latest}})" $FLAGS || exit 1
-dfx canister call evm_rpc eth_getTransactionReceipt "(variant {$CANDID_SOURCE}, \"0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f\")" $FLAGS || exit 1
-dfx canister call evm_rpc eth_getTransactionCount "(variant {$CANDID_SOURCE}, record {address = \"0xdAC17F958D2ee523a2206206994597C13D831ec7\"; block = variant {Tag = variant {Latest}}})" $FLAGS || exit 1
-dfx canister call evm_rpc eth_feeHistory "(variant {$CANDID_SOURCE}, record {block_count = 3; newest_block = variant {Tag = variant {Latest}}})" $FLAGS || exit 1
-dfx canister call evm_rpc eth_sendRawTransaction "(variant {$CANDID_SOURCE}, \"0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83\")" $FLAGS || exit 1
+dfx canister call $CANISTER_ID eth_getLogs "(variant {$CANDID_SOURCE}, record {addresses = vec {\"0xdAC17F958D2ee523a2206206994597C13D831ec7\"}})" $FLAGS || exit 1
+dfx canister call $CANISTER_ID eth_getBlockByNumber "(variant {$CANDID_SOURCE}, variant {Tag=variant {Latest}})" $FLAGS || exit 1
+dfx canister call $CANISTER_ID eth_getTransactionReceipt "(variant {$CANDID_SOURCE}, \"0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f\")" $FLAGS || exit 1
+dfx canister call $CANISTER_ID eth_getTransactionCount "(variant {$CANDID_SOURCE}, record {address = \"0xdAC17F958D2ee523a2206206994597C13D831ec7\"; block = variant {Tag = variant {Latest}}})" $FLAGS || exit 1
+dfx canister call $CANISTER_ID eth_feeHistory "(variant {$CANDID_SOURCE}, record {block_count = 3; newest_block = variant {Tag = variant {Latest}}})" $FLAGS || exit 1
+dfx canister call $CANISTER_ID eth_sendRawTransaction "(variant {$CANDID_SOURCE}, \"0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83\")" $FLAGS || exit 1

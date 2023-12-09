@@ -80,7 +80,7 @@ pub async fn eth_send_raw_transaction(
 }
 
 #[ic_cdk_macros::query]
-#[candid_method(query)]
+#[candid_method(query, rename = "verifyMessageSignature")]
 pub fn verify_message_signature(signed_message: SignedMessage) -> bool {
     do_verify_message_signature(
         &signed_message.address,
@@ -107,7 +107,7 @@ async fn request(
 }
 
 #[query]
-#[candid_method(query)]
+#[candid_method(query, rename = "requestCost")]
 fn request_cost(
     source: Source,
     json_rpc_payload: String,
@@ -121,7 +121,7 @@ fn request_cost(
 }
 
 #[query]
-#[candid_method(query)]
+#[candid_method(query, rename = "getProviders")]
 fn get_providers() -> Vec<ProviderView> {
     PROVIDERS.with(|p| {
         p.borrow()
@@ -132,25 +132,25 @@ fn get_providers() -> Vec<ProviderView> {
 }
 
 #[update(guard = "require_register_provider")]
-#[candid_method]
+#[candid_method(rename = "registerProvider")]
 fn register_provider(provider: RegisterProviderArgs) -> u64 {
     do_register_provider(ic_cdk::caller(), provider)
 }
 
 #[update(guard = "require_register_provider")]
-#[candid_method]
+#[candid_method(rename = "unregisterProvider")]
 fn unregister_provider(provider_id: u64) -> bool {
     do_unregister_provider(ic_cdk::caller(), provider_id)
 }
 
 #[update(guard = "require_register_provider")]
-#[candid_method]
+#[candid_method(rename = "updateProvider")]
 fn update_provider(provider: UpdateProviderArgs) {
     do_update_provider(ic_cdk::caller(), provider)
 }
 
 #[query(guard = "require_register_provider")]
-#[candid_method(query)]
+#[candid_method(query, rename = "getAccumulatedCycleCount")]
 fn get_accumulated_cycle_count(provider_id: u64) -> u128 {
     let provider = PROVIDERS.with(|p| {
         p.borrow()
@@ -170,7 +170,7 @@ struct DepositCyclesArgs {
 }
 
 #[update(guard = "require_register_provider")]
-#[candid_method]
+#[candid_method(rename = "withdrawAccumulatedCycles")]
 async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
     let provider = PROVIDERS.with(|p| {
         p.borrow()
@@ -287,7 +287,7 @@ fn authorize(principal: Principal, auth: Auth) {
 }
 
 #[query(guard = "require_admin_or_controller")]
-#[candid_method(query)]
+#[candid_method(query, rename = "getAuthorized")]
 fn get_authorized(auth: Auth) -> Vec<String> {
     AUTH.with(|a| {
         let mut result = Vec::new();
@@ -306,8 +306,14 @@ fn deauthorize(principal: Principal, auth: Auth) {
     do_deauthorize(principal, auth)
 }
 
+#[query(guard = "require_admin_or_controller")]
+#[candid_method(query, rename = "getOpenRpcAccess")]
+fn get_open_rpc_access() -> bool {
+    METADATA.with(|m| m.borrow().get().open_rpc_access)
+}
+
 #[update(guard = "require_admin_or_controller")]
-#[candid_method]
+#[candid_method(rename = "setOpenRpcAccess")]
 fn set_open_rpc_access(open_rpc_access: bool) {
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
@@ -317,25 +323,19 @@ fn set_open_rpc_access(open_rpc_access: bool) {
 }
 
 #[query(guard = "require_admin_or_controller")]
-#[candid_method(query)]
-fn get_open_rpc_access() -> bool {
-    METADATA.with(|m| m.borrow().get().open_rpc_access)
+#[candid_method(query, rename = "getNodesInSubnet")]
+fn get_nodes_in_subnet() -> u32 {
+    METADATA.with(|m| m.borrow().get().nodes_in_subnet)
 }
 
 #[update(guard = "require_admin_or_controller")]
-#[candid_method]
+#[candid_method(rename = "setNodesInSubnet")]
 fn set_nodes_in_subnet(nodes_in_subnet: u32) {
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.nodes_in_subnet = nodes_in_subnet;
         m.borrow_mut().set(metadata).unwrap();
     });
-}
-
-#[query(guard = "require_admin_or_controller")]
-#[candid_method(query)]
-fn get_nodes_in_subnet() -> u32 {
-    METADATA.with(|m| m.borrow().get().nodes_in_subnet)
 }
 
 #[cfg(not(any(target_arch = "wasm32", test)))]
