@@ -200,7 +200,7 @@ impl EvmRpcSetup {
         source: CandidRpcSource,
         args: candid_types::GetLogsArgs,
     ) -> CallFlow<RpcResult<Vec<LogEntry>>> {
-        self.call_update("eth_get_logs", Encode!(&source, &args).unwrap())
+        self.call_update("eth_getLogs", Encode!(&source, &args).unwrap())
     }
 
     pub fn eth_get_block_by_number(
@@ -208,7 +208,7 @@ impl EvmRpcSetup {
         source: CandidRpcSource,
         block: candid_types::BlockSpec,
     ) -> CallFlow<RpcResult<Block>> {
-        self.call_update("eth_get_block_by_number", Encode!(&source, &block).unwrap())
+        self.call_update("eth_getBlockByNumber", Encode!(&source, &block).unwrap())
     }
 
     pub fn eth_get_transaction_receipt(
@@ -217,7 +217,7 @@ impl EvmRpcSetup {
         address: &str,
     ) -> CallFlow<RpcResult<Option<candid_types::TransactionReceipt>>> {
         self.call_update(
-            "eth_get_transaction_receipt",
+            "eth_getTransactionReceipt",
             Encode!(&source, &address).unwrap(),
         )
     }
@@ -228,7 +228,7 @@ impl EvmRpcSetup {
         address: &str,
     ) -> CallFlow<RpcResult<Nat>> {
         self.call_update(
-            "eth_get_transaction_count",
+            "eth_getTransactionCount",
             Encode!(&source, &address).unwrap(),
         )
     }
