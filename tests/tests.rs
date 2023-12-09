@@ -148,11 +148,11 @@ impl EvmRpcSetup {
     }
 
     pub fn get_providers(&self) -> Vec<ProviderView> {
-        self.call_query("get_providers", Encode!().unwrap())
+        self.call_query("getProviders", Encode!().unwrap())
     }
 
     pub fn register_provider(&self, args: RegisterProviderArgs) -> CallFlow<u64> {
-        self.call_update("register_provider", Encode!(&args).unwrap())
+        self.call_update("registerProvider", Encode!(&args).unwrap())
     }
 
     pub fn authorize_caller(self, auth: Auth) -> Self {
@@ -178,7 +178,7 @@ impl EvmRpcSetup {
         max_response_bytes: u64,
     ) -> Nat {
         self.call_query(
-            "request_cost",
+            "requestCost",
             Encode!(&source, &json_rpc_payload, &max_response_bytes).unwrap(),
         )
     }
