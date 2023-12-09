@@ -19,7 +19,7 @@ use ic_state_machine_tests::{
     StateMachine, StateMachineBuilder, WasmResult,
 };
 use ic_test_utilities_load_wasm::load_wasm;
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use evm_rpc::*;
 use mock::*;
@@ -509,22 +509,6 @@ fn mock_request_should_fail_with_request_body() {
 }
 
 #[test]
-fn should_decode_checked_amount() {
-    use candid::{CandidType, Decode, Encode};
-    use serde::{Deserialize, Serialize};
-
-    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
-    pub struct Struct {
-        #[serde(rename = "fieldName")]
-        pub field_name: Wei,
-    }
-    let value = Struct {
-        field_name: Wei::new(123),
-    };
-    assert_eq!(Decode!(&Encode!(&value).unwrap(), Struct).unwrap(), value);
-}
-
-#[test]
 fn should_canonicalize_json_response() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let responses = [
@@ -548,6 +532,23 @@ fn should_canonicalize_json_response() {
     })
     .collect::<Vec<_>>();
     assert!(responses.windows(2).all(|w| w[0] == w[1]));
+}
+
+#[test]
+fn should_decode_renamed_field() {
+    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
+    pub struct Struct {
+        #[serde(rename = "fieldName")]
+        pub field_name: u64,
+    }
+    let value = Struct { field_name: 123 };
+    assert_eq!(Decode!(&Encode!(&value).unwrap(), Struct).unwrap(), value);
+}
+
+#[test]
+fn should_decode_checked_amount() {
+    let value = Wei::new(123);
+    assert_eq!(Decode!(&Encode!(&value).unwrap(), Wei).unwrap(), value);
 }
 
 #[test]
