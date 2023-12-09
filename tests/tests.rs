@@ -225,12 +225,9 @@ impl EvmRpcSetup {
     pub fn eth_get_transaction_count(
         &self,
         source: CandidRpcSource,
-        address: &str,
+        args: candid_types::GetTransactionCountArgs,
     ) -> CallFlow<RpcResult<Nat>> {
-        self.call_update(
-            "eth_getTransactionCount",
-            Encode!(&source, &address).unwrap(),
-        )
+        self.call_update("eth_getTransactionCount", Encode!(&source, &args).unwrap())
     }
 }
 
@@ -607,7 +604,10 @@ fn eth_get_transaction_count_should_succeed() {
     let result = setup
         .eth_get_transaction_count(
             CandidRpcSource::EthMainnet(None),
-            "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockSpec::Tag(candid_types::BlockTag::Latest),
+            },
         )
         .mock_http(MockOutcallBuilder::new(
             200,
