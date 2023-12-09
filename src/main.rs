@@ -13,8 +13,8 @@ use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
 use evm_rpc::*;
 
-#[ic_cdk_macros::update]
-#[candid_method(rename = "eth_getLogs")]
+#[update(name = "eth_getLogs")]
+#[candid_method]
 pub async fn eth_get_logs(
     source: CandidRpcSource,
     args: candid_types::GetLogsArgs,
@@ -24,8 +24,8 @@ pub async fn eth_get_logs(
         .await
 }
 
-#[ic_cdk_macros::update]
-#[candid_method(rename = "eth_getBlockByNumber")]
+#[update(name = "eth_getBlockByNumber")]
+#[candid_method]
 pub async fn eth_get_block_by_number(
     source: CandidRpcSource,
     block: candid_types::BlockSpec,
@@ -35,8 +35,8 @@ pub async fn eth_get_block_by_number(
         .await
 }
 
-#[ic_cdk_macros::update]
-#[candid_method(rename = "eth_getTransactionReceipt")]
+#[update(name = "eth_getTransactionReceipt")]
+#[candid_method]
 pub async fn eth_get_transaction_receipt(
     source: CandidRpcSource,
     hash: String,
@@ -46,8 +46,8 @@ pub async fn eth_get_transaction_receipt(
         .await
 }
 
-#[ic_cdk_macros::update]
-#[candid_method(rename = "eth_getTransactionCount")]
+#[update(name = "eth_getTransactionCount")]
+#[candid_method]
 pub async fn eth_get_transaction_count(
     source: CandidRpcSource,
     args: candid_types::GetTransactionCountArgs,
@@ -57,8 +57,8 @@ pub async fn eth_get_transaction_count(
         .await
 }
 
-#[ic_cdk_macros::update]
-#[candid_method(rename = "eth_getFeeHistory")]
+#[update(name = "eth_getFeeHistory")]
+#[candid_method]
 pub async fn eth_fee_history(
     source: CandidRpcSource,
     args: candid_types::FeeHistoryArgs,
@@ -68,8 +68,8 @@ pub async fn eth_fee_history(
         .await
 }
 
-#[ic_cdk_macros::update]
-#[candid_method(rename = "eth_sendRawTransaction")]
+#[update(name = "eth_sendRawTransaction")]
+#[candid_method]
 pub async fn eth_send_raw_transaction(
     source: CandidRpcSource,
     raw_signed_transaction_hex: String,
@@ -79,8 +79,8 @@ pub async fn eth_send_raw_transaction(
         .await
 }
 
-#[ic_cdk_macros::query]
-#[candid_method(query, rename = "verifyMessageSignature")]
+#[query(name = "verifyMessageSignature")]
+#[candid_method(query)]
 pub fn verify_message_signature(signed_message: SignedMessage) -> bool {
     do_verify_message_signature(
         &signed_message.address,
@@ -106,8 +106,8 @@ async fn request(
     get_http_response_body(response)
 }
 
-#[query]
-#[candid_method(query, rename = "requestCost")]
+#[query(name = "requestCost")]
+#[candid_method(query)]
 fn request_cost(
     source: Source,
     json_rpc_payload: String,
@@ -120,8 +120,8 @@ fn request_cost(
     ))
 }
 
-#[query]
-#[candid_method(query, rename = "getProviders")]
+#[query(name = "getProviders")]
+#[candid_method(query)]
 fn get_providers() -> Vec<ProviderView> {
     PROVIDERS.with(|p| {
         p.borrow()
@@ -131,26 +131,26 @@ fn get_providers() -> Vec<ProviderView> {
     })
 }
 
-#[update(guard = "require_register_provider")]
-#[candid_method(rename = "registerProvider")]
+#[update(name = "registerProvider", guard = "require_register_provider")]
+#[candid_method]
 fn register_provider(provider: RegisterProviderArgs) -> u64 {
     do_register_provider(ic_cdk::caller(), provider)
 }
 
-#[update(guard = "require_register_provider")]
-#[candid_method(rename = "unregisterProvider")]
+#[update(name = "unregisterProvider", guard = "require_register_provider")]
+#[candid_method]
 fn unregister_provider(provider_id: u64) -> bool {
     do_unregister_provider(ic_cdk::caller(), provider_id)
 }
 
-#[update(guard = "require_register_provider")]
-#[candid_method(rename = "updateProvider")]
+#[update(name = "updateProvider", guard = "require_register_provider")]
+#[candid_method]
 fn update_provider(provider: UpdateProviderArgs) {
     do_update_provider(ic_cdk::caller(), provider)
 }
 
-#[query(guard = "require_register_provider")]
-#[candid_method(query, rename = "getAccumulatedCycleCount")]
+#[query(name = "getAccumulatedCycleCount", guard = "require_register_provider")]
+#[candid_method(query)]
 fn get_accumulated_cycle_count(provider_id: u64) -> u128 {
     let provider = PROVIDERS.with(|p| {
         p.borrow()
@@ -169,8 +169,11 @@ struct DepositCyclesArgs {
     canister_id: Principal,
 }
 
-#[update(guard = "require_register_provider")]
-#[candid_method(rename = "withdrawAccumulatedCycles")]
+#[update(
+    name = "withdrawAccumulatedCycles",
+    guard = "require_register_provider"
+)]
+#[candid_method]
 async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
     let provider = PROVIDERS.with(|p| {
         p.borrow()
