@@ -258,14 +258,49 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
 
     pub fn mock_http(self, mock: impl Into<MockOutcall>) -> Self {
         let mock = mock.into();
+        self.mock_http_once_inner(&mock);
+        loop {
+            if !self.try_mock_http_inner(&mock) {
+                break;
+            }
+        }
+        self
+    }
+
+    pub fn mock_http_n_times(self, mock: impl Into<MockOutcall>, count: u32) -> Self {
+        let mock = mock.into();
+        for _ in 0..count {
+            self.mock_http_once_inner(&mock);
+        }
+        self
+    }
+
+    pub fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self {
+        let mock = mock.into();
+        self.mock_http_once_inner(&mock);
+        self
+    }
+
+    fn mock_http_once_inner(&self, mock: &MockOutcall) {
+        if !self.try_mock_http_inner(mock) {
+            panic!("no pending HTTP request")
+        }
+    }
+
+    fn try_mock_http_inner(&self, mock: &MockOutcall) -> bool {
         assert_eq!(self.setup.env.canister_http_request_contexts().len(), 0);
         self.setup.tick_until_http_request();
         match self.setup.env.ingress_status(&self.message_id) {
-            IngressStatus::Known { state, .. } if state != IngressState::Processing => return self,
+            IngressStatus::Known { state, .. } if state != IngressState::Processing => {
+                return false
+            }
             _ => (),
         }
         let contexts = self.setup.env.canister_http_request_contexts();
-        let (id, context) = contexts.first_key_value().expect("no pending HTTP request");
+        let (id, context) = match contexts.first_key_value() {
+            Some(kv) => kv,
+            None => return false,
+        };
 
         mock.assert_matches(&CanisterHttpRequestArgument {
             url: context.url.clone(),
@@ -292,9 +327,9 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
             }),
         });
         let mut response = OutCallHttpResponse {
-            status: mock.response.status,
-            headers: mock.response.headers,
-            body: mock.response.body,
+            status: mock.response.status.clone(),
+            headers: mock.response.headers.clone(),
+            body: mock.response.body.clone(),
         };
         if let Some(transform) = &context.transform {
             let transform_args = TransformArgs {
@@ -330,7 +365,7 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
         };
         let payload = PayloadBuilder::new().http_response(*id, &http_response);
         self.setup.env.execute_payload(payload);
-        self
+        true
     }
 
     pub fn wait(self) -> R {
@@ -600,7 +635,7 @@ fn eth_get_transaction_receipt_should_succeed() {
             CandidRpcSource::EthMainnet(None),
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
-        .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":{"blockHash":"0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be","blockNumber":"0x11a85ab","contractAddress":null,"cumulativeGasUsed":"0xf02aed","effectiveGasPrice":"0x63c00ee76","from":"0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667","gasUsed":"0x7d89","logs":[],"logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","status":"0x1","to":"0x356cfd6e6d0000400000003900b415f80669009e","transactionHash":"0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f","transactionIndex":"0xd9","type":"0x2"}}"#))
+        .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":{"blockHash":"0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be","blockNumber":"0x11a85ab","contractAddress":null,"cumulativeGasUsed":"0xf02aed","effectiveGasPrice":"0x63c00ee76","from":"0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667","gasUsed":"0x7d89","logs":[],"logsBloom":"0x0","status":"0x1","to":"0x356cfd6e6d0000400000003900b415f80669009e","transactionHash":"0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f","transactionIndex":"0xd9","type":"0x2"}}"#))
         .wait().unwrap().expect("receipt was None");
     assert_eq!(result.block_number, BlockNumber::new(18_515_371));
 }
