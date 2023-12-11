@@ -5,6 +5,7 @@ use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
 use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
 use cketh_common::{
+    address::Address,
     eth_rpc::{Block, LogEntry},
     numeric::{BlockNumber, Wei},
 };
@@ -546,6 +547,12 @@ fn should_decode_renamed_field() {
 fn should_decode_checked_amount() {
     let value = Wei::new(123);
     assert_eq!(Decode!(&Encode!(&value).unwrap(), Wei).unwrap(), value);
+}
+
+#[test]
+fn should_decode_address() {
+    let value = Address::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap();
+    assert_eq!(Decode!(&Encode!(&value).unwrap(), Address).unwrap(), value);
 }
 
 #[test]

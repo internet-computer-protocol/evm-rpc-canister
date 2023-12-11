@@ -43,13 +43,13 @@ type HttpOutcallError = variant {
 };
 type JsonRpcError = record { code : int64; message : text };
 type LogEntry = record {
-  transactionHash : opt vec nat8;
+  transactionHash : opt text;
   blockNumber : opt nat;
-  data : vec nat8;
-  blockHash : opt vec nat8;
+  data : text;
+  blockHash : opt text;
   transactionIndex : opt nat;
-  topics : vec vec nat8;
-  address : vec nat8;
+  topics : vec text;
+  address : text;
   logIndex : opt nat;
   removed : bool;
 };
@@ -118,9 +118,9 @@ type Source = variant {
 };
 type TransactionReceipt = record {
   status : TransactionStatus;
-  transactionHash : vec nat8;
+  transactionHash : text;
   blockNumber : nat;
-  blockHash : vec nat8;
+  blockHash : text;
   effectiveGasPrice : nat;
   gasUsed : nat;
 };
