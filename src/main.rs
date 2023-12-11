@@ -57,8 +57,8 @@ pub async fn eth_get_transaction_count(
         .await
 }
 
-#[update(name = "eth_getFeeHistory")]
-#[candid_method(rename = "eth_getFeeHistory")]
+#[update(name = "eth_feeHistory")]
+#[candid_method(rename = "eth_feeHistory")]
 pub async fn eth_fee_history(
     source: CandidRpcSource,
     args: candid_types::FeeHistoryArgs,

@@ -6,7 +6,8 @@ use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
 use cketh_common::{
     address::Address,
-    eth_rpc::{Block, LogEntry},
+    checked_amount::CheckedAmountOf,
+    eth_rpc::{Block, FeeHistory, LogEntry, SendRawTransactionResult},
     numeric::{BlockNumber, Wei},
 };
 use ic_base_types::{CanisterId, PrincipalId};
@@ -229,6 +230,25 @@ impl EvmRpcSetup {
         args: candid_types::GetTransactionCountArgs,
     ) -> CallFlow<RpcResult<Nat>> {
         self.call_update("eth_getTransactionCount", Encode!(&source, &args).unwrap())
+    }
+
+    pub fn eth_fee_history(
+        &self,
+        source: CandidRpcSource,
+        args: candid_types::FeeHistoryArgs,
+    ) -> CallFlow<RpcResult<Option<FeeHistory>>> {
+        self.call_update("eth_feeHistory", Encode!(&source, &args).unwrap())
+    }
+
+    pub fn eth_send_raw_transaction(
+        &self,
+        source: CandidRpcSource,
+        signed_raw_transaction_hex: String,
+    ) -> CallFlow<RpcResult<SendRawTransactionResult>> {
+        self.call_update(
+            "eth_sendRawTransaction",
+            Encode!(&source, &signed_raw_transaction_hex).unwrap(),
+        )
     }
 }
 
@@ -658,6 +678,45 @@ fn eth_get_transaction_count_should_succeed() {
         .wait()
         .unwrap();
     assert_eq!(result, 1);
+}
+
+#[test]
+fn eth_fee_history_should_succeed() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_fee_history(
+            CandidRpcSource::EthMainnet(None),
+            candid_types::FeeHistoryArgs {
+                block_count: 3,
+                newest_block: candid_types::BlockSpec::Tag(candid_types::BlockTag::Latest),
+                reward_percentiles: None,
+            },
+        )
+        .mock_http(MockOutcallBuilder::new(
+            200,
+            r#"{"id":0,"jsonrpc":"2.0","result":{"oldestBlock":"0x11e57f5","baseFeePerGas":["0x9cf6c61b9","0x97d853982","0x9ba55a0b0","0x9543bf98d"],"reward":[]}}"#,
+        ))
+        .wait()
+        .unwrap()
+        .expect("fee history was None");
+    assert_eq!(result.oldest_block, CheckedAmountOf::new(0x11e57f5));
+}
+
+#[test]
+fn eth_send_raw_transaction_should_succeed() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_send_raw_transaction(
+            CandidRpcSource::EthMainnet(None),
+            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83".to_string(),
+        )
+        .mock_http(MockOutcallBuilder::new(
+            200,
+            r#"{"id":0,"jsonrpc":"2.0","result":"Ok"}"#,
+        ))
+        .wait()
+        .unwrap();
+    assert_eq!(result, SendRawTransactionResult::Ok);
 }
 
 #[test]

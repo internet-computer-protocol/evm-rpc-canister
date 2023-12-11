@@ -85,8 +85,8 @@ type RejectionCode = variant {
   SysFatal;
   CanisterReject;
 };
-type Result = variant { Ok : Block; Err : RpcError };
-type Result_1 = variant { Ok : opt FeeHistory; Err : RpcError };
+type Result = variant { Ok : opt FeeHistory; Err : RpcError };
+type Result_1 = variant { Ok : Block; Err : RpcError };
 type Result_2 = variant { Ok : vec LogEntry; Err : RpcError };
 type Result_3 = variant { Ok : nat; Err : RpcError };
 type Result_4 = variant { Ok : opt TransactionReceipt; Err : RpcError };
@@ -144,8 +144,8 @@ type ValidationError = variant {
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
-  eth_getBlockByNumber : (CandidRpcSource, BlockSpec) -> (Result);
-  eth_getFeeHistory : (CandidRpcSource, FeeHistoryArgs) -> (Result_1);
+  eth_feeHistory : (CandidRpcSource, FeeHistoryArgs) -> (Result);
+  eth_getBlockByNumber : (CandidRpcSource, BlockSpec) -> (Result_1);
   eth_getLogs : (CandidRpcSource, GetLogsArgs) -> (Result_2);
   eth_getTransactionCount : (CandidRpcSource, GetTransactionCountArgs) -> (
       Result_3,
