@@ -7,7 +7,8 @@ use candid::{CandidType, Decode, Encode, Nat};
 use cketh_common::{
     address::Address,
     checked_amount::CheckedAmountOf,
-    eth_rpc::{Block, FeeHistory, LogEntry, SendRawTransactionResult},
+    eth_rpc::{Block, FeeHistory, Hash, LogEntry, SendRawTransactionResult},
+    eth_rpc_client::responses::TransactionStatus,
     numeric::{BlockNumber, Wei},
 };
 use ic_base_types::{CanisterId, PrincipalId};
@@ -611,6 +612,32 @@ fn should_decode_address() {
 }
 
 #[test]
+fn should_decode_opt_transaction_receipt() {
+    let value = Some(candid_types::TransactionReceipt {
+        status: TransactionStatus::Success,
+        transaction_hash: Hash::from_str(
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .unwrap(),
+        block_number: 18_515_371_u64.into(),
+        block_hash: Hash::from_str(
+            "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be",
+        )
+        .unwrap(),
+        effective_gas_price: 26_776_497_782_u64.into(),
+        gas_used: 32_137.into(),
+    });
+    assert_eq!(
+        Decode!(
+            &Encode!(&value).unwrap(),
+            Option<candid_types::TransactionReceipt>
+        )
+        .unwrap(),
+        value
+    );
+}
+
+#[test]
 fn eth_get_logs_should_succeed() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let result = setup
@@ -655,9 +682,25 @@ fn eth_get_transaction_receipt_should_succeed() {
             CandidRpcSource::EthMainnet(None),
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
-        .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":{"blockHash":"0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be","blockNumber":"0x11a85ab","contractAddress":null,"cumulativeGasUsed":"0xf02aed","effectiveGasPrice":"0x63c00ee76","from":"0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667","gasUsed":"0x7d89","logs":[],"logsBloom":"0x0","status":"0x1","to":"0x356cfd6e6d0000400000003900b415f80669009e","transactionHash":"0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f","transactionIndex":"0xd9","type":"0x2"}}"#))
-        .wait().unwrap().expect("receipt was None");
-    assert_eq!(result.block_number, BlockNumber::new(18_515_371));
+        .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":2,"result":{"blockHash":"0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be","blockNumber":"0x11a85ab","contractAddress":null,"cumulativeGasUsed":"0xf02aed","effectiveGasPrice":"0x63c00ee76","from":"0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667","gasUsed":"0x7d89","logs":[],"logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","status":"0x1","to":"0x356cfd6e6d0000400000003900b415f80669009e","transactionHash":"0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f","transactionIndex":"0xd9","type":"0x2"}}"#))
+        .wait().unwrap();
+    assert_eq!(
+        result,
+        Some(candid_types::TransactionReceipt {
+            status: TransactionStatus::Success,
+            transaction_hash: Hash::from_str(
+                "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+            )
+            .unwrap(),
+            block_number: 18_515_371_u64.into(),
+            block_hash: Hash::from_str(
+                "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be",
+            )
+            .unwrap(),
+            effective_gas_price: 26_776_497_782_u64.into(),
+            gas_used: 32_137.into(),
+        })
+    );
 }
 
 #[test]
