@@ -71,7 +71,9 @@ impl RpcTransport for CanisterTransport {
             }
             ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
         }
-        match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost).await {
+        match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost)
+            .await
+        {
             Ok((response,)) => Ok(response),
             Err((code, message)) => Err(HttpOutcallError::IcError { code, message }.into()),
         }

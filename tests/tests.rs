@@ -7,7 +7,10 @@ use candid::{CandidType, Decode, Encode, Nat};
 use cketh_common::{
     address::Address,
     checked_amount::CheckedAmountOf,
-    eth_rpc::{Block, Data, FeeHistory, FixedSizeData, Hash, LogEntry, SendRawTransactionResult},
+    eth_rpc::{
+        Block, Data, FeeHistory, FixedSizeData, Hash, JsonRpcError, LogEntry, ProviderError,
+        RpcError, SendRawTransactionResult,
+    },
     numeric::{BlockNumber, Wei},
 };
 use ic_base_types::{CanisterId, PrincipalId};
@@ -108,6 +111,12 @@ impl EvmRpcSetup {
         self
     }
 
+    /// Shorthand for deriving an `EvmRpcSetup` with a third-party caller.
+    pub fn as_user(mut self) -> Self {
+        self.caller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);
+        self
+    }
+
     /// Shorthand for deriving an `EvmRpcSetup` with an arbitrary caller.
     pub fn as_caller(mut self, id: PrincipalId) -> Self {
         self.caller = id;
@@ -171,6 +180,11 @@ impl EvmRpcSetup {
             .deauthorize(&self.caller, auth)
             .wait();
         self
+    }
+
+    pub fn set_open_rpc_access(&self, open_rpc_access: bool) {
+        self.call_update("setOpenRpcAccess", Encode!(&open_rpc_access).unwrap())
+            .wait()
     }
 
     pub fn request_cost(
@@ -792,7 +806,7 @@ fn eth_send_raw_transaction_should_succeed() {
 }
 
 #[test]
-fn should_allow_unexpected_response_fields() {
+fn candid_rpc_should_allow_unexpected_response_fields() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let response = setup
         .eth_get_transaction_receipt(
@@ -800,9 +814,87 @@ fn should_allow_unexpected_response_fields() {
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
         .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":{"unexpectedKey":"unexpectedValue","blockHash":"0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35","blockNumber":"0x5bad55","contractAddress":null,"cumulativeGasUsed":"0xb90b0","effectiveGasPrice":"0x746a528800","from":"0x398137383b3d25c92898c656696e41950e47316b","gasUsed":"0x1383f","logs":[],"status":"0x1","to":"0x06012c8cf97bead5deae237070f9587f8e7a266d","transactionHash":"0xbb3a336e3f823ec18197f1e13ee875700f08f03e2cab75f0d0b118dabb44cba0","transactionIndex":"0x11","type":"0x0"}}"#))
-        .wait().unwrap().expect("received `None` in place of receipt");
+        .wait().unwrap().expect("receipt was None");
     assert_eq!(
         response.block_hash,
         "0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35".to_string()
+    );
+}
+
+#[test]
+fn candid_rpc_should_err_without_cycles() {
+    let setup = EvmRpcSetup::new();
+    let result = setup
+        .eth_get_transaction_receipt(
+            CandidRpcSource::EthMainnet(None),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .wait();
+    assert_matches!(
+        result,
+        Err(RpcError::ProviderError(ProviderError::TooFewCycles {
+            expected: _,
+            received: 0,
+        }))
+    );
+}
+
+#[test]
+fn candid_rpc_should_err_during_restricted_access() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    setup.clone().as_controller().set_open_rpc_access(false);
+    let result = setup
+        .eth_get_transaction_receipt(
+            CandidRpcSource::EthMainnet(None),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .wait();
+    assert_eq!(
+        result,
+        Err(RpcError::ProviderError(ProviderError::NoPermission))
+    );
+}
+
+#[test]
+fn candid_rpc_should_err_when_service_unavailable() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_get_transaction_receipt(
+            CandidRpcSource::EthMainnet(None),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .mock_http(MockOutcallBuilder::new(503, "Service unavailable"))
+        .wait();
+    assert_eq!(
+        result,
+        Err(RpcError::HttpOutcallError(
+            cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
+                status: 503,
+                body: "Service unavailable".to_string(),
+                parsing_error: None,
+            }
+        ))
+    );
+}
+
+#[test]
+fn candid_rpc_should_recognize_json_error() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_get_transaction_receipt(
+            CandidRpcSource::EthMainnet(None),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .mock_http(MockOutcallBuilder::new(
+            200,
+            r#"{"jsonrpc":"2.0","id":0,"error":{"code":123,"message":"Error message"}}"#,
+        ))
+        .wait();
+    assert_eq!(
+        result,
+        Err(RpcError::JsonRpcError(JsonRpcError {
+            code: 123,
+            message: "Error message".to_string(),
+        }))
     );
 }
