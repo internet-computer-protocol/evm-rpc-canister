@@ -348,7 +348,6 @@ pub mod candid_types {
     use cketh_common::{
         address::Address,
         eth_rpc::{into_nat, FixedSizeData, ValidationError},
-        eth_rpc_client::responses::TransactionStatus,
         numeric::BlockNumber,
     };
     use serde::Deserialize;
@@ -430,27 +429,27 @@ pub mod candid_types {
     #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
     pub struct TransactionReceipt {
         #[serde(rename = "blockHash")]
-        pub block_hash: Hash,
+        pub block_hash: String,
         #[serde(rename = "blockNumber")]
         pub block_number: BlockNumber,
         #[serde(rename = "effectiveGasPrice")]
         pub effective_gas_price: candid::Nat,
         #[serde(rename = "gasUsed")]
         pub gas_used: candid::Nat,
-        pub status: TransactionStatus,
+        pub status: candid::Nat,
         #[serde(rename = "transactionHash")]
-        pub transaction_hash: Hash,
+        pub transaction_hash: String,
     }
 
     impl From<cketh_common::eth_rpc_client::responses::TransactionReceipt> for TransactionReceipt {
         fn from(value: cketh_common::eth_rpc_client::responses::TransactionReceipt) -> Self {
             TransactionReceipt {
-                block_hash: value.block_hash,
+                block_hash: format!("{:#x}", value.block_hash),
                 block_number: value.block_number,
                 effective_gas_price: into_nat(value.effective_gas_price.into_inner()),
                 gas_used: into_nat(value.gas_used.into_inner()),
-                status: value.status,
-                transaction_hash: value.transaction_hash,
+                status: (value.status as u64).into(),
+                transaction_hash: format!("{:#x}", value.transaction_hash),
             }
         }
     }

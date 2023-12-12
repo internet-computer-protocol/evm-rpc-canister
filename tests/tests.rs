@@ -7,8 +7,7 @@ use candid::{CandidType, Decode, Encode, Nat};
 use cketh_common::{
     address::Address,
     checked_amount::CheckedAmountOf,
-    eth_rpc::{Block, FeeHistory, Hash, LogEntry, SendRawTransactionResult},
-    eth_rpc_client::responses::TransactionStatus,
+    eth_rpc::{Block, FeeHistory, LogEntry, SendRawTransactionResult},
     numeric::{BlockNumber, Wei},
 };
 use ic_base_types::{CanisterId, PrincipalId};
@@ -612,27 +611,19 @@ fn should_decode_address() {
 }
 
 #[test]
-fn should_decode_opt_transaction_receipt() {
-    let value = Some(candid_types::TransactionReceipt {
-        status: TransactionStatus::Success,
-        transaction_hash: Hash::from_str(
-            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
-        )
-        .unwrap(),
+fn should_decode_transaction_receipt() {
+    let value = candid_types::TransactionReceipt {
+        status: 0.into(),
+        transaction_hash: "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"
+            .to_string(),
         block_number: 18_515_371_u64.into(),
-        block_hash: Hash::from_str(
-            "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be",
-        )
-        .unwrap(),
+        block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be"
+            .to_string(),
         effective_gas_price: 26_776_497_782_u64.into(),
         gas_used: 32_137.into(),
-    });
+    };
     assert_eq!(
-        Decode!(
-            &Encode!(&value).unwrap(),
-            Option<candid_types::TransactionReceipt>
-        )
-        .unwrap(),
+        Decode!(&Encode!(&value).unwrap(), candid_types::TransactionReceipt).unwrap(),
         value
     );
 }
@@ -687,16 +678,12 @@ fn eth_get_transaction_receipt_should_succeed() {
     assert_eq!(
         result,
         Some(candid_types::TransactionReceipt {
-            status: TransactionStatus::Success,
-            transaction_hash: Hash::from_str(
-                "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
-            )
-            .unwrap(),
+            status: 0.into(),
+            transaction_hash: "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"
+                .to_string(),
             block_number: 18_515_371_u64.into(),
-            block_hash: Hash::from_str(
-                "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be",
-            )
-            .unwrap(),
+            block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be"
+                .to_string(),
             effective_gas_price: 26_776_497_782_u64.into(),
             gas_used: 32_137.into(),
         })
@@ -774,7 +761,6 @@ fn should_allow_unexpected_response_fields() {
         .wait().unwrap().expect("received `None` in place of receipt");
     assert_eq!(
         receipt.block_hash,
-        FromStr::from_str("0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35")
-            .unwrap()
+        "0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35".to_string()
     );
 }
