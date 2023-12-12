@@ -58,20 +58,20 @@ impl RpcTransport for CanisterTransport {
     async fn http_request(
         _provider: &RpcService,
         request: CanisterHttpRequestArgument,
-        cycles: u128,
+        cycles_cost: u128,
     ) -> RpcResult<HttpResponse> {
         if !is_authorized(&ic_cdk::caller(), Auth::FreeRpc) {
             let cycles_available = ic_cdk::api::call::msg_cycles_available128();
-            if cycles_available < cycles {
+            if cycles_available < cycles_cost {
                 return Err(ProviderError::TooFewCycles {
-                    expected: cycles,
+                    expected: cycles_cost,
                     received: cycles_available,
                 }
                 .into());
             }
-            ic_cdk::api::call::msg_cycles_accept128(cycles);
+            ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
         }
-        match ic_cdk::api::management_canister::http_request::http_request(request, cycles).await {
+        match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost).await {
             Ok((response,)) => Ok(response),
             Err((code, message)) => Err(HttpOutcallError::IcError { code, message }.into()),
         }
