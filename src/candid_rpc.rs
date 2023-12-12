@@ -3,8 +3,8 @@ use std::str::FromStr;
 use async_trait::async_trait;
 use cketh_common::{
     eth_rpc::{
-        into_nat, Block, FeeHistory, GetLogsParam, Hash, LogEntry, ProviderError, RpcError,
-        SendRawTransactionResult, ValidationError,
+        into_nat, Block, FeeHistory, GetLogsParam, Hash, HttpOutcallError, LogEntry, ProviderError,
+        RpcError, SendRawTransactionResult, ValidationError,
     },
     eth_rpc_client::{
         providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
@@ -13,10 +13,7 @@ use cketh_common::{
     },
     lifecycle::EthereumNetwork,
 };
-use ic_cdk::api::{
-    call::CallResult,
-    management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse},
-};
+use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 
 use crate::*;
 
@@ -61,13 +58,25 @@ impl RpcTransport for CanisterTransport {
     async fn http_request(
         _provider: &RpcService,
         request: CanisterHttpRequestArgument,
-        cost: u128,
-    ) -> CallResult<HttpResponse> {
-        Ok(
-            ic_cdk::api::management_canister::http_request::http_request(request, cost)
-                .await?
-                .0,
-        )
+        cycles_cost: u128,
+    ) -> RpcResult<HttpResponse> {
+        if !is_authorized(&ic_cdk::caller(), Auth::FreeRpc) {
+            let cycles_available = ic_cdk::api::call::msg_cycles_available128();
+            if cycles_available < cycles_cost {
+                return Err(ProviderError::TooFewCycles {
+                    expected: cycles_cost,
+                    received: cycles_available,
+                }
+                .into());
+            }
+            ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
+        }
+        match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost)
+            .await
+        {
+            Ok((response,)) => Ok(response),
+            Err((code, message)) => Err(HttpOutcallError::IcError { code, message }.into()),
+        }
     }
 }
 

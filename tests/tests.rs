@@ -1,9 +1,18 @@
 mod mock;
 
-use std::{marker::PhantomData, rc::Rc, time::Duration};
+use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
 
 use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
+use cketh_common::{
+    address::Address,
+    checked_amount::CheckedAmountOf,
+    eth_rpc::{
+        Block, Data, FeeHistory, FixedSizeData, Hash, JsonRpcError, LogEntry, ProviderError,
+        RpcError, SendRawTransactionResult,
+    },
+    numeric::{BlockNumber, Wei},
+};
 use ic_base_types::{CanisterId, PrincipalId};
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse as OutCallHttpResponse,
@@ -15,7 +24,7 @@ use ic_state_machine_tests::{
     StateMachine, StateMachineBuilder, WasmResult,
 };
 use ic_test_utilities_load_wasm::load_wasm;
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use evm_rpc::*;
 use mock::*;
@@ -91,24 +100,27 @@ impl EvmRpcSetup {
     }
 
     /// Shorthand for deriving an `EvmRpcSetup` with the caller as the canister controller.
-    pub fn as_controller(&self) -> Self {
-        let mut setup = self.clone();
-        setup.caller = self.controller;
-        setup
+    pub fn as_controller(mut self) -> Self {
+        self.caller = self.controller;
+        self
     }
 
     /// Shorthand for deriving an `EvmRpcSetup` with an anonymous caller.
-    pub fn as_anonymous(&self) -> Self {
-        let mut setup = self.clone();
-        setup.caller = PrincipalId::new_anonymous();
-        setup
+    pub fn as_anonymous(mut self) -> Self {
+        self.caller = PrincipalId::new_anonymous();
+        self
+    }
+
+    /// Shorthand for deriving an `EvmRpcSetup` with a third-party caller.
+    pub fn as_user(mut self) -> Self {
+        self.caller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);
+        self
     }
 
     /// Shorthand for deriving an `EvmRpcSetup` with an arbitrary caller.
-    pub fn as_caller(&self, id: PrincipalId) -> Self {
-        let mut setup = self.clone();
-        setup.caller = id;
-        setup
+    pub fn as_caller(mut self, id: PrincipalId) -> Self {
+        self.caller = id;
+        self
     }
 
     fn call_update<R: CandidType + DeserializeOwned>(
@@ -120,18 +132,12 @@ impl EvmRpcSetup {
     }
 
     fn call_query<R: CandidType + DeserializeOwned>(&self, method: &str, input: Vec<u8>) -> R {
-        Decode!(
-            &assert_reply(
-                self.env
-                    .query_as(self.caller, self.canister_id, method, input,)
-                    .unwrap_or_else(|err| panic!(
-                        "error during query call to `{}()`: {}",
-                        method, err
-                    ))
-            ),
-            R
-        )
-        .unwrap()
+        let candid = &assert_reply(
+            self.env
+                .query_as(self.caller, self.canister_id, method, input)
+                .unwrap_or_else(|err| panic!("error during query call to `{}()`: {}", method, err)),
+        );
+        Decode!(candid, R).expect("error while decoding Candid response from query call")
     }
 
     pub fn tick_until_http_request(&self) {
@@ -153,19 +159,32 @@ impl EvmRpcSetup {
     }
 
     pub fn get_providers(&self) -> Vec<ProviderView> {
-        self.call_query("get_providers", Encode!().unwrap())
+        self.call_query("getProviders", Encode!().unwrap())
     }
 
     pub fn register_provider(&self, args: RegisterProviderArgs) -> CallFlow<u64> {
-        self.call_update("register_provider", Encode!(&args).unwrap())
+        self.call_update("registerProvider", Encode!(&args).unwrap())
     }
 
-    pub fn authorize_caller(&self, auth: Auth) -> CallFlow<()> {
-        self.as_controller().authorize(&self.caller, auth)
+    pub fn authorize_caller(self, auth: Auth) -> Self {
+        self.clone()
+            .as_controller()
+            .authorize(&self.caller, auth)
+            .wait();
+        self
     }
 
-    pub fn deauthorize_caller(&self, auth: Auth) -> CallFlow<()> {
-        self.as_controller().deauthorize(&self.caller, auth)
+    pub fn deauthorize_caller(self, auth: Auth) -> Self {
+        self.clone()
+            .as_controller()
+            .deauthorize(&self.caller, auth)
+            .wait();
+        self
+    }
+
+    pub fn set_open_rpc_access(&self, open_rpc_access: bool) {
+        self.call_update("setOpenRpcAccess", Encode!(&open_rpc_access).unwrap())
+            .wait()
     }
 
     pub fn request_cost(
@@ -175,7 +194,7 @@ impl EvmRpcSetup {
         max_response_bytes: u64,
     ) -> Nat {
         self.call_query(
-            "request_cost",
+            "requestCost",
             Encode!(&source, &json_rpc_payload, &max_response_bytes).unwrap(),
         )
     }
@@ -189,6 +208,60 @@ impl EvmRpcSetup {
         self.call_update(
             "request",
             Encode!(&source, &json_rpc_payload, &max_response_bytes).unwrap(),
+        )
+    }
+
+    pub fn eth_get_logs(
+        &self,
+        source: CandidRpcSource,
+        args: candid_types::GetLogsArgs,
+    ) -> CallFlow<RpcResult<Vec<LogEntry>>> {
+        self.call_update("eth_getLogs", Encode!(&source, &args).unwrap())
+    }
+
+    pub fn eth_get_block_by_number(
+        &self,
+        source: CandidRpcSource,
+        block: candid_types::BlockSpec,
+    ) -> CallFlow<RpcResult<Block>> {
+        self.call_update("eth_getBlockByNumber", Encode!(&source, &block).unwrap())
+    }
+
+    pub fn eth_get_transaction_receipt(
+        &self,
+        source: CandidRpcSource,
+        address: &str,
+    ) -> CallFlow<RpcResult<Option<candid_types::TransactionReceipt>>> {
+        self.call_update(
+            "eth_getTransactionReceipt",
+            Encode!(&source, &address).unwrap(),
+        )
+    }
+
+    pub fn eth_get_transaction_count(
+        &self,
+        source: CandidRpcSource,
+        args: candid_types::GetTransactionCountArgs,
+    ) -> CallFlow<RpcResult<Nat>> {
+        self.call_update("eth_getTransactionCount", Encode!(&source, &args).unwrap())
+    }
+
+    pub fn eth_fee_history(
+        &self,
+        source: CandidRpcSource,
+        args: candid_types::FeeHistoryArgs,
+    ) -> CallFlow<RpcResult<Option<FeeHistory>>> {
+        self.call_update("eth_feeHistory", Encode!(&source, &args).unwrap())
+    }
+
+    pub fn eth_send_raw_transaction(
+        &self,
+        source: CandidRpcSource,
+        signed_raw_transaction_hex: String,
+    ) -> CallFlow<RpcResult<SendRawTransactionResult>> {
+        self.call_update(
+            "eth_sendRawTransaction",
+            Encode!(&source, &signed_raw_transaction_hex).unwrap(),
         )
     }
 }
@@ -219,14 +292,49 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
 
     pub fn mock_http(self, mock: impl Into<MockOutcall>) -> Self {
         let mock = mock.into();
+        self.mock_http_once_inner(&mock);
+        loop {
+            if !self.try_mock_http_inner(&mock) {
+                break;
+            }
+        }
+        self
+    }
+
+    pub fn mock_http_n_times(self, mock: impl Into<MockOutcall>, count: u32) -> Self {
+        let mock = mock.into();
+        for _ in 0..count {
+            self.mock_http_once_inner(&mock);
+        }
+        self
+    }
+
+    pub fn mock_http_once(self, mock: impl Into<MockOutcall>) -> Self {
+        let mock = mock.into();
+        self.mock_http_once_inner(&mock);
+        self
+    }
+
+    fn mock_http_once_inner(&self, mock: &MockOutcall) {
+        if !self.try_mock_http_inner(mock) {
+            panic!("no pending HTTP request")
+        }
+    }
+
+    fn try_mock_http_inner(&self, mock: &MockOutcall) -> bool {
         assert_eq!(self.setup.env.canister_http_request_contexts().len(), 0);
         self.setup.tick_until_http_request();
         match self.setup.env.ingress_status(&self.message_id) {
-            IngressStatus::Known { state, .. } if state != IngressState::Processing => return self,
+            IngressStatus::Known { state, .. } if state != IngressState::Processing => {
+                return false
+            }
             _ => (),
         }
         let contexts = self.setup.env.canister_http_request_contexts();
-        let (id, context) = contexts.first_key_value().expect("no pending HTTP request");
+        let (id, context) = match contexts.first_key_value() {
+            Some(kv) => kv,
+            None => return false,
+        };
 
         mock.assert_matches(&CanisterHttpRequestArgument {
             url: context.url.clone(),
@@ -253,9 +361,9 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
             }),
         });
         let mut response = OutCallHttpResponse {
-            status: mock.response.status,
-            headers: mock.response.headers,
-            body: mock.response.body,
+            status: mock.response.status.clone(),
+            headers: mock.response.headers.clone(),
+            body: mock.response.body.clone(),
         };
         if let Some(transform) = &context.transform {
             let transform_args = TransformArgs {
@@ -291,31 +399,25 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
         };
         let payload = PayloadBuilder::new().http_response(*id, &http_response);
         self.setup.env.execute_payload(payload);
-
-        self
+        true
     }
 
     pub fn wait(self) -> R {
-        Decode!(
-            &assert_reply(
-                self.setup
-                    .env
-                    .await_ingress(self.message_id, MAX_TICKS)
-                    .unwrap_or_else(|err| {
-                        panic!("error during update call to `{}()`: {}", self.method, err)
-                    })
-            ),
-            R
-        )
-        .unwrap()
+        let candid = &assert_reply(
+            self.setup
+                .env
+                .await_ingress(self.message_id, MAX_TICKS)
+                .unwrap_or_else(|err| {
+                    panic!("error during update call to `{}()`: {}", self.method, err)
+                }),
+        );
+        Decode!(candid, R).expect("error while decoding Candid response from update call")
     }
 }
 
 #[test]
 fn should_register_provider() {
-    let setup = EvmRpcSetup::new();
-    setup.authorize_caller(Auth::RegisterProvider);
-
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
     assert_eq!(
         setup
             .get_providers()
@@ -381,8 +483,7 @@ fn should_register_provider() {
 }
 
 fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
-    let setup = EvmRpcSetup::new();
-    setup.authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
 
     assert_matches!(
         setup
@@ -476,8 +577,7 @@ fn mock_request_should_fail_with_request_body() {
 
 #[test]
 fn should_canonicalize_json_response() {
-    let setup = EvmRpcSetup::new();
-    setup.authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let responses = [
         r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#,
         r#"{"result":"0x00112233","id":1,"jsonrpc":"2.0"}"#,
@@ -499,4 +599,302 @@ fn should_canonicalize_json_response() {
     })
     .collect::<Vec<_>>();
     assert!(responses.windows(2).all(|w| w[0] == w[1]));
+}
+
+#[test]
+fn should_decode_renamed_field() {
+    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
+    pub struct Struct {
+        #[serde(rename = "fieldName")]
+        pub field_name: u64,
+    }
+    let value = Struct { field_name: 123 };
+    assert_eq!(Decode!(&Encode!(&value).unwrap(), Struct).unwrap(), value);
+}
+
+#[test]
+fn should_decode_checked_amount() {
+    let value = Wei::new(123);
+    assert_eq!(Decode!(&Encode!(&value).unwrap(), Wei).unwrap(), value);
+}
+
+#[test]
+fn should_decode_address() {
+    let value = Address::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap();
+    assert_eq!(Decode!(&Encode!(&value).unwrap(), Address).unwrap(), value);
+}
+
+#[test]
+fn should_decode_transaction_receipt() {
+    let value = candid_types::TransactionReceipt {
+        status: 0.into(),
+        transaction_hash: "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"
+            .to_string(),
+        block_number: 18_515_371_u64.into(),
+        block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be"
+            .to_string(),
+        effective_gas_price: 26_776_497_782_u64.into(),
+        gas_used: 32_137.into(),
+    };
+    assert_eq!(
+        Decode!(&Encode!(&value).unwrap(), candid_types::TransactionReceipt).unwrap(),
+        value
+    );
+}
+
+#[test]
+fn eth_get_logs_should_succeed() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let response = setup
+        .eth_get_logs(
+            CandidRpcSource::EthMainnet(None),
+            candid_types::GetLogsArgs {
+                addresses: vec!["0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string()],
+                from_block: None,
+                to_block: None,
+                topics: None,
+            },
+        )
+        .mock_http(MockOutcallBuilder::new(200, r#"{"id":0,"jsonrpc":"2.0","result":[{"address":"0xdac17f958d2ee523a2206206994597c13d831ec7","topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef","0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43","0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"],"data":"0x000000000000000000000000000000000000000000000000000000003b9c6433","blockNumber":"0x11dc77e","transactionHash":"0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678","transactionIndex":"0x65","blockHash":"0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629","logIndex":"0xe8","removed":false}]}"#))
+        .wait().unwrap();
+    assert_eq!(
+        response,
+        vec![LogEntry {
+            address: Address::from_str("0xdac17f958d2ee523a2206206994597c13d831ec7").unwrap(),
+            topics: vec![
+                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                "0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43",
+                "0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"
+            ]
+            .into_iter()
+            .map(|hex| FixedSizeData::from_str(hex).unwrap())
+            .collect(),
+            data: Data(
+                hex::decode("000000000000000000000000000000000000000000000000000000003b9c6433")
+                    .unwrap()
+            ),
+            block_number: Some(CheckedAmountOf::new(0x11dc77e)),
+            transaction_hash: Some(
+                Hash::from_str(
+                    "0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678"
+                )
+                .unwrap()
+            ),
+            transaction_index: Some(CheckedAmountOf::new(0x65)),
+            block_hash: Some(
+                Hash::from_str(
+                    "0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629"
+                )
+                .unwrap()
+            ),
+            log_index: Some(CheckedAmountOf::new(0xe8)),
+            removed: false
+        }]
+    );
+}
+
+#[test]
+fn eth_get_block_by_number_should_succeed() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let response = setup
+        .eth_get_block_by_number(
+            CandidRpcSource::EthMainnet(None),
+            candid_types::BlockSpec::Tag(candid_types::BlockTag::Latest),
+        )
+        .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","result":{"baseFeePerGas":"0xd7232aa34","difficulty":"0x0","extraData":"0x546974616e2028746974616e6275696c6465722e78797a29","gasLimit":"0x1c9c380","gasUsed":"0xa768c4","hash":"0xc3674be7b9d95580d7f23c03d32e946f2b453679ee6505e3a778f003c5a3cfae","logsBloom":"0x3e6b8420e1a13038902c24d6c2a9720a7ad4860cdc870cd5c0490011e43631134f608935bd83171247407da2c15d85014f9984608c03684c74aad48b20bc24022134cdca5f2e9d2dee3b502a8ccd39eff8040b1d96601c460e119c408c620b44fa14053013220847045556ea70484e67ec012c322830cf56ef75e09bd0db28a00f238adfa587c9f80d7e30d3aba2863e63a5cad78954555966b1055a4936643366a0bb0b1bac68d0e6267fc5bf8304d404b0c69041125219aa70562e6a5a6362331a414a96d0716990a10161b87dd9568046a742d4280014975e232b6001a0360970e569d54404b27807d7a44c949ac507879d9d41ec8842122da6772101bc8b","miner":"0x388c818ca8b9251b393131c08a736a67ccb19297","mixHash":"0x516a58424d4883a3614da00a9c6f18cd5cd54335a08388229a993a8ecf05042f","nonce":"0x0000000000000000","number":"0x11db01d","parentHash":"0x43325027f6adf9befb223f8ae80db057daddcd7b48e41f60cd94bfa8877181ae","receiptsRoot":"0x66934c3fd9c547036fe0e56ad01bc43c84b170be7c4030a86805ddcdab149929","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":"0xcd35","stateRoot":"0x13552447dd62f11ad885f21a583c4fa34144efe923c7e35fb018d6710f06b2b6","timestamp":"0x656f96f3","totalDifficulty":"0xc70d815d562d3cfa955","withdrawalsRoot":"0xecae44b2c53871003c5cc75285995764034c9b5978a904229d36c1280b141d48"},"id":0}"#))
+        .wait().unwrap();
+    assert_eq!(
+        response,
+        Block {
+            number: BlockNumber::new(18_722_845),
+            base_fee_per_gas: Wei::new(57_750_497_844),
+        }
+    );
+}
+
+#[test]
+fn eth_get_transaction_receipt_should_succeed() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let response = setup
+        .eth_get_transaction_receipt(
+            CandidRpcSource::EthMainnet(None),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":2,"result":{"blockHash":"0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be","blockNumber":"0x11a85ab","contractAddress":null,"cumulativeGasUsed":"0xf02aed","effectiveGasPrice":"0x63c00ee76","from":"0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667","gasUsed":"0x7d89","logs":[],"logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","status":"0x1","to":"0x356cfd6e6d0000400000003900b415f80669009e","transactionHash":"0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f","transactionIndex":"0xd9","type":"0x2"}}"#))
+        .wait().unwrap();
+    assert_eq!(
+        response,
+        Some(candid_types::TransactionReceipt {
+            status: 0.into(),
+            transaction_hash: "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"
+                .to_string(),
+            block_number: 18_515_371_u64.into(),
+            block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be"
+                .to_string(),
+            effective_gas_price: 26_776_497_782_u64.into(),
+            gas_used: 32_137.into(),
+        })
+    );
+}
+
+#[test]
+fn eth_get_transaction_count_should_succeed() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let response = setup
+        .eth_get_transaction_count(
+            CandidRpcSource::EthMainnet(None),
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockSpec::Tag(candid_types::BlockTag::Latest),
+            },
+        )
+        .mock_http(MockOutcallBuilder::new(
+            200,
+            r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+        ))
+        .wait()
+        .unwrap();
+    assert_eq!(response, 1);
+}
+
+#[test]
+fn eth_fee_history_should_succeed() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let response = setup
+        .eth_fee_history(
+            CandidRpcSource::EthMainnet(None),
+            candid_types::FeeHistoryArgs {
+                block_count: 3,
+                newest_block: candid_types::BlockSpec::Tag(candid_types::BlockTag::Latest),
+                reward_percentiles: None,
+            },
+        )
+        .mock_http(MockOutcallBuilder::new(
+            200,
+            r#"{"id":0,"jsonrpc":"2.0","result":{"oldestBlock":"0x11e57f5","baseFeePerGas":["0x9cf6c61b9","0x97d853982","0x9ba55a0b0","0x9543bf98d"],"reward":[["0x0123"]]}}"#,
+        ))
+        .wait()
+        .unwrap();
+    assert_eq!(
+        response,
+        Some(FeeHistory {
+            oldest_block: CheckedAmountOf::new(0x11e57f5),
+            base_fee_per_gas: vec!["0x9cf6c61b9", "0x97d853982", "0x9ba55a0b0", "0x9543bf98d"]
+                .into_iter()
+                .map(|hex| CheckedAmountOf::from_str_hex(hex).unwrap())
+                .collect(),
+            reward: vec![vec![CheckedAmountOf::new(0x0123)]],
+        })
+    );
+}
+
+#[test]
+fn eth_send_raw_transaction_should_succeed() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let response = setup
+        .eth_send_raw_transaction(
+            CandidRpcSource::EthMainnet(None),
+            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83".to_string(),
+        )
+        .mock_http(MockOutcallBuilder::new(
+            200,
+            r#"{"id":0,"jsonrpc":"2.0","result":"Ok"}"#,
+        ))
+        .wait()
+        .unwrap();
+    assert_eq!(response, SendRawTransactionResult::Ok);
+}
+
+#[test]
+fn candid_rpc_should_allow_unexpected_response_fields() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let response = setup
+        .eth_get_transaction_receipt(
+            CandidRpcSource::EthMainnet(None),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":{"unexpectedKey":"unexpectedValue","blockHash":"0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35","blockNumber":"0x5bad55","contractAddress":null,"cumulativeGasUsed":"0xb90b0","effectiveGasPrice":"0x746a528800","from":"0x398137383b3d25c92898c656696e41950e47316b","gasUsed":"0x1383f","logs":[],"status":"0x1","to":"0x06012c8cf97bead5deae237070f9587f8e7a266d","transactionHash":"0xbb3a336e3f823ec18197f1e13ee875700f08f03e2cab75f0d0b118dabb44cba0","transactionIndex":"0x11","type":"0x0"}}"#))
+        .wait().unwrap().expect("receipt was None");
+    assert_eq!(
+        response.block_hash,
+        "0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35".to_string()
+    );
+}
+
+#[test]
+fn candid_rpc_should_err_without_cycles() {
+    let setup = EvmRpcSetup::new();
+    let result = setup
+        .eth_get_transaction_receipt(
+            CandidRpcSource::EthMainnet(None),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .wait();
+    assert_matches!(
+        result,
+        Err(RpcError::ProviderError(ProviderError::TooFewCycles {
+            expected: _,
+            received: 0,
+        }))
+    );
+}
+
+#[test]
+fn candid_rpc_should_err_during_restricted_access() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    setup.clone().as_controller().set_open_rpc_access(false);
+    let result = setup
+        .eth_get_transaction_receipt(
+            CandidRpcSource::EthMainnet(None),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .wait();
+    assert_eq!(
+        result,
+        Err(RpcError::ProviderError(ProviderError::NoPermission))
+    );
+}
+
+#[test]
+fn candid_rpc_should_err_when_service_unavailable() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_get_transaction_receipt(
+            CandidRpcSource::EthMainnet(None),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .mock_http(MockOutcallBuilder::new(503, "Service unavailable"))
+        .wait();
+    assert_eq!(
+        result,
+        Err(RpcError::HttpOutcallError(
+            cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
+                status: 503,
+                body: "Service unavailable".to_string(),
+                parsing_error: None,
+            }
+        ))
+    );
+}
+
+#[test]
+fn candid_rpc_should_recognize_json_error() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_get_transaction_receipt(
+            CandidRpcSource::EthMainnet(None),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .mock_http(MockOutcallBuilder::new(
+            200,
+            r#"{"jsonrpc":"2.0","id":0,"error":{"code":123,"message":"Error message"}}"#,
+        ))
+        .wait();
+    assert_eq!(
+        result,
+        Err(RpcError::JsonRpcError(JsonRpcError {
+            code: 123,
+            message: "Error message".to_string(),
+        }))
+    );
 }

@@ -1,5 +1,5 @@
 type Auth = variant { Rpc; RegisterProvider; FreeRpc; ManageService };
-type Block = record { base_fee_per_gas : nat; number : nat };
+type Block = record { baseFeePerGas : nat; number : nat };
 type BlockSpec = variant { Tag : BlockTag; Number : nat };
 type BlockTag = variant {
   Earliest;
@@ -17,19 +17,19 @@ type EthMainnetService = variant { BlockPi; Cloudflare; PublicNode; Ankr };
 type EthSepoliaService = variant { BlockPi; PublicNode; Ankr };
 type FeeHistory = record {
   reward : vec vec nat;
-  base_fee_per_gas : vec nat;
-  oldest_block : nat;
+  oldestBlock : nat;
+  baseFeePerGas : vec nat;
 };
 type FeeHistoryArgs = record {
-  block_count : nat;
-  newest_block : BlockSpec;
-  reward_percentiles : opt vec nat8;
+  blockCount : nat;
+  newestBlock : BlockSpec;
+  rewardPercentiles : opt vec nat8;
 };
 type GetLogsArgs = record {
+  fromBlock : opt BlockSpec;
+  toBlock : opt BlockSpec;
   addresses : vec text;
   topics : opt vec text;
-  to_block : opt BlockSpec;
-  from_block : opt BlockSpec;
 };
 type GetTransactionCountArgs = record { address : text; block : BlockSpec };
 type HttpHeader = record { value : text; name : text };
@@ -38,19 +38,19 @@ type HttpOutcallError = variant {
   InvalidHttpJsonRpcResponse : record {
     status : nat16;
     body : text;
-    parsing_error : opt text;
+    parsingError : opt text;
   };
 };
 type JsonRpcError = record { code : int64; message : text };
 type LogEntry = record {
-  transaction_hash : opt vec nat8;
-  block_hash : opt vec nat8;
-  log_index : opt nat;
-  data : vec nat8;
-  transaction_index : opt nat;
-  block_number : opt nat;
-  topics : vec vec nat8;
-  address : vec nat8;
+  transactionHash : opt text;
+  blockNumber : opt nat;
+  data : text;
+  blockHash : opt text;
+  transactionIndex : opt nat;
+  topics : vec text;
+  address : text;
+  logIndex : opt nat;
   removed : bool;
 };
 type Message = variant { Data : vec nat8; Hash : vec nat8 };
@@ -60,21 +60,21 @@ type ProviderError = variant {
   NoPermission;
 };
 type ProviderView = record {
+  cyclesPerCall : nat64;
   owner : principal;
   hostname : text;
-  provider_id : nat64;
-  cycles_per_message_byte : nat64;
   primary : bool;
-  chain_id : nat64;
-  cycles_per_call : nat64;
+  chainId : nat64;
+  cyclesPerMessageByte : nat64;
+  providerId : nat64;
 };
 type RegisterProviderArgs = record {
-  credential_headers : opt vec HttpHeader;
+  cyclesPerCall : nat64;
+  credentialPath : text;
   hostname : text;
-  cycles_per_message_byte : nat64;
-  chain_id : nat64;
-  cycles_per_call : nat64;
-  credential_path : text;
+  credentialHeaders : opt vec HttpHeader;
+  chainId : nat64;
+  cyclesPerMessageByte : nat64;
 };
 type RejectionCode = variant {
   NoError;
@@ -112,27 +112,27 @@ type SignedMessage = record {
 };
 type Source = variant {
   Custom : record { url : text; headers : opt vec HttpHeader };
-  Service : record { hostname : text; chain_id : opt nat64 };
+  Service : record { hostname : text; chainId : opt nat64 };
   Chain : nat64;
   Provider : nat64;
 };
 type TransactionReceipt = record {
-  effective_gas_price : nat;
   status : TransactionStatus;
-  transaction_hash : vec nat8;
-  block_hash : vec nat8;
-  block_number : nat;
-  gas_used : nat;
+  transactionHash : text;
+  blockNumber : nat;
+  blockHash : text;
+  effectiveGasPrice : nat;
+  gasUsed : nat;
 };
 type TransactionStatus = variant { Success; Failure };
 type UpdateProviderArgs = record {
-  credential_headers : opt vec HttpHeader;
+  cyclesPerCall : opt nat64;
+  credentialPath : opt text;
   hostname : opt text;
-  provider_id : nat64;
-  cycles_per_message_byte : opt nat64;
+  credentialHeaders : opt vec HttpHeader;
   primary : opt bool;
-  cycles_per_call : opt nat64;
-  credential_path : opt text;
+  cyclesPerMessageByte : opt nat64;
+  providerId : nat64;
 };
 type ValidationError = variant {
   CredentialPathNotAllowed : text;
@@ -144,26 +144,26 @@ type ValidationError = variant {
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
-  eth_fee_history : (CandidRpcSource, FeeHistoryArgs) -> (Result);
-  eth_get_block_by_number : (CandidRpcSource, BlockSpec) -> (Result_1);
-  eth_get_logs : (CandidRpcSource, GetLogsArgs) -> (Result_2);
-  eth_get_transaction_count : (CandidRpcSource, GetTransactionCountArgs) -> (
+  eth_feeHistory : (CandidRpcSource, FeeHistoryArgs) -> (Result);
+  eth_getBlockByNumber : (CandidRpcSource, BlockSpec) -> (Result_1);
+  eth_getLogs : (CandidRpcSource, GetLogsArgs) -> (Result_2);
+  eth_getTransactionCount : (CandidRpcSource, GetTransactionCountArgs) -> (
       Result_3,
     );
-  eth_get_transaction_receipt : (CandidRpcSource, text) -> (Result_4);
-  eth_send_raw_transaction : (CandidRpcSource, text) -> (Result_5);
-  get_accumulated_cycle_count : (nat64) -> (nat) query;
-  get_authorized : (Auth) -> (vec text) query;
-  get_nodes_in_subnet : () -> (nat32) query;
-  get_open_rpc_access : () -> (bool) query;
-  get_providers : () -> (vec ProviderView) query;
-  register_provider : (RegisterProviderArgs) -> (nat64);
+  eth_getTransactionReceipt : (CandidRpcSource, text) -> (Result_4);
+  eth_sendRawTransaction : (CandidRpcSource, text) -> (Result_5);
+  getAccumulatedCycleCount : (nat64) -> (nat) query;
+  getAuthorized : (Auth) -> (vec text) query;
+  getNodesInSubnet : () -> (nat32) query;
+  getOpenRpcAccess : () -> (bool) query;
+  getProviders : () -> (vec ProviderView) query;
+  registerProvider : (RegisterProviderArgs) -> (nat64);
   request : (Source, text, nat64) -> (Result_6);
-  request_cost : (Source, text, nat64) -> (Result_7) query;
-  set_nodes_in_subnet : (nat32) -> ();
-  set_open_rpc_access : (bool) -> ();
-  unregister_provider : (nat64) -> (bool);
-  update_provider : (UpdateProviderArgs) -> ();
-  verify_message_signature : (SignedMessage) -> (bool) query;
-  withdraw_accumulated_cycles : (nat64, principal) -> ();
+  requestCost : (Source, text, nat64) -> (Result_7) query;
+  setNodesInSubnet : (nat32) -> ();
+  setOpenRpcAccess : (bool) -> ();
+  unregisterProvider : (nat64) -> (bool);
+  updateProvider : (UpdateProviderArgs) -> ();
+  verifyMessageSignature : (SignedMessage) -> (bool) query;
+  withdrawAccumulatedCycles : (nat64, principal) -> ();
 }

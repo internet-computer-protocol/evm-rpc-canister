@@ -86,7 +86,7 @@ module {
                 case (#Service { hostname; network }) {
                     #Service {
                         hostname;
-                        chain_id = switch network {
+                        chainId = switch network {
                             case (?n) { ?wrapChainId(n) };
                             case null { null };
                         };
@@ -122,7 +122,7 @@ module {
                                 #InvalidHttpJsonRpcResponse {
                                     status = 0;
                                     body = text;
-                                    parsing_error = ?("error while parsing JSON response");
+                                    parsingError = ?("error while parsing JSON response");
                                 }
                             );
                         };

@@ -18,12 +18,12 @@ actor class Main() {
     public shared ({ caller }) func test() : async () {
         let source = #Service {
             hostname = "cloudflare-eth.com";
-            chain_id = ?(1 : Nat64); // Ethereum mainnet
+            chainId = ?(1 : Nat64); // Ethereum mainnet
         };
         let json = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}";
         let maxResponseBytes : Nat64 = 1000;
 
-        let cyclesResult = await EvmRpcCanister.request_cost(source, json, maxResponseBytes);
+        let cyclesResult = await EvmRpcCanister.requestCost(source, json, maxResponseBytes);
         let cycles = switch cyclesResult {
             case (#Ok cycles) { cycles };
             case (#Err err) {
@@ -67,7 +67,7 @@ actor class Main() {
 
         // Invalid address
         assert not (
-            await EvmRpcCanister.verify_message_signature({
+            await EvmRpcCanister.verifyMessageSignature({
                 address = a2;
                 message = m1;
                 signature = s1;
@@ -76,7 +76,7 @@ actor class Main() {
 
         // Invalid message
         assert not (
-            await EvmRpcCanister.verify_message_signature({
+            await EvmRpcCanister.verifyMessageSignature({
                 address = a1;
                 message = m2;
                 signature = s1;
@@ -85,7 +85,7 @@ actor class Main() {
 
         // Invalid signature
         assert not (
-            await EvmRpcCanister.verify_message_signature({
+            await EvmRpcCanister.verifyMessageSignature({
                 address = a1;
                 message = m1;
                 signature = s2;
@@ -94,14 +94,14 @@ actor class Main() {
 
         // Valid signatures
         assert (
-            await EvmRpcCanister.verify_message_signature({
+            await EvmRpcCanister.verifyMessageSignature({
                 address = a1;
                 message = m1;
                 signature = s1;
             })
         );
         assert (
-            await EvmRpcCanister.verify_message_signature({
+            await EvmRpcCanister.verifyMessageSignature({
                 address = a1;
                 message = m2;
                 signature = s2;
