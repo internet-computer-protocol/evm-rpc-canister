@@ -7,7 +7,7 @@ use candid::{CandidType, Decode, Encode, Nat};
 use cketh_common::{
     address::Address,
     checked_amount::CheckedAmountOf,
-    eth_rpc::{Block, FeeHistory, LogEntry, SendRawTransactionResult},
+    eth_rpc::{Block, Data, FeeHistory, FixedSizeData, Hash, LogEntry, SendRawTransactionResult},
     numeric::{BlockNumber, Wei},
 };
 use ic_base_types::{CanisterId, PrincipalId};
@@ -643,7 +643,40 @@ fn eth_get_logs_should_succeed() {
         )
         .mock_http(MockOutcallBuilder::new(200, r#"{"id":0,"jsonrpc":"2.0","result":[{"address":"0xdac17f958d2ee523a2206206994597c13d831ec7","topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef","0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43","0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"],"data":"0x000000000000000000000000000000000000000000000000000000003b9c6433","blockNumber":"0x11dc77e","transactionHash":"0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678","transactionIndex":"0x65","blockHash":"0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629","logIndex":"0xe8","removed":false}]}"#))
         .wait().unwrap();
-    assert_eq!(response.len(), 1);
+    assert_eq!(
+        response,
+        vec![LogEntry {
+            address: Address::from_str("0xdac17f958d2ee523a2206206994597c13d831ec7").unwrap(),
+            topics: vec![
+                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                "0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43",
+                "0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"
+            ]
+            .into_iter()
+            .map(|hex| FixedSizeData::from_str(hex).unwrap())
+            .collect(),
+            data: Data(
+                hex::decode("000000000000000000000000000000000000000000000000000000003b9c6433")
+                    .unwrap()
+            ),
+            block_number: Some(CheckedAmountOf::new(0x11dc77e)),
+            transaction_hash: Some(
+                Hash::from_str(
+                    "0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678"
+                )
+                .unwrap()
+            ),
+            transaction_index: Some(CheckedAmountOf::new(0x65)),
+            block_hash: Some(
+                Hash::from_str(
+                    "0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629"
+                )
+                .unwrap()
+            ),
+            log_index: Some(CheckedAmountOf::new(0xe8)),
+            removed: false
+        }]
+    );
 }
 
 #[test]
