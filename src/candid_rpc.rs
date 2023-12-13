@@ -129,10 +129,7 @@ impl CandidRpcClient {
         wrap_result(self.client.eth_get_logs(args).await)
     }
 
-    pub async fn eth_get_block_by_number(
-        &self,
-        block: candid_types::BlockTag,
-    ) -> RpcResult<Block> {
+    pub async fn eth_get_block_by_number(&self, block: candid_types::BlockTag) -> RpcResult<Block> {
         wrap_result(self.client.eth_get_block_by_number(block.into()).await)
     }
 
