@@ -426,6 +426,16 @@ pub mod candid_types {
         pub status: candid::Nat,
         #[serde(rename = "transactionHash")]
         pub transaction_hash: String,
+        #[serde(rename = "contractAddress")]
+        pub contract_address: Option<String>,
+        pub from: String,
+        pub logs: Vec<cketh_common::eth_rpc::LogEntry>,
+        #[serde(rename = "logsBloom")]
+        pub logs_bloom: String,
+        pub to: String,
+        #[serde(rename = "transactionIndex")]
+        pub transaction_index: candid::Nat,
+        pub r#type: String,
     }
 
     impl From<cketh_common::eth_rpc_client::responses::TransactionReceipt> for TransactionReceipt {
@@ -437,6 +447,13 @@ pub mod candid_types {
                 gas_used: into_nat(value.gas_used.into_inner()),
                 status: (value.status as u64).into(),
                 transaction_hash: format!("{:#x}", value.transaction_hash),
+                contract_address: value.contract_address,
+                from: value.from,
+                logs: value.logs,
+                logs_bloom: value.logs_bloom,
+                to: value.to,
+                transaction_index: into_nat(value.transaction_index.into_inner()),
+                r#type: value.r#type,
             }
         }
     }

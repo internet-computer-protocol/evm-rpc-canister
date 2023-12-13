@@ -630,11 +630,18 @@ fn should_decode_transaction_receipt() {
         status: 0.into(),
         transaction_hash: "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"
             .to_string(),
+        contract_address: None,
         block_number: 18_515_371_u64.into(),
         block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be"
             .to_string(),
         effective_gas_price: 26_776_497_782_u64.into(),
         gas_used: 32_137.into(),
+        from: "0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667".to_string(),
+        logs: vec![],
+        logs_bloom: "0x0".to_string(),
+        to: "0x356cfd6e6d0000400000003900b415f80669009e".to_string(),
+        transaction_index: 0xd9.into(),
+        r#type: "0x2".to_string(),
     };
     assert_eq!(
         Decode!(&Encode!(&value).unwrap(), candid_types::TransactionReceipt).unwrap(),
@@ -744,14 +751,19 @@ fn eth_get_transaction_receipt_should_succeed() {
     assert_eq!(
         response,
         Some(candid_types::TransactionReceipt {
-            status: 0.into(),
-            transaction_hash: "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"
-                .to_string(),
-            block_number: 18_515_371_u64.into(),
-            block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be"
-                .to_string(),
-            effective_gas_price: 26_776_497_782_u64.into(),
-            gas_used: 32_137.into(),
+            status: 0x1.into(),
+            transaction_hash: "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f".to_string(),
+            contract_address:None,
+            block_number: 0x11a85ab_u64.into(),
+            block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be".to_string(),
+            effective_gas_price: 0x63c00ee76_u64.into(),
+            gas_used: 0x7d89.into(),
+            from: "0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667".to_string(),
+            logs: vec![],
+            logs_bloom: "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string(),
+            to: "0x356cfd6e6d0000400000003900b415f80669009e".to_string(),
+            transaction_index: 0xd9.into(),
+            r#type: "0x2".to_string(),
         })
     );
 }
