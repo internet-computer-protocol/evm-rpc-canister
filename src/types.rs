@@ -445,7 +445,7 @@ pub mod candid_types {
                 block_number: value.block_number,
                 effective_gas_price: into_nat(value.effective_gas_price.into_inner()),
                 gas_used: into_nat(value.gas_used.into_inner()),
-                status: (value.status as u64).into(),
+                status: into_nat(value.status.into()),
                 transaction_hash: format!("{:#x}", value.transaction_hash),
                 contract_address: value.contract_address,
                 from: value.from,

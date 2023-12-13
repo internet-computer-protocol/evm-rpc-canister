@@ -627,7 +627,7 @@ fn should_decode_address() {
 #[test]
 fn should_decode_transaction_receipt() {
     let value = candid_types::TransactionReceipt {
-        status: 0.into(),
+        status: 0x1.into(),
         transaction_hash: "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"
             .to_string(),
         contract_address: None,
