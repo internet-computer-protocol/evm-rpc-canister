@@ -28,7 +28,7 @@ pub async fn eth_get_logs(
 #[candid_method(rename = "eth_getBlockByNumber")]
 pub async fn eth_get_block_by_number(
     source: CandidRpcSource,
-    block: candid_types::BlockSpec,
+    block: candid_types::BlockTag,
 ) -> RpcResult<Block> {
     CandidRpcClient::from_source(source)?
         .eth_get_block_by_number(block)

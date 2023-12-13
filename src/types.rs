@@ -354,22 +354,6 @@ pub mod candid_types {
 
     pub use cketh_common::eth_rpc::Hash;
 
-    #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
-    pub enum BlockSpec {
-        Number(u128),
-        Tag(BlockTag),
-    }
-
-    impl From<BlockSpec> for cketh_common::eth_rpc::BlockSpec {
-        fn from(value: BlockSpec) -> Self {
-            use cketh_common::eth_rpc::BlockSpec::*;
-            match value {
-                BlockSpec::Number(n) => Number(n.into()),
-                BlockSpec::Tag(t) => Tag(t.into()),
-            }
-        }
-    }
-
     #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
     pub enum BlockTag {
         #[default]
@@ -378,17 +362,20 @@ pub mod candid_types {
         Safe,
         Earliest,
         Pending,
-        Number(u64),
+        Number(BlockNumber),
     }
 
-    impl From<BlockTag> for cketh_common::eth_rpc::BlockTag {
-        fn from(value: BlockTag) -> cketh_common::eth_rpc::BlockTag {
+    impl From<BlockTag> for cketh_common::eth_rpc::BlockSpec {
+        fn from(value: BlockTag) -> Self {
+            use cketh_common::eth_rpc::BlockSpec::*;
             use cketh_common::eth_rpc::BlockTag::*;
             match value {
-                BlockTag::Latest => Latest,
-                BlockTag::Safe => Safe,
-                BlockTag::Finalized => Finalized,
-                _ => unimplemented!(),
+                BlockTag::Number(n) => Number(n),
+                BlockTag::Latest => Tag(Latest),
+                BlockTag::Safe => Tag(Safe),
+                BlockTag::Finalized => Tag(Finalized),
+                BlockTag::Earliest => Tag(Earliest),
+                BlockTag::Pending => Tag(Pending),
             }
         }
     }
@@ -396,9 +383,9 @@ pub mod candid_types {
     #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
     pub struct GetLogsArgs {
         #[serde(rename = "fromBlock")]
-        pub from_block: Option<BlockSpec>,
+        pub from_block: Option<BlockTag>,
         #[serde(rename = "toBlock")]
-        pub to_block: Option<BlockSpec>,
+        pub to_block: Option<BlockTag>,
         pub addresses: Vec<String>,
         pub topics: Option<Vec<String>>,
     }
@@ -459,7 +446,7 @@ pub mod candid_types {
         #[serde(rename = "blockCount")]
         pub block_count: u128,
         #[serde(rename = "newestBlock")]
-        pub newest_block: BlockSpec,
+        pub newest_block: BlockTag,
         #[serde(rename = "rewardPercentiles")]
         pub reward_percentiles: Option<Vec<u8>>,
     }
@@ -477,7 +464,7 @@ pub mod candid_types {
     #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
     pub struct GetTransactionCountArgs {
         pub address: String,
-        pub block: BlockSpec,
+        pub block: BlockTag,
     }
 
     impl TryFrom<GetTransactionCountArgs>
