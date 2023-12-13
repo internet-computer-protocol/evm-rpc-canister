@@ -36,7 +36,7 @@ impl RpcTransport for CanisterTransport {
                     EthMainnetService::Ankr => ANKR_HOSTNAME,
                     EthMainnetService::BlockPi => BLOCKPI_ETH_MAINNET_HOSTNAME,
                     EthMainnetService::PublicNode => PUBLICNODE_ETH_MAINNET_HOSTNAME,
-                    EthMainnetService::Cloudflare => CLOUDFLARE_ETH_HOSTNAME,
+                    EthMainnetService::Cloudflare => CLOUDFLARE_HOSTNAME,
                 },
             ),
             EthSepolia(provider) => (

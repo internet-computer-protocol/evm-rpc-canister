@@ -443,7 +443,7 @@ fn should_register_provider() {
     let b_id = setup
         .register_provider(RegisterProviderArgs {
             chain_id: 5,
-            hostname: CLOUDFLARE_ETH_HOSTNAME.to_string(),
+            hostname: CLOUDFLARE_HOSTNAME.to_string(),
             credential_path: "/test-path".to_string(),
             credential_headers: Some(vec![HttpHeader {
                 name: "Test-Authorization".to_string(),
@@ -473,7 +473,7 @@ fn should_register_provider() {
                 provider_id: first_new_id + 1,
                 owner: setup.caller.0,
                 chain_id: 5,
-                hostname: CLOUDFLARE_ETH_HOSTNAME.to_string(),
+                hostname: CLOUDFLARE_HOSTNAME.to_string(),
                 cycles_per_call: 0,
                 cycles_per_message_byte: 0,
                 primary: false,
