@@ -753,7 +753,7 @@ fn eth_get_transaction_receipt_should_succeed() {
         Some(candid_types::TransactionReceipt {
             status: 0x1.into(),
             transaction_hash: "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f".to_string(),
-            contract_address:None,
+            contract_address: None,
             block_number: 0x11a85ab_u64.into(),
             block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be".to_string(),
             effective_gas_price: 0x63c00ee76_u64.into(),
@@ -814,6 +814,7 @@ fn eth_fee_history_should_succeed() {
                 .into_iter()
                 .map(|hex| CheckedAmountOf::from_str_hex(hex).unwrap())
                 .collect(),
+            gas_used_ratio: vec![],
             reward: vec![vec![CheckedAmountOf::new(0x0123)]],
         })
     );
