@@ -38,6 +38,7 @@ type EthMainnetService = variant { BlockPi; Cloudflare; PublicNode; Ankr };
 type EthSepoliaService = variant { BlockPi; PublicNode; Ankr };
 type FeeHistory = record {
   reward : vec vec nat;
+  gasUsedRatio : vec float64;
   oldestBlock : nat;
   baseFeePerGas : vec nat;
 };
@@ -138,11 +139,18 @@ type Source = variant {
   Provider : nat64;
 };
 type TransactionReceipt = record {
+  to : text;
   status : nat;
   transactionHash : text;
   blockNumber : nat;
+  from : text;
+  logs : vec LogEntry;
   blockHash : text;
+  "type" : text;
+  transactionIndex : nat;
   effectiveGasPrice : nat;
+  logsBloom : text;
+  contractAddress : opt text;
   gasUsed : nat;
 };
 type UpdateProviderArgs = record {
