@@ -1,12 +1,33 @@
 type Auth = variant { Rpc; RegisterProvider; FreeRpc; ManageService };
-type Block = record { baseFeePerGas : nat; number : nat };
-type BlockSpec = variant { Tag : BlockTag; Number : nat };
+type Block = record {
+  miner : text;
+  totalDifficulty : nat;
+  receiptsRoot : text;
+  stateRoot : text;
+  hash : text;
+  difficulty : nat;
+  size : nat;
+  uncles : vec text;
+  baseFeePerGas : nat;
+  extraData : text;
+  transactionsRoot : opt text;
+  sha3Uncles : text;
+  nonce : nat;
+  number : nat;
+  timestamp : nat;
+  transactions : vec text;
+  gasLimit : nat;
+  logsBloom : text;
+  parentHash : text;
+  gasUsed : nat;
+  mixHash : text;
+};
 type BlockTag = variant {
   Earliest;
   Safe;
   Finalized;
   Latest;
-  Number : nat64;
+  Number : nat;
   Pending;
 };
 type CandidRpcSource = variant {
@@ -17,21 +38,22 @@ type EthMainnetService = variant { BlockPi; Cloudflare; PublicNode; Ankr };
 type EthSepoliaService = variant { BlockPi; PublicNode; Ankr };
 type FeeHistory = record {
   reward : vec vec nat;
+  gasUsedRatio : vec float64;
   oldestBlock : nat;
   baseFeePerGas : vec nat;
 };
 type FeeHistoryArgs = record {
   blockCount : nat;
-  newestBlock : BlockSpec;
+  newestBlock : BlockTag;
   rewardPercentiles : opt vec nat8;
 };
 type GetLogsArgs = record {
-  fromBlock : opt BlockSpec;
-  toBlock : opt BlockSpec;
+  fromBlock : opt BlockTag;
+  toBlock : opt BlockTag;
   addresses : vec text;
   topics : opt vec text;
 };
-type GetTransactionCountArgs = record { address : text; block : BlockSpec };
+type GetTransactionCountArgs = record { address : text; block : BlockTag };
 type HttpHeader = record { value : text; name : text };
 type HttpOutcallError = variant {
   IcError : record { code : RejectionCode; message : text };
@@ -117,14 +139,20 @@ type Source = variant {
   Provider : nat64;
 };
 type TransactionReceipt = record {
-  status : TransactionStatus;
+  to : text;
+  status : nat;
   transactionHash : text;
   blockNumber : nat;
+  from : text;
+  logs : vec LogEntry;
   blockHash : text;
+  "type" : text;
+  transactionIndex : nat;
   effectiveGasPrice : nat;
+  logsBloom : text;
+  contractAddress : opt text;
   gasUsed : nat;
 };
-type TransactionStatus = variant { Success; Failure };
 type UpdateProviderArgs = record {
   cyclesPerCall : opt nat64;
   credentialPath : opt text;
@@ -145,7 +173,7 @@ service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
   eth_feeHistory : (CandidRpcSource, FeeHistoryArgs) -> (Result);
-  eth_getBlockByNumber : (CandidRpcSource, BlockSpec) -> (Result_1);
+  eth_getBlockByNumber : (CandidRpcSource, BlockTag) -> (Result_1);
   eth_getLogs : (CandidRpcSource, GetLogsArgs) -> (Result_2);
   eth_getTransactionCount : (CandidRpcSource, GetTransactionCountArgs) -> (
       Result_3,

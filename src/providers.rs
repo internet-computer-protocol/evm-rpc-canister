@@ -1,6 +1,6 @@
 use crate::*;
 
-pub const CLOUDFLARE_ETH_HOSTNAME: &str = "cloudflare-eth.com";
+pub const CLOUDFLARE_HOSTNAME: &str = "cloudflare-eth.com";
 pub const ANKR_HOSTNAME: &str = "rpc.ankr.com";
 pub const PUBLICNODE_ETH_MAINNET_HOSTNAME: &str = "ethereum.publicnode.com";
 pub const BLOCKPI_ETH_MAINNET_HOSTNAME: &str = "ethereum.blockpi.network";
@@ -12,7 +12,7 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
     vec![
         RegisterProviderArgs {
             chain_id: ETH_MAINNET_CHAIN_ID,
-            hostname: CLOUDFLARE_ETH_HOSTNAME.to_string(),
+            hostname: CLOUDFLARE_HOSTNAME.to_string(),
             credential_path: "/v1/mainnet".to_string(),
             credential_headers: None,
             cycles_per_call: 0,
@@ -27,7 +27,7 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             cycles_per_message_byte: 0,
         },
         RegisterProviderArgs {
-            chain_id: ETH_SEPOLIA_CHAIN_ID,
+            chain_id: ETH_MAINNET_CHAIN_ID,
             hostname: PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string(),
             credential_path: "".to_string(),
             credential_headers: None,

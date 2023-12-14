@@ -36,7 +36,7 @@ impl RpcTransport for CanisterTransport {
                     EthMainnetService::Ankr => ANKR_HOSTNAME,
                     EthMainnetService::BlockPi => BLOCKPI_ETH_MAINNET_HOSTNAME,
                     EthMainnetService::PublicNode => PUBLICNODE_ETH_MAINNET_HOSTNAME,
-                    EthMainnetService::Cloudflare => CLOUDFLARE_ETH_HOSTNAME,
+                    EthMainnetService::Cloudflare => CLOUDFLARE_HOSTNAME,
                 },
             ),
             EthSepolia(provider) => (
@@ -129,10 +129,7 @@ impl CandidRpcClient {
         wrap_result(self.client.eth_get_logs(args).await)
     }
 
-    pub async fn eth_get_block_by_number(
-        &self,
-        block: candid_types::BlockSpec,
-    ) -> RpcResult<Block> {
+    pub async fn eth_get_block_by_number(&self, block: candid_types::BlockTag) -> RpcResult<Block> {
         wrap_result(self.client.eth_get_block_by_number(block.into()).await)
     }
 
