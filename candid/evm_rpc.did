@@ -202,16 +202,16 @@ service : {
   getNodesInSubnet : () -> (nat32) query;
   getOpenRpcAccess : () -> (bool) query;
   getProviders : () -> (vec ProviderView) query;
-  multi_eth_feeHistory : (CandidRpcSource, FeeHistoryArgs) -> (MultiRpcResult);
-  multi_eth_getBlockByNumber : (CandidRpcSource, BlockTag) -> (
+  eth_feeHistory : (CandidRpcSource, FeeHistoryArgs) -> (MultiRpcResult);
+  eth_getBlockByNumber : (CandidRpcSource, BlockTag) -> (
       MultiRpcResult_1,
     );
-  multi_eth_getLogs : (CandidRpcSource, GetLogsArgs) -> (MultiRpcResult_2);
-  multi_eth_getTransactionCount : (
+  eth_getLogs : (CandidRpcSource, GetLogsArgs) -> (MultiRpcResult_2);
+  eth_getTransactionCount : (
       CandidRpcSource,
       GetTransactionCountArgs,
     ) -> (MultiRpcResult_3);
-  multi_eth_getTransactionReceipt : (CandidRpcSource, text) -> (
+  eth_getTransactionReceipt : (CandidRpcSource, text) -> (
       MultiRpcResult_4,
     );
   registerProvider : (RegisterProviderArgs) -> (nat64);

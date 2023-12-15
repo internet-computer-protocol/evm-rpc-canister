@@ -121,7 +121,7 @@ impl CandidRpcClient {
         })
     }
 
-    pub async fn multi_eth_get_logs(
+    pub async fn eth_get_logs(
         &self,
         args: candid_types::GetLogsArgs,
     ) -> MultiRpcResult<Vec<LogEntry>> {
@@ -132,14 +132,14 @@ impl CandidRpcClient {
         multi_result(self.client.eth_get_logs(args).await)
     }
 
-    pub async fn multi_eth_get_block_by_number(
+    pub async fn eth_get_block_by_number(
         &self,
         block: candid_types::BlockTag,
     ) -> MultiRpcResult<Block> {
         multi_result(self.client.eth_get_block_by_number(block.into()).await)
     }
 
-    pub async fn multi_eth_get_transaction_receipt(
+    pub async fn eth_get_transaction_receipt(
         &self,
         hash: String,
     ) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
@@ -150,7 +150,7 @@ impl CandidRpcClient {
         }
     }
 
-    pub async fn multi_eth_get_transaction_count(
+    pub async fn eth_get_transaction_count(
         &self,
         args: candid_types::GetTransactionCountArgs,
     ) -> MultiRpcResult<candid::Nat> {
@@ -167,7 +167,7 @@ impl CandidRpcClient {
         .map(|count| into_nat(count.into_inner()))
     }
 
-    pub async fn multi_eth_fee_history(
+    pub async fn eth_fee_history(
         &self,
         args: candid_types::FeeHistoryArgs,
     ) -> MultiRpcResult<Option<FeeHistory>> {
@@ -177,9 +177,9 @@ impl CandidRpcClient {
     pub async fn eth_send_raw_transaction(
         &self,
         raw_signed_transaction_hex: String,
-    ) -> RpcResult<SendRawTransactionResult> {
+    ) -> MultiRpcResult<SendRawTransactionResult> {
         self.client
-            .eth_send_raw_transaction(raw_signed_transaction_hex)
+            .multi_eth_send_raw_transaction(raw_signed_transaction_hex)
             .await
     }
 }

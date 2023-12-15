@@ -215,7 +215,7 @@ impl EvmRpcSetup {
         &self,
         source: CandidRpcSource,
         args: candid_types::GetLogsArgs,
-    ) -> CallFlow<RpcResult<Vec<LogEntry>>> {
+    ) -> CallFlow<MultiRpcResult<Vec<LogEntry>>> {
         self.call_update("eth_getLogs", Encode!(&source, &args).unwrap())
     }
 
@@ -223,7 +223,7 @@ impl EvmRpcSetup {
         &self,
         source: CandidRpcSource,
         block: candid_types::BlockTag,
-    ) -> CallFlow<RpcResult<Block>> {
+    ) -> CallFlow<MultiRpcResult<Block>> {
         self.call_update("eth_getBlockByNumber", Encode!(&source, &block).unwrap())
     }
 
@@ -231,7 +231,7 @@ impl EvmRpcSetup {
         &self,
         source: CandidRpcSource,
         address: &str,
-    ) -> CallFlow<RpcResult<Option<candid_types::TransactionReceipt>>> {
+    ) -> CallFlow<MultiRpcResult<Option<candid_types::TransactionReceipt>>> {
         self.call_update(
             "eth_getTransactionReceipt",
             Encode!(&source, &address).unwrap(),
@@ -242,7 +242,7 @@ impl EvmRpcSetup {
         &self,
         source: CandidRpcSource,
         args: candid_types::GetTransactionCountArgs,
-    ) -> CallFlow<RpcResult<Nat>> {
+    ) -> CallFlow<MultiRpcResult<Nat>> {
         self.call_update("eth_getTransactionCount", Encode!(&source, &args).unwrap())
     }
 
@@ -250,7 +250,7 @@ impl EvmRpcSetup {
         &self,
         source: CandidRpcSource,
         args: candid_types::FeeHistoryArgs,
-    ) -> CallFlow<RpcResult<Option<FeeHistory>>> {
+    ) -> CallFlow<MultiRpcResult<Option<FeeHistory>>> {
         self.call_update("eth_feeHistory", Encode!(&source, &args).unwrap())
     }
 
@@ -258,7 +258,7 @@ impl EvmRpcSetup {
         &self,
         source: CandidRpcSource,
         signed_raw_transaction_hex: String,
-    ) -> CallFlow<RpcResult<SendRawTransactionResult>> {
+    ) -> CallFlow<MultiRpcResult<SendRawTransactionResult>> {
         self.call_update(
             "eth_sendRawTransaction",
             Encode!(&source, &signed_raw_transaction_hex).unwrap(),
