@@ -344,16 +344,30 @@ pub enum MultiRpcResult<T> {
 }
 
 impl<T> MultiRpcResult<T> {
-    pub fn map<R>(self, f: impl FnMut(T) -> R) -> MultiRpcResult<R> {
+    pub fn map<R>(self, f: impl Fn(T) -> R) -> MultiRpcResult<R> {
         match self {
             MultiRpcResult::Consistent(result) => MultiRpcResult::Consistent(result.map(f)),
             MultiRpcResult::Inconsistent(results) => MultiRpcResult::Inconsistent(
                 results
                     .into_iter()
-                    .map(|(service, result)| (service, result.map(f)))
+                    .map(|(service, result)| {
+                        (
+                            service,
+                            match result {
+                                Ok(ok) => Ok(f(ok)),
+                                Err(err) => Err(err),
+                            },
+                        )
+                    })
                     .collect(),
             ),
         }
+    }
+}
+
+impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
+    fn from(result: RpcResult<T>) -> Self {
+        MultiRpcResult::Consistent(result)
     }
 }
 

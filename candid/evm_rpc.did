@@ -31,8 +31,8 @@ type BlockTag = variant {
   Pending;
 };
 type CandidRpcSource = variant {
-  EthSepolia : opt EthSepoliaService;
-  EthMainnet : opt EthMainnetService;
+  EthSepolia : opt vec EthSepoliaService;
+  EthMainnet : opt vec EthMainnetService;
 };
 type EthMainnetService = variant { BlockPi; Cloudflare; PublicNode; Ankr };
 type EthSepoliaService = variant { BlockPi; PublicNode; Ankr };
@@ -76,6 +76,26 @@ type LogEntry = record {
   removed : bool;
 };
 type Message = variant { Data : vec nat8; Hash : vec nat8 };
+type MultiRpcResult = variant {
+  Consistent : Result_1;
+  Inconsistent : vec record { RpcService; Result_1 };
+};
+type MultiRpcResult_1 = variant {
+  Consistent : Result_2;
+  Inconsistent : vec record { RpcService; Result_2 };
+};
+type MultiRpcResult_2 = variant {
+  Consistent : Result_3;
+  Inconsistent : vec record { RpcService; Result_3 };
+};
+type MultiRpcResult_3 = variant {
+  Consistent : Result_4;
+  Inconsistent : vec record { RpcService; Result_4 };
+};
+type MultiRpcResult_4 = variant {
+  Consistent : Result_5;
+  Inconsistent : vec record { RpcService; Result_5 };
+};
 type ProviderError = variant {
   TooFewCycles : record { expected : nat; received : nat };
   ProviderNotFound;
@@ -107,12 +127,12 @@ type RejectionCode = variant {
   SysFatal;
   CanisterReject;
 };
-type Result = variant { Ok : opt FeeHistory; Err : RpcError };
-type Result_1 = variant { Ok : Block; Err : RpcError };
-type Result_2 = variant { Ok : vec LogEntry; Err : RpcError };
-type Result_3 = variant { Ok : nat; Err : RpcError };
-type Result_4 = variant { Ok : opt TransactionReceipt; Err : RpcError };
-type Result_5 = variant { Ok : SendRawTransactionResult; Err : RpcError };
+type Result = variant { Ok : SendRawTransactionResult; Err : RpcError };
+type Result_1 = variant { Ok : opt FeeHistory; Err : RpcError };
+type Result_2 = variant { Ok : Block; Err : RpcError };
+type Result_3 = variant { Ok : vec LogEntry; Err : RpcError };
+type Result_4 = variant { Ok : nat; Err : RpcError };
+type Result_5 = variant { Ok : opt TransactionReceipt; Err : RpcError };
 type Result_6 = variant { Ok : text; Err : RpcError };
 type Result_7 = variant { Ok : nat; Err : RpcError };
 type RpcError = variant {
@@ -120,6 +140,10 @@ type RpcError = variant {
   ProviderError : ProviderError;
   ValidationError : ValidationError;
   HttpOutcallError : HttpOutcallError;
+};
+type RpcService = variant {
+  EthSepolia : EthSepoliaService;
+  EthMainnet : EthMainnetService;
 };
 type SendRawTransactionResult = variant {
   Ok;
@@ -172,19 +196,24 @@ type ValidationError = variant {
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
-  eth_feeHistory : (CandidRpcSource, FeeHistoryArgs) -> (Result);
-  eth_getBlockByNumber : (CandidRpcSource, BlockTag) -> (Result_1);
-  eth_getLogs : (CandidRpcSource, GetLogsArgs) -> (Result_2);
-  eth_getTransactionCount : (CandidRpcSource, GetTransactionCountArgs) -> (
-      Result_3,
-    );
-  eth_getTransactionReceipt : (CandidRpcSource, text) -> (Result_4);
-  eth_sendRawTransaction : (CandidRpcSource, text) -> (Result_5);
+  eth_sendRawTransaction : (CandidRpcSource, text) -> (Result);
   getAccumulatedCycleCount : (nat64) -> (nat) query;
   getAuthorized : (Auth) -> (vec text) query;
   getNodesInSubnet : () -> (nat32) query;
   getOpenRpcAccess : () -> (bool) query;
   getProviders : () -> (vec ProviderView) query;
+  multi_eth_feeHistory : (CandidRpcSource, FeeHistoryArgs) -> (MultiRpcResult);
+  multi_eth_getBlockByNumber : (CandidRpcSource, BlockTag) -> (
+      MultiRpcResult_1,
+    );
+  multi_eth_getLogs : (CandidRpcSource, GetLogsArgs) -> (MultiRpcResult_2);
+  multi_eth_getTransactionCount : (
+      CandidRpcSource,
+      GetTransactionCountArgs,
+    ) -> (MultiRpcResult_3);
+  multi_eth_getTransactionReceipt : (CandidRpcSource, text) -> (
+      MultiRpcResult_4,
+    );
   registerProvider : (RegisterProviderArgs) -> (nat64);
   request : (Source, text, nat64) -> (Result_6);
   requestCost : (Source, text, nat64) -> (Result_7) query;

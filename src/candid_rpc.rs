@@ -167,7 +167,7 @@ impl CandidRpcClient {
         .map(|count| into_nat(count.into_inner()))
     }
 
-    pub async fn eth_fee_history(
+    pub async fn multi_eth_fee_history(
         &self,
         args: candid_types::FeeHistoryArgs,
     ) -> MultiRpcResult<Option<FeeHistory>> {

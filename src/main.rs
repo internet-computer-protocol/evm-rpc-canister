@@ -18,10 +18,11 @@ use evm_rpc::*;
 pub async fn multi_eth_get_logs(
     source: CandidRpcSource,
     args: candid_types::GetLogsArgs,
-) -> RpcResult<Vec<LogEntry>> {
-    CandidRpcClient::from_source(source)?
-        .eth_get_logs(args)
-        .await
+) -> MultiRpcResult<Vec<LogEntry>> {
+    match CandidRpcClient::from_source(source) {
+        Ok(source) => source.multi_eth_get_logs(args).await,
+        Err(err) => Err(err).into(),
+    }
 }
 
 #[update(name = "multi_eth_getBlockByNumber")]
@@ -29,10 +30,11 @@ pub async fn multi_eth_get_logs(
 pub async fn multi_eth_get_block_by_number(
     source: CandidRpcSource,
     block: candid_types::BlockTag,
-) -> RpcResult<Block> {
-    CandidRpcClient::from_source(source)?
-        .eth_get_block_by_number(block)
-        .await
+) -> MultiRpcResult<Block> {
+    match CandidRpcClient::from_source(source) {
+        Ok(source) => source.multi_eth_get_block_by_number(block).await,
+        Err(err) => Err(err).into(),
+    }
 }
 
 #[update(name = "multi_eth_getTransactionReceipt")]
@@ -40,10 +42,11 @@ pub async fn multi_eth_get_block_by_number(
 pub async fn multi_eth_get_transaction_receipt(
     source: CandidRpcSource,
     hash: String,
-) -> RpcResult<Option<candid_types::TransactionReceipt>> {
-    CandidRpcClient::from_source(source)?
-        .eth_get_transaction_receipt(hash)
-        .await
+) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
+    match CandidRpcClient::from_source(source) {
+        Ok(source) => source.multi_eth_get_transaction_receipt(hash).await,
+        Err(err) => Err(err).into(),
+    }
 }
 
 #[update(name = "multi_eth_getTransactionCount")]
@@ -51,21 +54,23 @@ pub async fn multi_eth_get_transaction_receipt(
 pub async fn multi_eth_get_transaction_count(
     source: CandidRpcSource,
     args: candid_types::GetTransactionCountArgs,
-) -> RpcResult<candid::Nat> {
-    CandidRpcClient::from_source(source)?
-        .eth_get_transaction_count(args)
-        .await
+) -> MultiRpcResult<candid::Nat> {
+    match CandidRpcClient::from_source(source) {
+        Ok(source) => source.multi_eth_get_transaction_count(args).await,
+        Err(err) => Err(err).into(),
+    }
 }
 
-#[update(name = "eth_feeHistory")]
-#[candid_method(rename = "eth_feeHistory")]
-pub async fn eth_fee_history(
+#[update(name = "multi_eth_feeHistory")]
+#[candid_method(rename = "multi_eth_feeHistory")]
+pub async fn multi_eth_fee_history(
     source: CandidRpcSource,
     args: candid_types::FeeHistoryArgs,
-) -> RpcResult<Option<FeeHistory>> {
-    CandidRpcClient::from_source(source)?
-        .eth_fee_history(args)
-        .await
+) -> MultiRpcResult<Option<FeeHistory>> {
+    match CandidRpcClient::from_source(source) {
+        Ok(source) => source.multi_eth_fee_history(args).await,
+        Err(err) => Err(err).into(),
+    }
 }
 
 #[update(name = "eth_sendRawTransaction")]
