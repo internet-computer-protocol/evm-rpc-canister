@@ -85,15 +85,15 @@ fn get_rpc_client(source: CandidRpcSource) -> RpcResult<CkEthRpcClient<CanisterT
         return Err(ProviderError::NoPermission.into());
     }
     Ok(match source {
-        CandidRpcSource::EthMainnet(service) => CkEthRpcClient::new(
+        CandidRpcSource::EthMainnet(services) => CkEthRpcClient::new(
             EthereumNetwork::Mainnet,
-            Some(vec![service.unwrap_or(DEFAULT_ETHEREUM_PROVIDERS)])
-                .map(|p| p.into_iter().map(RpcService::EthMainnet).collect()),
+            Some(services.unwrap_or_else(|| DEFAULT_ETHEREUM_PROVIDERS.to_vec()))
+                .map(|s| s.into_iter().map(RpcService::EthMainnet).collect()),
         ),
-        CandidRpcSource::EthSepolia(service) => CkEthRpcClient::new(
+        CandidRpcSource::EthSepolia(services) => CkEthRpcClient::new(
             EthereumNetwork::Sepolia,
-            Some(vec![service.unwrap_or(DEFAULT_SEPOLIA_PROVIDERS)])
-                .map(|p| p.into_iter().map(RpcService::EthSepolia).collect()),
+            Some(services.unwrap_or_else(|| DEFAULT_SEPOLIA_PROVIDERS.to_vec()))
+                .map(|s| s.into_iter().map(RpcService::EthSepolia).collect()),
         ),
     })
 }

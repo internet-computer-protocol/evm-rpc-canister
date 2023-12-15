@@ -16,12 +16,12 @@ pub const DEFAULT_NODES_IN_SUBNET: u32 = 13;
 pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
 
 // Providers used by default (when passing `null` with `CandidRpcSource`)
-pub const DEFAULT_ETHEREUM_PROVIDERS: Vec<EthMainnetService> = vec![
+pub const DEFAULT_ETHEREUM_PROVIDERS: &[EthMainnetService] = &[
     EthMainnetService::Ankr,
     EthMainnetService::Cloudflare,
     EthMainnetService::PublicNode,
 ];
-pub const DEFAULT_SEPOLIA_PROVIDERS: Vec<EthSepoliaService> = vec![
+pub const DEFAULT_SEPOLIA_PROVIDERS: &[EthSepoliaService] = &[
     EthSepoliaService::Ankr,
     EthSepoliaService::BlockPi,
     EthSepoliaService::PublicNode,
