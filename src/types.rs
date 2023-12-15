@@ -363,6 +363,28 @@ impl<T> MultiRpcResult<T> {
             ),
         }
     }
+
+    pub fn consistent(self) -> Option<RpcResult<T>> {
+        match self {
+            MultiRpcResult::Consistent(result) => Some(result),
+            MultiRpcResult::Inconsistent(_) => None,
+        }
+    }
+
+    pub fn inconsistent(self) -> Option<Vec<(RpcService, RpcResult<T>)>> {
+        match self {
+            MultiRpcResult::Consistent(_) => None,
+            MultiRpcResult::Inconsistent(results) => Some(results),
+        }
+    }
+
+    pub fn expect_consistent(self) -> RpcResult<T> {
+        self.consistent().expect("inconsistent results")
+    }
+
+    pub fn expect_inconsistent(self) -> Vec<(RpcService, RpcResult<T>)> {
+        self.inconsistent().expect("consistent results")
+    }
 }
 
 impl<T> From<RpcResult<T>> for MultiRpcResult<T> {

@@ -178,8 +178,10 @@ impl CandidRpcClient {
         &self,
         raw_signed_transaction_hex: String,
     ) -> MultiRpcResult<SendRawTransactionResult> {
-        self.client
-            .multi_eth_send_raw_transaction(raw_signed_transaction_hex)
-            .await
+        multi_result(
+            self.client
+                .multi_eth_send_raw_transaction(raw_signed_transaction_hex)
+                .await,
+        )
     }
 }
