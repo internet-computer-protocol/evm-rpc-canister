@@ -9,7 +9,7 @@ WALLET=$(dfx identity get-wallet --network=$NETWORK --identity=$IDENTITY)
 JSON_SOURCE=Chain=1
 CANDID_SOURCE=EthMainnet
 
-FLAGS="--network=$NETWORK --with-cycles=$CYCLES --wallet=$WALLET --identity=$IDENTITY"
+FLAGS="--network=$NETWORK --identity=$IDENTITY --with-cycles=$CYCLES --wallet=$WALLET"
 
 
 dfx canister call $CANISTER_ID request "(variant {$JSON_SOURCE}, "'"{ \"jsonrpc\": \"2.0\", \"method\": \"eth_gasPrice\", \"params\": [], \"id\": 1 }"'", 1000)" $FLAGS || exit 1
