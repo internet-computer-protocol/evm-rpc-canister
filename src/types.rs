@@ -1,6 +1,8 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use cketh_common::eth_rpc::{ProviderError, RpcError};
-use cketh_common::eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcApi};
+use cketh_common::eth_rpc_client::providers::{
+    EthMainnetService, EthSepoliaService, RpcApi, RpcService,
+};
 
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_eth::core::types::RecoveryMessage;
@@ -334,6 +336,26 @@ pub struct SignedMessage {
 }
 
 pub type RpcResult<T> = Result<T, RpcError>;
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum MultiRpcResult<T> {
+    Consistent(RpcResult<T>),
+    Inconsistent(Vec<(RpcService, RpcResult<T>)>),
+}
+
+impl<T> MultiRpcResult<T> {
+    pub fn map<R>(self, f: impl FnMut(T) -> R) -> MultiRpcResult<R> {
+        match self {
+            MultiRpcResult::Consistent(result) => MultiRpcResult::Consistent(result.map(f)),
+            MultiRpcResult::Inconsistent(results) => MultiRpcResult::Inconsistent(
+                results
+                    .into_iter()
+                    .map(|(service, result)| (service, result.map(f)))
+                    .collect(),
+            ),
+        }
+    }
+}
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum CandidRpcSource {

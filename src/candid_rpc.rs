@@ -98,13 +98,13 @@ fn get_rpc_client(source: CandidRpcSource) -> RpcResult<CkEthRpcClient<CanisterT
     })
 }
 
-fn wrap_result<T>(result: Result<T, MultiCallError<T>>) -> RpcResult<T> {
+fn multi_result<T>(result: Result<T, MultiCallError<T>>) -> MultiRpcResult<T> {
     match result {
-        Ok(value) => Ok(value),
+        Ok(value) => MultiRpcResult::Consistent(Ok(value)),
         Err(err) => match err {
-            MultiCallError::ConsistentError(err) => Err(err),
-            MultiCallError::InconsistentResults(_results) => {
-                unreachable!("BUG: receieved more than one RPC provider result")
+            MultiCallError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
+            MultiCallError::InconsistentResults(multi_call_results) => {
+                MultiRpcResult::Inconsistent(multi_call_results.results.into_iter().collect())
             }
         },
     }
@@ -121,41 +121,44 @@ impl CandidRpcClient {
         })
     }
 
-    pub async fn eth_get_logs(&self, args: candid_types::GetLogsArgs) -> RpcResult<Vec<LogEntry>> {
+    pub async fn multi_eth_get_logs(
+        &self,
+        args: candid_types::GetLogsArgs,
+    ) -> MultiRpcResult<Vec<LogEntry>> {
         let args: GetLogsParam = match args.try_into() {
             Ok(args) => args,
-            Err(err) => return Err(RpcError::from(err)),
+            Err(err) => return MultiRpcResult::Consistent(Err(RpcError::from(err))),
         };
-        wrap_result(self.client.eth_get_logs(args).await)
+        multi_result(self.client.eth_get_logs(args).await)
     }
 
-    pub async fn eth_get_block_by_number(&self, block: candid_types::BlockTag) -> RpcResult<Block> {
-        wrap_result(self.client.eth_get_block_by_number(block.into()).await)
+    pub async fn multi_eth_get_block_by_number(
+        &self,
+        block: candid_types::BlockTag,
+    ) -> MultiRpcResult<Block> {
+        multi_result(self.client.eth_get_block_by_number(block.into()).await)
     }
 
-    pub async fn eth_get_transaction_receipt(
+    pub async fn multi_eth_get_transaction_receipt(
         &self,
         hash: String,
-    ) -> RpcResult<Option<candid_types::TransactionReceipt>> {
-        wrap_result(
-            self.client
-                .eth_get_transaction_receipt(
-                    Hash::from_str(&hash).map_err(|_| ValidationError::InvalidHex(hash))?,
-                )
-                .await,
-        )
-        .map(|option| option.map(|r| r.into()))
+    ) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
+        match Hash::from_str(&hash) {
+            Ok(hash) => multi_result(self.client.eth_get_transaction_receipt(hash).await)
+                .map(|option| option.map(|r| r.into())),
+            Err(_) => MultiRpcResult::Consistent(Err(ValidationError::InvalidHex(hash).into())),
+        }
     }
 
-    pub async fn eth_get_transaction_count(
+    pub async fn multi_eth_get_transaction_count(
         &self,
         args: candid_types::GetTransactionCountArgs,
-    ) -> RpcResult<candid::Nat> {
+    ) -> MultiRpcResult<candid::Nat> {
         let args: GetTransactionCountParams = match args.try_into() {
             Ok(args) => args,
-            Err(err) => return Err(RpcError::from(err)),
+            Err(err) => return MultiRpcResult::Consistent(Err(RpcError::from(err))),
         };
-        wrap_result(
+        multi_result(
             self.client
                 .eth_get_transaction_count(args)
                 .await
@@ -167,8 +170,8 @@ impl CandidRpcClient {
     pub async fn eth_fee_history(
         &self,
         args: candid_types::FeeHistoryArgs,
-    ) -> RpcResult<Option<FeeHistory>> {
-        wrap_result(self.client.eth_fee_history(args.into()).await).map(|history| history.into())
+    ) -> MultiRpcResult<Option<FeeHistory>> {
+        multi_result(self.client.eth_fee_history(args.into()).await).map(|history| history.into())
     }
 
     pub async fn eth_send_raw_transaction(

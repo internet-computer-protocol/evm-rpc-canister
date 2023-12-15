@@ -13,9 +13,9 @@ use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
 
 use evm_rpc::*;
 
-#[update(name = "eth_getLogs")]
-#[candid_method(rename = "eth_getLogs")]
-pub async fn eth_get_logs(
+#[update(name = "multi_eth_getLogs")]
+#[candid_method(rename = "multi_eth_getLogs")]
+pub async fn multi_eth_get_logs(
     source: CandidRpcSource,
     args: candid_types::GetLogsArgs,
 ) -> RpcResult<Vec<LogEntry>> {
@@ -24,9 +24,9 @@ pub async fn eth_get_logs(
         .await
 }
 
-#[update(name = "eth_getBlockByNumber")]
-#[candid_method(rename = "eth_getBlockByNumber")]
-pub async fn eth_get_block_by_number(
+#[update(name = "multi_eth_getBlockByNumber")]
+#[candid_method(rename = "multi_eth_getBlockByNumber")]
+pub async fn multi_eth_get_block_by_number(
     source: CandidRpcSource,
     block: candid_types::BlockTag,
 ) -> RpcResult<Block> {
@@ -35,9 +35,9 @@ pub async fn eth_get_block_by_number(
         .await
 }
 
-#[update(name = "eth_getTransactionReceipt")]
-#[candid_method(rename = "eth_getTransactionReceipt")]
-pub async fn eth_get_transaction_receipt(
+#[update(name = "multi_eth_getTransactionReceipt")]
+#[candid_method(rename = "multi_eth_getTransactionReceipt")]
+pub async fn multi_eth_get_transaction_receipt(
     source: CandidRpcSource,
     hash: String,
 ) -> RpcResult<Option<candid_types::TransactionReceipt>> {
@@ -46,9 +46,9 @@ pub async fn eth_get_transaction_receipt(
         .await
 }
 
-#[update(name = "eth_getTransactionCount")]
-#[candid_method(rename = "eth_getTransactionCount")]
-pub async fn eth_get_transaction_count(
+#[update(name = "multi_eth_getTransactionCount")]
+#[candid_method(rename = "multi_eth_getTransactionCount")]
+pub async fn multi_eth_get_transaction_count(
     source: CandidRpcSource,
     args: candid_types::GetTransactionCountArgs,
 ) -> RpcResult<candid::Nat> {
