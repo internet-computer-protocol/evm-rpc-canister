@@ -337,8 +337,8 @@ pub type RpcResult<T> = Result<T, RpcError>;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum CandidRpcSource {
-    EthMainnet(Option<EthMainnetService>),
-    EthSepolia(Option<EthSepoliaService>),
+    EthMainnet(Option<Vec<EthMainnetService>>),
+    EthSepolia(Option<Vec<EthSepoliaService>>),
 }
 
 pub mod candid_types {

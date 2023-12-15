@@ -87,12 +87,12 @@ fn get_rpc_client(source: CandidRpcSource) -> RpcResult<CkEthRpcClient<CanisterT
     Ok(match source {
         CandidRpcSource::EthMainnet(service) => CkEthRpcClient::new(
             EthereumNetwork::Mainnet,
-            Some(vec![service.unwrap_or(DEFAULT_ETHEREUM_PROVIDER)])
+            Some(vec![service.unwrap_or(DEFAULT_ETHEREUM_PROVIDERS)])
                 .map(|p| p.into_iter().map(RpcService::EthMainnet).collect()),
         ),
         CandidRpcSource::EthSepolia(service) => CkEthRpcClient::new(
             EthereumNetwork::Sepolia,
-            Some(vec![service.unwrap_or(DEFAULT_SEPOLIA_PROVIDER)])
+            Some(vec![service.unwrap_or(DEFAULT_SEPOLIA_PROVIDERS)])
                 .map(|p| p.into_iter().map(RpcService::EthSepolia).collect()),
         ),
     })
