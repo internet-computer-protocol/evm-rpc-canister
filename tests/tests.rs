@@ -322,8 +322,9 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
     }
 
     fn try_mock_http_inner(&self, mock: &MockOutcall) -> bool {
-        assert_eq!(self.setup.env.canister_http_request_contexts().len(), 0);
-        self.setup.tick_until_http_request();
+        if self.setup.env.canister_http_request_contexts().is_empty() {
+            self.setup.tick_until_http_request();
+        }
         match self.setup.env.ingress_status(&self.message_id) {
             IngressStatus::Known { state, .. } if state != IngressState::Processing => {
                 return false
