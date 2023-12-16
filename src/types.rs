@@ -379,11 +379,11 @@ impl<T> MultiRpcResult<T> {
     }
 
     pub fn expect_consistent(self) -> RpcResult<T> {
-        self.consistent().expect("inconsistent results")
+        self.consistent().expect("expected consistent results")
     }
 
     pub fn expect_inconsistent(self) -> Vec<(RpcService, RpcResult<T>)> {
-        self.inconsistent().expect("consistent results")
+        self.inconsistent().expect("expected inconsistent results")
     }
 }
 
