@@ -80,6 +80,18 @@ impl RpcTransport for CanisterTransport {
     }
 }
 
+fn check_services<T>(services: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
+    match services {
+        Some(services) => {
+            if services.is_empty() {
+                Err(ProviderError::ProviderNotFound)?;
+            }
+            Ok(Some(services))
+        }
+        None => Ok(None),
+    }
+}
+
 fn get_rpc_client(source: CandidRpcSource) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
     if !is_rpc_allowed(&ic_cdk::caller()) {
         return Err(ProviderError::NoPermission.into());
@@ -87,13 +99,23 @@ fn get_rpc_client(source: CandidRpcSource) -> RpcResult<CkEthRpcClient<CanisterT
     Ok(match source {
         CandidRpcSource::EthMainnet(services) => CkEthRpcClient::new(
             EthereumNetwork::Mainnet,
-            Some(services.unwrap_or_else(|| DEFAULT_ETHEREUM_PROVIDERS.to_vec()))
-                .map(|service| service.into_iter().map(RpcService::EthMainnet).collect()),
+            Some(
+                check_services(services)?
+                    .unwrap_or_else(|| DEFAULT_ETHEREUM_SERVICES.to_vec())
+                    .into_iter()
+                    .map(RpcService::EthMainnet)
+                    .collect(),
+            ),
         ),
         CandidRpcSource::EthSepolia(services) => CkEthRpcClient::new(
             EthereumNetwork::Sepolia,
-            Some(services.unwrap_or_else(|| DEFAULT_SEPOLIA_PROVIDERS.to_vec()))
-                .map(|service| service.into_iter().map(RpcService::EthSepolia).collect()),
+            Some(
+                check_services(services)?
+                    .unwrap_or_else(|| DEFAULT_SEPOLIA_SERVICES.to_vec())
+                    .into_iter()
+                    .map(RpcService::EthSepolia)
+                    .collect(),
+            ),
         ),
     })
 }

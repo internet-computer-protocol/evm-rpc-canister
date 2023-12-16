@@ -947,3 +947,19 @@ fn candid_rpc_should_recognize_json_error() {
         }))
     );
 }
+
+#[test]
+fn candid_rpc_should_reject_empty_service_list() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_get_transaction_receipt(
+            CandidRpcSource::EthMainnet(Some(vec![])),
+            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
+        )
+        .wait()
+        .expect_consistent();
+    assert_eq!(
+        result,
+        Err(RpcError::ProviderError(ProviderError::ProviderNotFound))
+    );
+}
