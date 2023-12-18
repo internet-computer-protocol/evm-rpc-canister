@@ -8,6 +8,8 @@ fn main() {}
 #[update]
 #[candid_method(update)]
 pub async fn test() {
+    assert!(ic_cdk::api::is_controller(&ic_cdk::caller()));
+
     // Define request parameters
     let params = (
         &Source::Service {

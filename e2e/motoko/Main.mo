@@ -6,7 +6,7 @@ import Debug "mo:base/Debug";
 import Text "mo:base/Text";
 import Blob "mo:base/Blob";
 
-actor class Main() {
+shared ({ caller = installer }) actor class Main() {
     let mainnet = Evm.Rpc(
         #Canister EvmRpcCanister,
         #Service {
@@ -16,6 +16,8 @@ actor class Main() {
     );
 
     public shared ({ caller }) func test() : async () {
+        assert caller == installer;
+
         let source = #Service {
             hostname = "cloudflare-eth.com";
             chainId = ?(1 : Nat64); // Ethereum mainnet
