@@ -1,4 +1,10 @@
 {
+  "e2e_motoko": {
+    "ic": "rcfjk-jiaaa-aaaap-abuoq-cai"
+  },
+  "e2e_rust": {
+    "ic": "rlgcw-7aaaa-aaaap-abupa-cai"
+  },
   "evm_rpc": {
     "ic": "a6d44-nyaaa-aaaap-abp7q-cai"
   },
