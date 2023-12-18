@@ -997,3 +997,24 @@ fn candid_rpc_should_represent_inconsistent_results() {
         ]
     );
 }
+
+#[test]
+fn candid_rpc_should_handle_already_known() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_send_raw_transaction(
+            CandidRpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
+            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83".to_string(),
+        )
+        .mock_http_once(MockOutcallBuilder::new(
+            200,
+            r#"{"id":0,"jsonrpc":"2.0","result":"Ok"}"#,
+        ))
+        .mock_http_once(MockOutcallBuilder::new(
+            200,
+            r#"{"id":0,"jsonrpc":"2.0","error":{"code":-32000,"message":"already known"}}"#,
+        ))
+        .wait()
+        .expect_consistent();
+    assert_eq!(result, Ok(SendRawTransactionResult::Ok));
+}
