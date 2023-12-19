@@ -1,7 +1,7 @@
 use candid::candid_method;
 use ic_cdk_macros::update;
 
-use e2e::declarations::evm_rpc::{evm_rpc, ProviderError, RpcError, Source};
+use e2e::declarations::evm_rpc::{evm_rpc, ProviderError, RpcError, JsonRpcSource};
 
 fn main() {}
 
@@ -12,7 +12,7 @@ pub async fn test() {
 
     // Define request parameters
     let params = (
-        &Source::Service {
+        &JsonRpcSource::Service {
             hostname: "cloudflare-eth.com".to_string(),
             chainId: Some(1), // Ethereum mainnet
         },
