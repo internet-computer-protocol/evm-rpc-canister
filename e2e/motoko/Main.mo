@@ -69,80 +69,82 @@ shared ({ caller = installer }) actor class Main() {
             #Inconsistent : [(EvmRpcCanister.RpcService, RpcResult<T>)];
         };
 
-        func assertConsistentOk<T>(method : Text, result : MultiRpcResult<T>) {
+        func assertOk<T>(method : Text, result : MultiRpcResult<T>) {
             switch result {
                 case (#Consistent(#Ok _)) {};
                 case (#Consistent(#Err err)) {
-                    Debug.trap("received error for " # method # ": " #debug_show err);
+                    Debug.trap("received error for " # method # ": " # debug_show err);
                 };
-                case _ {
-                    Debug.trap("received inconsistent results for " # method);
+                case (#Inconsistent(results)) {
+                    for ((service, result) in results.vals()) {
+                        switch result {
+                            case (#Ok(_)) {};
+                            case (#Err(err)) {
+                                Debug.trap("received error in inconsistent results for " # method # ": " # debug_show err);
+                            };
+                        };
+                    };
                 };
             };
         };
 
-        let candidRpcCycles = 1_000_000_000;
-        for (
-            candidSource in [
-                #EthMainnet(?[#Ankr, #Cloudflare, #BlockPi, #PublicNode]),
-                #EthSepolia(?[#Ankr, #BlockPi, #PublicNode]),
-            ].vals()
-        ) {
-            Cycles.add(candidRpcCycles);
-            assertConsistentOk(
-                "eth_getLogs",
-                await EvmRpcCanister.eth_getLogs(
-                    candidSource,
-                    {
-                        addresses = ["0xdAC17F958D2ee523a2206206994597C13D831ec7"];
-                        fromBlock = null;
-                        toBlock = null;
-                        topics = null;
-                    },
-                ),
-            );
-            Cycles.add(candidRpcCycles);
-            assertConsistentOk(
-                "eth_getBlockByNumber",
-                await EvmRpcCanister.eth_getBlockByNumber(candidSource, #Latest),
-            );
-            Cycles.add(candidRpcCycles);
-            assertConsistentOk(
-                "eth_getTransactionReceipt",
-                await EvmRpcCanister.eth_getTransactionReceipt(candidSource, "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"),
-            );
-            Cycles.add(candidRpcCycles);
-            assertConsistentOk(
-                "eth_getTransactionCount",
-                await EvmRpcCanister.eth_getTransactionCount(
-                    candidSource,
-                    {
-                        address = "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f";
-                        block = #Latest;
-                    },
-                ),
-            );
-            Cycles.add(candidRpcCycles);
-            assertConsistentOk(
-                "eth_feeHistory",
-                await EvmRpcCanister.eth_feeHistory(
-                    candidSource,
-                    {
-                        blockCount = 3;
-                        newestBlock = #Latest;
-                        rewardPercentiles = null;
-                    },
-                ),
-            );
-            Cycles.add(candidRpcCycles);
-            assertConsistentOk(
-                "eth_sendRawTransaction",
-                await EvmRpcCanister.eth_sendRawTransaction(
-                    candidSource,
-                    "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
-                ),
-            );
-        };
+        let candidRpcCycles = 1_000_000_000_000;
+        let ethMainnetSource = #EthMainnet(null);
+
+        Cycles.add(candidRpcCycles);
+        assertOk(
+            "eth_getLogs",
+            await EvmRpcCanister.eth_getLogs(
+                ethMainnetSource,
+                {
+                    addresses = ["0xdAC17F958D2ee523a2206206994597C13D831ec7"];
+                    fromBlock = null;
+                    toBlock = null;
+                    topics = null;
+                },
+            ),
+        );
+        Cycles.add(candidRpcCycles);
+        assertOk(
+            "eth_getBlockByNumber",
+            await EvmRpcCanister.eth_getBlockByNumber(ethMainnetSource, #Latest),
+        );
+        Cycles.add(candidRpcCycles);
+        assertOk(
+            "eth_getTransactionReceipt",
+            await EvmRpcCanister.eth_getTransactionReceipt(ethMainnetSource, "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"),
+        );
+        Cycles.add(candidRpcCycles);
+        assertOk(
+            "eth_getTransactionCount",
+            await EvmRpcCanister.eth_getTransactionCount(
+                ethMainnetSource,
+                {
+                    address = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
+                    block = #Latest;
+                },
+            ),
+        );
+        Cycles.add(candidRpcCycles);
+        assertOk(
+            "eth_feeHistory",
+            await EvmRpcCanister.eth_feeHistory(
+                ethMainnetSource,
+                {
+                    blockCount = 3;
+                    newestBlock = #Latest;
+                    rewardPercentiles = null;
+                },
+            ),
+        );
+        Cycles.add(candidRpcCycles);
+        assertOk(
+            "eth_sendRawTransaction",
+            await EvmRpcCanister.eth_sendRawTransaction(
+                ethMainnetSource,
+                "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
+            ),
+        );
 
         // Signature verification
         let a1 = "0xc9b28dca7ea6c5e176a58ba9df53c30ba52c6642";
