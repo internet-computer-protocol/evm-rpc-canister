@@ -10,7 +10,7 @@ use crate::*;
 
 pub async fn do_http_request(
     caller: Principal,
-    source: ResolvedSource,
+    source: ResolvedJsonRpcSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> Result<HttpResponse, RpcError> {
@@ -21,8 +21,8 @@ pub async fn do_http_request(
     }
     let cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
     let (api, provider) = match source {
-        ResolvedSource::Api(api) => (api, None),
-        ResolvedSource::Provider(provider) => (provider.api(), Some(provider)),
+        ResolvedJsonRpcSource::Api(api) => (api, None),
+        ResolvedJsonRpcSource::Provider(provider) => (provider.api(), Some(provider)),
     };
     let parsed_url = match url::Url::parse(&api.url) {
         Ok(url) => url,

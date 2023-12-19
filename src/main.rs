@@ -16,7 +16,7 @@ use evm_rpc::*;
 #[update(name = "eth_getLogs")]
 #[candid_method(rename = "eth_getLogs")]
 pub async fn eth_get_logs(
-    source: CandidRpcSource,
+    source: RpcSource,
     args: candid_types::GetLogsArgs,
 ) -> MultiRpcResult<Vec<LogEntry>> {
     match CandidRpcClient::from_source(source) {
@@ -28,7 +28,7 @@ pub async fn eth_get_logs(
 #[update(name = "eth_getBlockByNumber")]
 #[candid_method(rename = "eth_getBlockByNumber")]
 pub async fn eth_get_block_by_number(
-    source: CandidRpcSource,
+    source: RpcSource,
     block: candid_types::BlockTag,
 ) -> MultiRpcResult<Block> {
     match CandidRpcClient::from_source(source) {
@@ -40,7 +40,7 @@ pub async fn eth_get_block_by_number(
 #[update(name = "eth_getTransactionReceipt")]
 #[candid_method(rename = "eth_getTransactionReceipt")]
 pub async fn eth_get_transaction_receipt(
-    source: CandidRpcSource,
+    source: RpcSource,
     hash: String,
 ) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
     match CandidRpcClient::from_source(source) {
@@ -52,7 +52,7 @@ pub async fn eth_get_transaction_receipt(
 #[update(name = "eth_getTransactionCount")]
 #[candid_method(rename = "eth_getTransactionCount")]
 pub async fn eth_get_transaction_count(
-    source: CandidRpcSource,
+    source: RpcSource,
     args: candid_types::GetTransactionCountArgs,
 ) -> MultiRpcResult<candid::Nat> {
     match CandidRpcClient::from_source(source) {
@@ -64,7 +64,7 @@ pub async fn eth_get_transaction_count(
 #[update(name = "eth_feeHistory")]
 #[candid_method(rename = "eth_feeHistory")]
 pub async fn eth_fee_history(
-    source: CandidRpcSource,
+    source: RpcSource,
     args: candid_types::FeeHistoryArgs,
 ) -> MultiRpcResult<Option<FeeHistory>> {
     match CandidRpcClient::from_source(source) {
@@ -76,7 +76,7 @@ pub async fn eth_fee_history(
 #[update(name = "eth_sendRawTransaction")]
 #[candid_method(rename = "eth_sendRawTransaction")]
 pub async fn eth_send_raw_transaction(
-    source: CandidRpcSource,
+    source: RpcSource,
     raw_signed_transaction_hex: String,
 ) -> MultiRpcResult<SendRawTransactionResult> {
     match CandidRpcClient::from_source(source) {
@@ -102,7 +102,7 @@ pub fn verify_message_signature(signed_message: SignedMessage) -> bool {
 #[update]
 #[candid_method]
 async fn request(
-    source: Source,
+    source: JsonRpcSource,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<String, RpcError> {
@@ -119,7 +119,7 @@ async fn request(
 #[query(name = "requestCost")]
 #[candid_method(query, rename = "requestCost")]
 fn request_cost(
-    source: Source,
+    source: JsonRpcSource,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<u128, RpcError> {

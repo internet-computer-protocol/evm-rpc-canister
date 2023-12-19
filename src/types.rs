@@ -16,7 +16,7 @@ use crate::constants::STRING_STORABLE_MAX_SIZE;
 use crate::{AUTH_SET_STORABLE_MAX_SIZE, PROVIDERS};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum Source {
+pub enum JsonRpcSource {
     Chain(u64),
     Provider(u64),
     Service {
@@ -30,14 +30,14 @@ pub enum Source {
     },
 }
 
-impl Source {
-    pub fn resolve(self) -> Result<ResolvedSource, ProviderError> {
+impl JsonRpcSource {
+    pub fn resolve(self) -> Result<ResolvedJsonRpcSource, ProviderError> {
         Ok(match self {
-            Source::Custom { url, headers } => ResolvedSource::Api(RpcApi {
+            JsonRpcSource::Custom { url, headers } => ResolvedJsonRpcSource::Api(RpcApi {
                 url,
                 headers: headers.unwrap_or_default(),
             }),
-            Source::Provider(id) => ResolvedSource::Provider({
+            JsonRpcSource::Provider(id) => ResolvedJsonRpcSource::Provider({
                 PROVIDERS.with(|providers| {
                     providers
                         .borrow()
@@ -45,7 +45,7 @@ impl Source {
                         .ok_or(ProviderError::ProviderNotFound)
                 })?
             }),
-            Source::Chain(id) => ResolvedSource::Provider(PROVIDERS.with(|providers| {
+            JsonRpcSource::Chain(id) => ResolvedJsonRpcSource::Provider(PROVIDERS.with(|providers| {
                 let providers = providers.borrow();
                 Ok(providers
                     .iter()
@@ -54,8 +54,8 @@ impl Source {
                     .ok_or(ProviderError::ProviderNotFound)?
                     .1)
             })?),
-            Source::Service { hostname, chain_id } => {
-                ResolvedSource::Provider(PROVIDERS.with(|providers| {
+            JsonRpcSource::Service { hostname, chain_id } => {
+                ResolvedJsonRpcSource::Provider(PROVIDERS.with(|providers| {
                     let matches_provider = |p: &Provider| {
                         p.hostname == hostname
                             && match chain_id {
@@ -76,7 +76,7 @@ impl Source {
     }
 }
 
-pub enum ResolvedSource {
+pub enum ResolvedJsonRpcSource {
     Api(RpcApi),
     Provider(Provider),
 }
@@ -394,7 +394,7 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum CandidRpcSource {
+pub enum RpcSource {
     EthMainnet(Option<Vec<EthMainnetService>>),
     EthSepolia(Option<Vec<EthSepoliaService>>),
 }

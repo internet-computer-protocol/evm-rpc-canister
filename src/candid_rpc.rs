@@ -92,12 +92,12 @@ fn check_services<T>(services: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
     }
 }
 
-fn get_rpc_client(source: CandidRpcSource) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
+fn get_rpc_client(source: RpcSource) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
     if !is_rpc_allowed(&ic_cdk::caller()) {
         return Err(ProviderError::NoPermission.into());
     }
     Ok(match source {
-        CandidRpcSource::EthMainnet(services) => CkEthRpcClient::new(
+        RpcSource::EthMainnet(services) => CkEthRpcClient::new(
             EthereumNetwork::Mainnet,
             Some(
                 check_services(services)?
@@ -107,7 +107,7 @@ fn get_rpc_client(source: CandidRpcSource) -> RpcResult<CkEthRpcClient<CanisterT
                     .collect(),
             ),
         ),
-        CandidRpcSource::EthSepolia(services) => CkEthRpcClient::new(
+        RpcSource::EthSepolia(services) => CkEthRpcClient::new(
             EthereumNetwork::Sepolia,
             Some(
                 check_services(services)?
@@ -137,7 +137,7 @@ pub struct CandidRpcClient {
 }
 
 impl CandidRpcClient {
-    pub fn from_source(source: CandidRpcSource) -> RpcResult<Self> {
+    pub fn from_source(source: RpcSource) -> RpcResult<Self> {
         Ok(Self {
             client: get_rpc_client(source)?,
         })
