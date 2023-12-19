@@ -40,7 +40,7 @@ module {
         #JsonRpcError : JsonRpcError;
     };
 
-    public type Result<T> = {
+    public type RpcResult<T> = {
         #ok : T;
         #err : Error;
     };
@@ -104,7 +104,7 @@ module {
         let actorSource = wrapActorSource(source);
 
         var nextId : Nat = 0;
-        public func request(method : Text, params : JSON.JSON, maxResponseBytes : Nat64) : async Result<JSON.JSON> {
+        public func request(method : Text, params : JSON.JSON, maxResponseBytes : Nat64) : async RpcResult<JSON.JSON> {
             nextId += 1;
             // prettier-ignore
             let payload = JSON.show(#Object([
@@ -132,8 +132,8 @@ module {
             };
         };
 
-        public func requestPlain(payload : Text, maxResponseBytes : Nat64) : async Result<Text> {
-            func requestPlain_(payload : Text, maxResponseBytes : Nat64, cycles : Nat) : async Result<Text> {
+        public func requestPlain(payload : Text, maxResponseBytes : Nat64) : async RpcResult<Text> {
+            func requestPlain_(payload : Text, maxResponseBytes : Nat64, cycles : Nat) : async RpcResult<Text> {
                 Cycles.add(cycles);
                 switch (await actor_.request(actorSource, payload, maxResponseBytes)) {
                     case (#Ok ok) { #ok ok };

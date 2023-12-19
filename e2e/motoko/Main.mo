@@ -5,6 +5,7 @@ import Evm "mo:evm";
 import Debug "mo:base/Debug";
 import Text "mo:base/Text";
 import Blob "mo:base/Blob";
+import Cycles "mo:base/ExperimentalCycles"
 
 shared ({ caller = installer }) actor class Main() {
     let mainnet = Evm.Rpc(
@@ -25,6 +26,7 @@ shared ({ caller = installer }) actor class Main() {
         let json = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}";
         let maxResponseBytes : Nat64 = 1000;
 
+        // `requestCost()`
         let cyclesResult = await EvmRpcCanister.requestCost(source, json, maxResponseBytes);
         let cycles = switch cyclesResult {
             case (#Ok cycles) { cycles };
@@ -33,12 +35,14 @@ shared ({ caller = installer }) actor class Main() {
             };
         };
 
+        // `request()` without cycles
         let resultWithoutCycles = await EvmRpcCanister.request(source, json, maxResponseBytes);
         assert switch resultWithoutCycles {
             case (#Err(#ProviderError(#TooFewCycles { expected }))) expected == cycles;
             case _ false;
         };
 
+        // `request()` with cycles
         let result = await mainnet.request("eth_gasPrice", #Array([]), 1000);
         label validate {
             switch result {
@@ -58,6 +62,89 @@ shared ({ caller = installer }) actor class Main() {
             Debug.trap(debug_show result);
         };
 
+        // Candid-RPC methods
+        type RpcResult<T> = { #Ok : T; #Err : EvmRpcCanister.RpcError };
+        type MultiRpcResult<T> = {
+            #Consistent : RpcResult<T>;
+            #Inconsistent : [(EvmRpcCanister.RpcService, RpcResult<T>)];
+        };
+
+        func assertConsistentOk<T>(method : Text, result : MultiRpcResult<T>) {
+            switch result {
+                case (#Consistent(#Ok _)) {};
+                case (#Consistent(#Err err)) {
+                    Debug.trap("received error for " # method # ": " #debug_show err);
+                };
+                case _ {
+                    Debug.trap("received inconsistent results for " # method);
+                };
+            };
+        };
+
+        let candidRpcCycles = 1_000_000_000;
+        for (
+            candidSource in [
+                #EthMainnet(?[#Ankr, #Cloudflare, #BlockPi, #PublicNode]),
+                #EthSepolia(?[#Ankr, #BlockPi, #PublicNode]),
+            ].vals()
+        ) {
+            Cycles.add(candidRpcCycles);
+            assertConsistentOk(
+                "eth_getLogs",
+                await EvmRpcCanister.eth_getLogs(
+                    candidSource,
+                    {
+                        addresses = ["0xdAC17F958D2ee523a2206206994597C13D831ec7"];
+                        fromBlock = null;
+                        toBlock = null;
+                        topics = null;
+                    },
+                ),
+            );
+            Cycles.add(candidRpcCycles);
+            assertConsistentOk(
+                "eth_getBlockByNumber",
+                await EvmRpcCanister.eth_getBlockByNumber(candidSource, #Latest),
+            );
+            Cycles.add(candidRpcCycles);
+            assertConsistentOk(
+                "eth_getTransactionReceipt",
+                await EvmRpcCanister.eth_getTransactionReceipt(candidSource, "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"),
+            );
+            Cycles.add(candidRpcCycles);
+            assertConsistentOk(
+                "eth_getTransactionCount",
+                await EvmRpcCanister.eth_getTransactionCount(
+                    candidSource,
+                    {
+                        address = "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f";
+                        block = #Latest;
+                    },
+                ),
+            );
+            Cycles.add(candidRpcCycles);
+            assertConsistentOk(
+                "eth_feeHistory",
+                await EvmRpcCanister.eth_feeHistory(
+                    candidSource,
+                    {
+                        blockCount = 3;
+                        newestBlock = #Latest;
+                        rewardPercentiles = null;
+                    },
+                ),
+            );
+            Cycles.add(candidRpcCycles);
+            assertConsistentOk(
+                "eth_sendRawTransaction",
+                await EvmRpcCanister.eth_sendRawTransaction(
+                    candidSource,
+                    "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
+                ),
+            );
+        };
+
+        // Signature verification
         let a1 = "0xc9b28dca7ea6c5e176a58ba9df53c30ba52c6642";
         let a2 = "0xd8da6bf26964af9d7eed9e03e53415d37aa96045";
 
