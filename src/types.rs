@@ -45,15 +45,17 @@ impl JsonRpcSource {
                         .ok_or(ProviderError::ProviderNotFound)
                 })?
             }),
-            JsonRpcSource::Chain(id) => ResolvedJsonRpcSource::Provider(PROVIDERS.with(|providers| {
-                let providers = providers.borrow();
-                Ok(providers
-                    .iter()
-                    .find(|(_, p)| p.primary && p.chain_id == id)
-                    .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
-                    .ok_or(ProviderError::ProviderNotFound)?
-                    .1)
-            })?),
+            JsonRpcSource::Chain(id) => {
+                ResolvedJsonRpcSource::Provider(PROVIDERS.with(|providers| {
+                    let providers = providers.borrow();
+                    Ok(providers
+                        .iter()
+                        .find(|(_, p)| p.primary && p.chain_id == id)
+                        .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
+                        .ok_or(ProviderError::ProviderNotFound)?
+                        .1)
+                })?)
+            }
             JsonRpcSource::Service { hostname, chain_id } => {
                 ResolvedJsonRpcSource::Provider(PROVIDERS.with(|providers| {
                     let matches_provider = |p: &Provider| {

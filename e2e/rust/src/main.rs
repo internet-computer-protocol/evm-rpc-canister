@@ -1,7 +1,7 @@
 use candid::candid_method;
 use ic_cdk_macros::update;
 
-use e2e::declarations::evm_rpc::{evm_rpc, ProviderError, RpcError, JsonRpcSource};
+use e2e::declarations::evm_rpc::{evm_rpc, JsonRpcSource, ProviderError, RpcError};
 
 fn main() {}
 
