@@ -16,67 +16,77 @@ use evm_rpc::*;
 #[update(name = "eth_getLogs")]
 #[candid_method(rename = "eth_getLogs")]
 pub async fn eth_get_logs(
-    source: CandidRpcSource,
+    source: RpcSource,
     args: candid_types::GetLogsArgs,
-) -> RpcResult<Vec<LogEntry>> {
-    CandidRpcClient::from_source(source)?
-        .eth_get_logs(args)
-        .await
+) -> MultiRpcResult<Vec<LogEntry>> {
+    match CandidRpcClient::from_source(source) {
+        Ok(source) => source.eth_get_logs(args).await,
+        Err(err) => Err(err).into(),
+    }
 }
 
 #[update(name = "eth_getBlockByNumber")]
 #[candid_method(rename = "eth_getBlockByNumber")]
 pub async fn eth_get_block_by_number(
-    source: CandidRpcSource,
+    source: RpcSource,
     block: candid_types::BlockTag,
-) -> RpcResult<Block> {
-    CandidRpcClient::from_source(source)?
-        .eth_get_block_by_number(block)
-        .await
+) -> MultiRpcResult<Block> {
+    match CandidRpcClient::from_source(source) {
+        Ok(source) => source.eth_get_block_by_number(block).await,
+        Err(err) => Err(err).into(),
+    }
 }
 
 #[update(name = "eth_getTransactionReceipt")]
 #[candid_method(rename = "eth_getTransactionReceipt")]
 pub async fn eth_get_transaction_receipt(
-    source: CandidRpcSource,
+    source: RpcSource,
     hash: String,
-) -> RpcResult<Option<candid_types::TransactionReceipt>> {
-    CandidRpcClient::from_source(source)?
-        .eth_get_transaction_receipt(hash)
-        .await
+) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
+    match CandidRpcClient::from_source(source) {
+        Ok(source) => source.eth_get_transaction_receipt(hash).await,
+        Err(err) => Err(err).into(),
+    }
 }
 
 #[update(name = "eth_getTransactionCount")]
 #[candid_method(rename = "eth_getTransactionCount")]
 pub async fn eth_get_transaction_count(
-    source: CandidRpcSource,
+    source: RpcSource,
     args: candid_types::GetTransactionCountArgs,
-) -> RpcResult<candid::Nat> {
-    CandidRpcClient::from_source(source)?
-        .eth_get_transaction_count(args)
-        .await
+) -> MultiRpcResult<candid::Nat> {
+    match CandidRpcClient::from_source(source) {
+        Ok(source) => source.eth_get_transaction_count(args).await,
+        Err(err) => Err(err).into(),
+    }
 }
 
 #[update(name = "eth_feeHistory")]
 #[candid_method(rename = "eth_feeHistory")]
 pub async fn eth_fee_history(
-    source: CandidRpcSource,
+    source: RpcSource,
     args: candid_types::FeeHistoryArgs,
-) -> RpcResult<Option<FeeHistory>> {
-    CandidRpcClient::from_source(source)?
-        .eth_fee_history(args)
-        .await
+) -> MultiRpcResult<Option<FeeHistory>> {
+    match CandidRpcClient::from_source(source) {
+        Ok(source) => source.eth_fee_history(args).await,
+        Err(err) => Err(err).into(),
+    }
 }
 
 #[update(name = "eth_sendRawTransaction")]
 #[candid_method(rename = "eth_sendRawTransaction")]
 pub async fn eth_send_raw_transaction(
-    source: CandidRpcSource,
+    source: RpcSource,
     raw_signed_transaction_hex: String,
-) -> RpcResult<SendRawTransactionResult> {
-    CandidRpcClient::from_source(source)?
-        .eth_send_raw_transaction(raw_signed_transaction_hex)
-        .await
+) -> MultiRpcResult<SendRawTransactionResult> {
+    match CandidRpcClient::from_source(source) {
+        Ok(source) => {
+            source
+                .eth_send_raw_transaction(raw_signed_transaction_hex)
+                .await
+        }
+        Err(err) => Err(err).into(),
+    }
 }
 
 #[query(name = "verifyMessageSignature")]
@@ -92,7 +102,7 @@ pub fn verify_message_signature(signed_message: SignedMessage) -> bool {
 #[update]
 #[candid_method]
 async fn request(
-    source: Source,
+    source: JsonRpcSource,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<String, RpcError> {
@@ -109,7 +119,7 @@ async fn request(
 #[query(name = "requestCost")]
 #[candid_method(query, rename = "requestCost")]
 fn request_cost(
-    source: Source,
+    source: JsonRpcSource,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<u128, RpcError> {

@@ -3,7 +3,7 @@ use cketh_common::eth_rpc_client::providers::RpcApi;
 use crate::*;
 
 pub fn get_request_cost(
-    source: &ResolvedSource,
+    source: &ResolvedJsonRpcSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> u128 {
@@ -13,16 +13,16 @@ pub fn get_request_cost(
 }
 
 pub fn get_request_costs(
-    source: &ResolvedSource,
+    source: &ResolvedJsonRpcSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> (u128, u128) {
     match source {
-        ResolvedSource::Api(api) => (
+        ResolvedJsonRpcSource::Api(api) => (
             get_http_request_cost(api, json_rpc_payload, max_response_bytes),
             0,
         ),
-        ResolvedSource::Provider(p) => (
+        ResolvedJsonRpcSource::Provider(p) => (
             get_http_request_cost(&p.api(), json_rpc_payload, max_response_bytes),
             get_provider_cost(p, json_rpc_payload),
         ),
@@ -63,7 +63,7 @@ fn test_request_cost() {
     let url = "https://cloudflare-eth.com";
     let payload = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
     let base_cost = get_request_cost(
-        &ResolvedSource::Api(RpcApi {
+        &ResolvedJsonRpcSource::Api(RpcApi {
             url: url.to_string(),
             headers: vec![],
         }),
@@ -72,7 +72,7 @@ fn test_request_cost() {
     );
     let s10 = "0123456789";
     let base_cost_s10 = get_request_cost(
-        &ResolvedSource::Api(RpcApi {
+        &ResolvedJsonRpcSource::Api(RpcApi {
             url: url.to_string(),
             headers: vec![],
         }),

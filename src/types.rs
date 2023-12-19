@@ -1,6 +1,8 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use cketh_common::eth_rpc::{ProviderError, RpcError};
-use cketh_common::eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcApi};
+use cketh_common::eth_rpc_client::providers::{
+    EthMainnetService, EthSepoliaService, RpcApi, RpcService,
+};
 
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_eth::core::types::RecoveryMessage;
@@ -14,7 +16,7 @@ use crate::constants::STRING_STORABLE_MAX_SIZE;
 use crate::{AUTH_SET_STORABLE_MAX_SIZE, PROVIDERS};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum Source {
+pub enum JsonRpcSource {
     Chain(u64),
     Provider(u64),
     Service {
@@ -28,14 +30,14 @@ pub enum Source {
     },
 }
 
-impl Source {
-    pub fn resolve(self) -> Result<ResolvedSource, ProviderError> {
+impl JsonRpcSource {
+    pub fn resolve(self) -> Result<ResolvedJsonRpcSource, ProviderError> {
         Ok(match self {
-            Source::Custom { url, headers } => ResolvedSource::Api(RpcApi {
+            JsonRpcSource::Custom { url, headers } => ResolvedJsonRpcSource::Api(RpcApi {
                 url,
                 headers: headers.unwrap_or_default(),
             }),
-            Source::Provider(id) => ResolvedSource::Provider({
+            JsonRpcSource::Provider(id) => ResolvedJsonRpcSource::Provider({
                 PROVIDERS.with(|providers| {
                     providers
                         .borrow()
@@ -43,17 +45,19 @@ impl Source {
                         .ok_or(ProviderError::ProviderNotFound)
                 })?
             }),
-            Source::Chain(id) => ResolvedSource::Provider(PROVIDERS.with(|providers| {
-                let providers = providers.borrow();
-                Ok(providers
-                    .iter()
-                    .find(|(_, p)| p.primary && p.chain_id == id)
-                    .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
-                    .ok_or(ProviderError::ProviderNotFound)?
-                    .1)
-            })?),
-            Source::Service { hostname, chain_id } => {
-                ResolvedSource::Provider(PROVIDERS.with(|providers| {
+            JsonRpcSource::Chain(id) => {
+                ResolvedJsonRpcSource::Provider(PROVIDERS.with(|providers| {
+                    let providers = providers.borrow();
+                    Ok(providers
+                        .iter()
+                        .find(|(_, p)| p.primary && p.chain_id == id)
+                        .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
+                        .ok_or(ProviderError::ProviderNotFound)?
+                        .1)
+                })?)
+            }
+            JsonRpcSource::Service { hostname, chain_id } => {
+                ResolvedJsonRpcSource::Provider(PROVIDERS.with(|providers| {
                     let matches_provider = |p: &Provider| {
                         p.hostname == hostname
                             && match chain_id {
@@ -74,7 +78,7 @@ impl Source {
     }
 }
 
-pub enum ResolvedSource {
+pub enum ResolvedJsonRpcSource {
     Api(RpcApi),
     Provider(Provider),
 }
@@ -336,9 +340,65 @@ pub struct SignedMessage {
 pub type RpcResult<T> = Result<T, RpcError>;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum CandidRpcSource {
-    EthMainnet(Option<EthMainnetService>),
-    EthSepolia(Option<EthSepoliaService>),
+pub enum MultiRpcResult<T> {
+    Consistent(RpcResult<T>),
+    Inconsistent(Vec<(RpcService, RpcResult<T>)>),
+}
+
+impl<T> MultiRpcResult<T> {
+    pub fn map<R>(self, f: impl Fn(T) -> R) -> MultiRpcResult<R> {
+        match self {
+            MultiRpcResult::Consistent(result) => MultiRpcResult::Consistent(result.map(f)),
+            MultiRpcResult::Inconsistent(results) => MultiRpcResult::Inconsistent(
+                results
+                    .into_iter()
+                    .map(|(service, result)| {
+                        (
+                            service,
+                            match result {
+                                Ok(ok) => Ok(f(ok)),
+                                Err(err) => Err(err),
+                            },
+                        )
+                    })
+                    .collect(),
+            ),
+        }
+    }
+
+    pub fn consistent(self) -> Option<RpcResult<T>> {
+        match self {
+            MultiRpcResult::Consistent(result) => Some(result),
+            MultiRpcResult::Inconsistent(_) => None,
+        }
+    }
+
+    pub fn inconsistent(self) -> Option<Vec<(RpcService, RpcResult<T>)>> {
+        match self {
+            MultiRpcResult::Consistent(_) => None,
+            MultiRpcResult::Inconsistent(results) => Some(results),
+        }
+    }
+
+    pub fn expect_consistent(self) -> RpcResult<T> {
+        self.consistent().expect("expected consistent results")
+    }
+
+    pub fn expect_inconsistent(self) -> Vec<(RpcService, RpcResult<T>)> {
+        self.inconsistent().expect("expected inconsistent results")
+    }
+}
+
+impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
+    fn from(result: RpcResult<T>) -> Self {
+        MultiRpcResult::Consistent(result)
+    }
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum RpcSource {
+    EthMainnet(Option<Vec<EthMainnetService>>),
+    EthSepolia(Option<Vec<EthSepoliaService>>),
 }
 
 pub mod candid_types {
