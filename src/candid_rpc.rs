@@ -50,7 +50,7 @@ impl RpcTransport for CanisterTransport {
         };
         Ok(
             find_provider(|p| p.chain_id == chain_id && p.hostname == hostname)
-                .ok_or(ProviderError::ProviderNotFound)?
+                .ok_or(ProviderError::MissingRequiredProvider)?
                 .api(),
         )
     }
