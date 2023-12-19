@@ -339,7 +339,7 @@ pub struct SignedMessage {
 
 pub type RpcResult<T> = Result<T, RpcError>;
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize)]
 pub enum MultiRpcResult<T> {
     Consistent(RpcResult<T>),
     Inconsistent(Vec<(RpcService, RpcResult<T>)>),
