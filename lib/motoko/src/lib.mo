@@ -28,7 +28,7 @@ module {
         value : Text;
     };
 
-    type ActorSource = EvmRpc.RpcSource;
+    type ActorSource = EvmRpc.JsonRpcSource;
 
     public type RpcError = EvmRpc.RpcError;
     public type JsonRpcError = EvmRpc.JsonRpcError;
