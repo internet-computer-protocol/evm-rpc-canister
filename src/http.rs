@@ -16,7 +16,7 @@ pub async fn do_http_request(
 ) -> Result<HttpResponse, RpcError> {
     inc_metric!(requests);
     if !is_rpc_allowed(&caller) {
-        inc_metric!(request_err_no_permission);
+        inc_metric!(err_no_permission);
         return Err(ProviderError::NoPermission.into());
     }
     let cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
@@ -34,7 +34,7 @@ pub async fn do_http_request(
     };
     if SERVICE_HOSTS_BLOCKLIST.contains(&host) {
         log!(INFO, "host not allowed: {}", host);
-        inc_metric!(request_err_host_not_allowed);
+        inc_metric!(err_host_not_allowed);
         return Err(ValidationError::HostNotAllowed(host.to_string()).into());
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
@@ -56,8 +56,8 @@ pub async fn do_http_request(
                     .expect("unable to update Provider");
             });
         }
-        add_metric!(request_cycles_charged, cost);
-        add_metric!(request_cycles_refunded, cycles_available - cost);
+        add_metric!(cycles_charged, cost);
+        add_metric!(cycles_refunded, cycles_available - cost);
     }
     inc_metric_entry!(host_requests, host.to_string());
     let mut request_headers = vec![HttpHeader {
@@ -79,7 +79,7 @@ pub async fn do_http_request(
     match ic_cdk::api::management_canister::http_request::http_request(request, cost).await {
         Ok((response,)) => Ok(response),
         Err((code, message)) => {
-            inc_metric!(request_err_http);
+            inc_metric!(err_http);
             Err(HttpOutcallError::IcError { code, message }.into())
         }
     }

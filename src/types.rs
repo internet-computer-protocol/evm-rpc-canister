@@ -86,11 +86,11 @@ pub enum ResolvedJsonRpcSource {
 #[derive(Default)]
 pub struct Metrics {
     pub requests: u64,
-    pub request_cycles_charged: u128,
-    pub request_cycles_refunded: u128,
-    pub request_err_no_permission: u64,
-    pub request_err_host_not_allowed: u64,
-    pub request_err_http: u64,
+    pub cycles_charged: u128,
+    pub cycles_refunded: u128,
+    pub err_no_permission: u64,
+    pub err_host_not_allowed: u64,
+    pub err_http: u64,
     pub host_requests: HashMap<String, u64>,
 }
 

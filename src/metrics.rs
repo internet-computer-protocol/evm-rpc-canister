@@ -36,27 +36,27 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
     w.encode_gauge(
         "canister_version",
         ic_cdk::api::canister_version() as f64,
-        "Canister version.",
+        "Canister version",
     )?;
     w.encode_gauge(
         "stable_memory_pages",
         ic_cdk::api::stable::stable64_size() as f64,
-        "Size of the stable memory allocated by this canister measured in 64K Wasm pages.",
+        "Size of the stable memory allocated by this canister measured in 64K Wasm pages",
     )?;
     w.encode_counter(
-        "request_calls",
+        "json_rpc_calls",
         get_metric!(requests) as f64,
-        "Number of request() calls.",
+        "Number of direct JSON-RPC calls",
     )?;
     w.encode_counter(
-        "request_cycles_charged",
-        get_metric!(request_cycles_charged) as f64,
-        "Cycles charged by request() calls.",
+        "json_rpc_cycles_charged",
+        get_metric!(cycles_charged) as f64,
+        "Cycles charged by direct JSON-RPC calls",
     )?;
     w.encode_counter(
-        "request_cycles_refunded",
-        get_metric!(request_cycles_refunded) as f64,
-        "Cycles refunded by request() calls.",
+        "json_rpc_cycles_refunded",
+        get_metric!(cycles_refunded) as f64,
+        "Cycles refunded by direct JSON-RPC calls",
     )?;
     crate::TRANSIENT_METRICS.with(|m| {
         m.borrow()
@@ -65,7 +65,7 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             .map(|(k, v)| {
                 w.counter_vec(
                     "json_rpc_host_requests",
-                    "Number of request() calls to a service host.",
+                    "Number of direct JSON-RPC calls to a service host.",
                 )
                 .and_then(|m| m.value(&[("host", k)], *v as f64))
                 .and(Ok(()))
