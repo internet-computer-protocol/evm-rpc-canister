@@ -360,21 +360,6 @@ fn main() {
 #[cfg(any(target_arch = "wasm32", test))]
 fn main() {}
 
-// #[test]
-// fn test_candid_interface() {
-//     use candid::utils::{service_compatible, CandidSource};
-//     use std::path::Path;
-
-//     candid::export_service!();
-//     let new_interface = __export_service();
-
-//     service_compatible(
-//         CandidSource::Text(&new_interface),
-//         CandidSource::File(Path::new("candid/evm_rpc.did")),
-//     )
-//     .unwrap();
-// }
-
 #[test]
 fn test_candid_interface() {
     fn source_to_str(source: &candid::utils::CandidSource) -> String {
