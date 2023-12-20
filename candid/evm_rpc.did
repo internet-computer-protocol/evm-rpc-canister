@@ -78,29 +78,29 @@ type LogEntry = record {
   removed : bool;
 };
 type Message = variant { Data : blob; Hash : blob };
-type MultiRpcResult = variant {
-  Consistent : Result;
-  Inconsistent : vec record { RpcService; Result };
+type MultiFeeHistoryResult = variant {
+  Consistent : FeeHistoryResult;
+  Inconsistent : vec record { RpcService; FeeHistoryResult };
 };
-type MultiRpcResult_1 = variant {
-  Consistent : Result_1;
-  Inconsistent : vec record { RpcService; Result_1 };
+type MultiGetBlockByNumberResult = variant {
+  Consistent : GetBlockByNumberResult;
+  Inconsistent : vec record { RpcService; GetBlockByNumberResult };
 };
-type MultiRpcResult_2 = variant {
-  Consistent : Result_2;
-  Inconsistent : vec record { RpcService; Result_2 };
+type MultiGetLogsResult = variant {
+  Consistent : GetLogsResult;
+  Inconsistent : vec record { RpcService; GetLogsResult };
 };
-type MultiRpcResult_3 = variant {
-  Consistent : Result_3;
-  Inconsistent : vec record { RpcService; Result_3 };
+type MultiGetTransactionCountResult = variant {
+  Consistent : GetTransactionCountResult;
+  Inconsistent : vec record { RpcService; GetTransactionCountResult };
 };
-type MultiRpcResult_4 = variant {
-  Consistent : Result_4;
-  Inconsistent : vec record { RpcService; Result_4 };
+type MultiGetTransactionReceiptResult = variant {
+  Consistent : GetTransactionReceiptResult;
+  Inconsistent : vec record { RpcService; GetTransactionReceiptResult };
 };
-type MultiRpcResult_5 = variant {
-  Consistent : Result_5;
-  Inconsistent : vec record { RpcService; Result_5 };
+type MultiSendRawTransactionResult = variant {
+  Consistent : SendRawTransactionResult;
+  Inconsistent : vec record { RpcService; SendRawTransactionResult };
 };
 type ProviderError = variant {
   TooFewCycles : record { expected : nat; received : nat };
@@ -134,14 +134,20 @@ type RejectionCode = variant {
   SysFatal;
   CanisterReject;
 };
-type Result = variant { Ok : opt FeeHistory; Err : RpcError };
-type Result_1 = variant { Ok : Block; Err : RpcError };
-type Result_2 = variant { Ok : vec LogEntry; Err : RpcError };
-type Result_3 = variant { Ok : nat; Err : RpcError };
-type Result_4 = variant { Ok : opt TransactionReceipt; Err : RpcError };
-type Result_5 = variant { Ok : SendRawTransactionResult; Err : RpcError };
-type Result_6 = variant { Ok : text; Err : RpcError };
-type Result_7 = variant { Ok : nat; Err : RpcError };
+type FeeHistoryResult = variant { Ok : opt FeeHistory; Err : RpcError };
+type GetBlockByNumberResult = variant { Ok : Block; Err : RpcError };
+type GetLogsResult = variant { Ok : vec LogEntry; Err : RpcError };
+type GetTransactionCountResult = variant { Ok : nat; Err : RpcError };
+type GetTransactionReceiptResult = variant {
+  Ok : opt TransactionReceipt;
+  Err : RpcError;
+};
+type SendRawTransactionResult = variant {
+  Ok : SendRawTransactionStatus;
+  Err : RpcError;
+};
+type RequestResult = variant { Ok : text; Err : RpcError };
+type RequestCostResult = variant { Ok : nat; Err : RpcError };
 type RpcError = variant {
   JsonRpcError : JsonRpcError;
   ProviderError : ProviderError;
@@ -156,7 +162,7 @@ type RpcSource = variant {
   EthSepolia : opt vec EthSepoliaService;
   EthMainnet : opt vec EthMainnetService;
 };
-type SendRawTransactionResult = variant {
+type SendRawTransactionStatus = variant {
   Ok;
   NonceTooLow;
   NonceTooHigh;
@@ -201,26 +207,26 @@ type ValidationError = variant {
 service : {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
-  eth_feeHistory : (RpcSource, FeeHistoryArgs) -> (MultiRpcResult);
-  eth_getBlockByNumber : (RpcSource, BlockTag) -> (MultiRpcResult_1);
-  eth_getLogs : (RpcSource, GetLogsArgs) -> (MultiRpcResult_2);
+  eth_feeHistory : (RpcSource, FeeHistoryArgs) -> (MultiFeeHistoryResult);
+  eth_getBlockByNumber : (RpcSource, BlockTag) -> (MultiGetBlockByNumberResult);
+  eth_getLogs : (RpcSource, GetLogsArgs) -> (MultiGetLogsResult);
   eth_getTransactionCount : (RpcSource, GetTransactionCountArgs) -> (
-      MultiRpcResult_3,
-    );
-  eth_getTransactionReceipt : (RpcSource, text) -> (MultiRpcResult_4);
-  eth_sendRawTransaction : (RpcSource, text) -> (MultiRpcResult_5);
+    MultiGetTransactionCountResult
+  );
+  eth_getTransactionReceipt : (RpcSource, text) -> (MultiGetTransactionReceiptResult);
+  eth_sendRawTransaction : (RpcSource, text) -> (MultiSendRawTransactionResult);
   getAccumulatedCycleCount : (nat64) -> (nat) query;
   getAuthorized : (Auth) -> (vec text) query;
   getNodesInSubnet : () -> (nat32) query;
   getOpenRpcAccess : () -> (bool) query;
   getProviders : () -> (vec ProviderView) query;
   registerProvider : (RegisterProviderArgs) -> (nat64);
-  request : (JsonRpcSource, text, nat64) -> (Result_6);
-  requestCost : (JsonRpcSource, text, nat64) -> (Result_7) query;
+  request : (JsonRpcSource, text, nat64) -> (RequestResult);
+  requestCost : (JsonRpcSource, text, nat64) -> (RequestCostResult) query;
   setNodesInSubnet : (nat32) -> ();
   setOpenRpcAccess : (bool) -> ();
   unregisterProvider : (nat64) -> (bool);
   updateProvider : (UpdateProviderArgs) -> ();
   verifyMessageSignature : (SignedMessage) -> (bool) query;
   withdrawAccumulatedCycles : (nat64, principal) -> ();
-}
+};
