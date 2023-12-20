@@ -2,3 +2,4 @@ node_modules/
 target/
 .dfx/
 .mops/
+candid/*.generated.did

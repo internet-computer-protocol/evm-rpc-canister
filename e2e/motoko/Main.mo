@@ -89,7 +89,7 @@ shared ({ caller = installer }) actor class Main() {
         };
 
         let candidRpcCycles = 1_000_000_000_000;
-        let ethMainnetSource = #EthMainnet(null);
+        let ethMainnetSource = #EthMainnet(?[#Ankr, #BlockPi, #Cloudflare, #PublicNode]);
 
         Cycles.add(candidRpcCycles);
         assertOk(
