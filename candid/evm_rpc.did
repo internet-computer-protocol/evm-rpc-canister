@@ -77,7 +77,7 @@ type LogEntry = record {
   logIndex : opt nat;
   removed : bool;
 };
-type Message = variant { Data : vec nat8; Hash : vec nat8 };
+type Message = variant { Data : blob; Hash : blob };
 type MultiRpcResult = variant {
   Consistent : Result;
   Inconsistent : vec record { RpcService; Result };
