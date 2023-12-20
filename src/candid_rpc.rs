@@ -207,3 +207,57 @@ impl CandidRpcClient {
         )
     }
 }
+
+#[test]
+fn test_multi_result_mapping() {
+    use cketh_common::eth_rpc_client::MultiCallResults;
+
+    assert_eq!(multi_result(Ok(5)), MultiRpcResult::Consistent(Ok(5)));
+    assert_eq!(
+        multi_result(Err(MultiCallError::<()>::ConsistentError(
+            RpcError::ProviderError(ProviderError::MissingRequiredProvider)
+        ))),
+        MultiRpcResult::Consistent(Err(RpcError::ProviderError(
+            ProviderError::MissingRequiredProvider
+        )))
+    );
+    assert_eq!(
+        multi_result(Err(MultiCallError::<()>::InconsistentResults(
+            MultiCallResults {
+                results: Default::default()
+            }
+        ))),
+        MultiRpcResult::Inconsistent(vec![])
+    );
+    assert_eq!(
+        multi_result(Err(MultiCallError::InconsistentResults(MultiCallResults {
+            results: vec![(RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5))]
+                .into_iter()
+                .collect(),
+        }))),
+        MultiRpcResult::Inconsistent(vec![(
+            RpcService::EthMainnet(EthMainnetService::Ankr),
+            Ok(5)
+        )])
+    );
+    assert_eq!(
+        multi_result(Err(MultiCallError::InconsistentResults(MultiCallResults {
+            results: vec![
+                (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
+                (
+                    RpcService::EthMainnet(EthMainnetService::Cloudflare),
+                    Err(RpcError::ProviderError(ProviderError::NoPermission))
+                )
+            ]
+            .into_iter()
+            .collect(),
+        }))),
+        MultiRpcResult::Inconsistent(vec![
+            (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
+            (
+                RpcService::EthMainnet(EthMainnetService::Cloudflare),
+                Err(RpcError::ProviderError(ProviderError::NoPermission))
+            )
+        ])
+    );
+}
