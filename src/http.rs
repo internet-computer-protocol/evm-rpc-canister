@@ -14,9 +14,9 @@ pub async fn do_http_request(
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> Result<HttpResponse, RpcError> {
-    inc_metric!(requests);
+    inc_metric!(json_rpc.requests);
     if !is_rpc_allowed(&caller) {
-        inc_metric!(err_no_permission);
+        inc_metric!(json_rpc.err_no_permission);
         return Err(ProviderError::NoPermission.into());
     }
     let cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
@@ -34,7 +34,7 @@ pub async fn do_http_request(
     };
     if SERVICE_HOSTS_BLOCKLIST.contains(&host) {
         log!(INFO, "host not allowed: {}", host);
-        inc_metric!(err_host_not_allowed);
+        inc_metric!(json_rpc.err_host_not_allowed);
         return Err(ValidationError::HostNotAllowed(host.to_string()).into());
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
@@ -50,14 +50,14 @@ pub async fn do_http_request(
         if let Some(mut provider) = provider {
             provider.cycles_owed += get_provider_cost(&provider, json_rpc_payload);
             PROVIDERS.with(|p| {
-                // Error should not happen here as it was checked before.
+                // Error should not happen here as it was checked before
                 p.borrow_mut()
                     .insert(provider.provider_id, provider)
                     .expect("unable to update Provider");
             });
         }
-        add_metric!(cycles_charged, cost);
-        add_metric!(cycles_refunded, cycles_available - cost);
+        add_metric!(json_rpc.cycles_charged, cost);
+        add_metric!(json_rpc.cycles_refunded, cycles_available - cost);
     }
     inc_metric_entry!(host_requests, host.to_string());
     let mut request_headers = vec![HttpHeader {

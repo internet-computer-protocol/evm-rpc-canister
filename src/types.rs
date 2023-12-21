@@ -85,13 +85,25 @@ pub enum ResolvedJsonRpcSource {
 
 #[derive(Default)]
 pub struct Metrics {
+    pub json_rpc: RpcMethodMetrics,
+    pub eth_fee_history: RpcMethodMetrics,
+    pub eth_get_block_by_number: RpcMethodMetrics,
+    pub eth_get_logs: RpcMethodMetrics,
+    pub eth_get_transaction_count: RpcMethodMetrics,
+    pub eth_get_transaction_receipt: RpcMethodMetrics,
+    pub eth_send_raw_transaction: RpcMethodMetrics,
+    pub method_requests: HashMap<String, u64>,
+    pub host_requests: HashMap<String, u64>,
+}
+
+#[derive(Default)]
+pub struct RpcMethodMetrics {
     pub requests: u64,
     pub cycles_charged: u128,
     pub cycles_refunded: u128,
     pub err_no_permission: u64,
     pub err_host_not_allowed: u64,
     pub err_http: u64,
-    pub host_requests: HashMap<String, u64>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]
