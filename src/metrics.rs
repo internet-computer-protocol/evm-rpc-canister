@@ -1,55 +1,41 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash, ops::AddAssign};
 
-#[macro_export]
-macro_rules! add_metric {
-    ($metric:ident, $amount:expr) => {{
-        $crate::TRANSIENT_METRICS.with(|m| m.borrow_mut().$metric += $amount);
-    }};
+use crate::*;
+
+pub fn update_metric(mut action: impl FnOnce(&mut Metrics)) {
+    TRANSIENT_METRICS.with(|m| action(m.get_mut()));
 }
 
-#[macro_export]
-macro_rules! add_metric_entry {
-    ($metric:ident, $entry:expr, $amount:expr) => {{
-        $crate::TRANSIENT_METRICS.with(|m| {
-            let amount = $amount;
-            m.borrow_mut()
-                .$metric
-                .entry($entry.into())
-                .and_modify(|counter| *counter += amount)
-                .or_insert(amount);
-        });
-    }};
+pub fn add_metric<T: AddAssign>(mut metric: impl FnOnce(&mut Metrics) -> &mut T, amount: T) {
+    update_metric(|m| *metric(m) += amount);
 }
 
-#[macro_export]
-macro_rules! inc_metric {
-    ($metric:ident) => {{
-        add_metric!($metric, 1)
-    }};
+pub fn add_metric_entry<K: Clone + Eq + Hash, V: AddAssign>(
+    mut metric: impl FnMut(&mut Metrics) -> &mut HashMap<K, V>,
+    key: K,
+    amount: V,
+) {
+    TRANSIENT_METRICS.with(|m| {
+        metric(m.get_mut())
+            .entry(key)
+            .and_modify(|counter| *counter += amount)
+            .or_insert(amount)
+    });
 }
 
-#[macro_export]
-macro_rules! inc_metric_entry {
-    ($metric:ident, $entry:expr) => {{
-        add_metric_entry!($metric, $entry, 1)
-    }};
-}
-
-trait EncodeExt {
-    fn encode_entries<'a, K, V, F: Into<f64>>(
+trait EncoderExtensions {
+    fn encode_entries<'a, K: MetricLabels, V: MetricValue>(
         &mut self,
         map: HashMap<K, V>,
-        f: impl Fn(&K, &V) -> (&'a [(&'a str, &'a str)], F),
         name: &str,
         help: &str,
     );
 }
 
-impl EncodeExt for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
-    fn encode_entries<'a, K, V, F: Into<f64>>(
+impl EncoderExtensions for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
+    fn encode_entries<'a, K: MetricLabels, V: MetricValue>(
         &mut self,
         map: HashMap<K, V>,
-        f: impl Fn(&K, &V) -> (&'a [(&'a str, &'a str)], F),
         name: &str,
         help: &str,
     ) {
@@ -60,8 +46,8 @@ impl EncodeExt for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
                     "Number of direct JSON-RPC calls to a service host.",
                 )
                 .and_then(|m| {
-                    let (labels, value) = f(k, v);
-                    m.value(labels, value.into())
+                    let (labels, value) = (k.metric_labels(), v.metric_value());
+                    m.value(&labels, value.into())
                 })
                 .and(Ok(()))
             })
@@ -83,33 +69,24 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
     )?;
     crate::TRANSIENT_METRICS.with(|m| {
         let m = m.borrow();
-        w.encode_entries(
-            m.requests,
-            |k, v| (&[("method", &k.0)], *v as f64),
-            "requests",
-            "Number of RPC requests",
-        );
+        w.encode_entries(m.requests, "requests", "Number of RPC requests");
         w.encode_entries(
             m.responses,
-            |k, v| (&[("method", &k.0)], *v as f64),
             "responses",
             "Number of successful RPC responses",
         );
         w.encode_entries(
             m.json_method_requests,
-            |k, v| (&[("method", &k.0)], *v as f64),
             "cycles_charged",
             "Number of direct JSON-RPC requests",
         );
         w.encode_entries(
             m.cycles_charged,
-            |k, v| (&[("method", &k.0)], *v as f64),
             "cycles_charged",
             "Number of cycles charged for RPC calls",
         );
         w.encode_entries(
             m.host_requests,
-            |k, v| (&[("host", &k.0)], *v as f64),
             "host_requests",
             "Number of RPC requests to a service host",
         );

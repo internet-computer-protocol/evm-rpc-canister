@@ -15,9 +15,9 @@ pub async fn do_http_request(
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> Result<HttpResponse, RpcError> {
-    inc_metric_entry!(requests, metric_rpc_method);
+    add_metric_entry(|m| &mut m.requests, metric_rpc_method.clone(), 1);
     if !is_rpc_allowed(&caller) {
-        inc_metric_entry!(err_no_permission, metric_rpc_method);
+        add_metric(|m| &mut m.err_no_permission, 1);
         return Err(ProviderError::NoPermission.into());
     }
     let cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
@@ -35,7 +35,7 @@ pub async fn do_http_request(
     };
     if SERVICE_HOSTS_BLOCKLIST.contains(&host) {
         log!(INFO, "host not allowed: {}", host);
-        inc_metric_entry!(err_host_not_allowed, metric_rpc_method);
+        add_metric(|m| &mut m.err_host_not_allowed, 1);
         return Err(ValidationError::HostNotAllowed(host.to_string()).into());
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
@@ -57,9 +57,9 @@ pub async fn do_http_request(
                     .expect("unable to update Provider");
             });
         }
-        add_metric_entry!(cycles_charged, metric_rpc_method, cost);
+        add_metric_entry(|m| &mut m.cycles_charged, metric_rpc_method.clone(), cost);
     }
-    inc_metric_entry!(host_requests, host.to_string());
+    add_metric_entry(|m| &mut m.host_requests, MetricHost(host.to_string()), 1);
     let mut request_headers = vec![HttpHeader {
         name: CONTENT_TYPE_HEADER.to_string(),
         value: CONTENT_TYPE_VALUE.to_string(),
@@ -79,7 +79,11 @@ pub async fn do_http_request(
     match ic_cdk::api::management_canister::http_request::http_request(request, cost).await {
         Ok((response,)) => Ok(response),
         Err((code, message)) => {
-            inc_metric_entry!(err_http, metric_rpc_method);
+            add_metric_entry(
+                |m| &mut m.err_http,
+                (metric_rpc_method.clone(), MetricHost(host.to_string())),
+                1,
+            );
             Err(HttpOutcallError::IcError { code, message }.into())
         }
     }

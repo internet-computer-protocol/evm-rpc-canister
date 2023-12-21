@@ -83,8 +83,49 @@ pub enum ResolvedJsonRpcSource {
     Provider(Provider),
 }
 
+pub trait MetricValue {
+    fn metric_value(&self) -> f64;
+}
+
+impl MetricValue for u64 {
+    fn metric_value(&self) -> f64 {
+        *self as f64
+    }
+}
+
+impl MetricValue for u128 {
+    fn metric_value(&self) -> f64 {
+        *self as f64
+    }
+}
+
+pub trait MetricLabels {
+    fn metric_labels(&self) -> Vec<(&str, &str)>;
+}
+
+impl<A: MetricLabels, B: MetricLabels> MetricLabels for (A, B) {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        [self.0.metric_labels(), self.1.metric_labels()].concat()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct MetricRpcMethod(pub String);
+
+impl MetricLabels for MetricRpcMethod {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        vec![("method", &self.0)]
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct MetricHost(pub String);
+
+impl MetricLabels for MetricHost {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        vec![("host", &self.0)]
+    }
+}
 
 #[derive(Default)]
 pub struct Metrics {

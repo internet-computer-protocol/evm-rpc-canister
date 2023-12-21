@@ -94,7 +94,7 @@ fn check_services<T>(services: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
 
 fn get_rpc_client(source: RpcSource) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
     if !is_rpc_allowed(&ic_cdk::caller()) {
-        inc_metric!(err_no_permission);
+        add_metric(|m| &mut m.err_no_permission, 1);
         return Err(ProviderError::NoPermission.into());
     }
     Ok(match source {
