@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[macro_export]
 macro_rules! add_metric {
     ($metric:ident, $amount:expr) => {{
@@ -33,6 +35,41 @@ macro_rules! inc_metric_entry {
     }};
 }
 
+trait EncodeExt {
+    fn encode_entries<'a, K, V>(
+        &mut self,
+        map: HashMap<K, V>,
+        f: impl Fn(&K, &V) -> (&'a [(&'a str, &'a str)], f64),
+        name: &str,
+        help: &str,
+    );
+}
+
+impl EncodeExt for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
+    fn encode_entries<'a, K, V>(
+        &mut self,
+        map: HashMap<K, V>,
+        f: impl Fn(&K, &V) -> (&'a [(&'a str, &'a str)], f64),
+        name: &str,
+        help: &str,
+    ) {
+        map.iter()
+            .map(|(k, v)| {
+                self.counter_vec(
+                    "json_rpc_host_requests",
+                    "Number of direct JSON-RPC calls to a service host.",
+                )
+                .and_then(|m| {
+                    let (labels, value) = f(k, v);
+                    m.value(labels, value)
+                })
+                .and(Ok(()))
+            })
+            .find(|e| e.is_err())
+            .unwrap_or(Ok(()));
+    }
+}
+
 pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> std::io::Result<()> {
     w.encode_gauge(
         "canister_version",
@@ -61,19 +98,18 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
     // )?;
     crate::TRANSIENT_METRICS.with(|m| {
         let m = m.borrow();
-
-        m.host_requests
-            .iter()
-            .map(|(k, v)| {
-                w.counter_vec(
-                    "json_rpc_host_requests",
-                    "Number of direct JSON-RPC calls to a service host.",
-                )
-                .and_then(|m| m.value(&[("host", k)], *v as f64))
-                .and(Ok(()))
-            })
-            .find(|e| e.is_err())
-            .unwrap_or(Ok(()))
-    })?;
+        w.encode_entries(
+            m.cycles_charged,
+            |k, v| (&[("host", &k.0)], *v as f64),
+            "cycles_charged",
+            "Amount of cycles charged for RPC requests",
+        );
+        w.encode_entries(
+            m.host_requests,
+            |k, v| (&[("host", &k.0)], *v as f64),
+            "host_requests",
+            "Number of RPC requests to a service host",
+        );
+    });
     Ok(())
 }
