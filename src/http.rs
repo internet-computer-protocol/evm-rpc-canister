@@ -9,7 +9,7 @@ use num_traits::ToPrimitive;
 use crate::*;
 
 pub async fn do_http_request(
-    metric_rpc_method: &MetricRpcMethod,
+    metric_rpc_method: MetricRpcMethod,
     caller: Principal,
     source: ResolvedJsonRpcSource,
     json_rpc_payload: &str,
@@ -81,7 +81,7 @@ pub async fn do_http_request(
         Err((code, message)) => {
             add_metric_entry!(
                 err_http,
-                (metric_rpc_method.clone(), MetricHost(host.to_string())),
+                (metric_rpc_method, MetricHost(host.to_string())),
                 1
             );
             Err(HttpOutcallError::IcError { code, message }.into())

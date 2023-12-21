@@ -45,7 +45,7 @@ macro_rules! add_metric_entry {
 // }
 
 trait EncoderExtensions {
-    fn encode_entries<'a, K: MetricLabels, V: MetricValue>(
+    fn encode_entries<K: MetricLabels, V: MetricValue>(
         &mut self,
         map: &HashMap<K, V>,
         name: &str,
@@ -54,23 +54,20 @@ trait EncoderExtensions {
 }
 
 impl EncoderExtensions for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
-    fn encode_entries<'a, K: MetricLabels, V: MetricValue>(
+    fn encode_entries<K: MetricLabels, V: MetricValue>(
         &mut self,
         map: &HashMap<K, V>,
         name: &str,
         help: &str,
     ) {
-        map.iter()
-            .map(|(k, v)| {
-                self.counter_vec(name, help)
-                    .and_then(|m| {
-                        let (labels, value) = (k.metric_labels(), v.metric_value());
-                        m.value(&labels, value.into())
-                    })
-                    .and(Ok(()))
-            })
-            .find(|e| e.is_err())
-            .unwrap_or(Ok(()));
+        map.iter().for_each(|(k, v)| {
+            self.counter_vec(name, help)
+                .and_then(|m| {
+                    let (labels, value) = (k.metric_labels(), v.metric_value());
+                    m.value(&labels, value)
+                })
+                .ok();
+        })
     }
 }
 
