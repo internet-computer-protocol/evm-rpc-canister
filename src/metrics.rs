@@ -14,7 +14,7 @@ macro_rules! add_metric_entry {
             let amount = $amount;
             m.borrow_mut()
                 .$metric
-                .entry($entry.to_string())
+                .entry($entry.into())
                 .and_modify(|counter| *counter += amount)
                 .or_insert(amount);
         });
@@ -36,20 +36,20 @@ macro_rules! inc_metric_entry {
 }
 
 trait EncodeExt {
-    fn encode_entries<'a, K, V>(
+    fn encode_entries<'a, K, V, F: Into<f64>>(
         &mut self,
         map: HashMap<K, V>,
-        f: impl Fn(&K, &V) -> (&'a [(&'a str, &'a str)], f64),
+        f: impl Fn(&K, &V) -> (&'a [(&'a str, &'a str)], F),
         name: &str,
         help: &str,
     );
 }
 
 impl EncodeExt for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
-    fn encode_entries<'a, K, V>(
+    fn encode_entries<'a, K, V, F: Into<f64>>(
         &mut self,
         map: HashMap<K, V>,
-        f: impl Fn(&K, &V) -> (&'a [(&'a str, &'a str)], f64),
+        f: impl Fn(&K, &V) -> (&'a [(&'a str, &'a str)], F),
         name: &str,
         help: &str,
     ) {
@@ -61,7 +61,7 @@ impl EncodeExt for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
                 )
                 .and_then(|m| {
                     let (labels, value) = f(k, v);
-                    m.value(labels, value)
+                    m.value(labels, value.into())
                 })
                 .and(Ok(()))
             })
@@ -81,28 +81,31 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
         ic_cdk::api::stable::stable64_size() as f64,
         "Size of the stable memory allocated by this canister measured in 64-bit Wasm pages",
     )?;
-    // w.encode_counter(
-    //     "json_rpc_calls",
-    //     get_metric!(requests) as f64,
-    //     "Number of direct JSON-RPC calls",
-    // )?;
-    // w.encode_counter(
-    //     "json_rpc_cycles_charged",
-    //     get_metric!(cycles_charged) as f64,
-    //     "Cycles charged by direct JSON-RPC calls",
-    // )?;
-    // w.encode_counter(
-    //     "json_rpc_cycles_refunded",
-    //     get_metric!(cycles_refunded) as f64,
-    //     "Cycles refunded by direct JSON-RPC calls",
-    // )?;
     crate::TRANSIENT_METRICS.with(|m| {
         let m = m.borrow();
         w.encode_entries(
-            m.cycles_charged,
-            |k, v| (&[("host", &k.0)], *v as f64),
+            m.requests,
+            |k, v| (&[("method", &k.0)], *v as f64),
+            "requests",
+            "Number of RPC requests",
+        );
+        w.encode_entries(
+            m.responses,
+            |k, v| (&[("method", &k.0)], *v as f64),
+            "responses",
+            "Number of successful RPC responses",
+        );
+        w.encode_entries(
+            m.json_method_requests,
+            |k, v| (&[("method", &k.0)], *v as f64),
             "cycles_charged",
-            "Amount of cycles charged for RPC requests",
+            "Number of direct JSON-RPC requests",
+        );
+        w.encode_entries(
+            m.cycles_charged,
+            |k, v| (&[("method", &k.0)], *v as f64),
+            "cycles_charged",
+            "Number of cycles charged for RPC calls",
         );
         w.encode_entries(
             m.host_requests,

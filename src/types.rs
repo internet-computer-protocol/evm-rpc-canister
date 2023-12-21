@@ -89,6 +89,7 @@ pub struct MetricHost(pub String);
 #[derive(Default)]
 pub struct Metrics {
     pub requests: HashMap<MetricRpcMethod, u64>,
+    pub responses: HashMap<MetricRpcMethod, u64>,
     pub cycles_charged: HashMap<MetricRpcMethod, u128>,
     pub err_no_permission: u64,
     pub err_host_not_allowed: u64,
