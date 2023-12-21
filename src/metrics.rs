@@ -61,10 +61,12 @@ impl EncoderExtensions for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
         help: &str,
     ) {
         map.iter().for_each(|(k, v)| {
-            self.counter_vec(name, help).and_then(|m| {
-                let (labels, value) = (k.metric_labels(), v.metric_value());
-                m.value(&labels, value)
-            }).unwrap_or(());
+            self.counter_vec(name, help)
+                .and_then(|m| {
+                    m.value(&k.metric_labels(), v.metric_value())?;
+                    Ok(())
+                })
+                .unwrap_or(());
         })
     }
 }
