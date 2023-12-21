@@ -89,8 +89,8 @@ pub async fn eth_send_raw_transaction(
     }
 }
 
-#[query(name = "verifyMessageSignature")]
-#[candid_method(query, rename = "verifyMessageSignature")]
+#[query(composite = true, name = "verifyMessageSignature")]
+#[candid_method(composite_query, rename = "verifyMessageSignature")]
 pub fn verify_message_signature(signed_message: SignedMessage) -> bool {
     do_verify_message_signature(
         &signed_message.address,
