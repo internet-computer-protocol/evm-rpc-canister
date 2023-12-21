@@ -129,13 +129,13 @@ impl MetricLabels for MetricHost {
 
 #[derive(Default)]
 pub struct Metrics {
-    pub requests: HashMap<MetricRpcMethod, u64>,
-    pub responses: HashMap<MetricRpcMethod, u64>,
+    pub requests: HashMap<(MetricRpcMethod, MetricHost), u64>,
+    pub responses: HashMap<(MetricRpcMethod, MetricHost), u64>,
     pub cycles_charged: HashMap<MetricRpcMethod, u128>,
     pub err_no_permission: u64,
     pub err_host_not_allowed: u64,
     pub err_http: HashMap<(MetricRpcMethod, MetricHost), u64>,
-    pub host_requests: HashMap<MetricHost, u64>,
+    pub json_host_requests: HashMap<MetricHost, u64>,
     pub json_method_requests: HashMap<MetricRpcMethod, u64>,
 }
 

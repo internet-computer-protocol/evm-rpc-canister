@@ -16,7 +16,7 @@ macro_rules! add_metric_entry {
             let amount = $amount;
             m.borrow_mut()
                 .$metric
-                .entry($key.into())
+                .entry($key)
                 .and_modify(|counter| *counter += amount)
                 .or_insert(amount);
         });
@@ -82,7 +82,7 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
         );
         w.encode_entries(
             "host_requests",
-            &m.host_requests,
+            &m.json_host_requests,
             "Number of RPC requests to a service host",
         );
         w.encode_entries("err_http", &m.err_http, "Number of HTTP errors");

@@ -15,7 +15,6 @@ pub async fn do_http_request(
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> Result<HttpResponse, RpcError> {
-    add_metric_entry!(requests, metric_rpc_method.clone(), 1);
     if !is_rpc_allowed(&caller) {
         add_metric!(err_no_permission, 1);
         return Err(ProviderError::NoPermission.into());
@@ -33,6 +32,11 @@ pub async fn do_http_request(
         Some(host) => host,
         None => return Err(ValidationError::UrlParseError(api.url).into()),
     };
+    add_metric_entry!(
+        requests,
+        (metric_rpc_method.clone(), MetricHost(host.to_string())),
+        1
+    );
     if SERVICE_HOSTS_BLOCKLIST.contains(&host) {
         log!(INFO, "host not allowed: {}", host);
         add_metric!(err_host_not_allowed, 1);
@@ -59,7 +63,6 @@ pub async fn do_http_request(
         }
         add_metric_entry!(cycles_charged, metric_rpc_method.clone(), cost);
     }
-    add_metric_entry!(host_requests, MetricHost(host.to_string()), 1);
     let mut request_headers = vec![HttpHeader {
         name: CONTENT_TYPE_HEADER.to_string(),
         value: CONTENT_TYPE_VALUE.to_string(),
@@ -77,7 +80,14 @@ pub async fn do_http_request(
         )),
     };
     match ic_cdk::api::management_canister::http_request::http_request(request, cost).await {
-        Ok((response,)) => Ok(response),
+        Ok((response,)) => {
+            add_metric_entry!(
+                responses,
+                (metric_rpc_method, MetricHost(host.to_string())),
+                1
+            );
+            Ok(response)
+        }
         Err((code, message)) => {
             add_metric_entry!(
                 err_http,
