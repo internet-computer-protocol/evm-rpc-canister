@@ -47,8 +47,8 @@ macro_rules! add_metric_entry {
 trait EncoderExtensions {
     fn encode_entries<K: MetricLabels, V: MetricValue>(
         &mut self,
-        map: &HashMap<K, V>,
         name: &str,
+        map: &HashMap<K, V>,
         help: &str,
     );
 }
@@ -56,17 +56,15 @@ trait EncoderExtensions {
 impl EncoderExtensions for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
     fn encode_entries<K: MetricLabels, V: MetricValue>(
         &mut self,
-        map: &HashMap<K, V>,
         name: &str,
+        map: &HashMap<K, V>,
         help: &str,
     ) {
         map.iter().for_each(|(k, v)| {
-            self.counter_vec(name, help)
-                .and_then(|m| {
-                    let (labels, value) = (k.metric_labels(), v.metric_value());
-                    m.value(&labels, value)
-                })
-                .ok();
+            self.counter_vec(name, help).and_then(|m| {
+                let (labels, value) = (k.metric_labels(), v.metric_value());
+                m.value(&labels, value)
+            }).unwrap_or(());
         })
     }
 }
@@ -74,37 +72,50 @@ impl EncoderExtensions for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
 pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> std::io::Result<()> {
     w.encode_gauge(
         "canister_version",
-        ic_cdk::api::canister_version() as f64,
+        ic_cdk::api::canister_version().metric_value(),
         "Canister version",
     )?;
     w.encode_gauge(
         "stable_memory_pages",
-        ic_cdk::api::stable::stable64_size() as f64,
+        ic_cdk::api::stable::stable64_size().metric_value(),
         "Size of the stable memory allocated by this canister measured in 64-bit Wasm pages",
     )?;
     crate::TRANSIENT_METRICS.with(|m| {
         let m = m.borrow();
-        w.encode_entries(&m.requests, "requests", "Number of RPC requests");
+
+        w.encode_entries("requests", &m.requests, "Number of RPC requests");
         w.encode_entries(
-            &m.responses,
             "responses",
+            &m.responses,
             "Number of successful RPC responses",
         );
         w.encode_entries(
+            "json_method_requests",
             &m.json_method_requests,
-            "cycles_charged",
             "Number of direct JSON-RPC requests",
         );
         w.encode_entries(
-            &m.cycles_charged,
             "cycles_charged",
+            &m.cycles_charged,
             "Number of cycles charged for RPC calls",
         );
         w.encode_entries(
-            &m.host_requests,
             "host_requests",
+            &m.host_requests,
             "Number of RPC requests to a service host",
         );
-    });
-    Ok(())
+        w.encode_entries("err_http", &m.err_http, "Number of HTTP errors");
+        w.encode_gauge(
+            "err_host_not_allowed",
+            m.err_host_not_allowed.metric_value(),
+            "Number of HostNotAllowed errors",
+        )?;
+        w.encode_gauge(
+            "err_no_permission",
+            m.err_no_permission.metric_value(),
+            "Number of NoPermission errors",
+        )?;
+
+        Ok(())
+    })
 }
