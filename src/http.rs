@@ -79,7 +79,7 @@ pub async fn do_http_request(
     match ic_cdk::api::management_canister::http_request::http_request(request, cost).await {
         Ok((response,)) => Ok(response),
         Err((code, message)) => {
-            inc_metric!(err_http);
+            inc_metric_entry!(err_http, metric_rpc_method);
             Err(HttpOutcallError::IcError { code, message }.into())
         }
     }

@@ -1,11 +1,4 @@
 #[macro_export]
-macro_rules! get_metric {
-    ($metric:ident) => {{
-        $crate::TRANSIENT_METRICS.with(|m| m.borrow().$metric)
-    }};
-}
-
-#[macro_export]
 macro_rules! add_metric {
     ($metric:ident, $amount:expr) => {{
         $crate::TRANSIENT_METRICS.with(|m| m.borrow_mut().$metric += $amount);
@@ -67,8 +60,9 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
     //     "Cycles refunded by direct JSON-RPC calls",
     // )?;
     crate::TRANSIENT_METRICS.with(|m| {
-        m.borrow()
-            .host_requests
+        let m = m.borrow();
+
+        m.host_requests
             .iter()
             .map(|(k, v)| {
                 w.counter_vec(
