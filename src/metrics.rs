@@ -23,27 +23,6 @@ macro_rules! add_metric_entry {
     }};
 }
 
-// pub fn update_metric(action: impl FnOnce(RefMut<Metrics>)) {
-//     TRANSIENT_METRICS.with(|m| action(m.borrow_mut()));
-// }
-
-// pub fn add_metric<T: AddAssign>(metric: impl FnOnce(&mut Metrics) -> &mut T, amount: T) {
-//     update_metric(|m| *metric(m) += amount);
-// }
-
-// pub fn add_metric_entry<K: Clone + Eq + Hash, V: AddAssign>(
-//     metric: impl FnMut(&mut Metrics) -> &mut HashMap<K, V>,
-//     key: K,
-//     amount: V,
-// ) {
-//     TRANSIENT_METRICS.with(|m| {
-//         metric(m.get_mut())
-//             .entry(key)
-//             .and_modify(|counter| *counter += amount)
-//             .or_insert(amount)
-//     });
-// }
-
 trait EncoderExtensions {
     fn encode_entries<K: MetricLabels, V: MetricValue>(
         &mut self,
