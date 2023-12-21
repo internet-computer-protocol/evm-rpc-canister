@@ -9,14 +9,15 @@ use num_traits::ToPrimitive;
 use crate::*;
 
 pub async fn do_http_request(
+    metric_rpc_method: &MetricRpcMethod,
     caller: Principal,
     source: ResolvedJsonRpcSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> Result<HttpResponse, RpcError> {
-    inc_metric!(json_rpc.requests);
+    inc_metric_entry!(requests, metric_rpc_method);
     if !is_rpc_allowed(&caller) {
-        inc_metric!(json_rpc.err_no_permission);
+        inc_metric_entry!(err_no_permission, metric_rpc_method);
         return Err(ProviderError::NoPermission.into());
     }
     let cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
@@ -34,7 +35,7 @@ pub async fn do_http_request(
     };
     if SERVICE_HOSTS_BLOCKLIST.contains(&host) {
         log!(INFO, "host not allowed: {}", host);
-        inc_metric!(json_rpc.err_host_not_allowed);
+        inc_metric_entry!(err_host_not_allowed, metric_rpc_method);
         return Err(ValidationError::HostNotAllowed(host.to_string()).into());
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
@@ -56,8 +57,7 @@ pub async fn do_http_request(
                     .expect("unable to update Provider");
             });
         }
-        add_metric!(json_rpc.cycles_charged, cost);
-        add_metric!(json_rpc.cycles_refunded, cycles_available - cost);
+        add_metric_entry!(cycles_charged, metric_rpc_method, cost);
     }
     inc_metric_entry!(host_requests, host.to_string());
     let mut request_headers = vec![HttpHeader {
