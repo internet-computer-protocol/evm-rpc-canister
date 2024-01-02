@@ -24,31 +24,7 @@ struct CanisterTransport;
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RpcTransport for CanisterTransport {
     fn resolve_api(service: &RpcService) -> Result<RpcApi, ProviderError> {
-        use RpcService::*;
-        let (chain_id, hostname) = match service {
-            EthMainnet(service) => (
-                ETH_MAINNET_CHAIN_ID,
-                match service {
-                    EthMainnetService::Ankr => ANKR_HOSTNAME,
-                    EthMainnetService::BlockPi => BLOCKPI_ETH_MAINNET_HOSTNAME,
-                    EthMainnetService::PublicNode => PUBLICNODE_ETH_MAINNET_HOSTNAME,
-                    EthMainnetService::Cloudflare => CLOUDFLARE_HOSTNAME,
-                },
-            ),
-            EthSepolia(service) => (
-                ETH_SEPOLIA_CHAIN_ID,
-                match service {
-                    EthSepoliaService::Ankr => ANKR_HOSTNAME,
-                    EthSepoliaService::BlockPi => BLOCKPI_ETH_SEPOLIA_HOSTNAME,
-                    EthSepoliaService::PublicNode => PUBLICNODE_ETH_SEPOLIA_HOSTNAME,
-                },
-            ),
-        };
-        Ok(
-            find_provider(|p| p.chain_id == chain_id && p.hostname == hostname)
-                .ok_or(ProviderError::MissingRequiredProvider)?
-                .api(),
-        )
+        Ok(resolve_provider(service)?.api())
     }
 
     async fn http_request(
@@ -59,15 +35,40 @@ impl RpcTransport for CanisterTransport {
     ) -> RpcResult<HttpResponse> {
         let base_cycles =
             400_000_000u128 + 100_000u128 * (2 * effective_response_size_estimate as u128);
-
-        const BASE_SUBNET_SIZE: u128 = 13;
         let subnet_size = METADATA.with(|m| m.borrow().get().nodes_in_subnet) as u128;
-        let cycles = base_cycles * subnet_size / BASE_SUBNET_SIZE;
-        let api = Self::resolve_api(service);
-        let rpc_method = RpcMethod(..);
-        let rpc_host = RpcHost(..);
-        do_http_request_with_metrics(rpc_method, rpc_host, request, cycles_cost)
+        let cycles_cost = base_cycles * subnet_size / DEFAULT_NODES_IN_SUBNET as u128;
+        let provider = resolve_provider(service)?;
+        let rpc_method = RpcMethod(method.to_string());
+        let rpc_host = RpcHost(provider.hostname);
+        do_http_request_with_metrics(rpc_method, rpc_host, request, cycles_cost).await
     }
+}
+
+fn resolve_provider(service: &RpcService) -> Result<Provider, ProviderError> {
+    use RpcService::*;
+    let (chain_id, hostname) = match service {
+        EthMainnet(service) => (
+            ETH_MAINNET_CHAIN_ID,
+            match service {
+                EthMainnetService::Ankr => ANKR_HOSTNAME,
+                EthMainnetService::BlockPi => BLOCKPI_ETH_MAINNET_HOSTNAME,
+                EthMainnetService::PublicNode => PUBLICNODE_ETH_MAINNET_HOSTNAME,
+                EthMainnetService::Cloudflare => CLOUDFLARE_HOSTNAME,
+            },
+        ),
+        EthSepolia(service) => (
+            ETH_SEPOLIA_CHAIN_ID,
+            match service {
+                EthSepoliaService::Ankr => ANKR_HOSTNAME,
+                EthSepoliaService::BlockPi => BLOCKPI_ETH_SEPOLIA_HOSTNAME,
+                EthSepoliaService::PublicNode => PUBLICNODE_ETH_SEPOLIA_HOSTNAME,
+            },
+        ),
+    };
+    Ok(
+        find_provider(|p| p.chain_id == chain_id && p.hostname == hostname)
+            .ok_or(ProviderError::MissingRequiredProvider)?,
+    )
 }
 
 fn check_services<T>(services: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
