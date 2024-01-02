@@ -24,7 +24,7 @@ pub fn get_request_costs(
         ),
         ResolvedJsonRpcSource::Provider(p) => (
             get_http_request_cost(&p.api(), json_rpc_payload, max_response_bytes),
-            get_provider_cost(p, json_rpc_payload),
+            get_provider_cost(p, json_rpc_payload.len()),
         ),
     }
 }
@@ -45,10 +45,10 @@ pub fn get_http_request_cost(
 }
 
 /// Calculate the additional cost for calling a registered JSON-RPC provider.
-pub fn get_provider_cost(provider: &Provider, json_rpc_payload: &str) -> u128 {
+pub fn get_provider_cost(provider: &Provider, payload_size_bytes: usize) -> u128 {
     let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
     let cost_per_node = provider.cycles_per_call as u128
-        + provider.cycles_per_message_byte as u128 * json_rpc_payload.len() as u128;
+        + provider.cycles_per_message_byte as u128 * payload_size_bytes as u128;
     cost_per_node * (nodes_in_subnet as u128)
 }
 
@@ -107,7 +107,7 @@ fn test_provider_cost() {
     };
     let base_cost = get_provider_cost(
         &provider,
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".len(),
     );
 
     let provider_s10 = Provider {
@@ -125,8 +125,8 @@ fn test_provider_cost() {
     let s10 = "0123456789";
     let base_cost_s10 = get_provider_cost(
         &provider_s10,
-        &("{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".to_string()
-            + s10),
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".len()
+            + s10.len(),
     );
     assert_eq!(base_cost + (10 * 2 + 1000) * 13, base_cost_s10)
 }

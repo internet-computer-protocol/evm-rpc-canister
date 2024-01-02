@@ -33,14 +33,23 @@ impl RpcTransport for CanisterTransport {
         request: CanisterHttpRequestArgument,
         effective_response_size_estimate: u64,
     ) -> RpcResult<HttpResponse> {
+        // TODO: move to `accounting.rs`
         let base_cycles =
             400_000_000u128 + 100_000u128 * (2 * effective_response_size_estimate as u128);
         let subnet_size = METADATA.with(|m| m.borrow().get().nodes_in_subnet) as u128;
         let cycles_cost = base_cycles * subnet_size / DEFAULT_NODES_IN_SUBNET as u128;
         let provider = resolve_provider(service)?;
         let rpc_method = RpcMethod(method.to_string());
-        let rpc_host = RpcHost(provider.hostname);
-        do_http_request_with_metrics(rpc_method, rpc_host, request, cycles_cost).await
+        let rpc_host = RpcHost(provider.hostname.to_string());
+        do_http_request_with_metrics(
+            ic_cdk::caller(),
+            rpc_method,
+            rpc_host,
+            Some(provider),
+            request,
+            cycles_cost,
+        )
+        .await
     }
 }
 

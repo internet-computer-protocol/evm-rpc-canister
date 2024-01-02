@@ -107,9 +107,9 @@ async fn request(
     max_response_bytes: u64,
 ) -> Result<String, RpcError> {
     let response = do_json_rpc_request(
-        RpcMethod("json_rpc".to_string()),
         ic_cdk::caller(),
         source.resolve()?,
+        RpcMethod("request".to_string()),
         &json_rpc_payload,
         max_response_bytes,
     )
