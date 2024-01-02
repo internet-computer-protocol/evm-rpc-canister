@@ -110,18 +110,18 @@ impl<A: MetricLabels, B: MetricLabels> MetricLabels for (A, B) {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
-pub struct MetricRpcMethod(pub String);
+pub struct RpcMethod(pub String);
 
-impl MetricLabels for MetricRpcMethod {
+impl MetricLabels for RpcMethod {
     fn metric_labels(&self) -> Vec<(&str, &str)> {
         vec![("method", &self.0)]
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
-pub struct MetricHost(pub String);
+pub struct RpcHost(pub String);
 
-impl MetricLabels for MetricHost {
+impl MetricLabels for RpcHost {
     fn metric_labels(&self) -> Vec<(&str, &str)> {
         vec![("host", &self.0)]
     }
@@ -129,14 +129,14 @@ impl MetricLabels for MetricHost {
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, CandidType, Deserialize)]
 pub struct Metrics {
-    pub requests: HashMap<(MetricRpcMethod, MetricHost), u64>,
-    pub responses: HashMap<(MetricRpcMethod, MetricHost), u64>,
-    pub cycles_charged: HashMap<MetricRpcMethod, u128>,
+    pub requests: HashMap<(RpcMethod, RpcHost), u64>,
+    pub responses: HashMap<(RpcMethod, RpcHost), u64>,
+    pub cycles_charged: HashMap<RpcMethod, u128>,
     pub err_no_permission: u64,
     pub err_host_not_allowed: u64,
-    pub err_http: HashMap<(MetricRpcMethod, MetricHost), u64>,
-    pub json_host_requests: HashMap<MetricHost, u64>,
-    pub json_method_requests: HashMap<MetricRpcMethod, u64>,
+    pub err_http: HashMap<(RpcMethod, RpcHost), u64>,
+    pub json_host_requests: HashMap<RpcHost, u64>,
+    pub json_method_requests: HashMap<RpcMethod, u64>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]

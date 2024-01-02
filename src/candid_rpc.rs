@@ -3,8 +3,8 @@ use std::str::FromStr;
 use async_trait::async_trait;
 use cketh_common::{
     eth_rpc::{
-        into_nat, Block, FeeHistory, GetLogsParam, Hash, HttpOutcallError, LogEntry, ProviderError,
-        RpcError, SendRawTransactionResult, ValidationError,
+        into_nat, Block, FeeHistory, GetLogsParam, Hash, LogEntry, ProviderError, RpcError,
+        SendRawTransactionResult, ValidationError,
     },
     eth_rpc_client::{
         providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
@@ -23,25 +23,21 @@ struct CanisterTransport;
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RpcTransport for CanisterTransport {
-    fn get_subnet_size() -> u32 {
-        METADATA.with(|m| m.borrow().get().nodes_in_subnet)
-    }
-
-    fn resolve_api(provider: &RpcService) -> Result<RpcApi, ProviderError> {
+    fn resolve_api(service: &RpcService) -> Result<RpcApi, ProviderError> {
         use RpcService::*;
-        let (chain_id, hostname) = match provider {
-            EthMainnet(provider) => (
+        let (chain_id, hostname) = match service {
+            EthMainnet(service) => (
                 ETH_MAINNET_CHAIN_ID,
-                match provider {
+                match service {
                     EthMainnetService::Ankr => ANKR_HOSTNAME,
                     EthMainnetService::BlockPi => BLOCKPI_ETH_MAINNET_HOSTNAME,
                     EthMainnetService::PublicNode => PUBLICNODE_ETH_MAINNET_HOSTNAME,
                     EthMainnetService::Cloudflare => CLOUDFLARE_HOSTNAME,
                 },
             ),
-            EthSepolia(provider) => (
+            EthSepolia(service) => (
                 ETH_SEPOLIA_CHAIN_ID,
-                match provider {
+                match service {
                     EthSepoliaService::Ankr => ANKR_HOSTNAME,
                     EthSepoliaService::BlockPi => BLOCKPI_ETH_SEPOLIA_HOSTNAME,
                     EthSepoliaService::PublicNode => PUBLICNODE_ETH_SEPOLIA_HOSTNAME,
@@ -56,27 +52,21 @@ impl RpcTransport for CanisterTransport {
     }
 
     async fn http_request(
-        _provider: &RpcService,
+        service: &RpcService,
+        method: &str,
         request: CanisterHttpRequestArgument,
-        cycles_cost: u128,
+        effective_response_size_estimate: u64,
     ) -> RpcResult<HttpResponse> {
-        if !is_authorized(&ic_cdk::caller(), Auth::FreeRpc) {
-            let cycles_available = ic_cdk::api::call::msg_cycles_available128();
-            if cycles_available < cycles_cost {
-                return Err(ProviderError::TooFewCycles {
-                    expected: cycles_cost,
-                    received: cycles_available,
-                }
-                .into());
-            }
-            ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
-        }
-        match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost)
-            .await
-        {
-            Ok((response,)) => Ok(response),
-            Err((code, message)) => Err(HttpOutcallError::IcError { code, message }.into()),
-        }
+        let base_cycles =
+            400_000_000u128 + 100_000u128 * (2 * effective_response_size_estimate as u128);
+
+        const BASE_SUBNET_SIZE: u128 = 13;
+        let subnet_size = METADATA.with(|m| m.borrow().get().nodes_in_subnet) as u128;
+        let cycles = base_cycles * subnet_size / BASE_SUBNET_SIZE;
+        let api = Self::resolve_api(service);
+        let rpc_method = RpcMethod(..);
+        let rpc_host = RpcHost(..);
+        do_http_request_with_metrics(rpc_method, rpc_host, request, cycles_cost)
     }
 }
 

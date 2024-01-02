@@ -106,8 +106,8 @@ async fn request(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<String, RpcError> {
-    let response = do_http_request(
-        MetricRpcMethod("json_rpc".to_string()),
+    let response = do_json_rpc_request(
+        RpcMethod("json_rpc".to_string()),
         ic_cdk::caller(),
         source.resolve()?,
         &json_rpc_payload,

@@ -8,13 +8,13 @@ use num_traits::ToPrimitive;
 
 use crate::*;
 
-pub async fn do_http_request(
-    metric_rpc_method: MetricRpcMethod,
+pub async fn do_json_rpc_request(
+    rpc_method: RpcMethod,
     caller: Principal,
     source: ResolvedJsonRpcSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
-) -> Result<HttpResponse, RpcError> {
+) -> RpcResult<HttpResponse> {
     if !is_rpc_allowed(&caller) {
         add_metric!(err_no_permission, 1);
         return Err(ProviderError::NoPermission.into());
@@ -32,11 +32,6 @@ pub async fn do_http_request(
         Some(host) => host,
         None => return Err(ValidationError::UrlParseError(api.url).into()),
     };
-    add_metric_entry!(
-        requests,
-        (metric_rpc_method.clone(), MetricHost(host.to_string())),
-        1
-    );
     if SERVICE_HOSTS_BLOCKLIST.contains(&host) {
         log!(INFO, "host not allowed: {}", host);
         add_metric!(err_host_not_allowed, 1);
@@ -61,7 +56,7 @@ pub async fn do_http_request(
                     .expect("unable to update Provider");
             });
         }
-        add_metric_entry!(cycles_charged, metric_rpc_method.clone(), cost);
+        add_metric_entry!(cycles_charged, rpc_method.clone(), cost);
     }
     let mut request_headers = vec![HttpHeader {
         name: CONTENT_TYPE_HEADER.to_string(),
@@ -79,21 +74,28 @@ pub async fn do_http_request(
             vec![],
         )),
     };
-    match ic_cdk::api::management_canister::http_request::http_request(request, cost).await {
+    let rpc_host = RpcHost(host.to_string());
+    do_http_request_with_metrics(rpc_method, rpc_host, request, cost).await
+}
+
+pub async fn do_http_request_with_metrics(
+    rpc_method: RpcMethod,
+    rpc_host: RpcHost,
+    request: CanisterHttpRequestArgument,
+    cycles_cost: u128,
+) -> RpcResult<HttpResponse> {
+    add_metric_entry!(
+        requests,
+        (rpc_method.clone(), rpc_host.clone()),
+        1
+    );
+    match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost).await {
         Ok((response,)) => {
-            add_metric_entry!(
-                responses,
-                (metric_rpc_method, MetricHost(host.to_string())),
-                1
-            );
+            add_metric_entry!(responses, (rpc_method, rpc_host), 1);
             Ok(response)
         }
         Err((code, message)) => {
-            add_metric_entry!(
-                err_http,
-                (metric_rpc_method, MetricHost(host.to_string())),
-                1
-            );
+            add_metric_entry!(err_http, (rpc_method, rpc_host), 1);
             Err(HttpOutcallError::IcError { code, message }.into())
         }
     }

@@ -1001,6 +1001,21 @@ fn candid_rpc_should_represent_inconsistent_results() {
             )
         ]
     );
+    let rpc_method = || RpcMethod("eth_sendRawTransation".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+            },
+            responses: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+            },
+            ..Default::default()
+        }
+    );
 }
 
 #[test]
@@ -1022,22 +1037,22 @@ fn candid_rpc_should_handle_already_known() {
         .wait()
         .expect_consistent();
     assert_eq!(result, Ok(SendRawTransactionResult::Ok));
-    let rpc_method = || MetricRpcMethod("eth_sendRawTransation".to_string());
+    let rpc_method = || RpcMethod("eth_sendRawTransation".to_string());
     assert_eq!(
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), MetricHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), MetricHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
             },
             cycles_charged: hashmap! {
                 rpc_method() => 123456789_u128,
             },
             ..Default::default()
         }
-    )
+    );
 }
