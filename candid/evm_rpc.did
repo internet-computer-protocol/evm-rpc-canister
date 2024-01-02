@@ -78,6 +78,16 @@ type LogEntry = record {
   removed : bool;
 };
 type Message = variant { Data : blob; Hash : blob };
+type Metrics = record {
+  responses : vec record { record { text; text }; nat64 };
+  err_no_permission : nat64;
+  json_method_requests : vec record { text; nat64 };
+  err_host_not_allowed : nat64;
+  err_http : vec record { record { text; text }; nat64 };
+  requests : vec record { record { text; text }; nat64 };
+  cycles_charged : vec record { text; nat };
+  json_host_requests : vec record { text; nat64 };
+};
 type MultiFeeHistoryResult = variant {
   Consistent : FeeHistoryResult;
   Inconsistent : vec record { RpcService; FeeHistoryResult };
@@ -217,6 +227,7 @@ service : {
   eth_sendRawTransaction : (RpcSource, text) -> (MultiSendRawTransactionResult);
   getAccumulatedCycleCount : (nat64) -> (nat) query;
   getAuthorized : (Auth) -> (vec text) query;
+  getMetrics : () -> (Metrics) query;
   getNodesInSubnet : () -> (nat32) query;
   getOpenRpcAccess : () -> (bool) query;
   getProviders : () -> (vec ProviderView) query;

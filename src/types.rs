@@ -109,7 +109,7 @@ impl<A: MetricLabels, B: MetricLabels> MetricLabels for (A, B) {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
 pub struct MetricRpcMethod(pub String);
 
 impl MetricLabels for MetricRpcMethod {
@@ -118,7 +118,7 @@ impl MetricLabels for MetricRpcMethod {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
 pub struct MetricHost(pub String);
 
 impl MetricLabels for MetricHost {
@@ -127,7 +127,7 @@ impl MetricLabels for MetricHost {
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct Metrics {
     pub requests: HashMap<(MetricRpcMethod, MetricHost), u64>,
     pub responses: HashMap<(MetricRpcMethod, MetricHost), u64>,

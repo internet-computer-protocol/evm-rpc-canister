@@ -8,6 +8,7 @@ edition = "2021"
 
 [profile.release]
 debug = false
+strip = true
 lto = true
 opt-level = 'z'
 
@@ -37,23 +38,23 @@ async-trait = "0.1"
 hex = "0.4"
 
 [dev-dependencies]
-ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
+ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
+ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
+ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
 assert_matches = "1.5"
 
 [workspace.dependencies]
-candid = { version = "0.9" }
-ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+candid = "0.9.10"
+ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
+ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
+ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
 ic-metrics-encoder = "1.1"
-ic-stable-structures = "0.5"
+ic-stable-structures = "0.5.4"
 ic-certified-map = "0.4"
-ic-cdk = "0.10"
-ic-cdk-macros = "0.7"
+ic-cdk = "0.10.0"
+ic-cdk-macros = "0.7.0"
 ic-cdk-bindgen = "0.1"
 ic-eth = { path = "lib/rust" }
 

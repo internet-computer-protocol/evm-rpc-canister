@@ -269,6 +269,12 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
     }
 }
 
+#[query(name = "getMetrics")]
+#[candid_method(query, rename = "getMetrics")]
+fn get_metrics() -> Metrics {
+    TRANSIENT_METRICS.with(|metrics| (*metrics.borrow()).clone())
+}
+
 #[query(guard = "require_admin_or_controller")]
 fn stable_size() -> u64 {
     ic_cdk::api::stable::stable64_size() * WASM_PAGE_SIZE
