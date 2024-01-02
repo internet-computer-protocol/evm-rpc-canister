@@ -26,7 +26,7 @@ ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-eth = { workspace = true }
-cketh-common = { git = "https://github.com/rvanasa/ic", rev = "5d50a919e4ffa90334dd6d6ba737ebd6215e02bc", package = "ic-cketh-minter" }
+cketh-common = { git = "https://github.com/rvanasa/ic", rev = "62b9c054e7b380ad83ad5cc545f1887efbcfccc6", package = "ic-cketh-minter" }
 num = "0.4"
 num-traits = "0.2"
 num-derive = "0.4"
