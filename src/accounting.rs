@@ -2,6 +2,7 @@ use cketh_common::eth_rpc_client::providers::RpcApi;
 
 use crate::*;
 
+/// Returns the cycles cost of a JSON-RPC request.
 pub fn get_request_cost(
     source: &ResolvedJsonRpcSource,
     json_rpc_payload: &str,
@@ -12,6 +13,7 @@ pub fn get_request_cost(
     http_cost + provider_cost
 }
 
+/// Returns `(http_cost, provider_cost)`in cycles.
 pub fn get_request_costs(
     source: &ResolvedJsonRpcSource,
     json_rpc_payload: &str,
@@ -29,7 +31,15 @@ pub fn get_request_costs(
     }
 }
 
-/// Calculate the baseline cost of sending a JSON-RPC request using HTTP outcalls.
+/// Returns the cycles cost of a Candid-RPC request.
+pub fn get_candid_rpc_cost(effective_response_size_estimate: u64) -> u128 {
+    let base_cycles =
+        400_000_000u128 + 100_000u128 * (2 * effective_response_size_estimate as u128);
+    let subnet_size = METADATA.with(|m| m.borrow().get().nodes_in_subnet) as u128;
+    base_cycles * subnet_size / DEFAULT_NODES_IN_SUBNET as u128
+}
+
+/// Calculates the baseline cost of sending a JSON-RPC request using HTTP outcalls.
 pub fn get_http_request_cost(
     api: &RpcApi,
     json_rpc_payload: &str,
@@ -44,7 +54,7 @@ pub fn get_http_request_cost(
     base_cost * (nodes_in_subnet as u128) / DEFAULT_NODES_IN_SUBNET as u128
 }
 
-/// Calculate the additional cost for calling a registered JSON-RPC provider.
+/// Calculates the additional cost for calling a registered JSON-RPC provider.
 pub fn get_provider_cost(provider: &Provider, payload_size_bytes: usize) -> u128 {
     let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
     let cost_per_node = provider.cycles_per_call as u128
