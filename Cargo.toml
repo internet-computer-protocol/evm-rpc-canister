@@ -8,8 +8,8 @@ edition = "2021"
 
 [profile.release]
 debug = false
-strip = true
 lto = true
+strip = true
 opt-level = 'z'
 
 # Required by `ic-test-utilities-load-wasm`
@@ -28,6 +28,7 @@ ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-eth = { workspace = true }
 cketh-common = { git = "https://github.com/rvanasa/ic", rev = "62b9c054e7b380ad83ad5cc545f1887efbcfccc6", package = "ic-cketh-minter" }
+maplit = "1.0"
 num = "0.4"
 num-traits = "0.2"
 num-derive = "0.4"
@@ -38,23 +39,23 @@ async-trait = "0.1"
 hex = "0.4"
 
 [dev-dependencies]
-ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
-ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
-ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
-ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
+ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 assert_matches = "1.5"
 
 [workspace.dependencies]
-candid = "0.9.10"
-ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
-ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
-ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-12-13_23-01" }
+candid = { version = "0.9" }
+ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-metrics-encoder = "1.1"
-ic-stable-structures = "0.5.4"
+ic-stable-structures = "0.5"
 ic-certified-map = "0.4"
-ic-cdk = "0.10.0"
-ic-cdk-macros = "0.7.0"
+ic-cdk = "0.10"
+ic-cdk-macros = "0.7"
 ic-cdk-bindgen = "0.1"
 ic-eth = { path = "lib/rust" }
 

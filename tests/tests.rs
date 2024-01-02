@@ -25,6 +25,7 @@ use ic_state_machine_tests::{
     StateMachine, StateMachineBuilder, WasmResult,
 };
 use ic_test_utilities_load_wasm::load_wasm;
+use maplit::hashmap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use evm_rpc::*;
@@ -1021,21 +1022,22 @@ fn candid_rpc_should_handle_already_known() {
         .wait()
         .expect_consistent();
     assert_eq!(result, Ok(SendRawTransactionResult::Ok));
-}
-
-#[test]
-fn should_update_metrics() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-    let result = setup
-        .eth_send_raw_transaction(
-            RpcSource::EthMainnet(Some(vec![EthMainnetService::Cloudflare])),
-            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83".to_string(),
-        )
-        .mock_http_once(MockOutcallBuilder::new(
-            200,
-            r#"{"id":0,"jsonrpc":"2.0","result":"Ok"}"#,
-        ))
-        .wait()
-        .expect_consistent();
-    assert_eq!(result, Ok(SendRawTransactionResult::Ok));
+    let rpc_method = || MetricRpcMethod("eth_sendRawTransation".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), MetricHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), MetricHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+            },
+            responses: hashmap! {
+                (rpc_method(), MetricHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), MetricHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+            },
+            cycles_charged: hashmap! {
+                rpc_method() => 123456789_u128,
+            },
+            ..Default::default()
+        }
+    )
 }

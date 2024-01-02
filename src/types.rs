@@ -127,7 +127,7 @@ impl MetricLabels for MetricHost {
     }
 }
 
-#[derive(Clone, Debug, Default, CandidType, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, CandidType, Deserialize)]
 pub struct Metrics {
     pub requests: HashMap<(MetricRpcMethod, MetricHost), u64>,
     pub responses: HashMap<(MetricRpcMethod, MetricHost), u64>,
