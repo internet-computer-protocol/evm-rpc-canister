@@ -68,10 +68,10 @@ jobs:
         run: npm ci
 
       - name: Deploy EVM RPC
-        run: dfx deploy evm_rpc --argument "(variant {nodesInSubnet = 13})"
+        run: dfx deploy evm_rpc --argument "(record {nodesInSubnet = 13})"
 
       - name: Deploy EVM RPC fiduciary canister
-        run: dfx deploy evm_rpc_fiduciary --argument "(variant {nodesInSubnet = 28})"
+        run: dfx deploy evm_rpc_fiduciary --argument "(record {nodesInSubnet = 28})"
 
       - name: Generate language bindings
         run: npm run generate
