@@ -999,6 +999,10 @@ fn candid_rpc_should_recognize_json_error() {
                 (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
                 (rpc_method(), RpcHost(BLOCKPI_ETH_SEPOLIA_HOSTNAME.to_string())) => 1,
             },
+            responses: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(BLOCKPI_ETH_SEPOLIA_HOSTNAME.to_string())) => 1,
+            },
             ..Default::default()
         }
     );
