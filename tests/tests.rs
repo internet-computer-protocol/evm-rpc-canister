@@ -913,14 +913,9 @@ fn candid_rpc_should_err_during_restricted_access() {
         result,
         Err(RpcError::ProviderError(ProviderError::NoPermission))
     );
-    let rpc_method = || RpcMethod("eth_sendRawTransaction".to_string());
     assert_eq!(
         setup.get_metrics(),
         Metrics {
-            requests: hashmap! {
-                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(BLOCKPI_ETH_MAINNET_HOSTNAME.to_string())) => 1,
-            },
             err_no_permission: 2,
             ..Default::default()
         }
