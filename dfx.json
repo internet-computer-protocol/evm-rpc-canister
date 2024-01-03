@@ -16,13 +16,13 @@
       "args": "(opt record {nodes_in_subnet = 28})"
     },
     "e2e_rust": {
-      "dependencies": ["evm_rpc"],
+      "dependencies": ["evm_rpc", "evm_rpc_fiduciary"],
       "candid": "e2e/rust/e2e_rust.did",
       "type": "rust",
       "package": "e2e"
     },
     "e2e_motoko": {
-      "dependencies": ["evm_rpc"],
+      "dependencies": ["evm_rpc", "evm_rpc_fiduciary"],
       "type": "motoko",
       "main": "e2e/motoko/Main.mo"
     }
