@@ -171,11 +171,6 @@ type SendRawTransactionStatus = variant {
   NonceTooHigh;
   InsufficientFunds;
 };
-type SignedMessage = record {
-  signature : text;
-  message : Message;
-  address : text;
-};
 type TransactionReceipt = record {
   to : text;
   status : nat;
@@ -228,6 +223,5 @@ service : (InitArgs) -> {
   setOpenRpcAccess : (bool) -> ();
   unregisterProvider : (nat64) -> (bool);
   updateProvider : (UpdateProviderArgs) -> ();
-  verifyMessageSignature : (SignedMessage) -> (bool) query;
   withdrawAccumulatedCycles : (nat64, principal) -> ();
 };
