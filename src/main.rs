@@ -126,7 +126,7 @@ fn request_cost(
 ) -> Result<u128, RpcError> {
     Ok(get_json_rpc_cost(
         &source.resolve().unwrap(),
-        &json_rpc_payload,
+        json_rpc_payload.len(),
         max_response_bytes,
     ))
 }
