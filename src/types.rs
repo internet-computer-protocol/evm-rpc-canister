@@ -13,7 +13,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
-use crate::{AUTH_SET_STORABLE_MAX_SIZE, PROVIDERS};
+use crate::{AUTH_SET_STORABLE_MAX_SIZE, NODES_IN_DEFAULT_SUBNET, PROVIDERS};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum JsonRpcSource {
@@ -203,11 +203,21 @@ impl BoundedStorable for AuthSet {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(Clone, Debug, Default, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Metadata {
     pub nodes_in_subnet: u32,
     pub next_provider_id: u64,
     pub open_rpc_access: bool,
+}
+
+impl Default for Metadata {
+    fn default() -> Self {
+        Self {
+            nodes_in_subnet: NODES_IN_DEFAULT_SUBNET,
+            next_provider_id: 0,
+            open_rpc_access: true,
+        }
+    }
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]

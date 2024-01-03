@@ -245,7 +245,7 @@ fn transform(args: TransformArgs) -> HttpResponse {
 fn init() {
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = DEFAULT_NODES_IN_SUBNET;
+        metadata.nodes_in_subnet = NODES_IN_DEFAULT_SUBNET;
         metadata.open_rpc_access = DEFAULT_OPEN_RPC_ACCESS;
         m.borrow_mut().set(metadata).unwrap();
     });

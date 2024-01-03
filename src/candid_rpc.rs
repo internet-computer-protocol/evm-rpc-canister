@@ -78,10 +78,8 @@ fn resolve_provider(service: &RpcService) -> Result<Provider, ProviderError> {
             },
         ),
     };
-    Ok(
-        find_provider(|p| p.chain_id == chain_id && p.hostname == hostname)
-            .ok_or(ProviderError::MissingRequiredProvider)?,
-    )
+    find_provider(|p| p.chain_id == chain_id && p.hostname == hostname)
+        .ok_or(ProviderError::MissingRequiredProvider)
 }
 
 fn check_services<T>(services: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
