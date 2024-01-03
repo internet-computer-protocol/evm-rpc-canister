@@ -76,13 +76,12 @@ fn test_request_cost() {
             payload,
             1000,
         );
-        let s10 = "0123456789";
         let base_cost_s10 = get_json_rpc_cost(
             &ResolvedJsonRpcSource::Api(RpcApi {
                 url: url.to_string(),
                 headers: vec![],
             }),
-            &(payload.to_string() + s10),
+            &(payload.to_string() + 10),
             1000,
         );
         assert_eq!(
@@ -133,13 +132,11 @@ fn test_provider_cost() {
             cycles_per_message_byte: 2,
             primary: false,
         };
-        let s10 = "0123456789";
         let base_cost_s10 = get_provider_cost(
             &provider_s10,
-            "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".len()
-                + s10.len(),
+            "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".len() + 10,
         );
-        assert_eq!(base_cost + (10 * 2 + 1000) * 13, base_cost_s10)
+        assert_eq!(base_cost + (10 * 2 + 1000) * nodes_in_subnet, base_cost_s10)
     }
 }
 
