@@ -7,7 +7,7 @@ use ic_stable_structures::VectorMemory;
 use ic_stable_structures::{Cell, StableBTreeMap};
 use std::cell::RefCell;
 
-use crate::types::*;
+use crate::{types::*, DEFAULT_NODES_IN_SUBNET};
 
 #[cfg(not(target_arch = "wasm32"))]
 type Memory = VirtualMemory<VectorMemory>;
@@ -21,6 +21,7 @@ declare_log_buffer!(name = ERROR, capacity = 1000);
 thread_local! {
     // Transient static data: this is reset when the canister is upgraded.
     pub static TRANSIENT_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
+    pub static TRANSIENT_SUBNET_SIZE: RefCell<u32> = RefCell::new(DEFAULT_NODES_IN_SUBNET);
 
     // Stable static data: this is preserved when the canister is upgraded.
     #[cfg(not(target_arch = "wasm32"))]

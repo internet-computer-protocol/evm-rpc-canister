@@ -241,10 +241,12 @@ fn transform(args: TransformArgs) -> HttpResponse {
 }
 
 #[ic_cdk::init]
-fn init() {
+fn init(args: Option<InitArgs>) {
+    if let Some(args) = args {
+        TRANSIENT_SUBNET_SIZE.with(|m| *m.borrow_mut() = args.nodes_in_subnet);
+    }
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = DEFAULT_NODES_IN_SUBNET;
         metadata.open_rpc_access = DEFAULT_OPEN_RPC_ACCESS;
         m.borrow_mut().set(metadata).unwrap();
     });
@@ -331,22 +333,6 @@ fn set_open_rpc_access(open_rpc_access: bool) {
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.open_rpc_access = open_rpc_access;
-        m.borrow_mut().set(metadata).unwrap();
-    });
-}
-
-#[query(name = "getNodesInSubnet", guard = "require_admin_or_controller")]
-#[candid_method(query, rename = "getNodesInSubnet")]
-fn get_nodes_in_subnet() -> u32 {
-    METADATA.with(|m| m.borrow().get().nodes_in_subnet)
-}
-
-#[update(name = "setNodesInSubnet", guard = "require_admin_or_controller")]
-#[candid_method(rename = "setNodesInSubnet")]
-fn set_nodes_in_subnet(nodes_in_subnet: u32) {
-    METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = nodes_in_subnet;
         m.borrow_mut().set(metadata).unwrap();
     });
 }
