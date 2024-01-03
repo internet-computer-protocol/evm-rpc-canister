@@ -13,6 +13,7 @@ shared ({ caller = installer }) actor class Main() {
         assert caller == installer;
 
         let canisterDetails = [
+            // (`canister module`, `debug name`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
             (EvmRpcCanister, "default", 13, 521_498_000),
             (EvmRpcFidicuaryCanister, "fiduciary", 28, 1_123_226_461),
         ];
@@ -73,6 +74,14 @@ shared ({ caller = installer }) actor class Main() {
                 Debug.trap(debug_show result);
             };
 
+            // `request()` without sufficient cycles
+            let resultWithoutEnoughCycles = await canister.request(source, json, maxResponseBytes);
+            Cycles.add(cycles - 1);
+            assert switch resultWithoutEnoughCycles {
+                case (#Err(#ProviderError(#TooFewCycles { expected }))) expected == cycles;
+                case _ false;
+            };
+
             // Candid-RPC methods
             type RpcResult<T> = { #Ok : T; #Err : canister.RpcError };
             type MultiRpcResult<T> = {
@@ -101,6 +110,13 @@ shared ({ caller = installer }) actor class Main() {
 
             let candidRpcCycles = 1_000_000_000_000;
             let ethMainnetSource = #EthMainnet(?[#Ankr, #BlockPi, #Cloudflare, #PublicNode]);
+
+            switch (await canister.eth_getBlockByNumber(ethMainnetSource, #Latest)) {
+                case (#Consistent(#Err(#ProviderError(#TooFewCycles _)))) {};
+                case result {
+                    Debug.trap("received unexpected result: " # debug_show result);
+                };
+            };
 
             Cycles.add(candidRpcCycles);
             assertOk(
