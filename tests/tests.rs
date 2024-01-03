@@ -11,7 +11,7 @@ use cketh_common::{
         Block, Data, FeeHistory, FixedSizeData, Hash, JsonRpcError, LogEntry, ProviderError,
         RpcError, SendRawTransactionResult,
     },
-    eth_rpc_client::providers::{EthMainnetService, RpcService},
+    eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
     numeric::{BlockNumber, Wei},
 };
 use ic_base_types::{CanisterId, PrincipalId};
@@ -897,7 +897,10 @@ fn candid_rpc_should_err_during_restricted_access() {
     setup.clone().as_controller().set_open_rpc_access(false);
     let result = setup
         .eth_get_transaction_receipt(
-            RpcSource::EthMainnet(None),
+            RpcSource::EthMainnet(Some(vec![
+                EthMainnetService::Cloudflare,
+                EthMainnetService::BlockPi,
+            ])),
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
         .wait()
@@ -905,6 +908,18 @@ fn candid_rpc_should_err_during_restricted_access() {
     assert_eq!(
         result,
         Err(RpcError::ProviderError(ProviderError::NoPermission))
+    );
+    let rpc_method = || RpcMethod("eth_sendRawTransaction".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(BLOCKPI_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+            },
+            err_no_permission: 2,
+            ..Default::default()
+        }
     );
 }
 
@@ -929,6 +944,23 @@ fn candid_rpc_should_err_when_service_unavailable() {
             }
         ))
     );
+    let rpc_method = || RpcMethod("eth_getTransactionReceipt".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+            },
+            err_http: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+            },
+            ..Default::default()
+        }
+    );
 }
 
 #[test]
@@ -936,7 +968,10 @@ fn candid_rpc_should_recognize_json_error() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let result = setup
         .eth_get_transaction_receipt(
-            RpcSource::EthMainnet(None),
+            RpcSource::EthSepolia(Some(vec![
+                EthSepoliaService::Ankr,
+                EthSepoliaService::BlockPi,
+            ])),
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
         .mock_http(MockOutcallBuilder::new(
@@ -951,6 +986,17 @@ fn candid_rpc_should_recognize_json_error() {
             code: 123,
             message: "Error message".to_string(),
         }))
+    );
+    let rpc_method = || RpcMethod("eth_getTransactionReceipt".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(BLOCKPI_ETH_SEPOLIA_HOSTNAME.to_string())) => 1,
+            },
+            ..Default::default()
+        }
     );
 }
 
