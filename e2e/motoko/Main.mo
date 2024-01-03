@@ -14,7 +14,7 @@ shared ({ caller = installer }) actor class Main() {
 
         let canisterDetails = [
             (EvmRpcCanister, "default", 13, 521_498_000),
-            (EvmRpcFidicuaryCanister, "fiduciary", 28, 1_042_996_000),
+            (EvmRpcFidicuaryCanister, "fiduciary", 28, 1_123_226_461),
         ];
         for ((canister, name, nodesInSubnet, expectedCycles) in canisterDetails.vals()) {
             Debug.print("Testing " # name # " canister...");
