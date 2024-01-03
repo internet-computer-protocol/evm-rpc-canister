@@ -356,7 +356,7 @@ fn test_candid_interface() {
         }
     }
 
-    fn check_service_equal(
+    fn check_service_compatible(
         new_name: &str,
         new: candid::utils::CandidSource,
         old_name: &str,
@@ -364,7 +364,7 @@ fn test_candid_interface() {
     ) {
         let new_str = source_to_str(&new);
         let old_str = source_to_str(&old);
-        match candid::utils::service_equal(new, old) {
+        match candid::utils::service_compatible(new, old) {
             Ok(_) => {}
             Err(e) => {
                 eprintln!(
@@ -387,7 +387,7 @@ fn test_candid_interface() {
     let old_interface = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
         .join("candid/evm_rpc.did");
 
-    check_service_equal(
+    check_service_compatible(
         "actual ledger candid interface",
         candid::utils::CandidSource::Text(&new_interface),
         "declared candid interface in evm_rpc.did file",
