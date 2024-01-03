@@ -3,40 +3,33 @@ use cketh_common::eth_rpc_client::providers::RpcApi;
 use crate::*;
 
 /// Returns the cycles cost of a JSON-RPC request.
-pub fn get_request_cost(
+pub fn get_json_rpc_cost(
     source: &ResolvedJsonRpcSource,
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> u128 {
-    let (http_cost, provider_cost) =
-        get_request_costs(source, json_rpc_payload, max_response_bytes);
-    http_cost + provider_cost
-}
-
-/// Returns `(http_cost, provider_cost)`in cycles.
-pub fn get_request_costs(
-    source: &ResolvedJsonRpcSource,
-    json_rpc_payload: &str,
-    max_response_bytes: u64,
-) -> (u128, u128) {
     match source {
-        ResolvedJsonRpcSource::Api(api) => (
-            get_http_request_cost(api, json_rpc_payload, max_response_bytes),
-            0,
-        ),
-        ResolvedJsonRpcSource::Provider(p) => (
-            get_http_request_cost(&p.api(), json_rpc_payload, max_response_bytes),
-            get_provider_cost(p, json_rpc_payload.len()),
-        ),
+        ResolvedJsonRpcSource::Api(api) => {
+            get_http_request_cost(api, json_rpc_payload, max_response_bytes)
+        }
+        ResolvedJsonRpcSource::Provider(p) => {
+            get_http_request_cost(&p.api(), json_rpc_payload, max_response_bytes)
+                + get_provider_cost(p, json_rpc_payload.len())
+        }
     }
 }
 
 /// Returns the cycles cost of a Candid-RPC request.
-pub fn get_candid_rpc_cost(effective_response_size_estimate: u64) -> u128 {
-    let base_cycles =
-        400_000_000u128 + 100_000u128 * (2 * effective_response_size_estimate as u128);
+pub fn get_candid_rpc_cost(
+    provider: &Provider,
+    payload_size_bytes: usize,
+    effective_response_size_estimate: u64,
+) -> u128 {
+    let base_cost = 400_000_000u128 + 100_000u128 * (2 * effective_response_size_estimate as u128);
     let subnet_size = METADATA.with(|m| m.borrow().get().nodes_in_subnet) as u128;
-    base_cycles * subnet_size / DEFAULT_NODES_IN_SUBNET as u128
+    let http_cost = base_cost * subnet_size / DEFAULT_NODES_IN_SUBNET as u128;
+    let provider_cost = get_provider_cost(provider, payload_size_bytes);
+    http_cost + provider_cost
 }
 
 /// Calculates the baseline cost of sending a JSON-RPC request using HTTP outcalls.
@@ -72,7 +65,7 @@ fn test_request_cost() {
 
     let url = "https://cloudflare-eth.com";
     let payload = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
-    let base_cost = get_request_cost(
+    let base_cost = get_json_rpc_cost(
         &ResolvedJsonRpcSource::Api(RpcApi {
             url: url.to_string(),
             headers: vec![],
@@ -81,7 +74,7 @@ fn test_request_cost() {
         1000,
     );
     let s10 = "0123456789";
-    let base_cost_s10 = get_request_cost(
+    let base_cost_s10 = get_json_rpc_cost(
         &ResolvedJsonRpcSource::Api(RpcApi {
             url: url.to_string(),
             headers: vec![],
@@ -139,4 +132,25 @@ fn test_provider_cost() {
             + s10.len(),
     );
     assert_eq!(base_cost + (10 * 2 + 1000) * 13, base_cost_s10)
+}
+
+#[test]
+fn test_candid_rpc_cost() {
+    let provider_id = do_register_provider(
+        Principal::anonymous(),
+        RegisterProviderArgs {
+            chain_id: 0,
+            hostname: "rpc.example.com".to_string(),
+            credential_headers: None,
+            credential_path: "".to_string(),
+            cycles_per_call: 999,
+            cycles_per_message_byte: 1000,
+        },
+    );
+    let provider = PROVIDERS.with(|providers| providers.borrow().get(&provider_id).unwrap());
+
+    assert_eq!(get_candid_rpc_cost(&provider, 0, 0), 123);
+    assert_eq!(get_candid_rpc_cost(&provider, 123, 123), 123);
+    assert_eq!(get_candid_rpc_cost(&provider, 123, 4567890), 123);
+    assert_eq!(get_candid_rpc_cost(&provider, 890, 4567890), 123);
 }

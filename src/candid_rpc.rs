@@ -34,7 +34,15 @@ impl RpcTransport for CanisterTransport {
         effective_response_size_estimate: u64,
     ) -> RpcResult<HttpResponse> {
         let provider = resolve_provider(service)?;
-        let cycles_cost = get_candid_rpc_cost(effective_response_size_estimate);
+        let cycles_cost = get_candid_rpc_cost(
+            &provider,
+            request
+                .body
+                .as_ref()
+                .map(|bytes| bytes.len())
+                .unwrap_or_default(),
+            effective_response_size_estimate,
+        );
         let rpc_method = RpcMethod(method.to_string());
         let rpc_host = RpcHost(provider.hostname.to_string());
         do_http_request_with_metrics(

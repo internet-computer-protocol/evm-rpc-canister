@@ -19,7 +19,7 @@ pub async fn do_json_rpc_request(
         add_metric!(err_no_permission, 1);
         return Err(ProviderError::NoPermission.into());
     }
-    let cycles_cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
+    let cycles_cost = get_json_rpc_cost(&source, json_rpc_payload, max_response_bytes);
     let (api, provider) = match source {
         ResolvedJsonRpcSource::Api(api) => (api, None),
         ResolvedJsonRpcSource::Provider(provider) => (provider.api(), Some(provider)),
