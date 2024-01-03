@@ -35,7 +35,7 @@ pub fn get_http_request_cost(
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> u128 {
-    let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
+    let nodes_in_subnet = UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow());
     let ingress_bytes = (json_rpc_payload.len() + api.url.len()) as u128 + INGRESS_OVERHEAD_BYTES;
     let base_cost = INGRESS_MESSAGE_RECEIVED_COST
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
@@ -46,7 +46,7 @@ pub fn get_http_request_cost(
 
 /// Calculate the additional cost for calling a registered JSON-RPC provider.
 pub fn get_provider_cost(provider: &Provider, json_rpc_payload: &str) -> u128 {
-    let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
+    let nodes_in_subnet = UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow());
     let cost_per_node = provider.cycles_per_call as u128
         + provider.cycles_per_message_byte as u128 * json_rpc_payload.len() as u128;
     cost_per_node * (nodes_in_subnet as u128)
@@ -54,12 +54,6 @@ pub fn get_provider_cost(provider: &Provider, json_rpc_payload: &str) -> u128 {
 
 #[test]
 fn test_request_cost() {
-    METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = 13;
-        m.borrow_mut().set(metadata).unwrap();
-    });
-
     let url = "https://cloudflare-eth.com";
     let payload = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
     let base_cost = get_request_cost(
@@ -87,12 +81,6 @@ fn test_request_cost() {
 
 #[test]
 fn test_provider_cost() {
-    METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = 13;
-        m.borrow_mut().set(metadata).unwrap();
-    });
-
     let provider = Provider {
         provider_id: 0,
         hostname: "".to_string(),

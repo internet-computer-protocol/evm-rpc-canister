@@ -231,10 +231,11 @@ fn transform(args: TransformArgs) -> HttpResponse {
 }
 
 #[ic_cdk::init]
-fn init() {
+fn init(args: InitArgs) {
+    UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow_mut() = args.nodes_in_subnet);
+
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = DEFAULT_NODES_IN_SUBNET;
         metadata.open_rpc_access = DEFAULT_OPEN_RPC_ACCESS;
         m.borrow_mut().set(metadata).unwrap();
     });
@@ -325,22 +326,6 @@ fn set_open_rpc_access(open_rpc_access: bool) {
     });
 }
 
-#[query(name = "getNodesInSubnet", guard = "require_admin_or_controller")]
-#[candid_method(query, rename = "getNodesInSubnet")]
-fn get_nodes_in_subnet() -> u32 {
-    METADATA.with(|m| m.borrow().get().nodes_in_subnet)
-}
-
-#[update(name = "setNodesInSubnet", guard = "require_admin_or_controller")]
-#[candid_method(rename = "setNodesInSubnet")]
-fn set_nodes_in_subnet(nodes_in_subnet: u32) {
-    METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = nodes_in_subnet;
-        m.borrow_mut().set(metadata).unwrap();
-    });
-}
-
 #[cfg(not(any(target_arch = "wasm32", test)))]
 fn main() {
     candid::export_service!();
@@ -361,7 +346,7 @@ fn test_candid_interface() {
         }
     }
 
-    fn check_service_equal(
+    fn check_service_compatible(
         new_name: &str,
         new: candid::utils::CandidSource,
         old_name: &str,
@@ -369,7 +354,7 @@ fn test_candid_interface() {
     ) {
         let new_str = source_to_str(&new);
         let old_str = source_to_str(&old);
-        match candid::utils::service_equal(new, old) {
+        match candid::utils::service_compatible(new, old) {
             Ok(_) => {}
             Err(e) => {
                 eprintln!(
@@ -392,7 +377,7 @@ fn test_candid_interface() {
     let old_interface = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
         .join("candid/evm_rpc.did");
 
-    check_service_equal(
+    check_service_compatible(
         "actual ledger candid interface",
         candid::utils::CandidSource::Text(&new_interface),
         "declared candid interface in evm_rpc.did file",

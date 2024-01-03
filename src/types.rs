@@ -16,6 +16,12 @@ use crate::constants::STRING_STORABLE_MAX_SIZE;
 use crate::{AUTH_SET_STORABLE_MAX_SIZE, PROVIDERS};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct InitArgs {
+    #[serde(rename = "nodesInSubnet")]
+    pub nodes_in_subnet: u32,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum JsonRpcSource {
     Chain(u64),
     Provider(u64),
@@ -160,7 +166,6 @@ impl BoundedStorable for AuthSet {
 
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct Metadata {
-    pub nodes_in_subnet: u32,
     pub next_provider_id: u64,
     pub open_rpc_access: bool,
 }

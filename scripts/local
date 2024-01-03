@@ -5,7 +5,10 @@ CANISTER_ID=evm_rpc
 PRINCIPAL=$(dfx identity get-principal)
 
 
-dfx deploy $CANISTER_ID --mode reinstall -y
+dfx canister create --all
+dfx deploy evm_rpc --argument "(record {nodesInSubnet = 13})" --mode reinstall -y
+dfx deploy evm_rpc_fiduciary --argument "(record {nodesInSubnet = 28})" --mode reinstall -y
+
 dfx canister call $CANISTER_ID authorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
 
 dfx canister call $CANISTER_ID registerProvider '(record {hostname = "cloudflare-eth.com"; credentialPath = "/v1/mainnet"; chainId = 1; cyclesPerCall = 1000; cyclesPerMessageByte = 100})'
