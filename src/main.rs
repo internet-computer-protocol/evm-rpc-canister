@@ -201,7 +201,7 @@ async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
     )
     .await
     {
-        Ok(()) => (),
+        Ok(()) => add_metric!(cycles_withdrawn, amount),
         e => {
             // Refund on failure to send cycles.
             log!(

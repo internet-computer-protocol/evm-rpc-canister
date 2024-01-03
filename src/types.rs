@@ -137,7 +137,8 @@ impl MetricLabels for RpcHost {
 pub struct Metrics {
     pub requests: HashMap<(RpcMethod, RpcHost), u64>,
     pub responses: HashMap<(RpcMethod, RpcHost), u64>,
-    pub cycles_charged: HashMap<RpcMethod, u128>,
+    pub cycles_charged: HashMap<(RpcMethod, RpcHost), u128>,
+    pub cycles_withdrawn: u128,
     pub err_no_permission: u64,
     pub err_host_not_allowed: HashMap<RpcHost, u64>,
     pub err_http_outcall: HashMap<(RpcMethod, RpcHost), u64>,

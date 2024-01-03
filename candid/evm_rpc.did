@@ -84,7 +84,8 @@ type Message = variant { Data : blob; Hash : blob };
 type Metrics = record {
   requests : vec record { record { text; text }; nat64 };
   responses : vec record { record { text; text }; nat64 };
-  cycles_charged : vec record { text; nat };
+  cycles_charged : vec record { record { text; text }; nat };
+  cycles_withdrawn : nat;
   err_no_permission : nat64;
   err_http_outcall : vec record { record { text; text }; nat64 };
   err_http_response : vec record { record { text; text }; nat64 };

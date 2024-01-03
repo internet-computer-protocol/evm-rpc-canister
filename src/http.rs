@@ -91,7 +91,11 @@ pub async fn do_http_request_with_metrics(
                     .expect("unable to update Provider");
             });
         }
-        add_metric_entry!(cycles_charged, rpc_method.clone(), cycles_cost);
+        add_metric_entry!(
+            cycles_charged,
+            (rpc_method.clone(), rpc_host.clone()),
+            cycles_cost
+        );
     }
     add_metric_entry!(requests, (rpc_method.clone(), rpc_host.clone()), 1);
     match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost).await {

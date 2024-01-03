@@ -14,11 +14,13 @@ macro_rules! add_metric_entry {
     ($metric:ident, $key:expr, $amount:expr) => {{
         $crate::UNSTABLE_METRICS.with(|m| {
             let amount = $amount;
-            m.borrow_mut()
+            if amount != 0 {
+                m.borrow_mut()
                 .$metric
                 .entry($key)
                 .and_modify(|counter| *counter += amount)
                 .or_insert(amount);
+            }
         });
     }};
 }
@@ -75,6 +77,11 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             &m.cycles_charged,
             "Number of cycles charged for RPC calls",
         );
+        w.encode_gauge(
+            "cycles_withdrawn",
+            m.cycles_withdrawn.metric_value(),
+            "Number of accumulated cycles withdrawn by RPC providers",
+        )?;
         w.encode_entries(
             "err_http_outcall",
             &m.err_http_outcall,
