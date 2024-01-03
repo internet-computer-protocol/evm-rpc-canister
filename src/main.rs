@@ -241,10 +241,9 @@ fn transform(args: TransformArgs) -> HttpResponse {
 }
 
 #[ic_cdk::init]
-fn init(args: Option<InitArgs>) {
-    if let Some(args) = args {
-        TRANSIENT_SUBNET_SIZE.with(|m| *m.borrow_mut() = args.nodes_in_subnet);
-    }
+fn init(args: InitArgs) {
+    TRANSIENT_SUBNET_SIZE.with(|m| *m.borrow_mut() = args.nodes_in_subnet);
+
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.open_rpc_access = DEFAULT_OPEN_RPC_ACCESS;
