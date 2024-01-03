@@ -17,6 +17,7 @@ use crate::{AUTH_SET_STORABLE_MAX_SIZE, PROVIDERS};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
+    #[serde(rename = "nodesInSubnet")]
     pub nodes_in_subnet: u32,
 }
 

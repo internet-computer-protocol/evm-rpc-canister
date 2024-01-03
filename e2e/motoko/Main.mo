@@ -13,10 +13,10 @@ shared ({ caller = installer }) actor class Main() {
         assert caller == installer;
 
         let canisterDetails = [
-            (EvmRpcCanister, "default", 13),
-            (EvmRpcFidicuaryCanister, "fiduciary", 28),
+            (EvmRpcCanister, "default", 13, 521_498_000),
+            (EvmRpcFidicuaryCanister, "fiduciary", 28, 55555),
         ];
-        for ((canister, name, nodesInSubnet) in canisterDetails.vals()) {
+        for ((canister, name, nodesInSubnet, expectedCycles) in canisterDetails.vals()) {
             Debug.print("Testing " # name # " canister...");
 
             let mainnet = Evm.Rpc(
@@ -42,9 +42,8 @@ shared ({ caller = installer }) actor class Main() {
                     Debug.trap("unexpected error for `request_cost`: " # (debug_show err));
                 };
             };
-            let expectedCycles = 521_498_000 * nodesInSubnet / 13;
             if (cycles != expectedCycles) {
-                Debug.trap("unexpected number of cycles: " # debug_show cycles # " (expected " # debug_show expectedCycles # ")");
+                Debug.trap("unexpected number of cycles for " # name # " canister: " # debug_show cycles # " (expected " # debug_show expectedCycles # ")");
             };
 
             // `request()` without cycles
@@ -162,10 +161,10 @@ shared ({ caller = installer }) actor class Main() {
             let a1 = "0xc9b28dca7ea6c5e176a58ba9df53c30ba52c6642";
             let a2 = "0xd8da6bf26964af9d7eed9e03e53415d37aa96045";
 
-            let m1 = #Data("hello" : Blob);
+            let m1 = #Data(Blob.toArray("hello"));
             let s1 = "0x5c0e32248c10f7125b32cae1de9988f2dab686031083302f85b0a82f78e9206516b272fb7641f3e8ab63cf9f3a9b9220b2d6ff2699dc34f0d000d7693ca1ea5e1c";
 
-            let m2 = #Data("other" : Blob);
+            let m2 = #Data(Blob.toArray("other"));
             let s2 = "0x27ae1f90fd65c86b07aae1287dba8715db7e429ff9bf700205cb8ac904c6ba071c8fb7c6f8b5e15338521fee95a452c6a688f1c6fec5eeddbfa680a2abf300341b";
 
             // Invalid address

@@ -59,6 +59,9 @@ type HttpOutcallError = variant {
     parsingError : opt text;
   };
 };
+type InitArgs = record {
+  nodesInSubnet : nat32;
+};
 type JsonRpcError = record { code : int64; message : text };
 type JsonRpcSource = variant {
   Custom : record { url : text; headers : opt vec HttpHeader };
@@ -204,7 +207,7 @@ type ValidationError = variant {
   UrlParseError : text;
   InvalidHex : text;
 };
-service : {
+service : (InitArgs) -> {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
   eth_feeHistory : (RpcSource, FeeHistoryArgs) -> (MultiFeeHistoryResult);

@@ -12,8 +12,7 @@
     "evm_rpc_fiduciary": {
       "candid": "candid/evm_rpc.did",
       "type": "rust",
-      "package": "evm_rpc",
-      "args": "(opt record {nodes_in_subnet = 28})"
+      "package": "evm_rpc"
     },
     "e2e_rust": {
       "dependencies": ["evm_rpc", "evm_rpc_fiduciary"],
