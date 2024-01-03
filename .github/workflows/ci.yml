@@ -70,7 +70,7 @@ jobs:
       - name: Deploy EVM RPC
         run: dfx deploy evm_rpc --argument "(variant {nodesInSubnet = 13})"
 
-      - name: Deploy EVM RPC on fidicuary subnet
+      - name: Deploy EVM RPC fiduciary canister
         run: dfx deploy evm_rpc_fiduciary --argument "(variant {nodesInSubnet = 28})"
 
       - name: Generate language bindings
