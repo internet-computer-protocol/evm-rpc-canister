@@ -62,7 +62,7 @@ pub async fn do_http_request_with_metrics(
 ) -> RpcResult<HttpResponse> {
     if SERVICE_HOSTS_BLOCKLIST.contains(&rpc_host.0.as_str()) {
         log!(INFO, "host not allowed: {}", rpc_host.0);
-        add_metric!(err_host_not_allowed, 1);
+        add_metric_entry!(err_host_not_allowed, rpc_host.clone(), 1);
         return Err(ValidationError::HostNotAllowed(rpc_host.0).into());
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
@@ -96,11 +96,15 @@ pub async fn do_http_request_with_metrics(
     add_metric_entry!(requests, (rpc_method.clone(), rpc_host.clone()), 1);
     match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost).await {
         Ok((response,)) => {
+            let status: u32 = response.status.0.clone().try_into().unwrap_or(0);
+            if status < 200 || status >= 300 {
+                add_metric_entry!(err_http_response, (rpc_method.clone(), rpc_host.clone()), 1);
+            }
             add_metric_entry!(responses, (rpc_method, rpc_host), 1);
             Ok(response)
         }
         Err((code, message)) => {
-            add_metric_entry!(err_http, (rpc_method, rpc_host), 1);
+            add_metric_entry!(err_http_outcall, (rpc_method, rpc_host), 1);
             Err(HttpOutcallError::IcError { code, message }.into())
         }
     }

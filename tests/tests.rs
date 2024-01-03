@@ -916,7 +916,7 @@ fn candid_rpc_should_err_during_restricted_access() {
     assert_eq!(
         setup.get_metrics(),
         Metrics {
-            err_no_permission: 2,
+            err_no_permission: 1,
             ..Default::default()
         }
     );
@@ -952,7 +952,12 @@ fn candid_rpc_should_err_when_service_unavailable() {
                 (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
                 (rpc_method(), RpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
             },
-            err_http: hashmap! {
+            responses: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+            },
+            err_http_response: hashmap! {
                 (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
                 (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
                 (rpc_method(), RpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,

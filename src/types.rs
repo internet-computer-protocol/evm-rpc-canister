@@ -139,8 +139,9 @@ pub struct Metrics {
     pub responses: HashMap<(RpcMethod, RpcHost), u64>,
     pub cycles_charged: HashMap<RpcMethod, u128>,
     pub err_no_permission: u64,
-    pub err_host_not_allowed: u64,
-    pub err_http: HashMap<(RpcMethod, RpcHost), u64>,
+    pub err_host_not_allowed: HashMap<RpcHost, u64>,
+    pub err_http_outcall: HashMap<(RpcMethod, RpcHost), u64>,
+    pub err_http_response: HashMap<(RpcMethod, RpcHost), u64>,
     pub json_host_requests: HashMap<RpcHost, u64>,
     pub json_method_requests: HashMap<RpcMethod, u64>,
 }
