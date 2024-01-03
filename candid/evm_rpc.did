@@ -217,13 +217,11 @@ service : {
   eth_sendRawTransaction : (RpcSource, text) -> (MultiSendRawTransactionResult);
   getAccumulatedCycleCount : (nat64) -> (nat) query;
   getAuthorized : (Auth) -> (vec text) query;
-  getNodesInSubnet : () -> (nat32) query;
   getOpenRpcAccess : () -> (bool) query;
   getProviders : () -> (vec ProviderView) query;
   registerProvider : (RegisterProviderArgs) -> (nat64);
   request : (JsonRpcSource, text, nat64) -> (RequestResult);
   requestCost : (JsonRpcSource, text, nat64) -> (RequestCostResult) query;
-  setNodesInSubnet : (nat32) -> ();
   setOpenRpcAccess : (bool) -> ();
   unregisterProvider : (nat64) -> (bool);
   updateProvider : (UpdateProviderArgs) -> ();
