@@ -10,7 +10,7 @@ edition = "2021"
 debug = false
 lto = true
 strip = true
-opt-level = 'z'
+opt-level = 's'
 
 # Required by `ic-test-utilities-load-wasm`
 [profile.canister-release]
