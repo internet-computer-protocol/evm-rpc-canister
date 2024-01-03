@@ -1001,7 +1001,7 @@ fn candid_rpc_should_represent_inconsistent_results() {
             )
         ]
     );
-    let rpc_method = || RpcMethod("eth_sendRawTransation".to_string());
+    let rpc_method = || RpcMethod("eth_sendRawTransaction".to_string());
     assert_eq!(
         setup.get_metrics(),
         Metrics {
