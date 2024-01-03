@@ -71,19 +71,9 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             "Number of successful RPC responses",
         );
         w.encode_entries(
-            "json_method_requests",
-            &m.json_method_requests,
-            "Number of direct JSON-RPC requests",
-        );
-        w.encode_entries(
             "cycles_charged",
             &m.cycles_charged,
             "Number of cycles charged for RPC calls",
-        );
-        w.encode_entries(
-            "host_requests",
-            &m.json_host_requests,
-            "Number of RPC requests to a service host",
         );
         w.encode_entries(
             "err_http_outcall",

@@ -142,8 +142,6 @@ pub struct Metrics {
     pub err_host_not_allowed: HashMap<RpcHost, u64>,
     pub err_http_outcall: HashMap<(RpcMethod, RpcHost), u64>,
     pub err_http_response: HashMap<(RpcMethod, RpcHost), u64>,
-    pub json_host_requests: HashMap<RpcHost, u64>,
-    pub json_method_requests: HashMap<RpcMethod, u64>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]
