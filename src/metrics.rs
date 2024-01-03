@@ -16,10 +16,10 @@ macro_rules! add_metric_entry {
             let amount = $amount;
             if amount != 0 {
                 m.borrow_mut()
-                .$metric
-                .entry($key)
-                .and_modify(|counter| *counter += amount)
-                .or_insert(amount);
+                    .$metric
+                    .entry($key)
+                    .and_modify(|counter| *counter += amount)
+                    .or_insert(amount);
             }
         });
     }};
