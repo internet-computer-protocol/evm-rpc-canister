@@ -59,6 +59,9 @@ type HttpOutcallError = variant {
     parsingError : opt text;
   };
 };
+type InitArgs = record {
+  nodesInSubnet : nat32;
+};
 type JsonRpcError = record { code : int64; message : text };
 type JsonRpcSource = variant {
   Custom : record { url : text; headers : opt vec HttpHeader };
@@ -178,11 +181,6 @@ type SendRawTransactionStatus = variant {
   NonceTooHigh;
   InsufficientFunds;
 };
-type SignedMessage = record {
-  signature : text;
-  message : Message;
-  address : text;
-};
 type TransactionReceipt = record {
   to : text;
   status : nat;
@@ -214,7 +212,7 @@ type ValidationError = variant {
   UrlParseError : text;
   InvalidHex : text;
 };
-service : {
+service : (InitArgs) -> {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
   eth_feeHistory : (RpcSource, FeeHistoryArgs) -> (MultiFeeHistoryResult);
@@ -228,16 +226,13 @@ service : {
   getAccumulatedCycleCount : (nat64) -> (nat) query;
   getAuthorized : (Auth) -> (vec text) query;
   getMetrics : () -> (Metrics) query;
-  getNodesInSubnet : () -> (nat32) query;
   getOpenRpcAccess : () -> (bool) query;
   getProviders : () -> (vec ProviderView) query;
   registerProvider : (RegisterProviderArgs) -> (nat64);
   request : (JsonRpcSource, text, nat64) -> (RequestResult);
   requestCost : (JsonRpcSource, text, nat64) -> (RequestCostResult) query;
-  setNodesInSubnet : (nat32) -> ();
   setOpenRpcAccess : (bool) -> ();
   unregisterProvider : (nat64) -> (bool);
   updateProvider : (UpdateProviderArgs) -> ();
-  verifyMessageSignature : (SignedMessage) -> (bool) query;
   withdrawAccumulatedCycles : (nat64, principal) -> ();
 };

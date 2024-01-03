@@ -5,14 +5,14 @@ use crate::*;
 #[macro_export]
 macro_rules! add_metric {
     ($metric:ident, $amount:expr) => {{
-        $crate::TRANSIENT_METRICS.with(|m| m.borrow_mut().$metric += $amount);
+        $crate::UNSTABLE_METRICS.with(|m| m.borrow_mut().$metric += $amount);
     }};
 }
 
 #[macro_export]
 macro_rules! add_metric_entry {
     ($metric:ident, $key:expr, $amount:expr) => {{
-        $crate::TRANSIENT_METRICS.with(|m| {
+        $crate::UNSTABLE_METRICS.with(|m| {
             let amount = $amount;
             m.borrow_mut()
                 .$metric
@@ -61,7 +61,7 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
         ic_cdk::api::stable::stable64_size().metric_value(),
         "Size of the stable memory allocated by this canister measured in 64-bit Wasm pages",
     )?;
-    crate::TRANSIENT_METRICS.with(|m| {
+    crate::UNSTABLE_METRICS.with(|m| {
         let m = m.borrow();
 
         w.encode_entries("requests", &m.requests, "Number of RPC requests");

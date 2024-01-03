@@ -26,7 +26,7 @@ pub fn get_candid_rpc_cost(
     effective_response_size_estimate: u64,
 ) -> u128 {
     let base_cost = 400_000_000u128 + 100_000u128 * (2 * effective_response_size_estimate as u128);
-    let subnet_size = METADATA.with(|m| m.borrow().get().nodes_in_subnet) as u128;
+    let subnet_size = UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow()) as u128;
     let http_cost = base_cost * subnet_size / NODES_IN_DEFAULT_SUBNET as u128;
     let provider_cost = get_provider_cost(provider, payload_size_bytes);
     http_cost + provider_cost
@@ -38,7 +38,7 @@ pub fn get_http_request_cost(
     payload_size_bytes: usize,
     max_response_bytes: u64,
 ) -> u128 {
-    let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
+    let nodes_in_subnet = UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow());
     let ingress_bytes = (payload_size_bytes + api.url.len()) as u128 + INGRESS_OVERHEAD_BYTES;
     let base_cost = INGRESS_MESSAGE_RECEIVED_COST
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
@@ -47,9 +47,9 @@ pub fn get_http_request_cost(
     base_cost * (nodes_in_subnet as u128) / NODES_IN_DEFAULT_SUBNET as u128
 }
 
-/// Calculates the additional cost for calling a registered JSON-RPC provider.
+/// Calculate the additional cost for calling a registered JSON-RPC provider.
 pub fn get_provider_cost(provider: &Provider, payload_size_bytes: usize) -> u128 {
-    let nodes_in_subnet = METADATA.with(|m| m.borrow().get().nodes_in_subnet);
+    let nodes_in_subnet = UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow());
     let cost_per_node = provider.cycles_per_call as u128
         + provider.cycles_per_message_byte as u128 * payload_size_bytes as u128;
     cost_per_node * (nodes_in_subnet as u128)
@@ -60,11 +60,7 @@ fn test_request_cost() {
     for nodes_in_subnet in [1, NODES_IN_DEFAULT_SUBNET, NODES_IN_FIDUCIARY_SUBNET] {
         println!("Nodes in subnet: {nodes_in_subnet}");
 
-        METADATA.with(|m| {
-            let mut metadata = m.borrow().get().clone();
-            metadata.nodes_in_subnet = nodes_in_subnet;
-            m.borrow_mut().set(metadata).unwrap();
-        });
+        UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = nodes_in_subnet);
 
         let url = "https://cloudflare-eth.com";
         let payload = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
@@ -101,11 +97,7 @@ fn test_provider_cost() {
     for nodes_in_subnet in [1, NODES_IN_DEFAULT_SUBNET, NODES_IN_FIDUCIARY_SUBNET] {
         println!("Nodes in subnet: {nodes_in_subnet}");
 
-        METADATA.with(|m| {
-            let mut metadata = m.borrow().get().clone();
-            metadata.nodes_in_subnet = nodes_in_subnet;
-            m.borrow_mut().set(metadata).unwrap();
-        });
+        UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = nodes_in_subnet);
 
         let provider = Provider {
             provider_id: 0,
@@ -169,11 +161,7 @@ fn test_candid_rpc_cost() {
     assert_eq!(get_candid_rpc_cost(&provider, 890, 4567890), 913989582987);
 
     // Fiduciary subnet
-    METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
-        metadata.nodes_in_subnet = NODES_IN_FIDUCIARY_SUBNET;
-        m.borrow_mut().set(metadata).unwrap();
-    });
+    UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = NODES_IN_FIDUCIARY_SUBNET);
     assert_eq!(get_candid_rpc_cost(&provider, 0, 0), 861566433);
     assert_eq!(get_candid_rpc_cost(&provider, 123, 123), 917995048);
     assert_eq!(get_candid_rpc_cost(&provider, 123, 4567890), 1968571471972);
