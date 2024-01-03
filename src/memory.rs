@@ -19,9 +19,9 @@ declare_log_buffer!(name = INFO, capacity = 1000);
 declare_log_buffer!(name = ERROR, capacity = 1000);
 
 thread_local! {
-    // Transient static data: this is reset when the canister is upgraded.
-    pub static TRANSIENT_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
-    pub static TRANSIENT_SUBNET_SIZE: RefCell<u32> = RefCell::new(DEFAULT_NODES_IN_SUBNET);
+    // Unstable static data: this is reset when the canister is upgraded.
+    pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
+    pub static UNSTABLE_SUBNET_SIZE: RefCell<u32> = RefCell::new(DEFAULT_NODES_IN_SUBNET);
 
     // Stable static data: this is preserved when the canister is upgraded.
     #[cfg(not(target_arch = "wasm32"))]

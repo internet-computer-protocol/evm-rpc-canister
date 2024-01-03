@@ -24,7 +24,7 @@ struct CanisterTransport;
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RpcTransport for CanisterTransport {
     fn get_subnet_size() -> u32 {
-        TRANSIENT_SUBNET_SIZE.with(|m| *m.borrow())
+        UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow())
     }
 
     fn resolve_api(provider: &RpcService) -> Result<RpcApi, ProviderError> {

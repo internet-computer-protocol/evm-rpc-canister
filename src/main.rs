@@ -242,7 +242,7 @@ fn transform(args: TransformArgs) -> HttpResponse {
 
 #[ic_cdk::init]
 fn init(args: InitArgs) {
-    TRANSIENT_SUBNET_SIZE.with(|m| *m.borrow_mut() = args.nodes_in_subnet);
+    UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow_mut() = args.nodes_in_subnet);
 
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
