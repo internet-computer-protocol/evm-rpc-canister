@@ -109,7 +109,7 @@ shared ({ caller = installer }) actor class Main() {
             };
 
             let candidRpcCycles = 1_000_000_000_000;
-            let ethMainnetSource = #EthMainnet(?[#Ankr, #Cloudflare, #PublicNode]);
+            let ethMainnetSource = #EthMainnet(?[#Ankr, #Cloudflare, #BlockPi, #PublicNode]);
 
             switch (await canister.eth_getBlockByNumber(ethMainnetSource, #Latest)) {
                 case (#Consistent(#Err(#ProviderError(#TooFewCycles _)))) {};
