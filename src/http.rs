@@ -8,18 +8,18 @@ use num_traits::ToPrimitive;
 
 use crate::*;
 
-pub async fn do_http_request(
+pub async fn do_json_rpc_request(
     caller: Principal,
     source: ResolvedJsonRpcSource,
+    rpc_method: RpcMethod,
     json_rpc_payload: &str,
     max_response_bytes: u64,
-) -> Result<HttpResponse, RpcError> {
-    inc_metric!(requests);
+) -> RpcResult<HttpResponse> {
     if !is_rpc_allowed(&caller) {
-        inc_metric!(request_err_no_permission);
+        add_metric!(err_no_permission, 1);
         return Err(ProviderError::NoPermission.into());
     }
-    let cost = get_request_cost(&source, json_rpc_payload, max_response_bytes);
+    let cycles_cost = get_json_rpc_cost(&source, json_rpc_payload.len(), max_response_bytes);
     let (api, provider) = match source {
         ResolvedJsonRpcSource::Api(api) => (api, None),
         ResolvedJsonRpcSource::Provider(provider) => (provider.api(), Some(provider)),
@@ -32,34 +32,6 @@ pub async fn do_http_request(
         Some(host) => host,
         None => return Err(ValidationError::UrlParseError(api.url).into()),
     };
-    if SERVICE_HOSTS_BLOCKLIST.contains(&host) {
-        log!(INFO, "host not allowed: {}", host);
-        inc_metric!(request_err_host_not_allowed);
-        return Err(ValidationError::HostNotAllowed(host.to_string()).into());
-    }
-    if !is_authorized(&caller, Auth::FreeRpc) {
-        let cycles_available = ic_cdk::api::call::msg_cycles_available128();
-        if cycles_available < cost {
-            return Err(ProviderError::TooFewCycles {
-                expected: cost,
-                received: cycles_available,
-            }
-            .into());
-        }
-        ic_cdk::api::call::msg_cycles_accept128(cost);
-        if let Some(mut provider) = provider {
-            provider.cycles_owed += get_provider_cost(&provider, json_rpc_payload);
-            PROVIDERS.with(|p| {
-                // Error should not happen here as it was checked before.
-                p.borrow_mut()
-                    .insert(provider.provider_id, provider)
-                    .expect("unable to update Provider");
-            });
-        }
-        add_metric!(request_cycles_charged, cost);
-        add_metric!(request_cycles_refunded, cycles_available - cost);
-    }
-    inc_metric_entry!(host_requests, host.to_string());
     let mut request_headers = vec![HttpHeader {
         name: CONTENT_TYPE_HEADER.to_string(),
         value: CONTENT_TYPE_VALUE.to_string(),
@@ -76,10 +48,67 @@ pub async fn do_http_request(
             vec![],
         )),
     };
-    match ic_cdk::api::management_canister::http_request::http_request(request, cost).await {
-        Ok((response,)) => Ok(response),
+    let rpc_host = RpcHost(host.to_string());
+    do_http_request_with_metrics(caller, rpc_method, rpc_host, provider, request, cycles_cost).await
+}
+
+pub async fn do_http_request_with_metrics(
+    caller: Principal,
+    rpc_method: RpcMethod,
+    rpc_host: RpcHost,
+    provider: Option<Provider>,
+    request: CanisterHttpRequestArgument,
+    cycles_cost: u128,
+) -> RpcResult<HttpResponse> {
+    if SERVICE_HOSTS_BLOCKLIST.contains(&rpc_host.0.as_str()) {
+        log!(INFO, "host not allowed: {}", rpc_host.0);
+        add_metric_entry!(err_host_not_allowed, rpc_host.clone(), 1);
+        return Err(ValidationError::HostNotAllowed(rpc_host.0).into());
+    }
+    if !is_authorized(&caller, Auth::FreeRpc) {
+        let cycles_available = ic_cdk::api::call::msg_cycles_available128();
+        if cycles_available < cycles_cost {
+            return Err(ProviderError::TooFewCycles {
+                expected: cycles_cost,
+                received: cycles_available,
+            }
+            .into());
+        }
+        ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
+        if let Some(mut provider) = provider {
+            provider.cycles_owed += get_provider_cost(
+                &provider,
+                request
+                    .body
+                    .as_ref()
+                    .map(|bytes| bytes.len())
+                    .unwrap_or_default(),
+            );
+            PROVIDERS.with(|p| {
+                // Error should not happen here as it was checked before
+                p.borrow_mut()
+                    .insert(provider.provider_id, provider)
+                    .expect("unable to update Provider");
+            });
+        }
+        add_metric_entry!(
+            cycles_charged,
+            (rpc_method.clone(), rpc_host.clone()),
+            cycles_cost
+        );
+    }
+    add_metric_entry!(requests, (rpc_method.clone(), rpc_host.clone()), 1);
+    match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost).await {
+        Ok((response,)) => {
+            let status: u32 = response.status.0.clone().try_into().unwrap_or(0);
+            if status < 200 || status >= 300 {
+                add_metric_entry!(err_http_response, (rpc_method.clone(), rpc_host.clone()), 1);
+            }
+            add_metric_entry!(responses, (rpc_method, rpc_host), 1);
+            Ok(response)
+        }
         Err((code, message)) => {
-            inc_metric!(request_err_http);
+            add_metric_entry!(err_http_outcall, (rpc_method, rpc_host), 1);
             Err(HttpOutcallError::IcError { code, message }.into())
         }
     }

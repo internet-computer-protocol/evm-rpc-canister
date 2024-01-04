@@ -1693,6 +1693,7 @@ dependencies = [
  "ic-stable-structures",
  "ic-state-machine-tests",
  "ic-test-utilities-load-wasm",
+ "maplit",
  "num",
  "num-derive",
  "num-traits",
@@ -2358,7 +2359,7 @@ dependencies = [
 [[package]]
 name = "ic-base-types"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "base32",
  "byte-unit",
@@ -2401,7 +2402,7 @@ dependencies = [
 [[package]]
 name = "ic-btc-types-internal"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "candid",
  "ic-btc-interface",
@@ -2519,7 +2520,7 @@ dependencies = [
 [[package]]
 name = "ic-canisters-http-types"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "candid",
  "serde",
@@ -2651,7 +2652,7 @@ dependencies = [
 [[package]]
 name = "ic-cketh-minter"
 version = "0.1.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "askama",
  "async-trait",
@@ -2786,7 +2787,7 @@ dependencies = [
 [[package]]
 name = "ic-crypto-ecdsa-secp256k1"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "k256",
  "lazy_static",
@@ -3105,7 +3106,7 @@ dependencies = [
 [[package]]
 name = "ic-crypto-internal-sha2"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "sha2 0.10.8",
 ]
@@ -3271,7 +3272,7 @@ dependencies = [
 [[package]]
 name = "ic-crypto-sha2"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "ic-crypto-internal-sha2 0.9.0",
 ]
@@ -3279,7 +3280,7 @@ dependencies = [
 [[package]]
 name = "ic-crypto-sha3"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "sha3 0.9.1",
 ]
@@ -3493,7 +3494,7 @@ dependencies = [
 [[package]]
 name = "ic-error-types"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "ic-utils 0.9.0",
  "serde",
@@ -3596,7 +3597,7 @@ dependencies = [
 [[package]]
 name = "ic-ic00-types"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "candid",
  "ic-base-types 0.9.0",
@@ -3886,7 +3887,7 @@ dependencies = [
 [[package]]
 name = "ic-protobuf"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "bincode",
  "candid",
@@ -4208,7 +4209,7 @@ dependencies = [
 [[package]]
 name = "ic-sys"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "hex",
  "ic-crypto-sha2 0.9.0",
@@ -4350,7 +4351,7 @@ dependencies = [
 [[package]]
 name = "ic-utils"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "cvt",
  "hex",
@@ -4367,7 +4368,7 @@ dependencies = [
 [[package]]
 name = "ic-utils-ensure"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 
 [[package]]
 name = "ic-utils-lru-cache"
@@ -4445,7 +4446,7 @@ dependencies = [
 [[package]]
 name = "icrc-ledger-client"
 version = "0.1.2"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "async-trait",
  "candid",
@@ -4456,7 +4457,7 @@ dependencies = [
 [[package]]
 name = "icrc-ledger-client-cdk"
 version = "0.1.2"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "async-trait",
  "candid",
@@ -4482,7 +4483,7 @@ dependencies = [
 [[package]]
 name = "icrc-ledger-types"
 version = "0.1.4"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "base32",
  "candid",
@@ -5568,7 +5569,7 @@ dependencies = [
 [[package]]
 name = "phantom_newtype"
 version = "0.9.0"
-source = "git+https://github.com/rvanasa/ic?rev=d8ede1d141c22a48703fa35abb567973d8fbc2b0#d8ede1d141c22a48703fa35abb567973d8fbc2b0"
+source = "git+https://github.com/rvanasa/ic?rev=f4a98457ecdc203d93970e7f2e6455096ba83020#f4a98457ecdc203d93970e7f2e6455096ba83020"
 dependencies = [
  "candid",
  "serde",

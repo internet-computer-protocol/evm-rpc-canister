@@ -13,7 +13,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
-use crate::{AUTH_SET_STORABLE_MAX_SIZE, PROVIDERS};
+use crate::{AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDERS};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
@@ -89,15 +89,60 @@ pub enum ResolvedJsonRpcSource {
     Provider(Provider),
 }
 
-#[derive(Default)]
+pub trait MetricValue {
+    fn metric_value(&self) -> f64;
+}
+
+impl MetricValue for u64 {
+    fn metric_value(&self) -> f64 {
+        *self as f64
+    }
+}
+
+impl MetricValue for u128 {
+    fn metric_value(&self) -> f64 {
+        *self as f64
+    }
+}
+
+pub trait MetricLabels {
+    fn metric_labels(&self) -> Vec<(&str, &str)>;
+}
+
+impl<A: MetricLabels, B: MetricLabels> MetricLabels for (A, B) {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        [self.0.metric_labels(), self.1.metric_labels()].concat()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
+pub struct RpcMethod(pub String);
+
+impl MetricLabels for RpcMethod {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        vec![("method", &self.0)]
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
+pub struct RpcHost(pub String);
+
+impl MetricLabels for RpcHost {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        vec![("host", &self.0)]
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, CandidType, Deserialize)]
 pub struct Metrics {
-    pub requests: u64,
-    pub request_cycles_charged: u128,
-    pub request_cycles_refunded: u128,
-    pub request_err_no_permission: u64,
-    pub request_err_host_not_allowed: u64,
-    pub request_err_http: u64,
-    pub host_requests: HashMap<String, u64>,
+    pub requests: HashMap<(RpcMethod, RpcHost), u64>,
+    pub responses: HashMap<(RpcMethod, RpcHost), u64>,
+    pub cycles_charged: HashMap<(RpcMethod, RpcHost), u128>,
+    pub cycles_withdrawn: u128,
+    pub err_no_permission: u64,
+    pub err_host_not_allowed: HashMap<RpcHost, u64>,
+    pub err_http_outcall: HashMap<(RpcMethod, RpcHost), u64>,
+    pub err_http_response: HashMap<(RpcMethod, RpcHost), u64>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]
@@ -164,10 +209,19 @@ impl BoundedStorable for AuthSet {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(Clone, Debug, Default, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Metadata {
     pub next_provider_id: u64,
     pub open_rpc_access: bool,
+}
+
+impl Default for Metadata {
+    fn default() -> Self {
+        Self {
+            next_provider_id: 0,
+            open_rpc_access: DEFAULT_OPEN_RPC_ACCESS,
+        }
+    }
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]

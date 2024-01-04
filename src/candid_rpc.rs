@@ -3,8 +3,8 @@ use std::str::FromStr;
 use async_trait::async_trait;
 use cketh_common::{
     eth_rpc::{
-        into_nat, Block, FeeHistory, GetLogsParam, Hash, HttpOutcallError, LogEntry, ProviderError,
-        RpcError, SendRawTransactionResult, ValidationError,
+        into_nat, Block, FeeHistory, GetLogsParam, Hash, LogEntry, ProviderError, RpcError,
+        SendRawTransactionResult, ValidationError,
     },
     eth_rpc_client::{
         providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
@@ -23,61 +23,63 @@ struct CanisterTransport;
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RpcTransport for CanisterTransport {
-    fn get_subnet_size() -> u32 {
-        UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow())
-    }
-
-    fn resolve_api(provider: &RpcService) -> Result<RpcApi, ProviderError> {
-        use RpcService::*;
-        let (chain_id, hostname) = match provider {
-            EthMainnet(provider) => (
-                ETH_MAINNET_CHAIN_ID,
-                match provider {
-                    EthMainnetService::Ankr => ANKR_HOSTNAME,
-                    EthMainnetService::BlockPi => BLOCKPI_ETH_MAINNET_HOSTNAME,
-                    EthMainnetService::PublicNode => PUBLICNODE_ETH_MAINNET_HOSTNAME,
-                    EthMainnetService::Cloudflare => CLOUDFLARE_HOSTNAME,
-                },
-            ),
-            EthSepolia(provider) => (
-                ETH_SEPOLIA_CHAIN_ID,
-                match provider {
-                    EthSepoliaService::Ankr => ANKR_HOSTNAME,
-                    EthSepoliaService::BlockPi => BLOCKPI_ETH_SEPOLIA_HOSTNAME,
-                    EthSepoliaService::PublicNode => PUBLICNODE_ETH_SEPOLIA_HOSTNAME,
-                },
-            ),
-        };
-        Ok(
-            find_provider(|p| p.chain_id == chain_id && p.hostname == hostname)
-                .ok_or(ProviderError::MissingRequiredProvider)?
-                .api(),
-        )
+    fn resolve_api(service: &RpcService) -> Result<RpcApi, ProviderError> {
+        Ok(resolve_provider(service)?.api())
     }
 
     async fn http_request(
-        _provider: &RpcService,
+        service: &RpcService,
+        method: &str,
         request: CanisterHttpRequestArgument,
-        cycles_cost: u128,
+        effective_response_size_estimate: u64,
     ) -> RpcResult<HttpResponse> {
-        if !is_authorized(&ic_cdk::caller(), Auth::FreeRpc) {
-            let cycles_available = ic_cdk::api::call::msg_cycles_available128();
-            if cycles_available < cycles_cost {
-                return Err(ProviderError::TooFewCycles {
-                    expected: cycles_cost,
-                    received: cycles_available,
-                }
-                .into());
-            }
-            ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
-        }
-        match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost)
-            .await
-        {
-            Ok((response,)) => Ok(response),
-            Err((code, message)) => Err(HttpOutcallError::IcError { code, message }.into()),
-        }
+        let provider = resolve_provider(service)?;
+        let cycles_cost = get_candid_rpc_cost(
+            &provider,
+            request
+                .body
+                .as_ref()
+                .map(|bytes| bytes.len())
+                .unwrap_or_default(),
+            effective_response_size_estimate,
+        );
+        let rpc_method = RpcMethod(method.to_string());
+        let rpc_host = RpcHost(provider.hostname.to_string());
+        do_http_request_with_metrics(
+            ic_cdk::caller(),
+            rpc_method,
+            rpc_host,
+            Some(provider),
+            request,
+            cycles_cost,
+        )
+        .await
     }
+}
+
+fn resolve_provider(service: &RpcService) -> Result<Provider, ProviderError> {
+    use RpcService::*;
+    let (chain_id, hostname) = match service {
+        EthMainnet(service) => (
+            ETH_MAINNET_CHAIN_ID,
+            match service {
+                EthMainnetService::Ankr => ANKR_HOSTNAME,
+                EthMainnetService::BlockPi => BLOCKPI_ETH_MAINNET_HOSTNAME,
+                EthMainnetService::PublicNode => PUBLICNODE_ETH_MAINNET_HOSTNAME,
+                EthMainnetService::Cloudflare => CLOUDFLARE_HOSTNAME,
+            },
+        ),
+        EthSepolia(service) => (
+            ETH_SEPOLIA_CHAIN_ID,
+            match service {
+                EthSepoliaService::Ankr => ANKR_HOSTNAME,
+                EthSepoliaService::BlockPi => BLOCKPI_ETH_SEPOLIA_HOSTNAME,
+                EthSepoliaService::PublicNode => PUBLICNODE_ETH_SEPOLIA_HOSTNAME,
+            },
+        ),
+    };
+    find_provider(|p| p.chain_id == chain_id && p.hostname == hostname)
+        .ok_or(ProviderError::MissingRequiredProvider)
 }
 
 fn check_services<T>(services: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
@@ -94,6 +96,7 @@ fn check_services<T>(services: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
 
 fn get_rpc_client(source: RpcSource) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
     if !is_rpc_allowed(&ic_cdk::caller()) {
+        add_metric!(err_no_permission, 1);
         return Err(ProviderError::NoPermission.into());
     }
     Ok(match source {

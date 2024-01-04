@@ -96,9 +96,10 @@ async fn request(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<String, RpcError> {
-    let response = do_http_request(
+    let response = do_json_rpc_request(
         ic_cdk::caller(),
         source.resolve()?,
+        RpcMethod("request".to_string()),
         &json_rpc_payload,
         max_response_bytes,
     )
@@ -113,9 +114,9 @@ fn request_cost(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<u128, RpcError> {
-    Ok(get_request_cost(
+    Ok(get_json_rpc_cost(
         &source.resolve().unwrap(),
-        &json_rpc_payload,
+        json_rpc_payload.len(),
         max_response_bytes,
     ))
 }
@@ -200,7 +201,7 @@ async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
     )
     .await
     {
-        Ok(()) => (),
+        Ok(()) => add_metric!(cycles_withdrawn, amount),
         e => {
             // Refund on failure to send cycles.
             log!(
@@ -234,12 +235,6 @@ fn transform(args: TransformArgs) -> HttpResponse {
 fn init(args: InitArgs) {
     UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow_mut() = args.nodes_in_subnet);
 
-    METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
-        metadata.open_rpc_access = DEFAULT_OPEN_RPC_ACCESS;
-        m.borrow_mut().set(metadata).unwrap();
-    });
-
     for provider in get_default_providers() {
         do_register_provider(ic_cdk::caller(), provider);
     }
@@ -257,6 +252,12 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
         "/log/error" => serve_logs(&ERROR),
         _ => HttpResponseBuilder::not_found().build(),
     }
+}
+
+#[query(name = "getMetrics")]
+#[candid_method(query, rename = "getMetrics")]
+fn get_metrics() -> Metrics {
+    UNSTABLE_METRICS.with(|metrics| (*metrics.borrow()).clone())
 }
 
 #[query(guard = "require_admin_or_controller")]

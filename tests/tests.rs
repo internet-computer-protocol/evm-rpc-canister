@@ -11,7 +11,7 @@ use cketh_common::{
         Block, Data, FeeHistory, FixedSizeData, Hash, JsonRpcError, LogEntry, ProviderError,
         RpcError, SendRawTransactionResult,
     },
-    eth_rpc_client::providers::{EthMainnetService, RpcService},
+    eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
     numeric::{BlockNumber, Wei},
 };
 use ic_base_types::{CanisterId, PrincipalId};
@@ -25,6 +25,7 @@ use ic_state_machine_tests::{
     StateMachine, StateMachineBuilder, WasmResult,
 };
 use ic_test_utilities_load_wasm::load_wasm;
+use maplit::hashmap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use evm_rpc::*;
@@ -78,7 +79,7 @@ impl EvmRpcSetup {
         );
 
         let args = InitArgs {
-            nodes_in_subnet: DEFAULT_NODES_IN_SUBNET,
+            nodes_in_subnet: NODES_IN_DEFAULT_SUBNET,
         };
 
         let controller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);
@@ -161,6 +162,10 @@ impl EvmRpcSetup {
 
     pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) -> CallFlow<()> {
         self.call_update("deauthorize", Encode!(&principal.0, &auth).unwrap())
+    }
+
+    pub fn get_metrics(&self) -> Metrics {
+        self.call_query("getMetrics", Encode!().unwrap())
     }
 
     pub fn get_providers(&self) -> Vec<ProviderView> {
@@ -896,7 +901,10 @@ fn candid_rpc_should_err_during_restricted_access() {
     setup.clone().as_controller().set_open_rpc_access(false);
     let result = setup
         .eth_get_transaction_receipt(
-            RpcSource::EthMainnet(None),
+            RpcSource::EthMainnet(Some(vec![
+                EthMainnetService::Cloudflare,
+                EthMainnetService::BlockPi,
+            ])),
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
         .wait()
@@ -904,6 +912,13 @@ fn candid_rpc_should_err_during_restricted_access() {
     assert_eq!(
         result,
         Err(RpcError::ProviderError(ProviderError::NoPermission))
+    );
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            err_no_permission: 1,
+            ..Default::default()
+        }
     );
 }
 
@@ -928,6 +943,28 @@ fn candid_rpc_should_err_when_service_unavailable() {
             }
         ))
     );
+    let rpc_method = || RpcMethod("eth_getTransactionReceipt".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+            },
+            responses: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+            },
+            err_http_response: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+            },
+            ..Default::default()
+        }
+    );
 }
 
 #[test]
@@ -935,7 +972,10 @@ fn candid_rpc_should_recognize_json_error() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let result = setup
         .eth_get_transaction_receipt(
-            RpcSource::EthMainnet(None),
+            RpcSource::EthSepolia(Some(vec![
+                EthSepoliaService::Ankr,
+                EthSepoliaService::BlockPi,
+            ])),
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
         .mock_http(MockOutcallBuilder::new(
@@ -950,6 +990,21 @@ fn candid_rpc_should_recognize_json_error() {
             code: 123,
             message: "Error message".to_string(),
         }))
+    );
+    let rpc_method = || RpcMethod("eth_getTransactionReceipt".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(BLOCKPI_ETH_SEPOLIA_HOSTNAME.to_string())) => 1,
+            },
+            responses: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(BLOCKPI_ETH_SEPOLIA_HOSTNAME.to_string())) => 1,
+            },
+            ..Default::default()
+        }
     );
 }
 
@@ -1000,6 +1055,21 @@ fn candid_rpc_should_represent_inconsistent_results() {
             )
         ]
     );
+    let rpc_method = || RpcMethod("eth_sendRawTransaction".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+            },
+            responses: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+            },
+            ..Default::default()
+        }
+    );
 }
 
 #[test]
@@ -1021,4 +1091,19 @@ fn candid_rpc_should_handle_already_known() {
         .wait()
         .expect_consistent();
     assert_eq!(result, Ok(SendRawTransactionResult::Ok));
+    let rpc_method = || RpcMethod("eth_sendRawTransaction".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+            },
+            responses: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+            },
+            ..Default::default()
+        }
+    );
 }

@@ -4,7 +4,7 @@ pub const INGRESS_OVERHEAD_BYTES: u128 = 100;
 pub const INGRESS_MESSAGE_RECEIVED_COST: u128 = 1_200_000;
 pub const INGRESS_MESSAGE_BYTE_RECEIVED_COST: u128 = 2_000;
 pub const HTTP_OUTCALL_REQUEST_COST: u128 = 400_000_000;
-pub const HTTP_OUTCALL_BYTE_RECEIEVED_COST: u128 = 100_000;
+pub const HTTP_OUTCALL_BYTE_RECEIVED_COST: u128 = 100_000;
 
 pub const MINIMUM_WITHDRAWAL_CYCLES: u128 = 1_000_000_000;
 
@@ -12,7 +12,8 @@ pub const STRING_STORABLE_MAX_SIZE: u32 = 100;
 pub const AUTH_SET_STORABLE_MAX_SIZE: u32 = 1000;
 pub const WASM_PAGE_SIZE: u64 = 65536;
 
-pub const DEFAULT_NODES_IN_SUBNET: u32 = 13;
+pub const NODES_IN_DEFAULT_SUBNET: u32 = 13;
+pub const NODES_IN_FIDUCIARY_SUBNET: u32 = 28;
 pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
 
 // Providers used by default (when passing `null` with `CandidRpcSource`)
