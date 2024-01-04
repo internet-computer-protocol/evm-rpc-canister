@@ -5,7 +5,7 @@ use crate::*;
 /// Returns the cycles cost of a JSON-RPC request.
 pub fn get_json_rpc_cost(
     source: &ResolvedJsonRpcSource,
-    payload_size_bytes: usize,
+    payload_size_bytes: u64,
     max_response_bytes: u64,
 ) -> u128 {
     match source {
@@ -22,7 +22,7 @@ pub fn get_json_rpc_cost(
 /// Returns the cycles cost of a Candid-RPC request.
 pub fn get_candid_rpc_cost(
     provider: &Provider,
-    payload_size_bytes: usize,
+    payload_size_bytes: u64,
     effective_response_size_estimate: u64,
 ) -> u128 {
     let base_cost = 400_000_000u128 + 100_000u128 * (2 * effective_response_size_estimate as u128);
@@ -35,11 +35,11 @@ pub fn get_candid_rpc_cost(
 /// Calculates the baseline cost of sending a JSON-RPC request using HTTP outcalls.
 pub fn get_http_request_cost(
     api: &RpcApi,
-    payload_size_bytes: usize,
+    payload_size_bytes: u64,
     max_response_bytes: u64,
 ) -> u128 {
     let nodes_in_subnet = UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow());
-    let ingress_bytes = (payload_size_bytes + api.url.len()) as u128 + INGRESS_OVERHEAD_BYTES;
+    let ingress_bytes = payload_size_bytes as u128 + api.url.len() as u128 + INGRESS_OVERHEAD_BYTES;
     let base_cost = INGRESS_MESSAGE_RECEIVED_COST
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
         + HTTP_OUTCALL_REQUEST_COST
@@ -48,7 +48,7 @@ pub fn get_http_request_cost(
 }
 
 /// Calculate the additional cost for calling a registered JSON-RPC provider.
-pub fn get_provider_cost(provider: &Provider, payload_size_bytes: usize) -> u128 {
+pub fn get_provider_cost(provider: &Provider, payload_size_bytes: u64) -> u128 {
     let nodes_in_subnet = UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow());
     let cost_per_node = provider.cycles_per_call as u128
         + provider.cycles_per_message_byte as u128 * payload_size_bytes as u128;
@@ -69,7 +69,7 @@ fn test_request_cost() {
                 url: url.to_string(),
                 headers: vec![],
             }),
-            payload.len(),
+            payload.len() as u64,
             1000,
         );
         let base_cost_10_extra_bytes = get_json_rpc_cost(
@@ -77,7 +77,7 @@ fn test_request_cost() {
                 url: url.to_string(),
                 headers: vec![],
             }),
-            payload.len() + 10,
+            payload.len() as u64 + 10,
             1000,
         );
         let estimated_cost_10_extra_bytes = base_cost
@@ -113,7 +113,7 @@ fn test_provider_cost() {
         };
         let base_cost = get_provider_cost(
             &provider,
-            "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".len(),
+            "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".len() as u64,
         );
 
         let provider_10_extra_bytes = Provider {
@@ -130,7 +130,8 @@ fn test_provider_cost() {
         };
         let base_cost_10_extra_bytes = get_provider_cost(
             &provider_10_extra_bytes,
-            "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".len() + 10,
+            "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".len() as u64
+                + 10,
         );
         assert_eq!(
             base_cost + (10 * 2 + 1000) * nodes_in_subnet as u128,
