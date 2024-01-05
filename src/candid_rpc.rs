@@ -39,7 +39,7 @@ impl RpcTransport for CanisterTransport {
             request
                 .body
                 .as_ref()
-                .map(|bytes| bytes.len())
+                .map(|bytes| bytes.len() as u64)
                 .unwrap_or_default(),
             effective_response_size_estimate,
         );
