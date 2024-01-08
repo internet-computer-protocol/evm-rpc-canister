@@ -18,13 +18,11 @@ pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
 
 // Providers used by default (when passing `null` with `CandidRpcSource`)
 pub const DEFAULT_ETHEREUM_SERVICES: &[EthMainnetService] = &[
-    EthMainnetService::Alchemy,
     EthMainnetService::Ankr,
     EthMainnetService::Cloudflare,
     EthMainnetService::PublicNode,
 ];
 pub const DEFAULT_SEPOLIA_SERVICES: &[EthSepoliaService] = &[
-    EthSepoliaService::Alchemy,
     EthSepoliaService::Ankr,
     EthSepoliaService::PublicNode,
 ];
