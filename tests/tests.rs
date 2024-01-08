@@ -516,16 +516,8 @@ fn should_panic_if_unauthorized_register_provider() {
 
 #[test]
 #[should_panic(expected = "Provider owner != caller")]
-fn should_panic_if_unauthorized_unregister_provider() {
-    // Providers can only be updated by the original owner
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
-    setup.unregister_provider(0);
-}
-
-#[test]
-#[should_panic(expected = "Not authorized")]
 fn should_panic_if_unauthorized_update_provider() {
-    // Only the `ManageCanister` authorization may unregister a provider
+    // Providers can only be updated by the original owner
     let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
     setup.update_provider(UpdateProviderArgs {
         provider_id: 0,
@@ -536,6 +528,14 @@ fn should_panic_if_unauthorized_update_provider() {
         cycles_per_message_byte: None,
         primary: None,
     });
+}
+
+#[test]
+#[should_panic(expected = "Not authorized")]
+fn should_panic_if_unauthorized_unregister_provider() {
+    // Only the `ManageCanister` authorization may unregister a provider
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    setup.unregister_provider(0);
 }
 
 fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
