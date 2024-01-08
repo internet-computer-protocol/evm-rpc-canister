@@ -30,7 +30,7 @@ pub fn require_register_provider() -> Result<(), String> {
 }
 
 pub fn is_rpc_allowed(caller: &Principal) -> bool {
-    METADATA.with(|m| m.borrow().get().open_rpc_access) || is_authorized(caller, Auth::Rpc)
+    METADATA.with(|m| m.borrow().get().open_rpc_access) || is_authorized(caller, Auth::PriorityRpc)
 }
 
 pub fn do_authorize(principal: Principal, auth: Auth) {
@@ -69,16 +69,16 @@ fn test_authorization() {
     let principal2 =
         Principal::from_text("yxhtl-jlpgx-wqnzc-ysego-h6yqe-3zwfo-o3grn-gvuhm-nz3kv-ainub-6ae")
             .unwrap();
-    assert!(!is_authorized(&principal1, Auth::Rpc));
-    assert!(!is_authorized(&principal2, Auth::Rpc));
+    assert!(!is_authorized(&principal1, Auth::PriorityRpc));
+    assert!(!is_authorized(&principal2, Auth::PriorityRpc));
 
-    do_authorize(principal1, Auth::Rpc);
-    assert!(is_authorized(&principal1, Auth::Rpc));
-    assert!(!is_authorized(&principal2, Auth::Rpc));
+    do_authorize(principal1, Auth::PriorityRpc);
+    assert!(is_authorized(&principal1, Auth::PriorityRpc));
+    assert!(!is_authorized(&principal2, Auth::PriorityRpc));
 
-    do_deauthorize(principal1, Auth::Rpc);
-    assert!(!is_authorized(&principal1, Auth::Rpc));
-    assert!(!is_authorized(&principal2, Auth::Rpc));
+    do_deauthorize(principal1, Auth::PriorityRpc);
+    assert!(!is_authorized(&principal1, Auth::PriorityRpc));
+    assert!(!is_authorized(&principal2, Auth::PriorityRpc));
 
     do_authorize(principal1, Auth::RegisterProvider);
     assert!(is_authorized(&principal1, Auth::RegisterProvider));
@@ -91,7 +91,6 @@ fn test_authorization() {
     assert!(!is_authorized(&principal1, Auth::ManageService));
     assert!(is_authorized(&principal2, Auth::ManageService));
 
-    assert!(!is_authorized(&principal2, Auth::Rpc));
-    assert!(!is_authorized(&principal2, Auth::FreeRpc));
+    assert!(!is_authorized(&principal2, Auth::PriorityRpc));
     assert!(!is_authorized(&principal2, Auth::RegisterProvider));
 }

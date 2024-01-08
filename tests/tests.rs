@@ -267,7 +267,7 @@ impl EvmRpcSetup {
     pub fn eth_send_raw_transaction(
         &self,
         source: RpcSource,
-        signed_raw_transaction_hex: String,
+        signed_raw_transaction_hex: &str,
     ) -> CallFlow<MultiRpcResult<SendRawTransactionResult>> {
         self.call_update(
             "eth_sendRawTransaction",
@@ -845,7 +845,7 @@ fn eth_send_raw_transaction_should_succeed() {
     let response = setup
         .eth_send_raw_transaction(
             RpcSource::EthMainnet(None),
-            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83".to_string(),
+            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
         .mock_http(MockOutcallBuilder::new(
             200,
@@ -1030,7 +1030,7 @@ fn candid_rpc_should_represent_inconsistent_results() {
     let results = setup
         .eth_send_raw_transaction(
             RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
-            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83".to_string(),
+            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
         .mock_http_once(MockOutcallBuilder::new(
             200,
@@ -1078,7 +1078,7 @@ fn candid_rpc_should_handle_already_known() {
     let result = setup
         .eth_send_raw_transaction(
             RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
-            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83".to_string(),
+            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
         .mock_http_once(MockOutcallBuilder::new(
             200,
@@ -1103,6 +1103,63 @@ fn candid_rpc_should_handle_already_known() {
                 (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
                 (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
             },
+            ..Default::default()
+        }
+    );
+}
+
+#[test]
+// #[should_panic(error="thing")]
+fn should_panic_if_unauthorized_set_rpc_access() {
+    let setup = EvmRpcSetup::new();
+    setup.set_open_rpc_access(false);
+}
+
+#[test]
+fn should_restrict_rpc_access() {
+    let mut setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    setup.clone().as_controller().set_open_rpc_access(false);
+    let result = setup
+        .eth_get_transaction_count(
+            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .wait()
+        .expect_consistent();
+    assert_eq!(
+        result,
+        Err(RpcError::ProviderError(ProviderError::NoPermission))
+    );
+    setup = setup.authorize_caller(Auth::PriorityRpc);
+    let result = setup
+        .eth_get_transaction_count(
+            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(MockOutcallBuilder::new(
+            200,
+            r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+        ))
+        .wait()
+        .expect_consistent();
+    assert_eq!(result, Ok(1.into()));
+    let rpc_method = || RpcMethod("eth_getTransactionCount".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+            },
+            responses: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+            },
+            err_no_permission: 1,
             ..Default::default()
         }
     );

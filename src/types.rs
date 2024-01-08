@@ -149,7 +149,7 @@ pub struct Metrics {
 pub enum Auth {
     ManageService,
     RegisterProvider,
-    Rpc,
+    PriorityRpc,
     FreeRpc,
 }
 
