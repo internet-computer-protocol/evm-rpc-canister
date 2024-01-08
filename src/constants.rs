@@ -22,10 +22,8 @@ pub const DEFAULT_ETHEREUM_SERVICES: &[EthMainnetService] = &[
     EthMainnetService::Cloudflare,
     EthMainnetService::PublicNode,
 ];
-pub const DEFAULT_SEPOLIA_SERVICES: &[EthSepoliaService] = &[
-    EthSepoliaService::Ankr,
-    EthSepoliaService::PublicNode,
-];
+pub const DEFAULT_SEPOLIA_SERVICES: &[EthSepoliaService] =
+    &[EthSepoliaService::Ankr, EthSepoliaService::PublicNode];
 
 pub const CONTENT_TYPE_HEADER: &str = "Content-Type";
 pub const CONTENT_TYPE_VALUE: &str = "application/json";
