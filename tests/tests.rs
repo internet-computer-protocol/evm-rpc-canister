@@ -172,8 +172,19 @@ impl EvmRpcSetup {
         self.call_query("getProviders", Encode!().unwrap())
     }
 
-    pub fn register_provider(&self, args: RegisterProviderArgs) -> CallFlow<u64> {
+    pub fn register_provider(&self, args: RegisterProviderArgs) -> u64 {
         self.call_update("registerProvider", Encode!(&args).unwrap())
+            .wait()
+    }
+
+    pub fn unregister_provider(&self, provider_id: u64) -> bool {
+        self.call_update("unregisterProvider", Encode!(&provider_id).unwrap())
+            .wait()
+    }
+
+    pub fn update_provider(&self, args: UpdateProviderArgs) {
+        self.call_update("updateProvider", Encode!(&args).unwrap())
+            .wait()
     }
 
     pub fn authorize_caller(self, auth: Auth) -> Self {
@@ -441,29 +452,25 @@ fn should_register_provider() {
             .collect::<Vec<_>>()
     );
     let n_providers = 2;
-    let a_id = setup
-        .register_provider(RegisterProviderArgs {
-            chain_id: 1,
-            hostname: ANKR_HOSTNAME.to_string(),
-            credential_path: "".to_string(),
-            credential_headers: None,
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
-        })
-        .wait();
-    let b_id = setup
-        .register_provider(RegisterProviderArgs {
-            chain_id: 5,
-            hostname: CLOUDFLARE_HOSTNAME.to_string(),
-            credential_path: "/test-path".to_string(),
-            credential_headers: Some(vec![HttpHeader {
-                name: "Test-Authorization".to_string(),
-                value: "---".to_string(),
-            }]),
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
-        })
-        .wait();
+    let a_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: 1,
+        hostname: ANKR_HOSTNAME.to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    let b_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: 5,
+        hostname: CLOUDFLARE_HOSTNAME.to_string(),
+        credential_path: "/test-path".to_string(),
+        credential_headers: Some(vec![HttpHeader {
+            name: "Test-Authorization".to_string(),
+            value: "---".to_string(),
+        }]),
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
     assert_eq!(a_id + 1, b_id);
     let providers = setup.get_providers();
     assert_eq!(providers.len(), get_default_providers().len() + n_providers);
@@ -491,6 +498,42 @@ fn should_register_provider() {
             }
         ]
     )
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_panic_if_unauthorized_register_provider() {
+    let setup = EvmRpcSetup::new();
+    setup.register_provider(RegisterProviderArgs {
+        chain_id: 1,
+        hostname: ANKR_HOSTNAME.to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_panic_if_unauthorized_unregister_provider() {
+    let setup = EvmRpcSetup::new();
+    setup.unregister_provider(0);
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_panic_if_unauthorized_update_provider() {
+    let setup = EvmRpcSetup::new();
+    setup.update_provider(UpdateProviderArgs {
+        provider_id: 0,
+        hostname: Some("unauthorized.host".to_string()),
+        credential_path: None,
+        credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
+        primary: None,
+    });
 }
 
 fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
@@ -1109,7 +1152,7 @@ fn candid_rpc_should_handle_already_known() {
 }
 
 #[test]
-// #[should_panic(error="thing")]
+#[should_panic(expected = "You are not authorized")]
 fn should_panic_if_unauthorized_set_rpc_access() {
     let setup = EvmRpcSetup::new();
     setup.set_open_rpc_access(false);
