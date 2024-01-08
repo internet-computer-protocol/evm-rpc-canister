@@ -516,15 +516,15 @@ fn should_panic_if_unauthorized_register_provider() {
 
 #[test]
 #[should_panic(expected = "You are not authorized")]
-fn should_panic_if_unauthorized_unregister_provider() {
-    let setup = EvmRpcSetup::new();
+fn should_panic_if_unauthorized_unregister_provider_with_different_owner() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
     setup.unregister_provider(0);
 }
 
 #[test]
 #[should_panic(expected = "You are not authorized")]
-fn should_panic_if_unauthorized_update_provider() {
-    let setup = EvmRpcSetup::new();
+fn should_panic_if_unauthorized_update_provider_with_different_owner() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
     setup.update_provider(UpdateProviderArgs {
         provider_id: 0,
         hostname: Some("unauthorized.host".to_string()),
