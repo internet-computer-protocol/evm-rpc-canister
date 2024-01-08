@@ -109,7 +109,7 @@ shared ({ caller = installer }) actor class Main() {
             };
 
             let candidRpcCycles = 1_000_000_000_000;
-            let ethMainnetSource = #EthMainnet(?[#Ankr, #Cloudflare, #BlockPi, #PublicNode]);
+            let ethMainnetSource = #EthMainnet(?[#Alchemy, #Ankr, #Cloudflare, #BlockPi, #PublicNode]);
 
             switch (await canister.eth_getBlockByNumber(ethMainnetSource, #Latest)) {
                 case (#Consistent(#Err(#ProviderError(#TooFewCycles _)))) {};
@@ -147,7 +147,7 @@ shared ({ caller = installer }) actor class Main() {
                 await canister.eth_getTransactionCount(
                     ethMainnetSource,
                     {
-                        address = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
+                        address = "0x1789F79e95324A47c5Fd6693071188e82E9a3558";
                         block = #Latest;
                     },
                 ),

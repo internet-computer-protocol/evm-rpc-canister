@@ -30,8 +30,8 @@ type BlockTag = variant {
   Number : nat;
   Pending;
 };
-type EthMainnetService = variant { BlockPi; Cloudflare; PublicNode; Ankr };
-type EthSepoliaService = variant { BlockPi; PublicNode; Ankr };
+type EthMainnetService = variant { Alchemy; Ankr; BlockPi; Cloudflare; PublicNode };
+type EthSepoliaService = variant { Alchemy; Ankr; BlockPi; PublicNode };
 type FeeHistory = record {
   reward : vec vec nat;
   gasUsedRatio : vec float64;
