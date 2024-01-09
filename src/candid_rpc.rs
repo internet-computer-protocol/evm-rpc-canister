@@ -63,6 +63,7 @@ fn resolve_provider(service: &RpcService) -> Result<Provider, ProviderError> {
         EthMainnet(service) => (
             ETH_MAINNET_CHAIN_ID,
             match service {
+                EthMainnetService::Alchemy => ALCHEMY_ETH_MAINNET_HOSTNAME,
                 EthMainnetService::Ankr => ANKR_HOSTNAME,
                 EthMainnetService::BlockPi => BLOCKPI_ETH_MAINNET_HOSTNAME,
                 EthMainnetService::PublicNode => PUBLICNODE_ETH_MAINNET_HOSTNAME,
@@ -72,6 +73,7 @@ fn resolve_provider(service: &RpcService) -> Result<Provider, ProviderError> {
         EthSepolia(service) => (
             ETH_SEPOLIA_CHAIN_ID,
             match service {
+                EthSepoliaService::Alchemy => ALCHEMY_ETH_SEPOLIA_HOSTNAME,
                 EthSepoliaService::Ankr => ANKR_HOSTNAME,
                 EthSepoliaService::BlockPi => BLOCKPI_ETH_SEPOLIA_HOSTNAME,
                 EthSepoliaService::PublicNode => PUBLICNODE_ETH_SEPOLIA_HOSTNAME,

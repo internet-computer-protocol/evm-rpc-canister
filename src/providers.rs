@@ -1,12 +1,19 @@
 use crate::*;
 
-pub const CLOUDFLARE_HOSTNAME: &str = "cloudflare-eth.com";
 pub const ANKR_HOSTNAME: &str = "rpc.ankr.com";
-pub const PUBLICNODE_ETH_MAINNET_HOSTNAME: &str = "ethereum.publicnode.com";
+pub const ALCHEMY_ETH_MAINNET_HOSTNAME: &str = "eth-mainnet.g.alchemy.com";
+pub const ALCHEMY_ETH_SEPOLIA_HOSTNAME: &str = "eth-sepolia.g.alchemy.com";
+pub const CLOUDFLARE_HOSTNAME: &str = "cloudflare-eth.com";
 pub const BLOCKPI_ETH_MAINNET_HOSTNAME: &str = "ethereum.blockpi.network";
-pub const ETH_SEPOLIA_HOSTNAME: &str = "rpc.sepolia.org";
 pub const BLOCKPI_ETH_SEPOLIA_HOSTNAME: &str = "ethereum-sepolia.blockpi.network";
+pub const PUBLICNODE_ETH_MAINNET_HOSTNAME: &str = "ethereum.publicnode.com";
 pub const PUBLICNODE_ETH_SEPOLIA_HOSTNAME: &str = "ethereum-sepolia.publicnode.com";
+pub const ETH_SEPOLIA_HOSTNAME: &str = "rpc.sepolia.org";
+
+// Limited API credentials for local testing.
+// Use `dfx canister call evm_rpc updateProvider ...` to pass your own keys.
+pub const ALCHEMY_ETH_MAINNET_CREDENTIAL: &str = "/v2/zBxaSBUMfuH8XnA-uLIWeXfCx1T8ItkM";
+pub const ALCHEMY_ETH_SEPOLIA_CREDENTIAL: &str = "/v2/Mbow19DWsfPXiTpdgvRu4HQq63iYycU-";
 
 pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
     vec![
@@ -70,6 +77,22 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             chain_id: ETH_SEPOLIA_CHAIN_ID,
             hostname: PUBLICNODE_ETH_SEPOLIA_HOSTNAME.to_string(),
             credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: ETH_MAINNET_CHAIN_ID,
+            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+            credential_path: ALCHEMY_ETH_MAINNET_CREDENTIAL.to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: ETH_SEPOLIA_CHAIN_ID,
+            hostname: ALCHEMY_ETH_SEPOLIA_HOSTNAME.to_string(),
+            credential_path: ALCHEMY_ETH_SEPOLIA_CREDENTIAL.to_string(),
             credential_headers: None,
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
