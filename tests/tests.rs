@@ -172,8 +172,19 @@ impl EvmRpcSetup {
         self.call_query("getProviders", Encode!().unwrap())
     }
 
-    pub fn register_provider(&self, args: RegisterProviderArgs) -> CallFlow<u64> {
+    pub fn register_provider(&self, args: RegisterProviderArgs) -> u64 {
         self.call_update("registerProvider", Encode!(&args).unwrap())
+            .wait()
+    }
+
+    pub fn unregister_provider(&self, provider_id: u64) -> bool {
+        self.call_update("unregisterProvider", Encode!(&provider_id).unwrap())
+            .wait()
+    }
+
+    pub fn update_provider(&self, args: UpdateProviderArgs) {
+        self.call_update("updateProvider", Encode!(&args).unwrap())
+            .wait()
     }
 
     pub fn authorize_caller(self, auth: Auth) -> Self {
@@ -267,7 +278,7 @@ impl EvmRpcSetup {
     pub fn eth_send_raw_transaction(
         &self,
         source: RpcSource,
-        signed_raw_transaction_hex: String,
+        signed_raw_transaction_hex: &str,
     ) -> CallFlow<MultiRpcResult<SendRawTransactionResult>> {
         self.call_update(
             "eth_sendRawTransaction",
@@ -441,29 +452,25 @@ fn should_register_provider() {
             .collect::<Vec<_>>()
     );
     let n_providers = 2;
-    let a_id = setup
-        .register_provider(RegisterProviderArgs {
-            chain_id: 1,
-            hostname: ANKR_HOSTNAME.to_string(),
-            credential_path: "".to_string(),
-            credential_headers: None,
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
-        })
-        .wait();
-    let b_id = setup
-        .register_provider(RegisterProviderArgs {
-            chain_id: 5,
-            hostname: CLOUDFLARE_HOSTNAME.to_string(),
-            credential_path: "/test-path".to_string(),
-            credential_headers: Some(vec![HttpHeader {
-                name: "Test-Authorization".to_string(),
-                value: "---".to_string(),
-            }]),
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
-        })
-        .wait();
+    let a_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: 1,
+        hostname: ANKR_HOSTNAME.to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    let b_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: 5,
+        hostname: CLOUDFLARE_HOSTNAME.to_string(),
+        credential_path: "/test-path".to_string(),
+        credential_headers: Some(vec![HttpHeader {
+            name: "Test-Authorization".to_string(),
+            value: "---".to_string(),
+        }]),
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
     assert_eq!(a_id + 1, b_id);
     let providers = setup.get_providers();
     assert_eq!(providers.len(), get_default_providers().len() + n_providers);
@@ -491,6 +498,44 @@ fn should_register_provider() {
             }
         ]
     )
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_panic_if_unauthorized_register_provider() {
+    let setup = EvmRpcSetup::new();
+    setup.register_provider(RegisterProviderArgs {
+        chain_id: 1,
+        hostname: ANKR_HOSTNAME.to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+}
+
+#[test]
+#[should_panic(expected = "Provider owner != caller")]
+fn should_panic_if_unauthorized_update_provider() {
+    // Providers can only be updated by the original owner
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    setup.update_provider(UpdateProviderArgs {
+        provider_id: 0,
+        hostname: Some("unauthorized.host".to_string()),
+        credential_path: None,
+        credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
+        primary: None,
+    });
+}
+
+#[test]
+#[should_panic(expected = "Not authorized")]
+fn should_panic_if_unauthorized_unregister_provider() {
+    // Only the `ManageCanister` authorization may unregister a provider
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    setup.unregister_provider(0);
 }
 
 fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
@@ -845,7 +890,7 @@ fn eth_send_raw_transaction_should_succeed() {
     let response = setup
         .eth_send_raw_transaction(
             RpcSource::EthMainnet(None),
-            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83".to_string(),
+            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
         .mock_http(MockOutcallBuilder::new(
             200,
@@ -1030,7 +1075,7 @@ fn candid_rpc_should_represent_inconsistent_results() {
     let results = setup
         .eth_send_raw_transaction(
             RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
-            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83".to_string(),
+            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
         .mock_http_once(MockOutcallBuilder::new(
             200,
@@ -1078,7 +1123,7 @@ fn candid_rpc_should_handle_already_known() {
     let result = setup
         .eth_send_raw_transaction(
             RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
-            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83".to_string(),
+            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
         .mock_http_once(MockOutcallBuilder::new(
             200,
@@ -1103,6 +1148,64 @@ fn candid_rpc_should_handle_already_known() {
                 (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
                 (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
             },
+            ..Default::default()
+        }
+    );
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_panic_if_unauthorized_set_rpc_access() {
+    // Only `ManageCanister` can restrict RPC access
+    let setup = EvmRpcSetup::new();
+    setup.set_open_rpc_access(false);
+}
+
+#[test]
+fn should_restrict_rpc_access() {
+    let mut setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    setup.clone().as_controller().set_open_rpc_access(false);
+    let result = setup
+        .eth_get_transaction_count(
+            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .wait()
+        .expect_consistent();
+    assert_eq!(
+        result,
+        Err(RpcError::ProviderError(ProviderError::NoPermission))
+    );
+    setup = setup.authorize_caller(Auth::PriorityRpc);
+    let result = setup
+        .eth_get_transaction_count(
+            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(MockOutcallBuilder::new(
+            200,
+            r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+        ))
+        .wait()
+        .expect_consistent();
+    assert_eq!(result, Ok(1.into()));
+    let rpc_method = || RpcMethod("eth_getTransactionCount".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+            },
+            responses: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+            },
+            err_no_permission: 1,
             ..Default::default()
         }
     );
