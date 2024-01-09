@@ -1,4 +1,4 @@
-type Auth = variant { FreeRpc; PriorityRpc; RegisterProvider; ManageCanister };
+type Auth = variant { FreeRpc; PriorityRpc; RegisterProvider; Manage };
 type Block = record {
   miner : text;
   totalDifficulty : nat;

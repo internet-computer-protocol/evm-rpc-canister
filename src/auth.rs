@@ -14,7 +14,7 @@ pub fn is_authorized(principal: &Principal, auth: Auth) -> bool {
 
 pub fn require_admin_or_controller() -> Result<(), String> {
     let caller = ic_cdk::caller();
-    if is_authorized(&caller, Auth::ManageCanister) || ic_cdk::api::is_controller(&caller) {
+    if is_authorized(&caller, Auth::Manage) || ic_cdk::api::is_controller(&caller) {
         Ok(())
     } else {
         Err("You are not authorized".to_string())
@@ -87,9 +87,9 @@ fn test_authorization() {
     do_deauthorize(principal1, Auth::RegisterProvider);
     assert!(!is_authorized(&principal1, Auth::RegisterProvider));
 
-    do_authorize(principal2, Auth::ManageCanister);
-    assert!(!is_authorized(&principal1, Auth::ManageCanister));
-    assert!(is_authorized(&principal2, Auth::ManageCanister));
+    do_authorize(principal2, Auth::Manage);
+    assert!(!is_authorized(&principal1, Auth::Manage));
+    assert!(is_authorized(&principal2, Auth::Manage));
 
     assert!(!is_authorized(&principal2, Auth::PriorityRpc));
     assert!(!is_authorized(&principal2, Auth::RegisterProvider));
