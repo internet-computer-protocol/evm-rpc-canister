@@ -14,6 +14,8 @@ pub const ETH_SEPOLIA_HOSTNAME: &str = "rpc.sepolia.org";
 // Use `dfx canister call evm_rpc updateProvider ...` to pass your own keys.
 pub const ALCHEMY_ETH_MAINNET_CREDENTIAL: &str = "/v2/zBxaSBUMfuH8XnA-uLIWeXfCx1T8ItkM";
 pub const ALCHEMY_ETH_SEPOLIA_CREDENTIAL: &str = "/v2/Mbow19DWsfPXiTpdgvRu4HQq63iYycU-";
+pub const BLOCKPI_ETH_MAINNET_CREDENTIAL: &str = "/v1/rpc/0edc81e20be23ddff051f61a97bb457ec7284a58";
+pub const BLOCKPI_ETH_SEPOLIA_CREDENTIAL: &str = "/v1/rpc/1fe987fddded17db50862311720ff444991d4dab";
 
 pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
     vec![
@@ -44,7 +46,7 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
         RegisterProviderArgs {
             chain_id: ETH_MAINNET_CHAIN_ID,
             hostname: BLOCKPI_ETH_MAINNET_HOSTNAME.to_string(),
-            credential_path: "/v1/rpc/public".to_string(),
+            credential_path: BLOCKPI_ETH_SEPOLIA_HOSTNAME.to_string(),
             credential_headers: None,
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
@@ -68,7 +70,7 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
         RegisterProviderArgs {
             chain_id: ETH_SEPOLIA_CHAIN_ID,
             hostname: BLOCKPI_ETH_SEPOLIA_HOSTNAME.to_string(),
-            credential_path: "/v1/rpc/public".to_string(),
+            credential_path: BLOCKPI_ETH_SEPOLIA_CREDENTIAL.to_string(),
             credential_headers: None,
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
