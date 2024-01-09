@@ -46,7 +46,7 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
         RegisterProviderArgs {
             chain_id: ETH_MAINNET_CHAIN_ID,
             hostname: BLOCKPI_ETH_MAINNET_HOSTNAME.to_string(),
-            credential_path: BLOCKPI_ETH_SEPOLIA_HOSTNAME.to_string(),
+            credential_path: BLOCKPI_ETH_MAINNET_CREDENTIAL.to_string(),
             credential_headers: None,
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
