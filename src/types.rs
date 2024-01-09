@@ -137,11 +137,17 @@ impl MetricLabels for RpcHost {
 pub struct Metrics {
     pub requests: HashMap<(RpcMethod, RpcHost), u64>,
     pub responses: HashMap<(RpcMethod, RpcHost), u64>,
+    #[serde(rename = "cyclesCharged")]
     pub cycles_charged: HashMap<(RpcMethod, RpcHost), u128>,
+    #[serde(rename = "cyclesWithdrawn")]
     pub cycles_withdrawn: u128,
+    #[serde(rename = "errNoPermission")]
     pub err_no_permission: u64,
+    #[serde(rename = "errHostNotAllowed")]
     pub err_host_not_allowed: HashMap<RpcHost, u64>,
+    #[serde(rename = "errHttpOutcall")]
     pub err_http_outcall: HashMap<(RpcMethod, RpcHost), u64>,
+    #[serde(rename = "errHttpResponse")]
     pub err_http_response: HashMap<(RpcMethod, RpcHost), u64>,
 }
 
