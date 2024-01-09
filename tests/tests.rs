@@ -533,7 +533,7 @@ fn should_panic_if_unauthorized_update_provider() {
 #[test]
 #[should_panic(expected = "Not authorized")]
 fn should_panic_if_unauthorized_unregister_provider() {
-    // Only the `ManageCanister` authorization may unregister a provider
+    // Only the `Manage` authorization may unregister a provider
     let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
     setup.unregister_provider(0);
 }
@@ -1156,7 +1156,7 @@ fn candid_rpc_should_handle_already_known() {
 #[test]
 #[should_panic(expected = "You are not authorized")]
 fn should_panic_if_unauthorized_set_rpc_access() {
-    // Only `ManageCanister` can restrict RPC access
+    // Only `Manage` can restrict RPC access
     let setup = EvmRpcSetup::new();
     setup.set_open_rpc_access(false);
 }

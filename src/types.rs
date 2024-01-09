@@ -153,7 +153,7 @@ pub struct Metrics {
 
 #[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]
 pub enum Auth {
-    ManageCanister,
+    Manage,
     RegisterProvider,
     PriorityRpc,
     FreeRpc,
