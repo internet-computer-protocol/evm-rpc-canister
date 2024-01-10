@@ -1185,11 +1185,6 @@ fn candid_rpc_should_recognize_rate_limit() {
                 (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
                 (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
             },
-            responses: hashmap! {
-                // Rate limit is considered a successful HTTP outcall
-                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
-            },
             err_rate_limit: hashmap! {
                 RpcHost(ANKR_HOSTNAME.to_string()) => 1,
                 RpcHost(CLOUDFLARE_HOSTNAME.to_string()) => 1,

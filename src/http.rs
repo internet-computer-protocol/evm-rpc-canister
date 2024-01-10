@@ -101,10 +101,11 @@ pub async fn do_http_request_with_metrics(
     match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost).await {
         Ok((response,)) => {
             let status: u32 = response.status.0.clone().try_into().unwrap_or(0);
+            if !(200..300).contains(&status) {
+                add_metric_entry!(err_http_response, (rpc_method.clone(), rpc_host.clone()), 1);
+            }
             if response.status == 429 {
                 add_metric_entry!(err_rate_limit, rpc_host.clone(), 1);
-            } else if !(200..300).contains(&status) {
-                add_metric_entry!(err_http_response, (rpc_method.clone(), rpc_host.clone()), 1);
             }
             add_metric_entry!(responses, (rpc_method, rpc_host), 1);
             Ok(response)
