@@ -73,6 +73,11 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             "Number of successful RPC responses",
         );
         w.encode_entries(
+            "inconsistent_responses",
+            &m.inconsistent_responses,
+            "Number of inconsistent RPC responses",
+        );
+        w.encode_entries(
             "cycles_charged",
             &m.cycles_charged,
             "Number of cycles charged for RPC calls",

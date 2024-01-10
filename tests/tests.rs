@@ -1195,6 +1195,64 @@ fn candid_rpc_should_recognize_rate_limit() {
 }
 
 #[test]
+fn candid_rpc_should_return_inconsistent_results() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_get_transaction_count(
+            RpcSource::EthMainnet(Some(vec![
+                EthMainnetService::Alchemy,
+                EthMainnetService::Ankr,
+            ])),
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http_once(MockOutcallBuilder::new(
+            200,
+            r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+        ))
+        .mock_http_once(MockOutcallBuilder::new(
+            200,
+            r#"{"jsonrpc":"2.0","id":0,"result":"0x2"}"#,
+        ))
+        .wait()
+        .expect_inconsistent();
+    assert_eq!(
+        result,
+        vec![
+            (
+                RpcService::EthMainnet(EthMainnetService::Alchemy),
+                Ok(1.into())
+            ),
+            (
+                RpcService::EthMainnet(EthMainnetService::Ankr),
+                Ok(2.into())
+            ),
+        ]
+    );
+    let rpc_method = || RpcMethod("eth_sendRawTransaction".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), RpcHost(ALCHEMY_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+            },
+            responses: hashmap! {
+                (rpc_method(), RpcHost(ALCHEMY_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+            },
+            inconsistent_responses: hashmap! {
+                (rpc_method(), RpcHost(ALCHEMY_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+            },
+            ..Default::default()
+        }
+    );
+}
+
+#[test]
 #[should_panic(expected = "You are not authorized")]
 fn should_panic_if_unauthorized_set_rpc_access() {
     // Only `Manage` can restrict RPC access

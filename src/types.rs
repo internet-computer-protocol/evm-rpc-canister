@@ -137,6 +137,8 @@ impl MetricLabels for RpcHost {
 pub struct Metrics {
     pub requests: HashMap<(RpcMethod, RpcHost), u64>,
     pub responses: HashMap<(RpcMethod, RpcHost), u64>,
+    #[serde(rename = "inconsistentResponses")]
+    pub inconsistent_responses: HashMap<(RpcMethod, RpcHost), u64>,
     #[serde(rename = "cyclesCharged")]
     pub cycles_charged: HashMap<(RpcMethod, RpcHost), u128>,
     #[serde(rename = "cyclesWithdrawn")]
