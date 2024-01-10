@@ -143,12 +143,14 @@ pub struct Metrics {
     pub cycles_withdrawn: u128,
     #[serde(rename = "errNoPermission")]
     pub err_no_permission: u64,
-    #[serde(rename = "errHostNotAllowed")]
-    pub err_host_not_allowed: HashMap<RpcHost, u64>,
     #[serde(rename = "errHttpOutcall")]
     pub err_http_outcall: HashMap<(RpcMethod, RpcHost), u64>,
     #[serde(rename = "errHttpResponse")]
     pub err_http_response: HashMap<(RpcMethod, RpcHost), u64>,
+    #[serde(rename = "errHostNotAllowed")]
+    pub err_host_not_allowed: HashMap<RpcHost, u64>,
+    #[serde(rename = "errRateLimit")]
+    pub err_rate_limit: HashMap<RpcHost, u64>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]

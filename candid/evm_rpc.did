@@ -90,6 +90,7 @@ type Metrics = record {
   errHttpOutcall : vec record { record { text; text }; nat64 };
   errHttpResponse : vec record { record { text; text }; nat64 };
   errHostNotAllowed : vec record { text; nat64 };
+  errRateLimit : vec record { text; nat64 };
 };
 type MultiFeeHistoryResult = variant {
   Consistent : FeeHistoryResult;

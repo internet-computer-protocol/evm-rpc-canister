@@ -1154,6 +1154,47 @@ fn candid_rpc_should_handle_already_known() {
 }
 
 #[test]
+fn candid_rpc_should_recognize_rate_limit() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_send_raw_transaction(
+            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
+            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
+        )
+        .mock_http(MockOutcallBuilder::new(
+            429,
+            "(Rate limit error message)",
+        ))
+        .wait()
+        .expect_consistent();
+    assert_eq!(
+        result,
+        Err(RpcError::HttpOutcallError(
+            cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
+                status: 429,
+                body: "(Rate limit error message)".to_string(),
+                parsing_error: None
+            }
+        ))
+    );
+    let rpc_method = || RpcMethod("eth_sendRawTransaction".to_string());
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+            },
+            err_rate_limit: hashmap! {
+                RpcHost(ANKR_HOSTNAME.to_string()) => 1,
+                RpcHost(CLOUDFLARE_HOSTNAME.to_string()) => 1,
+            },
+            ..Default::default()
+        }
+    );
+}
+
+#[test]
 #[should_panic(expected = "You are not authorized")]
 fn should_panic_if_unauthorized_set_rpc_access() {
     // Only `Manage` can restrict RPC access
