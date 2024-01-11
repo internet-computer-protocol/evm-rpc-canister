@@ -993,14 +993,14 @@ fn candid_rpc_should_err_when_service_unavailable() {
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into()) => 1,
+                (rpc_method(), PUBLICNODE_ETH_MAINNET_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string()), 503) => 1,
-                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string()), 503) => 1,
-                (rpc_method(), MetricRpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string()), 503) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 503.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into(), 503.into()) => 1,
+                (rpc_method(), PUBLICNODE_ETH_MAINNET_HOSTNAME.into(), 503.into()) => 1,
             },
             ..Default::default()
         }
@@ -1036,12 +1036,12 @@ fn candid_rpc_should_recognize_json_error() {
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(BLOCKPI_ETH_SEPOLIA_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), BLOCKPI_ETH_SEPOLIA_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(BLOCKPI_ETH_SEPOLIA_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 200.into()) => 1,
+                (rpc_method(), BLOCKPI_ETH_SEPOLIA_HOSTNAME.into(), 200.into()) => 1,
             },
             ..Default::default()
         }
@@ -1100,16 +1100,16 @@ fn candid_rpc_should_return_inconsistent_results() {
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 200.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into(), 200.into()) => 1,
             },
             inconsistent_responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into()) => 1,
             },
             ..Default::default()
         }
@@ -1161,16 +1161,16 @@ fn candid_rpc_should_return_inconsistent_results_with_error() {
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), MetricRpcHost(ALCHEMY_ETH_MAINNET_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ALCHEMY_ETH_MAINNET_HOSTNAME.into()) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ALCHEMY_ETH_MAINNET_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ALCHEMY_ETH_MAINNET_HOSTNAME.into(), 200.into()) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 400.into()) => 1,
             },
             inconsistent_responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ALCHEMY_ETH_MAINNET_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ALCHEMY_ETH_MAINNET_HOSTNAME.into()) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
             },
             ..Default::default()
         }
@@ -1226,16 +1226,16 @@ fn candid_rpc_should_return_inconsistent_results_with_unexpected_status_code() {
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), MetricRpcHost(ALCHEMY_ETH_MAINNET_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ALCHEMY_ETH_MAINNET_HOSTNAME.into()) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ALCHEMY_ETH_MAINNET_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ALCHEMY_ETH_MAINNET_HOSTNAME.into(), 200.into()) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 200.into()) => 1,
             },
             inconsistent_responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ALCHEMY_ETH_MAINNET_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ALCHEMY_ETH_MAINNET_HOSTNAME.into()) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
             },
             ..Default::default()
         }
@@ -1266,12 +1266,12 @@ fn candid_rpc_should_handle_already_known() {
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 200.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into(), 200.into()) => 1,
             },
             ..Default::default()
         }
@@ -1307,12 +1307,12 @@ fn candid_rpc_should_recognize_rate_limit() {
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string()), 429) => 1,
-                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string()), 429) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 429.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into(), 429.into()) => 1,
             },
             ..Default::default()
         }
@@ -1366,10 +1366,10 @@ fn should_restrict_rpc_access() {
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 200.into()) => 1,
             },
             err_no_permission: 1,
             ..Default::default()

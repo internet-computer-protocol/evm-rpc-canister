@@ -150,6 +150,12 @@ impl MetricLabels for MetricRpcMethod {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
 pub struct MetricRpcHost(pub String);
 
+impl<'a> From<&'a str> for MetricRpcHost {
+    fn from(hostname: &str) -> Self {
+        MetricRpcHost(hostname.to_string())
+    }
+}
+
 impl MetricLabels for MetricRpcHost {
     fn metric_labels(&self) -> Vec<(&str, &str)> {
         vec![("host", &self.0)]
