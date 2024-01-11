@@ -93,6 +93,12 @@ pub trait MetricValue {
     fn metric_value(&self) -> f64;
 }
 
+impl MetricValue for u32 {
+    fn metric_value(&self) -> f64 {
+        *self as f64
+    }
+}
+
 impl MetricValue for u64 {
     fn metric_value(&self) -> f64 {
         *self as f64
@@ -112,6 +118,17 @@ pub trait MetricLabels {
 impl<A: MetricLabels, B: MetricLabels> MetricLabels for (A, B) {
     fn metric_labels(&self) -> Vec<(&str, &str)> {
         [self.0.metric_labels(), self.1.metric_labels()].concat()
+    }
+}
+
+impl<A: MetricLabels, B: MetricLabels, C: MetricLabels> MetricLabels for (A, B, C) {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        [
+            self.0.metric_labels(),
+            self.1.metric_labels(),
+            self.2.metric_labels(),
+        ]
+        .concat()
     }
 }
 
@@ -139,10 +156,25 @@ impl MetricLabels for MetricRpcHost {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
+pub struct MetricHttpStatusCode(pub String);
+
+impl From<u32> for MetricHttpStatusCode {
+    fn from(value: u32) -> Self {
+        MetricHttpStatusCode(value.to_string())
+    }
+}
+
+impl MetricLabels for MetricHttpStatusCode {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        vec![("status", &self.0)]
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq, CandidType, Deserialize)]
 pub struct Metrics {
     pub requests: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
-    pub responses: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
+    pub responses: HashMap<(MetricRpcMethod, MetricRpcHost, MetricHttpStatusCode), u64>,
     #[serde(rename = "inconsistentResponses")]
     pub inconsistent_responses: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
     #[serde(rename = "cyclesCharged")]
@@ -153,12 +185,8 @@ pub struct Metrics {
     pub err_no_permission: u64,
     #[serde(rename = "errHttpOutcall")]
     pub err_http_outcall: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
-    #[serde(rename = "errHttpResponse")]
-    pub err_http_response: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
     #[serde(rename = "errHostNotAllowed")]
     pub err_host_not_allowed: HashMap<MetricRpcHost, u64>,
-    #[serde(rename = "errRateLimit")]
-    pub err_rate_limit: HashMap<MetricRpcHost, u64>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

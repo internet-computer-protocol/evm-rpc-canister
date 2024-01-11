@@ -998,14 +998,9 @@ fn candid_rpc_should_err_when_service_unavailable() {
                 (rpc_method(), MetricRpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
-            },
-            err_http_response: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string()), 503) => 1,
+                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string()), 503) => 1,
+                (rpc_method(), MetricRpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string()), 503) => 1,
             },
             ..Default::default()
         }
@@ -1316,12 +1311,8 @@ fn candid_rpc_should_recognize_rate_limit() {
                 (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
-            },
-            err_rate_limit: hashmap! {
-                MetricRpcHost(ANKR_HOSTNAME.to_string()) => 1,
-                MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string()) => 1,
+                (rpc_method(), MetricRpcHost(ANKR_HOSTNAME.to_string()), 429) => 1,
+                (rpc_method(), MetricRpcHost(CLOUDFLARE_HOSTNAME.to_string()), 429) => 1,
             },
             ..Default::default()
         }
