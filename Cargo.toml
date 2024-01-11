@@ -27,7 +27,7 @@ ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-eth = { workspace = true }
-cketh-common = { git = "https://github.com/rvanasa/ic", rev = "cd3beda5a3bb3ea8f087b1a7bbd666dd557fbb6f", package = "ic-cketh-minter" }
+cketh-common = { git = "https://github.com/rvanasa/ic", rev = "c408ac3489a6a18a09b95e678cd16782db766c39", package = "ic-cketh-minter" }
 maplit = "1.0"
 num = "0.4"
 num-traits = "0.2"
@@ -39,18 +39,18 @@ async-trait = "0.1"
 hex = "0.4"
 
 [dev-dependencies]
-ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2024-01-03_23-01" }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2024-01-03_23-01" }
+ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2024-01-03_23-01" }
+ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2024-01-03_23-01" }
+ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2024-01-03_23-01" }
 assert_matches = "1.5"
 
 [workspace.dependencies]
 candid = { version = "0.9" }
-ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2024-01-03_23-01" }
+ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2024-01-03_23-01" }
+ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2024-01-03_23-01" }
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
 ic-certified-map = "0.4"
