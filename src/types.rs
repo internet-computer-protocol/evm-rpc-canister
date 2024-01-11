@@ -116,18 +116,24 @@ impl<A: MetricLabels, B: MetricLabels> MetricLabels for (A, B) {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
-pub struct RpcMethod(pub String);
+pub struct MetricRpcMethod(pub String);
 
-impl MetricLabels for RpcMethod {
+impl From<RpcMethod> for MetricRpcMethod {
+    fn from(method: RpcMethod) -> Self {
+        MetricRpcMethod(method.name().to_string())
+    }
+}
+
+impl MetricLabels for MetricRpcMethod {
     fn metric_labels(&self) -> Vec<(&str, &str)> {
         vec![("method", &self.0)]
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
-pub struct RpcHost(pub String);
+pub struct MetricRpcHost(pub String);
 
-impl MetricLabels for RpcHost {
+impl MetricLabels for MetricRpcHost {
     fn metric_labels(&self) -> Vec<(&str, &str)> {
         vec![("host", &self.0)]
     }
@@ -135,24 +141,47 @@ impl MetricLabels for RpcHost {
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, CandidType, Deserialize)]
 pub struct Metrics {
-    pub requests: HashMap<(RpcMethod, RpcHost), u64>,
-    pub responses: HashMap<(RpcMethod, RpcHost), u64>,
+    pub requests: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
+    pub responses: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
     #[serde(rename = "inconsistentResponses")]
-    pub inconsistent_responses: HashMap<(RpcMethod, RpcHost), u64>,
+    pub inconsistent_responses: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
     #[serde(rename = "cyclesCharged")]
-    pub cycles_charged: HashMap<(RpcMethod, RpcHost), u128>,
+    pub cycles_charged: HashMap<(MetricRpcMethod, MetricRpcHost), u128>,
     #[serde(rename = "cyclesWithdrawn")]
     pub cycles_withdrawn: u128,
     #[serde(rename = "errNoPermission")]
     pub err_no_permission: u64,
     #[serde(rename = "errHttpOutcall")]
-    pub err_http_outcall: HashMap<(RpcMethod, RpcHost), u64>,
+    pub err_http_outcall: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
     #[serde(rename = "errHttpResponse")]
-    pub err_http_response: HashMap<(RpcMethod, RpcHost), u64>,
+    pub err_http_response: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
     #[serde(rename = "errHostNotAllowed")]
-    pub err_host_not_allowed: HashMap<RpcHost, u64>,
+    pub err_host_not_allowed: HashMap<MetricRpcHost, u64>,
     #[serde(rename = "errRateLimit")]
-    pub err_rate_limit: HashMap<RpcHost, u64>,
+    pub err_rate_limit: HashMap<MetricRpcHost, u64>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RpcMethod {
+    EthFeeHistory,
+    EthGetLogs,
+    EthGetBlockByNumber,
+    EthGetTransactionCount,
+    EthGetTransactionReceipt,
+    EthSendRawTransaction,
+}
+
+impl RpcMethod {
+    fn name(self) -> &'static str {
+        match self {
+            RpcMethod::EthFeeHistory => "eth_feeHistory",
+            RpcMethod::EthGetLogs => "eth_getLogs",
+            RpcMethod::EthGetBlockByNumber => "eth_getBlockByNumber",
+            RpcMethod::EthGetTransactionCount => "eth_getTransactionCount",
+            RpcMethod::EthGetTransactionReceipt => "eth_getTransactionReceipt",
+            RpcMethod::EthSendRawTransaction => "eth_sendRawTransaction",
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]

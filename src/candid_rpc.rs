@@ -43,8 +43,8 @@ impl RpcTransport for CanisterTransport {
                 .unwrap_or_default(),
             effective_response_size_estimate,
         );
-        let rpc_method = RpcMethod(method.to_string());
-        let rpc_host = RpcHost(provider.hostname.to_string());
+        let rpc_method = MetricRpcMethod(method.to_string());
+        let rpc_host = MetricRpcHost(provider.hostname.to_string());
         do_http_request_with_metrics(
             ic_cdk::caller(),
             rpc_method,
@@ -125,12 +125,22 @@ fn get_rpc_client(source: RpcSource) -> RpcResult<CkEthRpcClient<CanisterTranspo
     })
 }
 
-fn multi_result<T>(result: Result<T, MultiCallError<T>>) -> MultiRpcResult<T> {
+fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) -> MultiRpcResult<T> {
     match result {
         Ok(value) => MultiRpcResult::Consistent(Ok(value)),
         Err(err) => match err {
             MultiCallError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
             MultiCallError::InconsistentResults(multi_call_results) => {
+                multi_call_results.results.iter().for_each(|(service, _)| {
+                    match resolve_provider(service) {
+                        Ok(provider) => add_metric_entry!(
+                            inconsistent_responses,
+                            (method.into(), MetricRpcHost(provider.hostname)),
+                            1
+                        ),
+                        Err(_) => {}
+                    }
+                });
                 MultiRpcResult::Inconsistent(multi_call_results.results.into_iter().collect())
             }
         },
@@ -156,14 +166,17 @@ impl CandidRpcClient {
             Ok(args) => args,
             Err(err) => return MultiRpcResult::Consistent(Err(RpcError::from(err))),
         };
-        multi_result(self.client.eth_get_logs(args).await)
+        process_result(RpcMethod::EthGetLogs, self.client.eth_get_logs(args).await)
     }
 
     pub async fn eth_get_block_by_number(
         &self,
         block: candid_types::BlockTag,
     ) -> MultiRpcResult<Block> {
-        multi_result(self.client.eth_get_block_by_number(block.into()).await)
+        process_result(
+            RpcMethod::EthGetBlockByNumber,
+            self.client.eth_get_block_by_number(block.into()).await,
+        )
     }
 
     pub async fn eth_get_transaction_receipt(
@@ -171,8 +184,11 @@ impl CandidRpcClient {
         hash: String,
     ) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
         match Hash::from_str(&hash) {
-            Ok(hash) => multi_result(self.client.eth_get_transaction_receipt(hash).await)
-                .map(|option| option.map(|r| r.into())),
+            Ok(hash) => process_result(
+                RpcMethod::EthGetTransactionReceipt,
+                self.client.eth_get_transaction_receipt(hash).await,
+            )
+            .map(|option| option.map(|r| r.into())),
             Err(_) => MultiRpcResult::Consistent(Err(ValidationError::InvalidHex(hash).into())),
         }
     }
@@ -185,7 +201,8 @@ impl CandidRpcClient {
             Ok(args) => args,
             Err(err) => return MultiRpcResult::Consistent(Err(RpcError::from(err))),
         };
-        multi_result(
+        process_result(
+            RpcMethod::EthGetTransactionCount,
             self.client
                 .eth_get_transaction_count(args)
                 .await
@@ -198,14 +215,19 @@ impl CandidRpcClient {
         &self,
         args: candid_types::FeeHistoryArgs,
     ) -> MultiRpcResult<Option<FeeHistory>> {
-        multi_result(self.client.eth_fee_history(args.into()).await).map(|history| history.into())
+        process_result(
+            RpcMethod::EthFeeHistory,
+            self.client.eth_fee_history(args.into()).await,
+        )
+        .map(|history| history.into())
     }
 
     pub async fn eth_send_raw_transaction(
         &self,
         raw_signed_transaction_hex: String,
     ) -> MultiRpcResult<SendRawTransactionResult> {
-        multi_result(
+        process_result(
+            RpcMethod::EthSendRawTransaction,
             self.client
                 .multi_eth_send_raw_transaction(raw_signed_transaction_hex)
                 .await,
@@ -214,49 +236,66 @@ impl CandidRpcClient {
 }
 
 #[test]
-fn test_multi_result_mapping() {
+fn test_process_result_mapping() {
     use cketh_common::eth_rpc_client::MultiCallResults;
 
-    assert_eq!(multi_result(Ok(5)), MultiRpcResult::Consistent(Ok(5)));
+    let method = RpcMethod::EthGetTransactionCount;
+
     assert_eq!(
-        multi_result(Err(MultiCallError::<()>::ConsistentError(
-            RpcError::ProviderError(ProviderError::MissingRequiredProvider)
-        ))),
+        process_result(method, Ok(5)),
+        MultiRpcResult::Consistent(Ok(5))
+    );
+    assert_eq!(
+        process_result(
+            method,
+            Err(MultiCallError::<()>::ConsistentError(
+                RpcError::ProviderError(ProviderError::MissingRequiredProvider)
+            ))
+        ),
         MultiRpcResult::Consistent(Err(RpcError::ProviderError(
             ProviderError::MissingRequiredProvider
         )))
     );
     assert_eq!(
-        multi_result(Err(MultiCallError::<()>::InconsistentResults(
-            MultiCallResults {
-                results: Default::default()
-            }
-        ))),
+        process_result(
+            method,
+            Err(MultiCallError::<()>::InconsistentResults(
+                MultiCallResults {
+                    results: Default::default()
+                }
+            ))
+        ),
         MultiRpcResult::Inconsistent(vec![])
     );
     assert_eq!(
-        multi_result(Err(MultiCallError::InconsistentResults(MultiCallResults {
-            results: vec![(RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5))]
-                .into_iter()
-                .collect(),
-        }))),
+        process_result(
+            method,
+            Err(MultiCallError::InconsistentResults(MultiCallResults {
+                results: vec![(RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5))]
+                    .into_iter()
+                    .collect(),
+            }))
+        ),
         MultiRpcResult::Inconsistent(vec![(
             RpcService::EthMainnet(EthMainnetService::Ankr),
             Ok(5)
         )])
     );
     assert_eq!(
-        multi_result(Err(MultiCallError::InconsistentResults(MultiCallResults {
-            results: vec![
-                (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
-                (
-                    RpcService::EthMainnet(EthMainnetService::Cloudflare),
-                    Err(RpcError::ProviderError(ProviderError::NoPermission))
-                )
-            ]
-            .into_iter()
-            .collect(),
-        }))),
+        process_result(
+            method,
+            Err(MultiCallError::InconsistentResults(MultiCallResults {
+                results: vec![
+                    (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
+                    (
+                        RpcService::EthMainnet(EthMainnetService::Cloudflare),
+                        Err(RpcError::ProviderError(ProviderError::NoPermission))
+                    )
+                ]
+                .into_iter()
+                .collect(),
+            }))
+        ),
         MultiRpcResult::Inconsistent(vec![
             (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
             (

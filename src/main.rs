@@ -99,7 +99,7 @@ async fn request(
     let response = do_json_rpc_request(
         ic_cdk::caller(),
         source.resolve()?,
-        RpcMethod("request".to_string()),
+        MetricRpcMethod("request".to_string()),
         &json_rpc_payload,
         max_response_bytes,
     )
