@@ -132,13 +132,12 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
             MultiCallError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
             MultiCallError::InconsistentResults(multi_call_results) => {
                 multi_call_results.results.iter().for_each(|(service, _)| {
-                    match resolve_provider(service) {
-                        Ok(provider) => add_metric_entry!(
+                    if let Ok(provider) = resolve_provider(service) {
+                        add_metric_entry!(
                             inconsistent_responses,
                             (method.into(), MetricRpcHost(provider.hostname)),
                             1
-                        ),
-                        Err(_) => {}
+                        )
                     }
                 });
                 MultiRpcResult::Inconsistent(multi_call_results.results.into_iter().collect())
