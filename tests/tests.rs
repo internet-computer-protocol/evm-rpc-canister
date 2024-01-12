@@ -8,8 +8,8 @@ use cketh_common::{
     address::Address,
     checked_amount::CheckedAmountOf,
     eth_rpc::{
-        Block, Data, FeeHistory, FixedSizeData, Hash, JsonRpcError, LogEntry, ProviderError,
-        RpcError, SendRawTransactionResult,
+        Block, Data, FeeHistory, FixedSizeData, Hash, HttpOutcallError, JsonRpcError, LogEntry,
+        ProviderError, RpcError, SendRawTransactionResult,
     },
     eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
     numeric::{BlockNumber, Wei},
@@ -1136,7 +1136,7 @@ fn candid_rpc_should_return_inconsistent_results_with_error() {
         ))
         .mock_http_once(MockOutcallBuilder::new(
             200,
-            r#"{"jsonrpc":"2.0","id":0,"code":123,"message":"Unexpected"}"#,
+            r#"{"jsonrpc":"2.0","id":0,"error":{"code":123,"message":"Unexpected"}}"#,
         ))
         .wait()
         .expect_inconsistent();
@@ -1149,18 +1149,14 @@ fn candid_rpc_should_return_inconsistent_results_with_error() {
             ),
             (
                 RpcService::EthMainnet(EthMainnetService::Ankr),
-                Err(RpcError::HttpOutcallError(
-                    cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
-                        status: 200,
-                        body: r#"{"jsonrpc":"2.0","id":0,"code":123,"message":"Unexpected"}"#
-                            .to_string(),
-                        parsing_error: Some("Eh".to_string()),
-                    }
-                ))
+                Err(RpcError::JsonRpcError(JsonRpcError {
+                    code: 123,
+                    message: "Unexpected".to_string(),
+                }))
             ),
         ]
     );
-    let rpc_method = || RpcMethod::EthSendRawTransaction.into();
+    let rpc_method = || RpcMethod::EthGetTransactionCount.into();
     assert_eq!(
         setup.get_metrics(),
         Metrics {
@@ -1201,7 +1197,7 @@ fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
         ))
         .mock_http_once(MockOutcallBuilder::new(
             400,
-            r#"{"jsonrpc":"2.0","id":0,"code":123,"message":"Error message"}"#,
+            r#"{"jsonrpc":"2.0","id":0,"error":{"code":123,"message":"Error message"}}"#,
         ))
         .wait()
         .expect_inconsistent();
@@ -1214,14 +1210,15 @@ fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
             ),
             (
                 RpcService::EthMainnet(EthMainnetService::Ankr),
-                Err(RpcError::JsonRpcError(JsonRpcError {
-                    code: 123,
-                    message: "Error message".to_string()
-                }))
+                Err(RpcError::HttpOutcallError(HttpOutcallError::InvalidHttpJsonRpcResponse {
+                    status: 400,
+                    body: "{\"jsonrpc\":\"2.0\",\"id\":0,\"error\":{\"code\":123,\"message\":\"Error message\"}}".to_string(),
+                    parsing_error: None,
+                })),
             ),
         ]
     );
-    let rpc_method = || RpcMethod::EthSendRawTransaction.into();
+    let rpc_method = || RpcMethod::EthGetTransactionCount.into();
     assert_eq!(
         setup.get_metrics(),
         Metrics {
