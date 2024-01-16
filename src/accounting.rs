@@ -25,9 +25,10 @@ pub fn get_candid_rpc_cost(
     payload_size_bytes: u64,
     effective_response_size_estimate: u64,
 ) -> u128 {
-    let base_cost = 400_000_000u128 + 100_000u128 * (2 * effective_response_size_estimate as u128);
-    let subnet_size = UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow()) as u128;
-    let http_cost = base_cost * subnet_size / NODES_IN_DEFAULT_SUBNET as u128;
+    let base_cost = HTTP_OUTCALL_REQUEST_COST
+        + HTTP_OUTCALL_BYTE_RECEIVED_COST * (2 * effective_response_size_estimate as u128);
+    let nodes_in_subnet = UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow()) as u128;
+    let http_cost = base_cost * nodes_in_subnet / NODES_IN_DEFAULT_SUBNET as u128;
     let provider_cost = get_provider_cost(provider, payload_size_bytes);
     http_cost + provider_cost
 }
