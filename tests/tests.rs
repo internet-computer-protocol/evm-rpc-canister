@@ -684,7 +684,7 @@ fn should_change_provider_owner() {
     setup = setup.as_controller();
     setup.manage_provider(ManageProviderArgs {
         provider_id,
-        owner: Some(setup.controller.0.clone()),
+        owner: Some(setup.controller.0),
         primary: None,
         service: None,
     });
