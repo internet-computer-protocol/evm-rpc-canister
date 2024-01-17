@@ -259,10 +259,12 @@ fn init(args: InitArgs) {
     for (service, hostname) in get_default_service_provider_hostnames() {
         let provider =
             find_provider(|p| p.chain_id == get_chain_id(&service) && p.hostname == hostname)
-                .expect(&format!(
-                    "Missing default provider for service {:?} with hostname {:?}",
-                    service, hostname
-                ));
+                .unwrap_or_else(|| {
+                    panic!(
+                        "Missing default provider for service {:?} with hostname {:?}",
+                        service, hostname
+                    )
+                });
         set_service_provider(&service, &provider);
     }
 }
