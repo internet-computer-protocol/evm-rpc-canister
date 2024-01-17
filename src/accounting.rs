@@ -13,7 +13,7 @@ pub fn get_json_rpc_cost(
             get_http_request_cost(api, payload_size_bytes, max_response_bytes)
         }
         ResolvedJsonRpcSource::Provider(provider) => {
-            get_candid_rpc_cost(&provider, payload_size_bytes, max_response_bytes)
+            get_candid_rpc_cost(provider, payload_size_bytes, max_response_bytes)
         }
     }
 }
