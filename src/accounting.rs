@@ -155,15 +155,15 @@ fn test_candid_rpc_cost() {
     let provider = PROVIDERS.with(|providers| providers.borrow().get(&provider_id).unwrap());
 
     // Default subnet
-    assert_eq!(get_candid_rpc_cost(&provider, 0, 0), 413758987);
-    assert_eq!(get_candid_rpc_cost(&provider, 123, 123), 440203987);
-    assert_eq!(get_candid_rpc_cost(&provider, 123, 4567890), 457216903987);
-    assert_eq!(get_candid_rpc_cost(&provider, 890, 4567890), 457305108987);
+    assert_eq!(get_candid_rpc_cost(&provider, 0, 0), 437524987);
+    assert_eq!(get_candid_rpc_cost(&provider, 123, 123), 463969987);
+    assert_eq!(get_candid_rpc_cost(&provider, 123, 4567890), 457240669987);
+    assert_eq!(get_candid_rpc_cost(&provider, 890, 4567890), 457328874987);
 
     // Fiduciary subnet
     UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = NODES_IN_FIDUCIARY_SUBNET);
-    assert_eq!(get_candid_rpc_cost(&provider, 0, 0), 891173202);
-    assert_eq!(get_candid_rpc_cost(&provider, 123, 123), 948131664);
-    assert_eq!(get_candid_rpc_cost(&provider, 123, 4567890), 984774870125);
-    assert_eq!(get_candid_rpc_cost(&provider, 890, 4567890), 984964850125);
+    assert_eq!(get_candid_rpc_cost(&provider, 0, 0), 942361510);
+    assert_eq!(get_candid_rpc_cost(&provider, 123, 123), 999319972);
+    assert_eq!(get_candid_rpc_cost(&provider, 123, 4567890), 984826058433);
+    assert_eq!(get_candid_rpc_cost(&provider, 890, 4567890), 985016038433);
 }
