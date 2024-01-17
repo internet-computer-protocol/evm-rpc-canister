@@ -7,7 +7,7 @@ use cketh_common::{
         SendRawTransactionResult, ValidationError,
     },
     eth_rpc_client::{
-        providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
+        providers::{RpcApi, RpcService},
         requests::GetTransactionCountParams,
         EthRpcClient as CkEthRpcClient, MultiCallError, RpcTransport,
     },
@@ -24,7 +24,7 @@ struct CanisterTransport;
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RpcTransport for CanisterTransport {
     fn resolve_api(service: &RpcService) -> Result<RpcApi, ProviderError> {
-        Ok(resolve_provider(service)?.api())
+        Ok(get_provider_for_service(service)?.api())
     }
 
     async fn http_request(
@@ -33,7 +33,7 @@ impl RpcTransport for CanisterTransport {
         request: CanisterHttpRequestArgument,
         effective_response_size_estimate: u64,
     ) -> RpcResult<HttpResponse> {
-        let provider = resolve_provider(service)?;
+        let provider = get_provider_for_service(service)?;
         let cycles_cost = get_candid_rpc_cost(
             &provider,
             request
@@ -55,33 +55,6 @@ impl RpcTransport for CanisterTransport {
         )
         .await
     }
-}
-
-fn resolve_provider(service: &RpcService) -> Result<Provider, ProviderError> {
-    use RpcService::*;
-    let (chain_id, hostname) = match service {
-        EthMainnet(service) => (
-            ETH_MAINNET_CHAIN_ID,
-            match service {
-                EthMainnetService::Alchemy => ALCHEMY_ETH_MAINNET_HOSTNAME,
-                EthMainnetService::Ankr => ANKR_HOSTNAME,
-                EthMainnetService::BlockPi => BLOCKPI_ETH_MAINNET_HOSTNAME,
-                EthMainnetService::PublicNode => PUBLICNODE_ETH_MAINNET_HOSTNAME,
-                EthMainnetService::Cloudflare => CLOUDFLARE_HOSTNAME,
-            },
-        ),
-        EthSepolia(service) => (
-            ETH_SEPOLIA_CHAIN_ID,
-            match service {
-                EthSepoliaService::Alchemy => ALCHEMY_ETH_SEPOLIA_HOSTNAME,
-                EthSepoliaService::Ankr => ANKR_HOSTNAME,
-                EthSepoliaService::BlockPi => BLOCKPI_ETH_SEPOLIA_HOSTNAME,
-                EthSepoliaService::PublicNode => PUBLICNODE_ETH_SEPOLIA_HOSTNAME,
-            },
-        ),
-    };
-    find_provider(|p| p.chain_id == chain_id && p.hostname == hostname)
-        .ok_or(ProviderError::MissingRequiredProvider)
 }
 
 fn check_services<T>(services: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
@@ -215,6 +188,7 @@ impl CandidRpcClient {
 
 #[test]
 fn test_multi_result_mapping() {
+    use cketh_common::eth_rpc_client::providers::EthMainnetService;
     use cketh_common::eth_rpc_client::MultiCallResults;
 
     assert_eq!(multi_result(Ok(5)), MultiRpcResult::Consistent(Ok(5)));

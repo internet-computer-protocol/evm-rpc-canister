@@ -1,4 +1,4 @@
-use cketh_common::eth_rpc_client::providers::RpcService;
+use cketh_common::{eth_rpc::ProviderError, eth_rpc_client::providers::RpcService};
 
 use crate::*;
 
@@ -117,6 +117,17 @@ pub fn find_provider(f: impl Fn(&Provider) -> bool) -> Option<Provider> {
     })
 }
 
+pub fn get_provider_for_service(service: &RpcService) -> Result<Provider, ProviderError> {
+    let provider_id = SERVICE_PROVIDER_MAP.with(|map| {
+        map.borrow()
+            .get(&StorableRpcService::new(service))
+            .ok_or(ProviderError::MissingRequiredProvider)
+    })?;
+    PROVIDERS
+        .with(|providers| providers.borrow().get(&provider_id))
+        .ok_or(ProviderError::ProviderNotFound)
+}
+
 pub fn do_register_provider(caller: Principal, provider: RegisterProviderArgs) -> u64 {
     validate_hostname(&provider.hostname).unwrap();
     validate_credential_path(&provider.credential_path).unwrap();
@@ -210,7 +221,7 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
                     provider.primary = primary;
                 }
                 if let Some(service) = args.service {
-                    set_service_provider(&service, args.provider_id);
+                    set_service_provider(&service, &provider);
                 }
                 providers.insert(args.provider_id, provider);
             }
@@ -219,10 +230,20 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
     })
 }
 
-pub fn set_service_provider(service: &RpcService, provider_id: u64) {
+pub fn set_service_provider(service: &RpcService, provider: &Provider) {
+    let chain_id = match service {
+        RpcService::EthMainnet(_) => ETH_MAINNET_CHAIN_ID,
+        RpcService::EthSepolia(_) => ETH_SEPOLIA_CHAIN_ID,
+    };
+    if chain_id != provider.chain_id {
+        ic_cdk::trap(&format!(
+            "Mismatch between service and provider chain ids ({} != {})",
+            chain_id, provider.chain_id
+        ))
+    }
     SERVICE_PROVIDER_MAP.with(|mappings| {
         mappings
             .borrow_mut()
-            .insert(StorableRpcService::new(service), provider_id);
+            .insert(StorableRpcService::new(service), provider.provider_id);
     });
 }
