@@ -1,3 +1,5 @@
+use cketh_common::eth_rpc_client::providers::RpcService;
+
 use crate::*;
 
 pub const ANKR_HOSTNAME: &str = "rpc.ankr.com";
@@ -208,13 +210,19 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
                     provider.primary = primary;
                 }
                 if let Some(service) = args.service {
-                    SERVICE_PROVIDER_MAPPING.with(|map| {
-                        let map = map.borrow_mut();
-                    })
+                    set_service_provider(&service, args.provider_id);
                 }
                 providers.insert(args.provider_id, provider);
             }
             None => ic_cdk::trap("Provider not found"),
         }
     })
+}
+
+pub fn set_service_provider(service: &RpcService, provider_id: u64) {
+    SERVICE_PROVIDER_MAP.with(|mappings| {
+        mappings
+            .borrow_mut()
+            .insert(StorableRpcService::new(&service), provider_id);
+    });
 }

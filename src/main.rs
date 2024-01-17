@@ -3,6 +3,7 @@ use cketh_common::eth_rpc::{
     Block, FeeHistory, LogEntry, ProviderError, RpcError, SendRawTransactionResult,
 };
 
+use cketh_common::eth_rpc_client::providers::RpcService;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -156,6 +157,12 @@ fn manage_provider(args: ManageProviderArgs) {
     do_manage_provider(args)
 }
 
+#[query(name = "getServiceProviderMap", guard = "require_admin_or_controller")]
+#[candid_method(query, rename = "getServiceProviderMap")]
+fn get_service_provider_mapping() -> Vec<(RpcService, u64)> {
+    SERVICE_PROVIDER_MAP.with(|map| map.borrow().iter().map(|(k, v)| (k.clone(), v)).collect())
+}
+
 #[query(name = "getAccumulatedCycleCount", guard = "require_register_provider")]
 #[candid_method(query, rename = "getAccumulatedCycleCount")]
 fn get_accumulated_cycle_count(provider_id: u64) -> u128 {
@@ -245,9 +252,6 @@ fn init(args: InitArgs) {
         do_register_provider(ic_cdk::caller(), provider);
     }
 }
-
-// #[ic_cdk::post_upgrade]
-// fn post_upgrade() {}
 
 #[query]
 fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {

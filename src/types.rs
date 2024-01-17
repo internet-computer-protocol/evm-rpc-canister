@@ -395,9 +395,12 @@ impl BoundedStorable for Provider {
 pub struct StorableRpcService(Vec<u8>);
 
 impl StorableRpcService {
-    fn new(service: &RpcService) -> Self {
+    pub fn new(service: &RpcService) -> Self {
         // Store as JSON string for enum order invariance
-        Self(serde_json::to_vec(service))
+        Self(
+            serde_json::to_vec(service)
+                .expect("BUG: unexpected error while serializing RpcService"),
+        )
     }
 }
 
@@ -407,7 +410,7 @@ impl Storable for StorableRpcService {
     }
 
     fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Owned(self.0)
+        Cow::Owned(self.0.to_owned())
     }
 }
 

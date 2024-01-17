@@ -1,4 +1,3 @@
-use cketh_common::eth_rpc_client::providers::RpcService;
 use ic_canister_log::declare_log_buffer;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 #[cfg(target_arch = "wasm32")]
@@ -38,6 +37,6 @@ thread_local! {
         StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(1)))));
     pub static PROVIDERS: RefCell<StableBTreeMap<u64, Provider, Memory>> = RefCell::new(
         StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(2)))));
-    pub static SERVICE_PROVIDER_MAPPING: RefCell<StableBTreeMap<StorableRpcService, u32, Memory>> = RefCell::new(
+    pub static SERVICE_PROVIDER_MAP: RefCell<StableBTreeMap<StorableRpcService, u64, Memory>> = RefCell::new(
         StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(3)))));
 }
