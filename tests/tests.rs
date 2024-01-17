@@ -172,6 +172,10 @@ impl EvmRpcSetup {
         self.call_query("getProviders", Encode!().unwrap())
     }
 
+    pub fn get_service_provider_map(&self) -> Vec<(RpcService, u64)> {
+        self.call_query("getServiceProviderMap", Encode!().unwrap())
+    }
+
     pub fn register_provider(&self, args: RegisterProviderArgs) -> u64 {
         self.call_update("registerProvider", Encode!(&args).unwrap())
             .wait()
@@ -184,6 +188,11 @@ impl EvmRpcSetup {
 
     pub fn update_provider(&self, args: UpdateProviderArgs) {
         self.call_update("updateProvider", Encode!(&args).unwrap())
+            .wait()
+    }
+
+    pub fn manage_provider(&self, args: ManageProviderArgs) {
+        self.call_update("manageProvider", Encode!(&args).unwrap())
             .wait()
     }
 
@@ -535,6 +544,56 @@ fn should_panic_if_unauthorized_unregister_provider() {
     // Only the `Manage` authorization may unregister a provider
     let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
     setup.unregister_provider(0);
+}
+
+#[test]
+#[should_panic(expected = "Not authorized")]
+fn should_panic_if_manage_auth_updates_non_owned_provider() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    let provider_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: 123,
+        hostname: "example.com".to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    setup.as_controller().update_provider(UpdateProviderArgs {
+        provider_id,
+        hostname: Some("unauthorized.host".to_string()),
+        credential_path: None,
+        credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
+    });
+}
+
+#[test]
+fn should_change_provider_owner() {
+    let mut setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    let provider_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: 123,
+        hostname: "example.com".to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    setup = setup.as_controller();
+    setup.manage_provider(ManageProviderArgs {
+        provider_id,
+        owner: Some(setup.controller.0.clone()),
+        primary: None,
+        service: None,
+    });
+    setup.update_provider(UpdateProviderArgs {
+        provider_id,
+        hostname: Some("authorized.host".to_string()),
+        credential_path: None,
+        credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
+    });
 }
 
 fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
