@@ -324,7 +324,15 @@ pub struct UpdateProviderArgs {
     pub cycles_per_call: Option<u64>,
     #[serde(rename = "cyclesPerMessageByte")]
     pub cycles_per_message_byte: Option<u64>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct ManageProviderArgs {
+    #[serde(rename = "providerId")]
+    pub provider_id: u64,
+    pub owner: Option<Principal>,
     pub primary: Option<bool>,
+    pub service: Option<RpcService>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

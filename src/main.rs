@@ -150,6 +150,12 @@ fn update_provider(provider: UpdateProviderArgs) {
     do_update_provider(ic_cdk::caller(), provider)
 }
 
+#[update(name = "manageProvider", guard = "require_admin_or_controller")]
+#[candid_method(rename = "manageProvider")]
+fn manage_provider(provider_id: u64, args: ManageProviderArgs) {
+    do_manage_provider(provider_id, args)
+}
+
 #[query(name = "getAccumulatedCycleCount", guard = "require_register_provider")]
 #[candid_method(query, rename = "getAccumulatedCycleCount")]
 fn get_accumulated_cycle_count(provider_id: u64) -> u128 {

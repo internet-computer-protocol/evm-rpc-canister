@@ -526,7 +526,6 @@ fn should_panic_if_unauthorized_update_provider() {
         credential_headers: None,
         cycles_per_call: None,
         cycles_per_message_byte: None,
-        primary: None,
     });
 }
 

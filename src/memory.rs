@@ -1,3 +1,4 @@
+use cketh_common::eth_rpc_client::providers::RpcService;
 use ic_canister_log::declare_log_buffer;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 #[cfg(target_arch = "wasm32")]

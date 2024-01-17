@@ -160,39 +160,58 @@ pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
     })
 }
 
-pub fn do_update_provider(caller: Principal, update: UpdateProviderArgs) {
+/// Changes provider details. The caller must be the owner of the provider.
+pub fn do_update_provider(caller: Principal, args: UpdateProviderArgs) {
     PROVIDERS.with(|p| {
         let mut p = p.borrow_mut();
-        match p.get(&update.provider_id) {
+        match p.get(&args.provider_id) {
             Some(mut provider) => {
                 if provider.owner != caller {
                     ic_cdk::trap("Provider owner != caller");
                 } else {
-                    if let Some(hostname) = update.hostname {
+                    if let Some(hostname) = args.hostname {
                         validate_hostname(&hostname).unwrap();
                         provider.hostname = hostname;
                     }
-                    if let Some(path) = update.credential_path {
+                    if let Some(path) = args.credential_path {
                         validate_credential_path(&path).unwrap();
                         provider.credential_path = path;
                     }
-                    if let Some(headers) = update.credential_headers {
+                    if let Some(headers) = args.credential_headers {
                         validate_credential_headers(&headers).unwrap();
                         provider.credential_headers = headers;
                     }
-                    if let Some(primary) = update.primary {
-                        provider.primary = primary;
-                    }
-                    if let Some(cycles_per_call) = update.cycles_per_call {
+                    if let Some(cycles_per_call) = args.cycles_per_call {
                         provider.cycles_per_call = cycles_per_call;
                     }
-                    if let Some(cycles_per_message_byte) = update.cycles_per_message_byte {
+                    if let Some(cycles_per_message_byte) = args.cycles_per_message_byte {
                         provider.cycles_per_message_byte = cycles_per_message_byte;
                     }
-                    p.insert(update.provider_id, provider);
+                    p.insert(args.provider_id, provider);
                 }
             }
             None => ic_cdk::trap("Provider not found"),
         }
     });
+}
+
+/// Changes administrative details for a provider. The caller must have the `Auth::Manage` permission.
+pub fn do_manage_provider(provider_id: u64, args: ManageProviderArgs) {
+    PROVIDERS.with(|p| {
+        let p = p.borrow_mut();
+        match p.get(&provider_id) {
+            Some(mut provider) => {
+                if let Some(owner) = args.owner {
+                    provider.owner = owner;
+                }
+                if let Some(primary) = args.primary {
+                    provider.primary = primary;
+                }
+                if let Some(service) = args.service {
+                    // TODO
+                }
+            }
+            None => ic_cdk::trap("Provider not found"),
+        }
+    })
 }
