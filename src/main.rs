@@ -274,18 +274,6 @@ fn stable_read(offset: u64, length: u64) -> Vec<u8> {
 }
 
 #[update(guard = "require_admin_or_controller")]
-fn stable_write(offset: u64, buffer: Vec<u8>) {
-    let size = offset + buffer.len() as u64;
-    let old_size = ic_cdk::api::stable::stable64_size() * WASM_PAGE_SIZE;
-    if size > old_size {
-        let old_pages = old_size / WASM_PAGE_SIZE;
-        let pages = (size + (WASM_PAGE_SIZE - 1)) / WASM_PAGE_SIZE;
-        ic_cdk::api::stable::stable64_grow(pages - old_pages).unwrap();
-    }
-    ic_cdk::api::stable::stable64_write(offset, buffer.as_slice());
-}
-
-#[update(guard = "require_admin_or_controller")]
 #[candid_method]
 fn authorize(principal: Principal, auth: Auth) {
     do_authorize(principal, auth)

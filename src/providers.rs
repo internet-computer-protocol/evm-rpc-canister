@@ -149,10 +149,10 @@ pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
     PROVIDERS.with(|p| {
         let mut p = p.borrow_mut();
         if let Some(provider) = p.get(&provider_id) {
-            if provider.owner == caller || is_authorized(&caller, Auth::Manage) {
-                p.remove(&provider_id).is_some()
-            } else {
+            if provider.owner != caller {
                 ic_cdk::trap("Not authorized");
+            } else {
+                p.remove(&provider_id).is_some()
             }
         } else {
             false
@@ -165,31 +165,32 @@ pub fn do_update_provider(caller: Principal, update: UpdateProviderArgs) {
         let mut p = p.borrow_mut();
         match p.get(&update.provider_id) {
             Some(mut provider) => {
-                if provider.owner != caller && !is_authorized(&caller, Auth::Manage) {
+                if provider.owner != caller {
                     ic_cdk::trap("Provider owner != caller");
+                } else {
+                    if let Some(hostname) = update.hostname {
+                        validate_hostname(&hostname).unwrap();
+                        provider.hostname = hostname;
+                    }
+                    if let Some(path) = update.credential_path {
+                        validate_credential_path(&path).unwrap();
+                        provider.credential_path = path;
+                    }
+                    if let Some(headers) = update.credential_headers {
+                        validate_credential_headers(&headers).unwrap();
+                        provider.credential_headers = headers;
+                    }
+                    if let Some(primary) = update.primary {
+                        provider.primary = primary;
+                    }
+                    if let Some(cycles_per_call) = update.cycles_per_call {
+                        provider.cycles_per_call = cycles_per_call;
+                    }
+                    if let Some(cycles_per_message_byte) = update.cycles_per_message_byte {
+                        provider.cycles_per_message_byte = cycles_per_message_byte;
+                    }
+                    p.insert(update.provider_id, provider);
                 }
-                if let Some(hostname) = update.hostname {
-                    validate_hostname(&hostname).unwrap();
-                    provider.hostname = hostname;
-                }
-                if let Some(path) = update.credential_path {
-                    validate_credential_path(&path).unwrap();
-                    provider.credential_path = path;
-                }
-                if let Some(headers) = update.credential_headers {
-                    validate_credential_headers(&headers).unwrap();
-                    provider.credential_headers = headers;
-                }
-                if let Some(primary) = update.primary {
-                    provider.primary = primary;
-                }
-                if let Some(cycles_per_call) = update.cycles_per_call {
-                    provider.cycles_per_call = cycles_per_call;
-                }
-                if let Some(cycles_per_message_byte) = update.cycles_per_message_byte {
-                    provider.cycles_per_message_byte = cycles_per_message_byte;
-                }
-                p.insert(update.provider_id, provider);
             }
             None => ic_cdk::trap("Provider not found"),
         }
