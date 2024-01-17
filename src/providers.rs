@@ -223,6 +223,6 @@ pub fn set_service_provider(service: &RpcService, provider_id: u64) {
     SERVICE_PROVIDER_MAP.with(|mappings| {
         mappings
             .borrow_mut()
-            .insert(StorableRpcService::new(&service), provider_id);
+            .insert(StorableRpcService::new(service), provider_id);
     });
 }
