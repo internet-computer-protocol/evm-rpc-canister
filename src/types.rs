@@ -394,6 +394,13 @@ impl BoundedStorable for Provider {
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct StorableRpcService(Vec<u8>);
 
+impl TryFrom<StorableRpcService> for RpcService {
+    type Error = serde_json::Error;
+    fn try_from(value: StorableRpcService) -> Result<Self, Self::Error> {
+        serde_json::from_slice(&value.0)
+    }
+}
+
 impl StorableRpcService {
     pub fn new(service: &RpcService) -> Self {
         // Store as JSON string for enum order invariance

@@ -159,8 +159,13 @@ fn manage_provider(args: ManageProviderArgs) {
 
 #[query(name = "getServiceProviderMap", guard = "require_admin_or_controller")]
 #[candid_method(query, rename = "getServiceProviderMap")]
-fn get_service_provider_mapping() -> Vec<(RpcService, u64)> {
-    SERVICE_PROVIDER_MAP.with(|map| map.borrow().iter().map(|(k, v)| (k.clone(), v)).collect())
+fn get_service_provider_map() -> Vec<(RpcService, u64)> {
+    SERVICE_PROVIDER_MAP.with(|map| {
+        map.borrow()
+            .iter()
+            .filter_map(|(k, v)| Some((k.try_into().ok()?, v)))
+            .collect()
+    })
 }
 
 #[query(name = "getAccumulatedCycleCount", guard = "require_register_provider")]
