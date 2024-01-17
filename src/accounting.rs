@@ -13,10 +13,20 @@ pub fn get_json_rpc_cost(
             get_http_request_cost(api, payload_size_bytes, max_response_bytes)
         }
         ResolvedJsonRpcSource::Provider(provider) => {
-            get_http_request_cost(&provider.api(), payload_size_bytes, max_response_bytes)
-                + get_provider_cost(provider, payload_size_bytes)
+            get_candid_rpc_cost(&provider, payload_size_bytes, max_response_bytes)
         }
     }
+}
+
+/// Returns the cycles cost of a Candid-RPC request.
+pub fn get_candid_rpc_cost(
+    provider: &Provider,
+    payload_size_bytes: u64,
+    max_response_bytes: u64,
+) -> u128 {
+    let http_cost = get_http_request_cost(&provider.api(), payload_size_bytes, max_response_bytes);
+    let provider_cost = get_provider_cost(provider, payload_size_bytes);
+    http_cost + provider_cost
 }
 
 /// Calculates the baseline cost of sending a JSON-RPC request using HTTP outcalls.
@@ -26,7 +36,9 @@ pub fn get_http_request_cost(
     max_response_bytes: u64,
 ) -> u128 {
     let nodes_in_subnet = UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow());
-    let ingress_bytes = payload_size_bytes as u128 + api.url.len() as u128 + INGRESS_OVERHEAD_BYTES;
+    let ingress_bytes = payload_size_bytes as u128
+        + u32::max(RPC_URL_MIN_COST_BYTES, api.url.len() as u32) as u128
+        + INGRESS_OVERHEAD_BYTES;
     let base_cost = INGRESS_MESSAGE_RECEIVED_COST
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
         + HTTP_OUTCALL_REQUEST_COST
@@ -143,15 +155,15 @@ fn test_candid_rpc_cost() {
     let provider = PROVIDERS.with(|providers| providers.borrow().get(&provider_id).unwrap());
 
     // Default subnet
-    assert_eq!(get_candid_rpc_cost(&provider, 0, 0), 400012987);
-    assert_eq!(get_candid_rpc_cost(&provider, 123, 123), 426211987);
-    assert_eq!(get_candid_rpc_cost(&provider, 123, 4567890), 913979611987);
-    assert_eq!(get_candid_rpc_cost(&provider, 890, 4567890), 913989582987);
+    assert_eq!(get_candid_rpc_cost(&provider, 0, 0), 413758987);
+    assert_eq!(get_candid_rpc_cost(&provider, 123, 123), 440203987);
+    assert_eq!(get_candid_rpc_cost(&provider, 123, 4567890), 457216903987);
+    assert_eq!(get_candid_rpc_cost(&provider, 890, 4567890), 457305108987);
 
     // Fiduciary subnet
     UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = NODES_IN_FIDUCIARY_SUBNET);
-    assert_eq!(get_candid_rpc_cost(&provider, 0, 0), 861566433);
-    assert_eq!(get_candid_rpc_cost(&provider, 123, 123), 917995048);
-    assert_eq!(get_candid_rpc_cost(&provider, 123, 4567890), 1968571471972);
-    assert_eq!(get_candid_rpc_cost(&provider, 890, 4567890), 1968592947972);
+    assert_eq!(get_candid_rpc_cost(&provider, 0, 0), 891173202);
+    assert_eq!(get_candid_rpc_cost(&provider, 123, 123), 948131664);
+    assert_eq!(get_candid_rpc_cost(&provider, 123, 4567890), 984774870125);
+    assert_eq!(get_candid_rpc_cost(&provider, 890, 4567890), 984964850125);
 }

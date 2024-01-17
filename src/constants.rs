@@ -6,6 +6,9 @@ pub const INGRESS_MESSAGE_BYTE_RECEIVED_COST: u128 = 2_000;
 pub const HTTP_OUTCALL_REQUEST_COST: u128 = 400_000_000;
 pub const HTTP_OUTCALL_BYTE_RECEIVED_COST: u128 = 100_000;
 
+// Minimum number of bytes charged for a URL; improves consistency of costs between providers
+pub const RPC_URL_MIN_COST_BYTES: u32 = 256;
+
 pub const MINIMUM_WITHDRAWAL_CYCLES: u128 = 1_000_000_000;
 
 pub const STRING_STORABLE_MAX_SIZE: u32 = 100;
