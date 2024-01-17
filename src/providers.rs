@@ -172,6 +172,13 @@ pub fn get_provider_for_service(service: &RpcService) -> Result<Provider, Provid
         .ok_or(ProviderError::ProviderNotFound)
 }
 
+pub fn get_chain_id(service: &RpcService) -> u64 {
+    match service {
+        RpcService::EthMainnet(_) => ETH_MAINNET_CHAIN_ID,
+        RpcService::EthSepolia(_) => ETH_SEPOLIA_CHAIN_ID,
+    }
+}
+
 pub fn do_register_provider(caller: Principal, provider: RegisterProviderArgs) -> u64 {
     validate_hostname(&provider.hostname).unwrap();
     validate_credential_path(&provider.credential_path).unwrap();
@@ -275,10 +282,7 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
 }
 
 pub fn set_service_provider(service: &RpcService, provider: &Provider) {
-    let chain_id = match service {
-        RpcService::EthMainnet(_) => ETH_MAINNET_CHAIN_ID,
-        RpcService::EthSepolia(_) => ETH_SEPOLIA_CHAIN_ID,
-    };
+    let chain_id = get_chain_id(service);
     if chain_id != provider.chain_id {
         ic_cdk::trap(&format!(
             "Mismatch between service and provider chain ids ({} != {})",

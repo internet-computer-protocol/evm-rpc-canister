@@ -257,9 +257,13 @@ fn init(args: InitArgs) {
         do_register_provider(ic_cdk::caller(), provider);
     }
     for (service, hostname) in get_default_service_provider_hostnames() {
-        let provider = find_provider(|p| p.chain_id == chain_id && p.hostname == hostname)
-            .ok_or(ProviderError::MissingRequiredProvider);
-        set_service_provider(&service, provider);
+        let provider =
+            find_provider(|p| p.chain_id == get_chain_id(&service) && p.hostname == hostname)
+                .expect(&format!(
+                    "Missing default provider for service {:?} with hostname {:?}",
+                    service, hostname
+                ));
+        set_service_provider(&service, &provider);
     }
 }
 
