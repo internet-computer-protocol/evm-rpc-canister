@@ -156,12 +156,14 @@ impl EvmRpcSetup {
         }
     }
 
-    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) -> CallFlow<()> {
+    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) {
         self.call_update("authorize", Encode!(&principal.0, &auth).unwrap())
+            .wait()
     }
 
-    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) -> CallFlow<()> {
+    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) {
         self.call_update("deauthorize", Encode!(&principal.0, &auth).unwrap())
+            .wait()
     }
 
     pub fn get_metrics(&self) -> Metrics {
@@ -197,18 +199,12 @@ impl EvmRpcSetup {
     }
 
     pub fn authorize_caller(self, auth: Auth) -> Self {
-        self.clone()
-            .as_controller()
-            .authorize(&self.caller, auth)
-            .wait();
+        self.clone().as_controller().authorize(&self.caller, auth);
         self
     }
 
     pub fn deauthorize_caller(self, auth: Auth) -> Self {
-        self.clone()
-            .as_controller()
-            .deauthorize(&self.caller, auth)
-            .wait();
+        self.clone().as_controller().deauthorize(&self.caller, auth);
         self
     }
 
@@ -579,6 +575,7 @@ fn should_change_provider_owner() {
         cycles_per_call: 0,
         cycles_per_message_byte: 0,
     });
+    setup.authorize(&setup.controller, Auth::RegisterProvider);
     setup = setup.as_controller();
     setup.manage_provider(ManageProviderArgs {
         provider_id,
@@ -596,9 +593,45 @@ fn should_change_provider_owner() {
     });
 }
 
+#[test]
+fn should_replace_service_provider() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    let provider_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: ETH_MAINNET_CHAIN_ID,
+        hostname: "ankr2.com".to_string(),
+        credential_path: "/v2/mainnet".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    setup
+        .clone()
+        .as_controller()
+        .manage_provider(ManageProviderArgs {
+            provider_id,
+            owner: None,
+            primary: None,
+            service: Some(RpcService::EthMainnet(EthMainnetService::Ankr)),
+        });
+    let result = setup
+        .eth_get_transaction_count(
+            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://ankr2.com/v2/mainnet"),
+        )
+        .wait()
+        .expect_consistent();
+    assert_eq!(result, Ok(1.into()));
+}
+
 fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-
     assert_matches!(
         setup
             .request(
