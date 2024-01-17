@@ -1,4 +1,7 @@
-use cketh_common::{eth_rpc::ProviderError, eth_rpc_client::providers::RpcService};
+use cketh_common::{
+    eth_rpc::ProviderError,
+    eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
+};
 
 use crate::*;
 
@@ -101,6 +104,47 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
         },
+    ]
+}
+
+pub fn get_default_service_provider_hostnames() -> Vec<(RpcService, &'static str)> {
+    vec![
+        (
+            RpcService::EthMainnet(EthMainnetService::Alchemy),
+            ALCHEMY_ETH_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::EthMainnet(EthMainnetService::Ankr),
+            ANKR_HOSTNAME,
+        ),
+        (
+            RpcService::EthMainnet(EthMainnetService::BlockPi),
+            BLOCKPI_ETH_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::EthMainnet(EthMainnetService::Cloudflare),
+            CLOUDFLARE_HOSTNAME,
+        ),
+        (
+            RpcService::EthMainnet(EthMainnetService::PublicNode),
+            PUBLICNODE_ETH_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::EthSepolia(EthSepoliaService::Alchemy),
+            ALCHEMY_ETH_SEPOLIA_HOSTNAME,
+        ),
+        (
+            RpcService::EthSepolia(EthSepoliaService::Ankr),
+            ANKR_HOSTNAME,
+        ),
+        (
+            RpcService::EthSepolia(EthSepoliaService::BlockPi),
+            BLOCKPI_ETH_SEPOLIA_HOSTNAME,
+        ),
+        (
+            RpcService::EthSepolia(EthSepoliaService::PublicNode),
+            PUBLICNODE_ETH_SEPOLIA_HOSTNAME,
+        ),
     ]
 }
 
