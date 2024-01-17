@@ -145,7 +145,7 @@ fn unregister_provider(provider_id: u64) -> bool {
     do_unregister_provider(ic_cdk::caller(), provider_id)
 }
 
-#[update(name = "updateProvider", guard = "require_register_provider")]
+#[update(name = "updateProvider")]
 #[candid_method(rename = "updateProvider")]
 fn update_provider(provider: UpdateProviderArgs) {
     do_update_provider(ic_cdk::caller(), provider)
