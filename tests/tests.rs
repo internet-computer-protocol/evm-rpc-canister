@@ -612,6 +612,20 @@ fn should_panic_if_anonymous_register_provider() {
 }
 
 #[test]
+#[should_panic(expected = "Provider owner != caller")]
+fn should_panic_if_anonymous_update_provider() {
+    let setup = EvmRpcSetup::new().as_anonymous();
+    setup.update_provider(UpdateProviderArgs {
+        provider_id: 3,
+        hostname: Some("unauthorized.host".to_string()),
+        credential_path: None,
+        credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
+    });
+}
+
+#[test]
 #[should_panic(expected = "You are not authorized")]
 fn should_panic_if_unauthorized_register_provider() {
     let setup = EvmRpcSetup::new();
