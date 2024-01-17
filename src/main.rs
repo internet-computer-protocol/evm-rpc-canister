@@ -152,8 +152,8 @@ fn update_provider(provider: UpdateProviderArgs) {
 
 #[update(name = "manageProvider", guard = "require_admin_or_controller")]
 #[candid_method(rename = "manageProvider")]
-fn manage_provider(provider_id: u64, args: ManageProviderArgs) {
-    do_manage_provider(provider_id, args)
+fn manage_provider(args: ManageProviderArgs) {
+    do_manage_provider(args)
 }
 
 #[query(name = "getAccumulatedCycleCount", guard = "require_register_provider")]

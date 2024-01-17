@@ -125,8 +125,8 @@ pub fn do_register_provider(caller: Principal, provider: RegisterProviderArgs) -
         m.borrow_mut().set(metadata).unwrap();
         id
     });
-    PROVIDERS.with(|p| {
-        p.borrow_mut().insert(
+    PROVIDERS.with(|providers| {
+        providers.borrow_mut().insert(
             provider_id,
             Provider {
                 provider_id,
@@ -146,13 +146,13 @@ pub fn do_register_provider(caller: Principal, provider: RegisterProviderArgs) -
 }
 
 pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
-    PROVIDERS.with(|p| {
-        let mut p = p.borrow_mut();
-        if let Some(provider) = p.get(&provider_id) {
+    PROVIDERS.with(|providers| {
+        let mut providers = providers.borrow_mut();
+        if let Some(provider) = providers.get(&provider_id) {
             if provider.owner != caller {
                 ic_cdk::trap("Not authorized");
             } else {
-                p.remove(&provider_id).is_some()
+                providers.remove(&provider_id).is_some()
             }
         } else {
             false
@@ -162,9 +162,9 @@ pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
 
 /// Changes provider details. The caller must be the owner of the provider.
 pub fn do_update_provider(caller: Principal, args: UpdateProviderArgs) {
-    PROVIDERS.with(|p| {
-        let mut p = p.borrow_mut();
-        match p.get(&args.provider_id) {
+    PROVIDERS.with(|providers| {
+        let mut providers = providers.borrow_mut();
+        match providers.get(&args.provider_id) {
             Some(mut provider) => {
                 if provider.owner != caller {
                     ic_cdk::trap("Provider owner != caller");
@@ -187,7 +187,7 @@ pub fn do_update_provider(caller: Principal, args: UpdateProviderArgs) {
                     if let Some(cycles_per_message_byte) = args.cycles_per_message_byte {
                         provider.cycles_per_message_byte = cycles_per_message_byte;
                     }
-                    p.insert(args.provider_id, provider);
+                    providers.insert(args.provider_id, provider);
                 }
             }
             None => ic_cdk::trap("Provider not found"),
@@ -196,10 +196,10 @@ pub fn do_update_provider(caller: Principal, args: UpdateProviderArgs) {
 }
 
 /// Changes administrative details for a provider. The caller must have the `Auth::Manage` permission.
-pub fn do_manage_provider(provider_id: u64, args: ManageProviderArgs) {
-    PROVIDERS.with(|p| {
-        let p = p.borrow_mut();
-        match p.get(&provider_id) {
+pub fn do_manage_provider(args: ManageProviderArgs) {
+    PROVIDERS.with(|providers| {
+        let mut providers = providers.borrow_mut();
+        match providers.get(&args.provider_id) {
             Some(mut provider) => {
                 if let Some(owner) = args.owner {
                     provider.owner = owner;
@@ -208,8 +208,11 @@ pub fn do_manage_provider(provider_id: u64, args: ManageProviderArgs) {
                     provider.primary = primary;
                 }
                 if let Some(service) = args.service {
-                    // TODO
+                    SERVICE_PROVIDER_MAPPING.with(|map| {
+                        let map = map.borrow_mut();
+                    })
                 }
+                providers.insert(args.provider_id, provider);
             }
             None => ic_cdk::trap("Provider not found"),
         }

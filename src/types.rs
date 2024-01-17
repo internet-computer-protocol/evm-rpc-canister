@@ -13,7 +13,10 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
-use crate::{AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDERS};
+use crate::{
+    AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDERS, PROVIDER_MAX_SIZE,
+    RPC_SERVICE_MAX_SIZE,
+};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
@@ -384,7 +387,32 @@ impl Storable for Provider {
 }
 
 impl BoundedStorable for Provider {
-    const MAX_SIZE: u32 = 256; // A reasonable limit.
+    const MAX_SIZE: u32 = PROVIDER_MAX_SIZE;
+    const IS_FIXED_SIZE: bool = false;
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct StorableRpcService(Vec<u8>);
+
+impl StorableRpcService {
+    fn new(service: &RpcService) -> Self {
+        // Store as JSON string for enum order invariance
+        Self(serde_json::to_vec(service))
+    }
+}
+
+impl Storable for StorableRpcService {
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        StorableRpcService(bytes.to_vec())
+    }
+
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::Owned(self.0)
+    }
+}
+
+impl BoundedStorable for StorableRpcService {
+    const MAX_SIZE: u32 = RPC_SERVICE_MAX_SIZE;
     const IS_FIXED_SIZE: bool = false;
 }
 
