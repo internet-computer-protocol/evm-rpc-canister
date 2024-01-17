@@ -747,6 +747,69 @@ fn should_replace_service_provider() {
 }
 
 #[test]
+fn should_set_primary_provider() {
+    let setup = EvmRpcSetup::new()
+        .authorize_caller(Auth::RegisterProvider)
+        .authorize_caller(Auth::FreeRpc);
+    let new_credential = "/primary-credential";
+    let provider_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: ETH_MAINNET_CHAIN_ID,
+        hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+        credential_path: new_credential.to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    assert_matches!(
+        setup
+            .request(
+                JsonRpcSource::Service {
+                    hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+                    chain_id: None,
+                },
+                MOCK_REQUEST_PAYLOAD,
+                MOCK_REQUEST_RESPONSE_BYTES,
+            )
+            .mock_http(
+                MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
+                    "https://{}{}",
+                    ALCHEMY_ETH_MAINNET_HOSTNAME, ALCHEMY_ETH_MAINNET_CREDENTIAL
+                ))
+            )
+            .wait(),
+        Ok(_)
+    );
+    setup
+        .clone()
+        .as_controller()
+        .manage_provider(ManageProviderArgs {
+            provider_id,
+            owner: None,
+            primary: Some(true),
+            service: None,
+        });
+    assert_matches!(
+        setup
+            .request(
+                JsonRpcSource::Service {
+                    hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+                    chain_id: None,
+                },
+                MOCK_REQUEST_PAYLOAD,
+                MOCK_REQUEST_RESPONSE_BYTES,
+            )
+            .mock_http(
+                MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
+                    "https://{}{}",
+                    ALCHEMY_ETH_MAINNET_HOSTNAME, new_credential
+                ))
+            )
+            .wait(),
+        Ok(_)
+    );
+}
+
+#[test]
 fn should_canonicalize_json_response() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let responses = [
