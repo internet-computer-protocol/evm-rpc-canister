@@ -640,6 +640,30 @@ fn should_panic_if_unauthorized_register_provider() {
 }
 
 #[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_panic_if_unauthorized_manage_provider() {
+    let setup = EvmRpcSetup::new();
+    setup.manage_provider(ManageProviderArgs {
+        provider_id: 2,
+        owner: Some(setup.caller.0),
+        primary: None,
+        service: None,
+    });
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_panic_if_anonymous_manage_provider() {
+    let setup = EvmRpcSetup::new().as_anonymous();
+    setup.manage_provider(ManageProviderArgs {
+        provider_id: 3,
+        owner: Some(setup.caller.0),
+        primary: None,
+        service: None,
+    });
+}
+
+#[test]
 #[should_panic(expected = "Provider owner != caller")]
 fn should_panic_if_unauthorized_update_provider() {
     // Providers can only be updated by the original owner
