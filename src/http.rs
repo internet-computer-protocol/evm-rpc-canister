@@ -11,7 +11,7 @@ use crate::*;
 pub async fn do_json_rpc_request(
     caller: Principal,
     source: ResolvedJsonRpcSource,
-    rpc_method: RpcMethod,
+    rpc_method: MetricRpcMethod,
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> RpcResult<HttpResponse> {
@@ -48,14 +48,14 @@ pub async fn do_json_rpc_request(
             vec![],
         )),
     };
-    let rpc_host = RpcHost(host.to_string());
+    let rpc_host = MetricRpcHost(host.to_string());
     do_http_request_with_metrics(caller, rpc_method, rpc_host, provider, request, cycles_cost).await
 }
 
 pub async fn do_http_request_with_metrics(
     caller: Principal,
-    rpc_method: RpcMethod,
-    rpc_host: RpcHost,
+    rpc_method: MetricRpcMethod,
+    rpc_host: MetricRpcHost,
     provider: Option<Provider>,
     request: CanisterHttpRequestArgument,
     cycles_cost: u128,
@@ -101,10 +101,7 @@ pub async fn do_http_request_with_metrics(
     match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost).await {
         Ok((response,)) => {
             let status: u32 = response.status.0.clone().try_into().unwrap_or(0);
-            if !(200..300).contains(&status) {
-                add_metric_entry!(err_http_response, (rpc_method.clone(), rpc_host.clone()), 1);
-            }
-            add_metric_entry!(responses, (rpc_method, rpc_host), 1);
+            add_metric_entry!(responses, (rpc_method, rpc_host, status.into()), 1);
             Ok(response)
         }
         Err((code, message)) => {

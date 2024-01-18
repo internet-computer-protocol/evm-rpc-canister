@@ -66,11 +66,12 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
     crate::UNSTABLE_METRICS.with(|m| {
         let m = m.borrow();
 
-        w.encode_entries("requests", &m.requests, "Number of RPC requests");
+        w.encode_entries("requests", &m.requests, "Number of JSON-RPC requests");
+        w.encode_entries("responses", &m.responses, "Number of JSON-RPC responses");
         w.encode_entries(
-            "responses",
-            &m.responses,
-            "Number of successful RPC responses",
+            "inconsistent_responses",
+            &m.inconsistent_responses,
+            "Number of inconsistent RPC responses",
         );
         w.encode_entries(
             "cycles_charged",
@@ -86,11 +87,6 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             "err_http_outcall",
             &m.err_http_outcall,
             "Number of unsuccessful HTTP outcalls",
-        );
-        w.encode_entries(
-            "err_http_response",
-            &m.err_http_response,
-            "Number of HTTP responses with unsuccessful status codes",
         );
         w.encode_entries(
             "err_host_not_allowed",

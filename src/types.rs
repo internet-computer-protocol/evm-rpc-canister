@@ -93,6 +93,12 @@ pub trait MetricValue {
     fn metric_value(&self) -> f64;
 }
 
+impl MetricValue for u32 {
+    fn metric_value(&self) -> f64 {
+        *self as f64
+    }
+}
+
 impl MetricValue for u64 {
     fn metric_value(&self) -> f64 {
         *self as f64
@@ -115,40 +121,101 @@ impl<A: MetricLabels, B: MetricLabels> MetricLabels for (A, B) {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
-pub struct RpcMethod(pub String);
+impl<A: MetricLabels, B: MetricLabels, C: MetricLabels> MetricLabels for (A, B, C) {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        [
+            self.0.metric_labels(),
+            self.1.metric_labels(),
+            self.2.metric_labels(),
+        ]
+        .concat()
+    }
+}
 
-impl MetricLabels for RpcMethod {
+#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
+pub struct MetricRpcMethod(pub String);
+
+impl From<RpcMethod> for MetricRpcMethod {
+    fn from(method: RpcMethod) -> Self {
+        MetricRpcMethod(method.name().to_string())
+    }
+}
+
+impl MetricLabels for MetricRpcMethod {
     fn metric_labels(&self) -> Vec<(&str, &str)> {
         vec![("method", &self.0)]
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
-pub struct RpcHost(pub String);
+pub struct MetricRpcHost(pub String);
 
-impl MetricLabels for RpcHost {
+impl<'a> From<&'a str> for MetricRpcHost {
+    fn from(hostname: &str) -> Self {
+        MetricRpcHost(hostname.to_string())
+    }
+}
+
+impl MetricLabels for MetricRpcHost {
     fn metric_labels(&self) -> Vec<(&str, &str)> {
         vec![("host", &self.0)]
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash, CandidType, Deserialize)]
+pub struct MetricHttpStatusCode(pub String);
+
+impl From<u32> for MetricHttpStatusCode {
+    fn from(value: u32) -> Self {
+        MetricHttpStatusCode(value.to_string())
+    }
+}
+
+impl MetricLabels for MetricHttpStatusCode {
+    fn metric_labels(&self) -> Vec<(&str, &str)> {
+        vec![("status", &self.0)]
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq, CandidType, Deserialize)]
 pub struct Metrics {
-    pub requests: HashMap<(RpcMethod, RpcHost), u64>,
-    pub responses: HashMap<(RpcMethod, RpcHost), u64>,
+    pub requests: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
+    pub responses: HashMap<(MetricRpcMethod, MetricRpcHost, MetricHttpStatusCode), u64>,
+    #[serde(rename = "inconsistentResponses")]
+    pub inconsistent_responses: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
     #[serde(rename = "cyclesCharged")]
-    pub cycles_charged: HashMap<(RpcMethod, RpcHost), u128>,
+    pub cycles_charged: HashMap<(MetricRpcMethod, MetricRpcHost), u128>,
     #[serde(rename = "cyclesWithdrawn")]
     pub cycles_withdrawn: u128,
     #[serde(rename = "errNoPermission")]
     pub err_no_permission: u64,
-    #[serde(rename = "errHostNotAllowed")]
-    pub err_host_not_allowed: HashMap<RpcHost, u64>,
     #[serde(rename = "errHttpOutcall")]
-    pub err_http_outcall: HashMap<(RpcMethod, RpcHost), u64>,
-    #[serde(rename = "errHttpResponse")]
-    pub err_http_response: HashMap<(RpcMethod, RpcHost), u64>,
+    pub err_http_outcall: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
+    #[serde(rename = "errHostNotAllowed")]
+    pub err_host_not_allowed: HashMap<MetricRpcHost, u64>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RpcMethod {
+    EthFeeHistory,
+    EthGetLogs,
+    EthGetBlockByNumber,
+    EthGetTransactionCount,
+    EthGetTransactionReceipt,
+    EthSendRawTransaction,
+}
+
+impl RpcMethod {
+    fn name(self) -> &'static str {
+        match self {
+            RpcMethod::EthFeeHistory => "eth_feeHistory",
+            RpcMethod::EthGetLogs => "eth_getLogs",
+            RpcMethod::EthGetBlockByNumber => "eth_getBlockByNumber",
+            RpcMethod::EthGetTransactionCount => "eth_getTransactionCount",
+            RpcMethod::EthGetTransactionReceipt => "eth_getTransactionReceipt",
+            RpcMethod::EthSendRawTransaction => "eth_sendRawTransaction",
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]

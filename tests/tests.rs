@@ -8,8 +8,8 @@ use cketh_common::{
     address::Address,
     checked_amount::CheckedAmountOf,
     eth_rpc::{
-        Block, Data, FeeHistory, FixedSizeData, Hash, JsonRpcError, LogEntry, ProviderError,
-        RpcError, SendRawTransactionResult,
+        Block, Data, FeeHistory, FixedSizeData, Hash, HttpOutcallError, JsonRpcError, LogEntry,
+        ProviderError, RpcError, SendRawTransactionResult,
     },
     eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
     numeric::{BlockNumber, Wei},
@@ -988,24 +988,19 @@ fn candid_rpc_should_err_when_service_unavailable() {
             }
         ))
     );
-    let rpc_method = || RpcMethod("eth_getTransactionReceipt".to_string());
+    let rpc_method = || RpcMethod::EthGetTransactionReceipt.into();
     assert_eq!(
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into()) => 1,
+                (rpc_method(), PUBLICNODE_ETH_MAINNET_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
-            },
-            err_http_response: hashmap! {
-                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(PUBLICNODE_ETH_MAINNET_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 503.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into(), 503.into()) => 1,
+                (rpc_method(), PUBLICNODE_ETH_MAINNET_HOSTNAME.into(), 503.into()) => 1,
             },
             ..Default::default()
         }
@@ -1036,17 +1031,17 @@ fn candid_rpc_should_recognize_json_error() {
             message: "Error message".to_string(),
         }))
     );
-    let rpc_method = || RpcMethod("eth_getTransactionReceipt".to_string());
+    let rpc_method = || RpcMethod::EthGetTransactionReceipt.into();
     assert_eq!(
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(BLOCKPI_ETH_SEPOLIA_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), BLOCKPI_ETH_SEPOLIA_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(BLOCKPI_ETH_SEPOLIA_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 200.into()) => 1,
+                (rpc_method(), BLOCKPI_ETH_SEPOLIA_HOSTNAME.into(), 200.into()) => 1,
             },
             ..Default::default()
         }
@@ -1070,7 +1065,7 @@ fn candid_rpc_should_reject_empty_service_list() {
 }
 
 #[test]
-fn candid_rpc_should_represent_inconsistent_results() {
+fn candid_rpc_should_return_inconsistent_results() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let results = setup
         .eth_send_raw_transaction(
@@ -1100,17 +1095,144 @@ fn candid_rpc_should_represent_inconsistent_results() {
             )
         ]
     );
-    let rpc_method = || RpcMethod("eth_sendRawTransaction".to_string());
+    let rpc_method = || RpcMethod::EthSendRawTransaction.into();
     assert_eq!(
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 200.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into(), 200.into()) => 1,
+            },
+            inconsistent_responses: hashmap! {
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into()) => 1,
+            },
+            ..Default::default()
+        }
+    );
+}
+
+#[test]
+fn candid_rpc_should_return_inconsistent_results_with_error() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_get_transaction_count(
+            RpcSource::EthMainnet(Some(vec![
+                EthMainnetService::Alchemy,
+                EthMainnetService::Ankr,
+            ])),
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http_once(MockOutcallBuilder::new(
+            200,
+            r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+        ))
+        .mock_http_once(MockOutcallBuilder::new(
+            200,
+            r#"{"jsonrpc":"2.0","id":0,"error":{"code":123,"message":"Unexpected"}}"#,
+        ))
+        .wait()
+        .expect_inconsistent();
+    assert_eq!(
+        result,
+        vec![
+            (
+                RpcService::EthMainnet(EthMainnetService::Alchemy),
+                Ok(1.into())
+            ),
+            (
+                RpcService::EthMainnet(EthMainnetService::Ankr),
+                Err(RpcError::JsonRpcError(JsonRpcError {
+                    code: 123,
+                    message: "Unexpected".to_string(),
+                }))
+            ),
+        ]
+    );
+    let rpc_method = || RpcMethod::EthGetTransactionCount.into();
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), ALCHEMY_ETH_MAINNET_HOSTNAME.into()) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+            },
+            responses: hashmap! {
+                (rpc_method(), ALCHEMY_ETH_MAINNET_HOSTNAME.into(), 200.into()) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 200.into()) => 1,
+            },
+            inconsistent_responses: hashmap! {
+                (rpc_method(), ALCHEMY_ETH_MAINNET_HOSTNAME.into()) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+            },
+            ..Default::default()
+        }
+    );
+}
+
+#[test]
+fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_get_transaction_count(
+            RpcSource::EthMainnet(Some(vec![
+                EthMainnetService::Alchemy,
+                EthMainnetService::Ankr,
+            ])),
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http_once(MockOutcallBuilder::new(
+            200,
+            r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+        ))
+        .mock_http_once(MockOutcallBuilder::new(
+            400,
+            r#"{"jsonrpc":"2.0","id":0,"error":{"code":123,"message":"Error message"}}"#,
+        ))
+        .wait()
+        .expect_inconsistent();
+    assert_eq!(
+        result,
+        vec![
+            (
+                RpcService::EthMainnet(EthMainnetService::Alchemy),
+                Ok(1.into())
+            ),
+            (
+                RpcService::EthMainnet(EthMainnetService::Ankr),
+                Err(RpcError::HttpOutcallError(HttpOutcallError::InvalidHttpJsonRpcResponse {
+                    status: 400,
+                    body: "{\"jsonrpc\":\"2.0\",\"id\":0,\"error\":{\"code\":123,\"message\":\"Error message\"}}".to_string(),
+                    parsing_error: None,
+                })),
+            ),
+        ]
+    );
+    let rpc_method = || RpcMethod::EthGetTransactionCount.into();
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), ALCHEMY_ETH_MAINNET_HOSTNAME.into()) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+            },
+            responses: hashmap! {
+                (rpc_method(), ALCHEMY_ETH_MAINNET_HOSTNAME.into(), 200.into()) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 400.into()) => 1,
+            },
+            inconsistent_responses: hashmap! {
+                (rpc_method(), ALCHEMY_ETH_MAINNET_HOSTNAME.into()) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
             },
             ..Default::default()
         }
@@ -1136,17 +1258,58 @@ fn candid_rpc_should_handle_already_known() {
         .wait()
         .expect_consistent();
     assert_eq!(result, Ok(SendRawTransactionResult::Ok));
-    let rpc_method = || RpcMethod("eth_sendRawTransaction".to_string());
+    let rpc_method = || RpcMethod::EthSendRawTransaction.into();
     assert_eq!(
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
-                (rpc_method(), RpcHost(CLOUDFLARE_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 200.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into(), 200.into()) => 1,
+            },
+            ..Default::default()
+        }
+    );
+}
+
+#[test]
+fn candid_rpc_should_recognize_rate_limit() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let result = setup
+        .eth_send_raw_transaction(
+            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
+            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
+        )
+        .mock_http(MockOutcallBuilder::new(
+            429,
+            "(Rate limit error message)",
+        ))
+        .wait()
+        .expect_consistent();
+    assert_eq!(
+        result,
+        Err(RpcError::HttpOutcallError(
+            cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
+                status: 429,
+                body: "(Rate limit error message)".to_string(),
+                parsing_error: None
+            }
+        ))
+    );
+    let rpc_method = || RpcMethod::EthSendRawTransaction.into();
+    assert_eq!(
+        setup.get_metrics(),
+        Metrics {
+            requests: hashmap! {
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into()) => 1,
+            },
+            responses: hashmap! {
+                (rpc_method(), ANKR_HOSTNAME.into(), 429.into()) => 1,
+                (rpc_method(), CLOUDFLARE_HOSTNAME.into(), 429.into()) => 1,
             },
             ..Default::default()
         }
@@ -1195,15 +1358,15 @@ fn should_restrict_rpc_access() {
         .wait()
         .expect_consistent();
     assert_eq!(result, Ok(1.into()));
-    let rpc_method = || RpcMethod("eth_getTransactionCount".to_string());
+    let rpc_method = || RpcMethod::EthGetTransactionCount.into();
     assert_eq!(
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), RpcHost(ANKR_HOSTNAME.to_string())) => 1,
+                (rpc_method(), ANKR_HOSTNAME.into(), 200.into()) => 1,
             },
             err_no_permission: 1,
             ..Default::default()
