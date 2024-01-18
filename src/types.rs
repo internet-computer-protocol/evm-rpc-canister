@@ -470,7 +470,8 @@ impl TryFrom<StorableRpcService> for RpcService {
 
 impl StorableRpcService {
     pub fn new(service: &RpcService) -> Self {
-        // Store as JSON string for enum order invariance
+        // Store as JSON string to remove the possibility of RPC services getting mixed up
+        // if we make changes to `RpcService`, `EthMainnetService`, etc.
         Self(
             serde_json::to_vec(service)
                 .expect("BUG: unexpected error while serializing RpcService"),
