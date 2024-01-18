@@ -94,12 +94,12 @@ type ManageProviderArgs = record {
 };
 type Metrics = record {
   requests : vec record { record { text; text }; nat64 };
-  responses : vec record { record { text; text }; nat64 };
+  responses : vec record { record { text; text; text }; nat64 };
+  inconsistentResponses : vec record { record { text; text }; nat64 };
   cyclesCharged : vec record { record { text; text }; nat };
   cyclesWithdrawn : nat;
   errNoPermission : nat64;
   errHttpOutcall : vec record { record { text; text }; nat64 };
-  errHttpResponse : vec record { record { text; text }; nat64 };
   errHostNotAllowed : vec record { text; nat64 };
 };
 type MultiFeeHistoryResult = variant {
