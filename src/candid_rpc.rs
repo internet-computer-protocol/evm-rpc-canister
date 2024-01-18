@@ -105,7 +105,7 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
             MultiCallError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
             MultiCallError::InconsistentResults(multi_call_results) => {
                 multi_call_results.results.iter().for_each(|(service, _)| {
-                    if let Ok(provider) = resolve_provider(service) {
+                    if let Ok(provider) = get_provider_for_service(service) {
                         add_metric_entry!(
                             inconsistent_responses,
                             (method.into(), MetricRpcHost(provider.hostname)),
@@ -209,7 +209,7 @@ impl CandidRpcClient {
 
 #[test]
 fn test_process_result_mapping() {
-    use cketh_common::eth_rpc_client::MultiCallResults;
+    use cketh_common::eth_rpc_client::{providers::EthMainnetService, MultiCallResults};
 
     let method = RpcMethod::EthGetTransactionCount;
 
