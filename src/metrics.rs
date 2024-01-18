@@ -78,7 +78,7 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             &m.cycles_charged,
             "Number of cycles charged for RPC calls",
         );
-        w.encode_gauge(
+        w.encode_counter(
             "cycles_withdrawn",
             m.cycles_withdrawn.metric_value(),
             "Number of accumulated cycles withdrawn by RPC providers",
@@ -93,7 +93,7 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             &m.err_host_not_allowed,
             "Number of HostNotAllowed errors",
         );
-        w.encode_gauge(
+        w.encode_counter(
             "err_no_permission",
             m.err_no_permission.metric_value(),
             "Number of NoPermission errors",
