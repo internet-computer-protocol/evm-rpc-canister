@@ -279,7 +279,7 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
         // "/log/info" => serve_logs(&DEBUG_BUF),
         // "/log/trace-http" => serve_logs(&TRACE_HTTP_BUF),
         "/logs" => {
-            use ic_cketh_minter::logs::{Log, Priority, Sort};
+            use cketh_common::logs::{Log, Priority, Sort};
             use std::str::FromStr;
 
             let max_skip_timestamp = match request.raw_query_param("time") {
