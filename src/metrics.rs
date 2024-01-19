@@ -26,7 +26,7 @@ macro_rules! add_metric_entry {
 }
 
 trait EncoderExtensions {
-    fn encode_entries<K: MetricLabels, V: MetricValue>(
+    fn counter_entries<K: MetricLabels, V: MetricValue>(
         &mut self,
         name: &str,
         map: &HashMap<K, V>,
@@ -35,7 +35,7 @@ trait EncoderExtensions {
 }
 
 impl EncoderExtensions for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
-    fn encode_entries<K: MetricLabels, V: MetricValue>(
+    fn counter_entries<K: MetricLabels, V: MetricValue>(
         &mut self,
         name: &str,
         map: &HashMap<K, V>,
@@ -66,34 +66,34 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
     crate::UNSTABLE_METRICS.with(|m| {
         let m = m.borrow();
 
-        w.encode_entries("requests", &m.requests, "Number of JSON-RPC requests");
-        w.encode_entries("responses", &m.responses, "Number of JSON-RPC responses");
-        w.encode_entries(
+        w.counter_entries("requests", &m.requests, "Number of JSON-RPC requests");
+        w.counter_entries("responses", &m.responses, "Number of JSON-RPC responses");
+        w.counter_entries(
             "inconsistent_responses",
             &m.inconsistent_responses,
             "Number of inconsistent RPC responses",
         );
-        w.encode_entries(
+        w.counter_entries(
             "cycles_charged",
             &m.cycles_charged,
             "Number of cycles charged for RPC calls",
         );
-        w.encode_gauge(
+        w.encode_counter(
             "cycles_withdrawn",
             m.cycles_withdrawn.metric_value(),
             "Number of accumulated cycles withdrawn by RPC providers",
         )?;
-        w.encode_entries(
+        w.counter_entries(
             "err_http_outcall",
             &m.err_http_outcall,
             "Number of unsuccessful HTTP outcalls",
         );
-        w.encode_entries(
+        w.counter_entries(
             "err_host_not_allowed",
             &m.err_host_not_allowed,
             "Number of HostNotAllowed errors",
         );
-        w.encode_gauge(
+        w.encode_counter(
             "err_no_permission",
             m.err_no_permission.metric_value(),
             "Number of NoPermission errors",
