@@ -1,4 +1,3 @@
-use ic_canister_log::declare_log_buffer;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 #[cfg(target_arch = "wasm32")]
 use ic_stable_structures::DefaultMemoryImpl;
@@ -13,10 +12,6 @@ use crate::{types::*, NODES_IN_DEFAULT_SUBNET};
 type Memory = VirtualMemory<VectorMemory>;
 #[cfg(target_arch = "wasm32")]
 type Memory = VirtualMemory<DefaultMemoryImpl>;
-
-declare_log_buffer!(name = DEBUG, capacity = 1000);
-declare_log_buffer!(name = INFO, capacity = 1000);
-declare_log_buffer!(name = ERROR, capacity = 1000);
 
 thread_local! {
     // Unstable static data: this is reset when the canister is upgraded.
