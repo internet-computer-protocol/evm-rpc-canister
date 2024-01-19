@@ -30,7 +30,13 @@ type BlockTag = variant {
   Number : nat;
   Pending;
 };
-type EthMainnetService = variant { Alchemy; Ankr; BlockPi; Cloudflare; PublicNode };
+type EthMainnetService = variant {
+  Alchemy;
+  Ankr;
+  BlockPi;
+  Cloudflare;
+  PublicNode;
+};
 type EthSepoliaService = variant { Alchemy; Ankr; BlockPi; PublicNode };
 type FeeHistory = record {
   reward : vec vec nat;
@@ -80,7 +86,12 @@ type LogEntry = record {
   logIndex : opt nat;
   removed : bool;
 };
-type Message = variant { Data : blob; Hash : blob };
+type ManageProviderArgs = record {
+  "service" : opt RpcService;
+  owner : opt principal;
+  primary : opt bool;
+  providerId : nat64;
+};
 type Metrics = record {
   requests : vec record { record { text; text }; nat64 };
   responses : vec record { record { text; text; text }; nat64 };
@@ -228,6 +239,8 @@ service : (InitArgs) -> {
   getMetrics : () -> (Metrics) query;
   getOpenRpcAccess : () -> (bool) query;
   getProviders : () -> (vec ProviderView) query;
+  getServiceProviderMap : () -> (vec record { RpcService; nat64 }) query;
+  manageProvider : (ManageProviderArgs) -> ();
   registerProvider : (RegisterProviderArgs) -> (nat64);
   request : (JsonRpcSource, text, nat64) -> (RequestResult);
   requestCost : (JsonRpcSource, text, nat64) -> (RequestCostResult) query;

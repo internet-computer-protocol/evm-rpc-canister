@@ -156,12 +156,14 @@ impl EvmRpcSetup {
         }
     }
 
-    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) -> CallFlow<()> {
+    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) {
         self.call_update("authorize", Encode!(&principal.0, &auth).unwrap())
+            .wait()
     }
 
-    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) -> CallFlow<()> {
+    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) {
         self.call_update("deauthorize", Encode!(&principal.0, &auth).unwrap())
+            .wait()
     }
 
     pub fn get_metrics(&self) -> Metrics {
@@ -170,6 +172,10 @@ impl EvmRpcSetup {
 
     pub fn get_providers(&self) -> Vec<ProviderView> {
         self.call_query("getProviders", Encode!().unwrap())
+    }
+
+    pub fn get_service_provider_map(&self) -> Vec<(RpcService, u64)> {
+        self.call_query("getServiceProviderMap", Encode!().unwrap())
     }
 
     pub fn register_provider(&self, args: RegisterProviderArgs) -> u64 {
@@ -187,19 +193,18 @@ impl EvmRpcSetup {
             .wait()
     }
 
+    pub fn manage_provider(&self, args: ManageProviderArgs) {
+        self.call_update("manageProvider", Encode!(&args).unwrap())
+            .wait()
+    }
+
     pub fn authorize_caller(self, auth: Auth) -> Self {
-        self.clone()
-            .as_controller()
-            .authorize(&self.caller, auth)
-            .wait();
+        self.clone().as_controller().authorize(&self.caller, auth);
         self
     }
 
     pub fn deauthorize_caller(self, auth: Auth) -> Self {
-        self.clone()
-            .as_controller()
-            .deauthorize(&self.caller, auth)
-            .wait();
+        self.clone().as_controller().deauthorize(&self.caller, auth);
         self
     }
 
@@ -437,110 +442,8 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
     }
 }
 
-#[test]
-fn should_register_provider() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
-    assert_eq!(
-        setup
-            .get_providers()
-            .into_iter()
-            .map(|p| (p.chain_id, p.hostname))
-            .collect::<Vec<_>>(),
-        get_default_providers()
-            .into_iter()
-            .map(|p| (p.chain_id, p.hostname))
-            .collect::<Vec<_>>()
-    );
-    let n_providers = 2;
-    let a_id = setup.register_provider(RegisterProviderArgs {
-        chain_id: 1,
-        hostname: ANKR_HOSTNAME.to_string(),
-        credential_path: "".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
-    let b_id = setup.register_provider(RegisterProviderArgs {
-        chain_id: 5,
-        hostname: CLOUDFLARE_HOSTNAME.to_string(),
-        credential_path: "/test-path".to_string(),
-        credential_headers: Some(vec![HttpHeader {
-            name: "Test-Authorization".to_string(),
-            value: "---".to_string(),
-        }]),
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
-    assert_eq!(a_id + 1, b_id);
-    let providers = setup.get_providers();
-    assert_eq!(providers.len(), get_default_providers().len() + n_providers);
-    let first_new_id = (providers.len() - n_providers) as u64;
-    assert_eq!(
-        providers[providers.len() - n_providers..],
-        vec![
-            ProviderView {
-                provider_id: first_new_id,
-                owner: setup.caller.0,
-                chain_id: 1,
-                hostname: ANKR_HOSTNAME.to_string(),
-                cycles_per_call: 0,
-                cycles_per_message_byte: 0,
-                primary: false,
-            },
-            ProviderView {
-                provider_id: first_new_id + 1,
-                owner: setup.caller.0,
-                chain_id: 5,
-                hostname: CLOUDFLARE_HOSTNAME.to_string(),
-                cycles_per_call: 0,
-                cycles_per_message_byte: 0,
-                primary: false,
-            }
-        ]
-    )
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_panic_if_unauthorized_register_provider() {
-    let setup = EvmRpcSetup::new();
-    setup.register_provider(RegisterProviderArgs {
-        chain_id: 1,
-        hostname: ANKR_HOSTNAME.to_string(),
-        credential_path: "".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
-}
-
-#[test]
-#[should_panic(expected = "Provider owner != caller")]
-fn should_panic_if_unauthorized_update_provider() {
-    // Providers can only be updated by the original owner
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
-    setup.update_provider(UpdateProviderArgs {
-        provider_id: 0,
-        hostname: Some("unauthorized.host".to_string()),
-        credential_path: None,
-        credential_headers: None,
-        cycles_per_call: None,
-        cycles_per_message_byte: None,
-        primary: None,
-    });
-}
-
-#[test]
-#[should_panic(expected = "Not authorized")]
-fn should_panic_if_unauthorized_unregister_provider() {
-    // Only the `Manage` authorization may unregister a provider
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
-    setup.unregister_provider(0);
-}
-
 fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-
     assert_matches!(
         setup
             .request(
@@ -629,6 +532,319 @@ fn mock_request_should_fail_with_request_headers() {
 #[should_panic(expected = "assertion failed: `(left == right)`")]
 fn mock_request_should_fail_with_request_body() {
     mock_request(|builder| builder.with_request_body(r#"{"different":"body"}"#))
+}
+
+#[test]
+fn should_register_provider() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    assert_eq!(
+        setup
+            .get_providers()
+            .into_iter()
+            .map(|p| (p.chain_id, p.hostname))
+            .collect::<Vec<_>>(),
+        get_default_providers()
+            .into_iter()
+            .map(|p| (p.chain_id, p.hostname))
+            .collect::<Vec<_>>()
+    );
+    let n_providers = 2;
+    let a_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: 1,
+        hostname: ANKR_HOSTNAME.to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    let b_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: 5,
+        hostname: CLOUDFLARE_HOSTNAME.to_string(),
+        credential_path: "/test-path".to_string(),
+        credential_headers: Some(vec![HttpHeader {
+            name: "Test-Authorization".to_string(),
+            value: "---".to_string(),
+        }]),
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    assert_eq!(a_id + 1, b_id);
+    let providers = setup.get_providers();
+    assert_eq!(providers.len(), get_default_providers().len() + n_providers);
+    let first_new_id = (providers.len() - n_providers) as u64;
+    assert_eq!(
+        providers[providers.len() - n_providers..],
+        vec![
+            ProviderView {
+                provider_id: first_new_id,
+                owner: setup.caller.0,
+                chain_id: 1,
+                hostname: ANKR_HOSTNAME.to_string(),
+                cycles_per_call: 0,
+                cycles_per_message_byte: 0,
+                primary: false,
+            },
+            ProviderView {
+                provider_id: first_new_id + 1,
+                owner: setup.caller.0,
+                chain_id: 5,
+                hostname: CLOUDFLARE_HOSTNAME.to_string(),
+                cycles_per_call: 0,
+                cycles_per_message_byte: 0,
+                primary: false,
+            }
+        ]
+    )
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_panic_if_anonymous_register_provider() {
+    let setup = EvmRpcSetup::new().as_anonymous();
+    setup.register_provider(RegisterProviderArgs {
+        chain_id: 1,
+        hostname: ANKR_HOSTNAME.to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+}
+
+#[test]
+#[should_panic(expected = "Provider owner != caller")]
+fn should_panic_if_anonymous_update_provider() {
+    let setup = EvmRpcSetup::new().as_anonymous();
+    setup.update_provider(UpdateProviderArgs {
+        provider_id: 3,
+        hostname: Some("unauthorized.host".to_string()),
+        credential_path: None,
+        credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
+    });
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_panic_if_unauthorized_register_provider() {
+    let setup = EvmRpcSetup::new();
+    setup.register_provider(RegisterProviderArgs {
+        chain_id: 1,
+        hostname: ANKR_HOSTNAME.to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_panic_if_unauthorized_manage_provider() {
+    let setup = EvmRpcSetup::new();
+    setup.manage_provider(ManageProviderArgs {
+        provider_id: 2,
+        owner: Some(setup.caller.0),
+        primary: None,
+        service: None,
+    });
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_panic_if_anonymous_manage_provider() {
+    let setup = EvmRpcSetup::new().as_anonymous();
+    setup.manage_provider(ManageProviderArgs {
+        provider_id: 3,
+        owner: Some(setup.caller.0),
+        primary: None,
+        service: None,
+    });
+}
+
+#[test]
+#[should_panic(expected = "Provider owner != caller")]
+fn should_panic_if_unauthorized_update_provider() {
+    // Providers can only be updated by the original owner
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    setup.update_provider(UpdateProviderArgs {
+        provider_id: 0,
+        hostname: Some("unauthorized.host".to_string()),
+        credential_path: None,
+        credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
+    });
+}
+
+#[test]
+#[should_panic(expected = "Not authorized")]
+fn should_panic_if_unauthorized_unregister_provider() {
+    // Only the `Manage` authorization may unregister a provider
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    setup.unregister_provider(0);
+}
+
+#[test]
+#[should_panic(expected = "Provider owner != caller")]
+fn should_panic_if_manage_auth_updates_non_owned_provider() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    let provider_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: 123,
+        hostname: "example.com".to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    setup.as_controller().update_provider(UpdateProviderArgs {
+        provider_id,
+        hostname: Some("unauthorized.host".to_string()),
+        credential_path: None,
+        credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
+    });
+}
+
+#[test]
+fn should_change_provider_owner() {
+    let mut setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    let provider_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: 123,
+        hostname: "example.com".to_string(),
+        credential_path: "".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    setup = setup.as_controller();
+    setup.manage_provider(ManageProviderArgs {
+        provider_id,
+        owner: Some(setup.controller.0),
+        primary: None,
+        service: None,
+    });
+    assert_eq!(
+        setup
+            .get_providers()
+            .into_iter()
+            .find(|p| p.provider_id == provider_id)
+            .unwrap()
+            .owner,
+        setup.controller.0
+    );
+    setup.update_provider(UpdateProviderArgs {
+        provider_id,
+        hostname: Some("authorized.host".to_string()),
+        credential_path: None,
+        credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
+    });
+}
+
+#[test]
+fn should_replace_service_provider() {
+    let setup = EvmRpcSetup::new()
+        .authorize_caller(Auth::RegisterProvider)
+        .authorize_caller(Auth::FreeRpc);
+    let provider_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: ETH_MAINNET_CHAIN_ID,
+        hostname: "ankr2.com".to_string(),
+        credential_path: "/v2/mainnet".to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    setup
+        .clone()
+        .as_controller()
+        .manage_provider(ManageProviderArgs {
+            provider_id,
+            owner: None,
+            primary: None,
+            service: Some(RpcService::EthMainnet(EthMainnetService::Ankr)),
+        });
+    let result = setup
+        .eth_get_transaction_count(
+            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://ankr2.com/v2/mainnet"),
+        )
+        .wait()
+        .expect_consistent();
+    assert_eq!(result, Ok(1.into()));
+}
+
+#[test]
+fn should_set_primary_provider() {
+    let setup = EvmRpcSetup::new()
+        .authorize_caller(Auth::RegisterProvider)
+        .authorize_caller(Auth::FreeRpc);
+    let new_credential = "/primary-credential";
+    let provider_id = setup.register_provider(RegisterProviderArgs {
+        chain_id: ETH_MAINNET_CHAIN_ID,
+        hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+        credential_path: new_credential.to_string(),
+        credential_headers: None,
+        cycles_per_call: 0,
+        cycles_per_message_byte: 0,
+    });
+    assert_matches!(
+        setup
+            .request(
+                JsonRpcSource::Service {
+                    hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+                    chain_id: None,
+                },
+                MOCK_REQUEST_PAYLOAD,
+                MOCK_REQUEST_RESPONSE_BYTES,
+            )
+            .mock_http(
+                MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
+                    "https://{}{}",
+                    ALCHEMY_ETH_MAINNET_HOSTNAME, ALCHEMY_ETH_MAINNET_CREDENTIAL
+                ))
+            )
+            .wait(),
+        Ok(_)
+    );
+    setup
+        .clone()
+        .as_controller()
+        .manage_provider(ManageProviderArgs {
+            provider_id,
+            owner: None,
+            primary: Some(true),
+            service: None,
+        });
+    assert_matches!(
+        setup
+            .request(
+                JsonRpcSource::Service {
+                    hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+                    chain_id: None,
+                },
+                MOCK_REQUEST_PAYLOAD,
+                MOCK_REQUEST_RESPONSE_BYTES,
+            )
+            .mock_http(
+                MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
+                    "https://{}{}",
+                    ALCHEMY_ETH_MAINNET_HOSTNAME, new_credential
+                ))
+            )
+            .wait(),
+        Ok(_)
+    );
 }
 
 #[test]

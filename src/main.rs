@@ -3,6 +3,7 @@ use cketh_common::eth_rpc::{
     Block, FeeHistory, LogEntry, ProviderError, RpcError, SendRawTransactionResult,
 };
 
+use cketh_common::eth_rpc_client::providers::RpcService;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -144,10 +145,27 @@ fn unregister_provider(provider_id: u64) -> bool {
     do_unregister_provider(ic_cdk::caller(), provider_id)
 }
 
-#[update(name = "updateProvider", guard = "require_register_provider")]
+#[update(name = "updateProvider")]
 #[candid_method(rename = "updateProvider")]
 fn update_provider(provider: UpdateProviderArgs) {
     do_update_provider(ic_cdk::caller(), provider)
+}
+
+#[update(name = "manageProvider", guard = "require_admin_or_controller")]
+#[candid_method(rename = "manageProvider")]
+fn manage_provider(args: ManageProviderArgs) {
+    do_manage_provider(args)
+}
+
+#[query(name = "getServiceProviderMap", guard = "require_admin_or_controller")]
+#[candid_method(query, rename = "getServiceProviderMap")]
+fn get_service_provider_map() -> Vec<(RpcService, u64)> {
+    SERVICE_PROVIDER_MAP.with(|map| {
+        map.borrow()
+            .iter()
+            .filter_map(|(k, v)| Some((k.try_into().ok()?, v)))
+            .collect()
+    })
 }
 
 #[query(name = "getAccumulatedCycleCount", guard = "require_register_provider")]
@@ -238,10 +256,18 @@ fn init(args: InitArgs) {
     for provider in get_default_providers() {
         do_register_provider(ic_cdk::caller(), provider);
     }
+    for (service, hostname) in get_default_service_provider_hostnames() {
+        let provider =
+            find_provider(|p| p.chain_id == get_chain_id(&service) && p.hostname == hostname)
+                .unwrap_or_else(|| {
+                    panic!(
+                        "Missing default provider for service {:?} with hostname {:?}",
+                        service, hostname
+                    )
+                });
+        set_service_provider(&service, &provider);
+    }
 }
-
-// #[ic_cdk::post_upgrade]
-// fn post_upgrade() {}
 
 #[query]
 fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
@@ -271,18 +297,6 @@ fn stable_read(offset: u64, length: u64) -> Vec<u8> {
     buffer.resize(length as usize, 0);
     ic_cdk::api::stable::stable64_read(offset, buffer.as_mut_slice());
     buffer
-}
-
-#[update(guard = "require_admin_or_controller")]
-fn stable_write(offset: u64, buffer: Vec<u8>) {
-    let size = offset + buffer.len() as u64;
-    let old_size = ic_cdk::api::stable::stable64_size() * WASM_PAGE_SIZE;
-    if size > old_size {
-        let old_pages = old_size / WASM_PAGE_SIZE;
-        let pages = (size + (WASM_PAGE_SIZE - 1)) / WASM_PAGE_SIZE;
-        ic_cdk::api::stable::stable64_grow(pages - old_pages).unwrap();
-    }
-    ic_cdk::api::stable::stable64_write(offset, buffer.as_slice());
 }
 
 #[update(guard = "require_admin_or_controller")]

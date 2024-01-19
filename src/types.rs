@@ -13,7 +13,10 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
-use crate::{AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDERS};
+use crate::{
+    AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDERS, PROVIDER_MAX_SIZE,
+    RPC_SERVICE_MAX_SIZE,
+};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
@@ -391,7 +394,15 @@ pub struct UpdateProviderArgs {
     pub cycles_per_call: Option<u64>,
     #[serde(rename = "cyclesPerMessageByte")]
     pub cycles_per_message_byte: Option<u64>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct ManageProviderArgs {
+    #[serde(rename = "providerId")]
+    pub provider_id: u64,
+    pub owner: Option<Principal>,
     pub primary: Option<bool>,
+    pub service: Option<RpcService>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -443,7 +454,43 @@ impl Storable for Provider {
 }
 
 impl BoundedStorable for Provider {
-    const MAX_SIZE: u32 = 256; // A reasonable limit.
+    const MAX_SIZE: u32 = PROVIDER_MAX_SIZE;
+    const IS_FIXED_SIZE: bool = false;
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct StorableRpcService(Vec<u8>);
+
+impl TryFrom<StorableRpcService> for RpcService {
+    type Error = serde_json::Error;
+    fn try_from(value: StorableRpcService) -> Result<Self, Self::Error> {
+        serde_json::from_slice(&value.0)
+    }
+}
+
+impl StorableRpcService {
+    pub fn new(service: &RpcService) -> Self {
+        // Store as JSON string to remove the possibility of RPC services getting mixed up
+        // if we make changes to `RpcService`, `EthMainnetService`, etc.
+        Self(
+            serde_json::to_vec(service)
+                .expect("BUG: unexpected error while serializing RpcService"),
+        )
+    }
+}
+
+impl Storable for StorableRpcService {
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        StorableRpcService(bytes.to_vec())
+    }
+
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::Owned(self.0.to_owned())
+    }
+}
+
+impl BoundedStorable for StorableRpcService {
+    const MAX_SIZE: u32 = RPC_SERVICE_MAX_SIZE;
     const IS_FIXED_SIZE: bool = false;
 }
 

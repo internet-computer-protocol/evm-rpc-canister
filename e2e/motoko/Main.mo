@@ -100,7 +100,7 @@ shared ({ caller = installer }) actor class Main() {
                             switch result {
                                 case (#Ok(_)) {};
                                 case (#Err(err)) {
-                                    Debug.trap("received error in inconsistent results for " # method # ": " # debug_show err);
+                                    Debug.trap("received error in inconsistent results for " # debug_show service # " " # method # ": " # debug_show err);
                                 };
                             };
                         };

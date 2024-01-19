@@ -1,3 +1,8 @@
+use cketh_common::{
+    eth_rpc::ProviderError,
+    eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
+};
+
 use crate::*;
 
 pub const ANKR_HOSTNAME: &str = "rpc.ankr.com";
@@ -102,6 +107,47 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
     ]
 }
 
+pub fn get_default_service_provider_hostnames() -> Vec<(RpcService, &'static str)> {
+    vec![
+        (
+            RpcService::EthMainnet(EthMainnetService::Alchemy),
+            ALCHEMY_ETH_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::EthMainnet(EthMainnetService::Ankr),
+            ANKR_HOSTNAME,
+        ),
+        (
+            RpcService::EthMainnet(EthMainnetService::BlockPi),
+            BLOCKPI_ETH_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::EthMainnet(EthMainnetService::Cloudflare),
+            CLOUDFLARE_HOSTNAME,
+        ),
+        (
+            RpcService::EthMainnet(EthMainnetService::PublicNode),
+            PUBLICNODE_ETH_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::EthSepolia(EthSepoliaService::Alchemy),
+            ALCHEMY_ETH_SEPOLIA_HOSTNAME,
+        ),
+        (
+            RpcService::EthSepolia(EthSepoliaService::Ankr),
+            ANKR_HOSTNAME,
+        ),
+        (
+            RpcService::EthSepolia(EthSepoliaService::BlockPi),
+            BLOCKPI_ETH_SEPOLIA_HOSTNAME,
+        ),
+        (
+            RpcService::EthSepolia(EthSepoliaService::PublicNode),
+            PUBLICNODE_ETH_SEPOLIA_HOSTNAME,
+        ),
+    ]
+}
+
 pub fn find_provider(f: impl Fn(&Provider) -> bool) -> Option<Provider> {
     PROVIDERS.with(|providers| {
         let providers = providers.borrow();
@@ -115,6 +161,24 @@ pub fn find_provider(f: impl Fn(&Provider) -> bool) -> Option<Provider> {
     })
 }
 
+pub fn get_provider_for_service(service: &RpcService) -> Result<Provider, ProviderError> {
+    let provider_id = SERVICE_PROVIDER_MAP.with(|map| {
+        map.borrow()
+            .get(&StorableRpcService::new(service))
+            .ok_or(ProviderError::MissingRequiredProvider)
+    })?;
+    PROVIDERS
+        .with(|providers| providers.borrow().get(&provider_id))
+        .ok_or(ProviderError::ProviderNotFound)
+}
+
+pub fn get_chain_id(service: &RpcService) -> u64 {
+    match service {
+        RpcService::EthMainnet(_) => ETH_MAINNET_CHAIN_ID,
+        RpcService::EthSepolia(_) => ETH_SEPOLIA_CHAIN_ID,
+    }
+}
+
 pub fn do_register_provider(caller: Principal, provider: RegisterProviderArgs) -> u64 {
     validate_hostname(&provider.hostname).unwrap();
     validate_credential_path(&provider.credential_path).unwrap();
@@ -125,8 +189,8 @@ pub fn do_register_provider(caller: Principal, provider: RegisterProviderArgs) -
         m.borrow_mut().set(metadata).unwrap();
         id
     });
-    PROVIDERS.with(|p| {
-        p.borrow_mut().insert(
+    PROVIDERS.with(|providers| {
+        providers.borrow_mut().insert(
             provider_id,
             Provider {
                 provider_id,
@@ -146,13 +210,13 @@ pub fn do_register_provider(caller: Principal, provider: RegisterProviderArgs) -
 }
 
 pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
-    PROVIDERS.with(|p| {
-        let mut p = p.borrow_mut();
-        if let Some(provider) = p.get(&provider_id) {
-            if provider.owner == caller || is_authorized(&caller, Auth::Manage) {
-                p.remove(&provider_id).is_some()
-            } else {
+    PROVIDERS.with(|providers| {
+        let mut providers = providers.borrow_mut();
+        if let Some(provider) = providers.get(&provider_id) {
+            if provider.owner != caller {
                 ic_cdk::trap("Not authorized");
+            } else {
+                providers.remove(&provider_id).is_some()
             }
         } else {
             false
@@ -160,38 +224,74 @@ pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
     })
 }
 
-pub fn do_update_provider(caller: Principal, update: UpdateProviderArgs) {
-    PROVIDERS.with(|p| {
-        let mut p = p.borrow_mut();
-        match p.get(&update.provider_id) {
+/// Changes provider details. The caller must be the owner of the provider.
+pub fn do_update_provider(caller: Principal, args: UpdateProviderArgs) {
+    PROVIDERS.with(|providers| {
+        let mut providers = providers.borrow_mut();
+        match providers.get(&args.provider_id) {
             Some(mut provider) => {
-                if provider.owner != caller && !is_authorized(&caller, Auth::Manage) {
+                if provider.owner != caller {
                     ic_cdk::trap("Provider owner != caller");
+                } else {
+                    if let Some(hostname) = args.hostname {
+                        validate_hostname(&hostname).unwrap();
+                        provider.hostname = hostname;
+                    }
+                    if let Some(path) = args.credential_path {
+                        validate_credential_path(&path).unwrap();
+                        provider.credential_path = path;
+                    }
+                    if let Some(headers) = args.credential_headers {
+                        validate_credential_headers(&headers).unwrap();
+                        provider.credential_headers = headers;
+                    }
+                    if let Some(cycles_per_call) = args.cycles_per_call {
+                        provider.cycles_per_call = cycles_per_call;
+                    }
+                    if let Some(cycles_per_message_byte) = args.cycles_per_message_byte {
+                        provider.cycles_per_message_byte = cycles_per_message_byte;
+                    }
+                    providers.insert(args.provider_id, provider);
                 }
-                if let Some(hostname) = update.hostname {
-                    validate_hostname(&hostname).unwrap();
-                    provider.hostname = hostname;
-                }
-                if let Some(path) = update.credential_path {
-                    validate_credential_path(&path).unwrap();
-                    provider.credential_path = path;
-                }
-                if let Some(headers) = update.credential_headers {
-                    validate_credential_headers(&headers).unwrap();
-                    provider.credential_headers = headers;
-                }
-                if let Some(primary) = update.primary {
-                    provider.primary = primary;
-                }
-                if let Some(cycles_per_call) = update.cycles_per_call {
-                    provider.cycles_per_call = cycles_per_call;
-                }
-                if let Some(cycles_per_message_byte) = update.cycles_per_message_byte {
-                    provider.cycles_per_message_byte = cycles_per_message_byte;
-                }
-                p.insert(update.provider_id, provider);
             }
             None => ic_cdk::trap("Provider not found"),
         }
+    });
+}
+
+/// Changes administrative details for a provider. The caller must have the `Auth::Manage` permission.
+pub fn do_manage_provider(args: ManageProviderArgs) {
+    PROVIDERS.with(|providers| {
+        let mut providers = providers.borrow_mut();
+        match providers.get(&args.provider_id) {
+            Some(mut provider) => {
+                if let Some(owner) = args.owner {
+                    provider.owner = owner;
+                }
+                if let Some(primary) = args.primary {
+                    provider.primary = primary;
+                }
+                if let Some(service) = args.service {
+                    set_service_provider(&service, &provider);
+                }
+                providers.insert(args.provider_id, provider);
+            }
+            None => ic_cdk::trap("Provider not found"),
+        }
+    })
+}
+
+pub fn set_service_provider(service: &RpcService, provider: &Provider) {
+    let chain_id = get_chain_id(service);
+    if chain_id != provider.chain_id {
+        ic_cdk::trap(&format!(
+            "Mismatch between service and provider chain ids ({} != {})",
+            chain_id, provider.chain_id
+        ))
+    }
+    SERVICE_PROVIDER_MAP.with(|mappings| {
+        mappings
+            .borrow_mut()
+            .insert(StorableRpcService::new(service), provider.provider_id);
     });
 }
