@@ -274,10 +274,6 @@ fn init(args: InitArgs) {
 fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
     match request.path() {
         "/metrics" => serve_metrics(encode_metrics),
-        // "/logs" => serve_logs_v2(request, &INFO_BUF, &ERROR_BUF),
-        // "/log/info" => serve_logs(&INFO_BUF),
-        // "/log/info" => serve_logs(&DEBUG_BUF),
-        // "/log/trace-http" => serve_logs(&TRACE_HTTP_BUF),
         "/logs" => {
             use cketh_common::logs::{Log, Priority, Sort};
             use std::str::FromStr;
