@@ -1679,7 +1679,7 @@ dependencies = [
  "candid",
  "hex",
  "ic-base-types 0.8.0",
- "ic-canister-log 0.2.0 (git+https://github.com/dfinity/ic?rev=release-2023-09-27_23-01)",
+ "ic-canister-log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ic-canisters-http-types 0.8.0",
  "ic-cdk",
  "ic-cdk-macros",

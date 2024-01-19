@@ -4,14 +4,14 @@ use cketh_common::eth_rpc::{
 };
 
 use cketh_common::eth_rpc_client::providers::RpcService;
-use cketh_common::logs::{ERROR_BUF, INFO_BUF, INFO};
+use cketh_common::logs::INFO;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
 use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
-use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
+use ic_nervous_system_common::serve_metrics;
 
 use evm_rpc::*;
 
@@ -221,7 +221,7 @@ async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
     .await
     {
         Ok(()) => add_metric!(cycles_withdrawn, amount),
-        e => {
+        Err(err) => {
             // Refund on failure to send cycles.
             log!(
                 INFO,
@@ -229,7 +229,7 @@ async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
                 amount,
                 canister_id,
                 provider_id,
-                e
+                err
             );
             let provider = PROVIDERS.with(|p| {
                 p.borrow()
@@ -334,7 +334,7 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
             }
 
             log.sort_logs(ordering_from_query_params(
-                req.raw_query_param("sort"),
+                request.raw_query_param("sort"),
                 max_skip_timestamp,
             ));
 
