@@ -1,4 +1,6 @@
 use candid::Principal;
+use cketh_common::logs::INFO;
+use ic_canister_log::log;
 
 use crate::*;
 
@@ -34,6 +36,12 @@ pub fn is_rpc_allowed(caller: &Principal) -> bool {
 }
 
 pub fn do_authorize(principal: Principal, auth: Auth) {
+    log!(
+        INFO,
+        "Granting `{:?}` authorization for principal: {}",
+        auth,
+        principal
+    );
     AUTH.with(|a| {
         let mut auth_map = a.borrow_mut();
         let principal = PrincipalStorable(principal);
@@ -47,6 +55,12 @@ pub fn do_authorize(principal: Principal, auth: Auth) {
 }
 
 pub fn do_deauthorize(principal: Principal, auth: Auth) {
+    log!(
+        INFO,
+        "Deauthorizing `{:?}` for principal: {}",
+        auth,
+        principal
+    );
     AUTH.with(|a| {
         let mut auth_map = a.borrow_mut();
         let principal = PrincipalStorable(principal);
