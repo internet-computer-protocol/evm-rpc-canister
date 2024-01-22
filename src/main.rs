@@ -311,7 +311,7 @@ fn get_authorized(auth: Auth) -> Vec<String> {
     AUTH.with(|a| {
         let mut result = Vec::new();
         for (k, v) in a.borrow().iter() {
-            if !v.is_authorized(auth) {
+            if v.is_authorized(auth) {
                 result.push(k.0.to_string());
             }
         }
