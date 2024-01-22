@@ -307,12 +307,12 @@ fn authorize(principal: Principal, auth: Auth) {
 
 #[query(name = "getAuthorized", guard = "require_admin_or_controller")]
 #[candid_method(query, rename = "getAuthorized")]
-fn get_authorized(auth: Auth) -> Vec<String> {
+fn get_authorized(auth: Auth) -> Vec<Principal> {
     AUTH.with(|a| {
         let mut result = Vec::new();
         for (k, v) in a.borrow().iter() {
             if v.is_authorized(auth) {
-                result.push(k.0.to_string());
+                result.push(k.0);
             }
         }
         result

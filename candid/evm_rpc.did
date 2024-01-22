@@ -235,7 +235,7 @@ service : (InitArgs) -> {
   eth_getTransactionReceipt : (RpcSource, text) -> (MultiGetTransactionReceiptResult);
   eth_sendRawTransaction : (RpcSource, text) -> (MultiSendRawTransactionResult);
   getAccumulatedCycleCount : (nat64) -> (nat) query;
-  getAuthorized : (Auth) -> (vec text) query;
+  getAuthorized : (Auth) -> (vec Principal) query;
   getMetrics : () -> (Metrics) query;
   getOpenRpcAccess : () -> (bool) query;
   getProviders : () -> (vec ProviderView) query;
