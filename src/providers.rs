@@ -189,6 +189,7 @@ pub fn do_register_provider(caller: Principal, provider: RegisterProviderArgs) -
         m.borrow_mut().set(metadata).unwrap();
         id
     });
+    do_deauthorize(caller, Auth::RegisterProvider);
     PROVIDERS.with(|providers| {
         providers.borrow_mut().insert(
             provider_id,

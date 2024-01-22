@@ -540,7 +540,7 @@ fn mock_request_should_fail_with_request_body() {
 
 #[test]
 fn should_register_provider() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    let mut setup = EvmRpcSetup::new();
     assert_eq!(
         setup.get_authorized(Auth::RegisterProvider),
         vec![setup.caller.0]
@@ -557,6 +557,7 @@ fn should_register_provider() {
             .collect::<Vec<_>>()
     );
     let n_providers = 2;
+    setup = setup.authorize_caller(Auth::RegisterProvider);
     let a_id = setup.register_provider(RegisterProviderArgs {
         chain_id: 1,
         hostname: ANKR_HOSTNAME.to_string(),
@@ -565,6 +566,13 @@ fn should_register_provider() {
         cycles_per_call: 0,
         cycles_per_message_byte: 0,
     });
+    // Permission removed after registering
+    assert!(setup
+        .get_authorized(Auth::RegisterProvider)
+        .into_iter()
+        .all(|p| p != setup.caller.0));
+    // Permission must be granted for each additional provider
+    setup = setup.authorize_caller(Auth::RegisterProvider);
     let b_id = setup.register_provider(RegisterProviderArgs {
         chain_id: 5,
         hostname: CLOUDFLARE_HOSTNAME.to_string(),
@@ -603,9 +611,8 @@ fn should_register_provider() {
             }
         ]
     );
-    setup.unregister_provider(first_new_id);
-    setup.unregister_provider(first_new_id + 1);
-    setup.deauthorize_caller(Auth::RegisterProvider);
+    setup.unregister_provider(a_id);
+    setup.unregister_provider(b_id);
 }
 
 #[test]
@@ -651,7 +658,7 @@ fn should_panic_if_unauthorized_register_provider() {
 }
 
 #[test]
-#[should_panic(expected = "You are not authorized")]
+#[should_panic(expected = "Provider owner != caller")]
 fn should_panic_if_unauthorized_manage_provider() {
     let setup = EvmRpcSetup::new();
     setup.manage_provider(ManageProviderArgs {
@@ -690,7 +697,7 @@ fn should_panic_if_unauthorized_update_provider() {
 }
 
 #[test]
-#[should_panic(expected = "Not authorized")]
+#[should_panic(expected = "You are not authorized")]
 fn should_panic_if_unauthorized_unregister_provider() {
     // Only the `Manage` authorization may unregister a provider
     let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
@@ -698,9 +705,9 @@ fn should_panic_if_unauthorized_unregister_provider() {
 }
 
 #[test]
-#[should_panic(expected = "Provider owner != caller")]
+#[should_panic(expected = "You are not authorized")]
 fn should_panic_if_manage_auth_unregister_provider() {
-    let setup = EvmRpcSetup::new().as_controller();
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::Manage);
     setup.unregister_provider(3);
 }
 
