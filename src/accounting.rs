@@ -42,7 +42,8 @@ pub fn get_http_request_cost(
     let base_cost = INGRESS_MESSAGE_RECEIVED_COST
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
         + HTTP_OUTCALL_REQUEST_COST
-        + HTTP_OUTCALL_BYTE_RECEIVED_COST * (ingress_bytes + max_response_bytes as u128);
+        + HTTP_OUTCALL_REQUEST_COST_PER_BYTE * ingress_bytes as u128
+        + HTTP_OUTCALL_RESPONSE_COST_PER_BYTE * max_response_bytes as u128;
     base_cost * (nodes_in_subnet as u128) / NODES_IN_DEFAULT_SUBNET as u128
 }
 
@@ -80,7 +81,7 @@ fn test_request_cost() {
             1000,
         );
         let estimated_cost_10_extra_bytes = base_cost
-            + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_BYTE_RECEIVED_COST)
+            + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_RESPONSE_COST_PER_BYTE)
                 * nodes_in_subnet as u128
                 / NODES_IN_DEFAULT_SUBNET as u128;
         // Request body with 10 additional bytes should be within 1 cycle of expected cost (due to rounding)
