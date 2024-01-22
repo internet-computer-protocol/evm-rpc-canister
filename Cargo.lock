@@ -7710,8 +7710,7 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 [[package]]
 name = "wasm-bindgen"
 version = "0.2.90"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1223296a201415c7fad14792dbefaace9bd52b62d33453ade1c5b5f07555406"
+source = "git+https://github.com/dfinity/wasm-bindgen?rev=77722c689ed4f2392685efd348c91c7d72e5d07f#77722c689ed4f2392685efd348c91c7d72e5d07f"
 dependencies = [
  "cfg-if",
  "wasm-bindgen-macro",
@@ -7720,8 +7719,7 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-backend"
 version = "0.2.90"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcdc935b63408d58a32f8cc9738a0bffd8f05cc7c002086c6ef20b7312ad9dcd"
+source = "git+https://github.com/dfinity/wasm-bindgen?rev=77722c689ed4f2392685efd348c91c7d72e5d07f#77722c689ed4f2392685efd348c91c7d72e5d07f"
 dependencies = [
  "bumpalo",
  "log",
@@ -7747,8 +7745,7 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-macro"
 version = "0.2.90"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e4c238561b2d428924c49815533a8b9121c664599558a5d9ec51f8a1740a999"
+source = "git+https://github.com/dfinity/wasm-bindgen?rev=77722c689ed4f2392685efd348c91c7d72e5d07f#77722c689ed4f2392685efd348c91c7d72e5d07f"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -7757,8 +7754,7 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-macro-support"
 version = "0.2.90"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bae1abb6806dc1ad9e560ed242107c0f6c84335f1749dd4e8ddb012ebd5e25a7"
+source = "git+https://github.com/dfinity/wasm-bindgen?rev=77722c689ed4f2392685efd348c91c7d72e5d07f#77722c689ed4f2392685efd348c91c7d72e5d07f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7770,8 +7766,7 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-shared"
 version = "0.2.90"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d91413b1c31d7539ba5ef2451af3f0b833a005eb27a631cec32bc0635a8602b"
+source = "git+https://github.com/dfinity/wasm-bindgen?rev=77722c689ed4f2392685efd348c91c7d72e5d07f#77722c689ed4f2392685efd348c91c7d72e5d07f"
 
 [[package]]
 name = "wasm-encoder"
@@ -8356,8 +8351,3 @@ dependencies = [
  "quote",
  "syn 2.0.48",
 ]
-
-[[patch.unused]]
-name = "wasm-bindgen"
-version = "0.2.89"
-source = "git+https://github.com/rvanasa/wasm-bindgen?rev=62965b0749ca68237e2ab3da487c141a5b3dbd2d#62965b0749ca68237e2ab3da487c141a5b3dbd2d"
