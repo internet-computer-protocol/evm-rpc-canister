@@ -294,9 +294,9 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
 pub fn set_service_provider(service: &RpcService, provider: &Provider) {
     log!(
         INFO,
-        "Changing service {:?} to use provider: {:?}",
+        "Changing service {:?} to use provider: {}",
         service,
-        provider
+        provider.provider_id
     );
     let chain_id = get_chain_id(service);
     if chain_id != provider.chain_id {
