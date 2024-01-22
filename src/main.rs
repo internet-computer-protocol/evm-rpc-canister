@@ -155,6 +155,12 @@ fn update_provider(provider: UpdateProviderArgs) {
 #[update(name = "manageProvider", guard = "require_admin_or_controller")]
 #[candid_method(rename = "manageProvider")]
 fn manage_provider(args: ManageProviderArgs) {
+    log!(
+        INFO,
+        "[{}] Managing provider: {}",
+        ic_cdk::caller(),
+        args.provider_id
+    );
     do_manage_provider(args)
 }
 
@@ -214,9 +220,9 @@ async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
     });
     log!(
         INFO,
-        "Withdrawing {} cycles from provider {} to principal: {}",
-        amount,
+        "[{}] Withdrawing {} cycles from provider: {}",
         provider_id,
+        amount,
         canister_id
     );
     match ic_cdk::api::call::call_with_payment128(
@@ -232,9 +238,9 @@ async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
             // Refund on failure to send cycles.
             log!(
                 INFO,
-                "Unable to send {} cycles to {} for provider {}: {:?}",
-                amount,
+                "[{}] Unable to send {} cycles from provider {}: {:?}",
                 canister_id,
+                amount,
                 provider_id,
                 err
             );
@@ -373,6 +379,13 @@ fn stable_read(offset: u64, length: u64) -> Vec<u8> {
 #[update(guard = "require_admin_or_controller")]
 #[candid_method]
 fn authorize(principal: Principal, auth: Auth) {
+    log!(
+        INFO,
+        "[{}] Authorizing `{:?}` for principal: {}",
+        ic_cdk::caller(),
+        auth,
+        principal
+    );
     do_authorize(principal, auth)
 }
 
@@ -382,7 +395,7 @@ fn get_authorized(auth: Auth) -> Vec<String> {
     AUTH.with(|a| {
         let mut result = Vec::new();
         for (k, v) in a.borrow().iter() {
-            if !v.is_authorized(auth) {
+            if v.is_authorized(auth) {
                 result.push(k.0.to_string());
             }
         }
@@ -393,6 +406,13 @@ fn get_authorized(auth: Auth) -> Vec<String> {
 #[update(guard = "require_admin_or_controller")]
 #[candid_method]
 fn deauthorize(principal: Principal, auth: Auth) {
+    log!(
+        INFO,
+        "[{}] Deauthorizing `{:?}` for principal: {}",
+        ic_cdk::caller(),
+        auth,
+        principal
+    );
     do_deauthorize(principal, auth)
 }
 

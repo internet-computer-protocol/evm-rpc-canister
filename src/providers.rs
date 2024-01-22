@@ -184,7 +184,6 @@ pub fn get_chain_id(service: &RpcService) -> u64 {
 pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> u64 {
     validate_hostname(&args.hostname).unwrap();
     validate_credential_path(&args.credential_path).unwrap();
-    log!(INFO, "Registering provider: {:?}", args);
     let provider_id = METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         let id = metadata.next_provider_id;
@@ -192,6 +191,7 @@ pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> u6
         m.borrow_mut().set(metadata).unwrap();
         id
     });
+    log!(INFO, "[{}] Registering provider: {:?}", caller, provider_id);
     PROVIDERS.with(|providers| {
         providers.borrow_mut().insert(
             provider_id,
@@ -219,7 +219,12 @@ pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
             if provider.owner != caller {
                 ic_cdk::trap("Not authorized");
             } else {
-                log!(INFO, "Unregistering provider: {:?}", provider);
+                log!(
+                    INFO,
+                    "[{}] Unregistering provider: {:?}",
+                    caller,
+                    provider_id
+                );
                 providers.remove(&provider_id).is_some()
             }
         } else {
@@ -237,7 +242,7 @@ pub fn do_update_provider(caller: Principal, args: UpdateProviderArgs) {
                 if provider.owner != caller {
                     ic_cdk::trap("Provider owner != caller");
                 } else {
-                    log!(INFO, "Updating provider: {:?}", args);
+                    log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
                     if let Some(hostname) = args.hostname {
                         validate_hostname(&hostname).unwrap();
                         provider.hostname = hostname;
@@ -266,7 +271,6 @@ pub fn do_update_provider(caller: Principal, args: UpdateProviderArgs) {
 
 /// Changes administrative details for a provider. The caller must have the `Auth::Manage` permission.
 pub fn do_manage_provider(args: ManageProviderArgs) {
-    log!(INFO, "Managing provider: {:?}", args);
     PROVIDERS.with(|providers| {
         let mut providers = providers.borrow_mut();
         match providers.get(&args.provider_id) {
