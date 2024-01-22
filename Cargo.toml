@@ -26,7 +26,6 @@ ic-stable-structures = { workspace = true }
 ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
-ic-eth = { workspace = true }
 cketh-common = { git = "https://github.com/rvanasa/ic", rev = "e9bf2ad9decb97f9fefb8190719c69c0281aef37", package = "ic-cketh-minter" }
 maplit = "1.0"
 num = "0.4"
@@ -57,10 +56,6 @@ ic-certified-map = "0.4"
 ic-cdk = "0.10"
 ic-cdk-macros = "0.7"
 ic-cdk-bindgen = "0.1"
-ic-eth = { path = "lib/rust" }
-
-[patch.crates-io]
-wasm-bindgen = { git = "https://github.com/rvanasa/wasm-bindgen", rev = "62965b0749ca68237e2ab3da487c141a5b3dbd2d" }
 
 [workspace]
-members = ["lib/rust", "e2e/rust"]
+members = ["e2e/rust"]
