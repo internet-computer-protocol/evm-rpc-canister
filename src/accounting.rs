@@ -41,7 +41,7 @@ pub fn get_http_request_cost(
         + INGRESS_OVERHEAD_BYTES;
     let base_cost = INGRESS_MESSAGE_RECEIVED_COST
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
-        + HTTP_OUTCALL_REQUEST_COST
+        + HTTP_OUTCALL_REQUEST_BASE_COST
         + HTTP_OUTCALL_REQUEST_COST_PER_BYTE * payload_size_bytes as u128
         + HTTP_OUTCALL_RESPONSE_COST_PER_BYTE * max_response_bytes as u128;
     base_cost * (nodes_in_subnet as u128) / NODES_IN_DEFAULT_SUBNET as u128
