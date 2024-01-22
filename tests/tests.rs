@@ -571,6 +571,8 @@ fn should_register_provider() {
     });
     // Permission removed after registering
     assert!(setup
+        .clone()
+        .as_controller()
         .get_authorized(Auth::RegisterProvider)
         .into_iter()
         .all(|p| p != setup.caller.0));
