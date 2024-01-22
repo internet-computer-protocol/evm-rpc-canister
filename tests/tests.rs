@@ -542,10 +542,6 @@ fn mock_request_should_fail_with_request_body() {
 fn should_register_provider() {
     let mut setup = EvmRpcSetup::new();
     assert_eq!(
-        setup.get_authorized(Auth::RegisterProvider),
-        vec![setup.caller.0]
-    );
-    assert_eq!(
         setup
             .get_providers()
             .into_iter()
@@ -558,6 +554,13 @@ fn should_register_provider() {
     );
     let n_providers = 2;
     setup = setup.authorize_caller(Auth::RegisterProvider);
+    assert_eq!(
+        setup
+            .clone()
+            .as_controller()
+            .get_authorized(Auth::RegisterProvider),
+        vec![setup.caller.0]
+    );
     let a_id = setup.register_provider(RegisterProviderArgs {
         chain_id: 1,
         hostname: ANKR_HOSTNAME.to_string(),
