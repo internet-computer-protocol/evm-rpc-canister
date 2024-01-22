@@ -18,6 +18,7 @@ inherits = "release"
 
 [dependencies]
 candid = { workspace = true }
+getrandom = { workspace = true }
 ic-canister-log = { workspace = true }
 ic-canisters-http-types = { workspace = true }
 ic-nervous-system-common = { workspace = true }
@@ -47,6 +48,7 @@ assert_matches = "1.5"
 
 [workspace.dependencies]
 candid = { version = "0.9" }
+getrandom = { version = "0.2", features = ["custom"] }
 ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
