@@ -166,6 +166,10 @@ impl EvmRpcSetup {
             .wait()
     }
 
+    pub fn get_authorized(&self, auth: Auth) -> Vec<Principal> {
+        self.call_query("getAuthorized", Encode!(&auth).unwrap())
+    }
+
     pub fn get_metrics(&self) -> Metrics {
         self.call_query("getMetrics", Encode!().unwrap())
     }
@@ -538,6 +542,10 @@ fn mock_request_should_fail_with_request_body() {
 fn should_register_provider() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
     assert_eq!(
+        setup.get_authorized(Auth::RegisterProvider),
+        vec![setup.caller.0]
+    );
+    assert_eq!(
         setup
             .get_providers()
             .into_iter()
@@ -594,7 +602,10 @@ fn should_register_provider() {
                 primary: false,
             }
         ]
-    )
+    );
+    setup.unregister_provider(first_new_id);
+    setup.unregister_provider(first_new_id + 1);
+    setup.deauthorize_caller(Auth::RegisterProvider);
 }
 
 #[test]
@@ -688,7 +699,14 @@ fn should_panic_if_unauthorized_unregister_provider() {
 
 #[test]
 #[should_panic(expected = "Provider owner != caller")]
-fn should_panic_if_manage_auth_updates_non_owned_provider() {
+fn should_panic_if_manage_auth_unregister_provider() {
+    let setup = EvmRpcSetup::new().as_controller();
+    setup.unregister_provider(3);
+}
+
+#[test]
+#[should_panic(expected = "Provider owner != caller")]
+fn should_panic_if_manage_auth_update_non_owned_provider() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
     let provider_id = setup.register_provider(RegisterProviderArgs {
         chain_id: 123,
