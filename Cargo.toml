@@ -60,7 +60,7 @@ ic-cdk-bindgen = "0.1"
 ic-eth = { path = "lib/rust" }
 
 [patch.crates-io]
-wasm-bindgen = { git = "https://github.com/rvanasa/wasm-bindgen", rev = "62965b0749ca68237e2ab3da487c141a5b3dbd2d" }
+wasm-bindgen = { git = "https://github.com/dfinity/wasm-bindgen", rev = "77722c689ed4f2392685efd348c91c7d72e5d07f" }
 
 [workspace]
 members = ["lib/rust", "e2e/rust"]
