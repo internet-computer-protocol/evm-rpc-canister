@@ -14,7 +14,7 @@ shared ({ caller = installer }) actor class Main() {
 
         let ignoredTests : [(EvmRpcCanister.RpcService, Text)] = [
             // (`RPC service`, `method`)
-            (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // Occasional errors
+            (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
         ];
 
         let canisterDetails = [
