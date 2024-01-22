@@ -42,7 +42,7 @@ pub fn get_http_request_cost(
     let base_cost = INGRESS_MESSAGE_RECEIVED_COST
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
         + HTTP_OUTCALL_REQUEST_COST
-        + HTTP_OUTCALL_REQUEST_COST_PER_BYTE * ingress_bytes as u128
+        + HTTP_OUTCALL_REQUEST_COST_PER_BYTE * payload_size_bytes as u128
         + HTTP_OUTCALL_RESPONSE_COST_PER_BYTE * max_response_bytes as u128;
     base_cost * (nodes_in_subnet as u128) / NODES_IN_DEFAULT_SUBNET as u128
 }
@@ -163,7 +163,7 @@ fn test_candid_rpc_cost() {
             get_candid_rpc_cost(&provider, 123, 4567890),
             get_candid_rpc_cost(&provider, 890, 4567890),
         ],
-        [52916187, 56679987, 47561456787, 47576950187]
+        [51064987, 54828787, 47559605587, 47575098987]
     );
 
     // Fiduciary subnet
@@ -175,6 +175,6 @@ fn test_candid_rpc_cost() {
             get_candid_rpc_cost(&provider, 123, 4567890),
             get_candid_rpc_cost(&provider, 890, 4567890),
         ],
-        [113973325, 122079972, 47561456787, 102473431172]
+        [109986125, 118092772, 102436073572, 102469443972]
     );
 }
