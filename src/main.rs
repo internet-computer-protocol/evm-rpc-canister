@@ -425,6 +425,12 @@ fn get_open_rpc_access() -> bool {
 #[update(name = "setOpenRpcAccess", guard = "require_admin_or_controller")]
 #[candid_method(rename = "setOpenRpcAccess")]
 fn set_open_rpc_access(open_rpc_access: bool) {
+    log!(
+        INFO,
+        "[{}] Setting open RPC access to `{}`",
+        ic_cdk::caller(),
+        open_rpc_access
+    );
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.open_rpc_access = open_rpc_access;
