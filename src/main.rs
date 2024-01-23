@@ -220,10 +220,11 @@ async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
     });
     log!(
         INFO,
-        "[{}] Withdrawing {} cycles from provider: {}",
-        provider_id,
+        "[{}] Withdrawing {} cycles from provider {} to canister: {}",
+        ic_cdk::caller(),
         amount,
-        canister_id
+        provider_id,
+        canister_id,
     );
     match ic_cdk::api::call::call_with_payment128(
         Principal::management_canister(),
