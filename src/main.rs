@@ -140,7 +140,7 @@ fn register_provider(provider: RegisterProviderArgs) -> u64 {
     do_register_provider(ic_cdk::caller(), provider)
 }
 
-#[update(name = "unregisterProvider", guard = "require_register_provider")]
+#[update(name = "unregisterProvider")]
 #[candid_method(rename = "unregisterProvider")]
 fn unregister_provider(provider_id: u64) -> bool {
     do_unregister_provider(ic_cdk::caller(), provider_id)
@@ -392,12 +392,12 @@ fn authorize(principal: Principal, auth: Auth) {
 
 #[query(name = "getAuthorized", guard = "require_admin_or_controller")]
 #[candid_method(query, rename = "getAuthorized")]
-fn get_authorized(auth: Auth) -> Vec<String> {
+fn get_authorized(auth: Auth) -> Vec<Principal> {
     AUTH.with(|a| {
         let mut result = Vec::new();
         for (k, v) in a.borrow().iter() {
-            if !v.is_authorized(auth) {
-                result.push(k.0.to_string());
+            if v.is_authorized(auth) {
+                result.push(k.0);
             }
         }
         result

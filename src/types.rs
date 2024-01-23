@@ -5,7 +5,6 @@ use cketh_common::eth_rpc_client::providers::{
 };
 
 use ic_cdk::api::management_canister::http_request::HttpHeader;
-use ic_eth::core::types::RecoveryMessage;
 use ic_stable_structures::{BoundedStorable, Storable};
 
 use serde::Serialize;
@@ -492,28 +491,6 @@ impl Storable for StorableRpcService {
 impl BoundedStorable for StorableRpcService {
     const MAX_SIZE: u32 = RPC_SERVICE_MAX_SIZE;
     const IS_FIXED_SIZE: bool = false;
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum Message {
-    Data(Vec<u8>),
-    Hash([u8; 32]),
-}
-
-impl From<Message> for RecoveryMessage {
-    fn from(message: Message) -> Self {
-        match message {
-            Message::Data(d) => RecoveryMessage::Data(d),
-            Message::Hash(h) => RecoveryMessage::Hash(h.into()),
-        }
-    }
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct SignedMessage {
-    pub address: String,
-    pub message: Message,
-    pub signature: String,
 }
 
 pub type RpcResult<T> = Result<T, RpcError>;

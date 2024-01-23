@@ -191,6 +191,7 @@ pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> u6
         m.borrow_mut().set(metadata).unwrap();
         id
     });
+    do_deauthorize(caller, Auth::RegisterProvider);
     log!(INFO, "[{}] Registering provider: {:?}", caller, provider_id);
     PROVIDERS.with(|providers| {
         providers.borrow_mut().insert(
@@ -217,7 +218,7 @@ pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
         let mut providers = providers.borrow_mut();
         if let Some(provider) = providers.get(&provider_id) {
             if provider.owner != caller {
-                ic_cdk::trap("Not authorized");
+                ic_cdk::trap("You are not authorized");
             } else {
                 log!(
                     INFO,
