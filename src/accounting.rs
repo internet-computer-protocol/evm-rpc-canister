@@ -41,8 +41,9 @@ pub fn get_http_request_cost(
         + INGRESS_OVERHEAD_BYTES;
     let base_cost = INGRESS_MESSAGE_RECEIVED_COST
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
-        + HTTP_OUTCALL_REQUEST_COST
-        + HTTP_OUTCALL_BYTE_RECEIVED_COST * (ingress_bytes + max_response_bytes as u128);
+        + HTTP_OUTCALL_REQUEST_BASE_COST
+        + HTTP_OUTCALL_REQUEST_COST_PER_BYTE * payload_size_bytes as u128
+        + HTTP_OUTCALL_RESPONSE_COST_PER_BYTE * max_response_bytes as u128;
     base_cost * (nodes_in_subnet as u128) / NODES_IN_DEFAULT_SUBNET as u128
 }
 
@@ -80,7 +81,7 @@ fn test_request_cost() {
             1000,
         );
         let estimated_cost_10_extra_bytes = base_cost
-            + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_BYTE_RECEIVED_COST)
+            + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_REQUEST_COST_PER_BYTE)
                 * nodes_in_subnet as u128
                 / NODES_IN_DEFAULT_SUBNET as u128;
         // Request body with 10 additional bytes should be within 1 cycle of expected cost (due to rounding)
@@ -155,15 +156,25 @@ fn test_candid_rpc_cost() {
     let provider = PROVIDERS.with(|providers| providers.borrow().get(&provider_id).unwrap());
 
     // Default subnet
-    assert_eq!(get_candid_rpc_cost(&provider, 0, 0), 54767387);
-    assert_eq!(get_candid_rpc_cost(&provider, 123, 123), 59170787);
-    assert_eq!(get_candid_rpc_cost(&provider, 123, 4567890), 47563947587);
-    assert_eq!(get_candid_rpc_cost(&provider, 890, 4567890), 47583429387);
+    assert_eq!(
+        [
+            get_candid_rpc_cost(&provider, 0, 0),
+            get_candid_rpc_cost(&provider, 123, 123),
+            get_candid_rpc_cost(&provider, 123, 4567890),
+            get_candid_rpc_cost(&provider, 890, 4567890),
+        ],
+        [51064987, 54828787, 47559605587, 47575098987]
+    );
 
     // Fiduciary subnet
     UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = NODES_IN_FIDUCIARY_SUBNET);
-    assert_eq!(get_candid_rpc_cost(&provider, 0, 0), 117960525);
-    assert_eq!(get_candid_rpc_cost(&provider, 123, 123), 127444772);
-    assert_eq!(get_candid_rpc_cost(&provider, 123, 4567890), 102445425572);
-    assert_eq!(get_candid_rpc_cost(&provider, 890, 4567890), 102487386372);
+    assert_eq!(
+        [
+            get_candid_rpc_cost(&provider, 0, 0),
+            get_candid_rpc_cost(&provider, 123, 123),
+            get_candid_rpc_cost(&provider, 123, 4567890),
+            get_candid_rpc_cost(&provider, 890, 4567890),
+        ],
+        [109986125, 118092772, 102436073572, 102469443972]
+    );
 }

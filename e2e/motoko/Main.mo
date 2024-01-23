@@ -19,8 +19,8 @@ shared ({ caller = installer }) actor class Main() {
 
         let canisterDetails = [
             // (`canister module`, `debug name`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
-            (EvmRpcCanister, "default", 13, 65_923_200),
-            (EvmRpcFidicuaryCanister, "fiduciary", 28, 141_988_430),
+            (EvmRpcCanister, "default", 13, 61_898_400),
+            (EvmRpcFidicuaryCanister, "fiduciary", 28, 133_319_630),
         ];
         for ((canister, name, nodesInSubnet, expectedCycles) in canisterDetails.vals()) {
             Debug.print("Testing " # name # " canister...");
