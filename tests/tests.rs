@@ -663,7 +663,7 @@ fn should_panic_if_unauthorized_register_provider() {
 }
 
 #[test]
-#[should_panic(expected = "Provider owner != caller")]
+#[should_panic(expected = "You are not authorized")]
 fn should_panic_if_unauthorized_manage_provider() {
     let setup = EvmRpcSetup::new();
     setup.manage_provider(ManageProviderArgs {
