@@ -1,5 +1,4 @@
 use cketh_common::eth_rpc::{HttpOutcallError, ProviderError, RpcError, ValidationError};
-use ic_canister_log::log;
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs,
     TransformContext,
@@ -61,7 +60,6 @@ pub async fn do_http_request_with_metrics(
     cycles_cost: u128,
 ) -> RpcResult<HttpResponse> {
     if SERVICE_HOSTS_BLOCKLIST.contains(&rpc_host.0.as_str()) {
-        log!(INFO, "host not allowed: {}", rpc_host.0);
         add_metric_entry!(err_host_not_allowed, rpc_host.clone(), 1);
         return Err(ValidationError::HostNotAllowed(rpc_host.0).into());
     }

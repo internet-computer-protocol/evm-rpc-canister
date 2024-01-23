@@ -4,13 +4,14 @@ use cketh_common::eth_rpc::{
 };
 
 use cketh_common::eth_rpc_client::providers::RpcService;
+use cketh_common::logs::INFO;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
 use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
-use ic_nervous_system_common::{serve_logs, serve_logs_v2, serve_metrics};
+use ic_nervous_system_common::serve_metrics;
 
 use evm_rpc::*;
 
@@ -154,6 +155,12 @@ fn update_provider(provider: UpdateProviderArgs) {
 #[update(name = "manageProvider", guard = "require_admin_or_controller")]
 #[candid_method(rename = "manageProvider")]
 fn manage_provider(args: ManageProviderArgs) {
+    log!(
+        INFO,
+        "[{}] Managing provider: {}",
+        ic_cdk::caller(),
+        args.provider_id
+    );
     do_manage_provider(args)
 }
 
@@ -211,6 +218,14 @@ async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
         provider.cycles_owed = 0;
         p.borrow_mut().insert(provider_id, provider)
     });
+    log!(
+        INFO,
+        "[{}] Withdrawing {} cycles from provider {} to canister: {}",
+        ic_cdk::caller(),
+        amount,
+        provider_id,
+        canister_id,
+    );
     match ic_cdk::api::call::call_with_payment128(
         Principal::management_canister(),
         "deposit_cycles",
@@ -220,15 +235,15 @@ async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
     .await
     {
         Ok(()) => add_metric!(cycles_withdrawn, amount),
-        e => {
+        Err(err) => {
             // Refund on failure to send cycles.
             log!(
                 INFO,
-                "Unable to send {} cycles to {} for provider {}: {:?}",
-                amount,
+                "[{}] Unable to send {} cycles from provider {}: {:?}",
                 canister_id,
+                amount,
                 provider_id,
-                e
+                err
             );
             let provider = PROVIDERS.with(|p| {
                 p.borrow()
@@ -273,9 +288,72 @@ fn init(args: InitArgs) {
 fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
     match request.path() {
         "/metrics" => serve_metrics(encode_metrics),
-        "/logs" => serve_logs_v2(request, &INFO, &ERROR),
-        "/log/info" => serve_logs(&INFO),
-        "/log/error" => serve_logs(&ERROR),
+        "/logs" => {
+            use cketh_common::logs::{Log, Priority, Sort};
+            use std::str::FromStr;
+
+            let max_skip_timestamp = match request.raw_query_param("time") {
+                Some(arg) => match u64::from_str(arg) {
+                    Ok(value) => value,
+                    Err(_) => {
+                        return HttpResponseBuilder::bad_request()
+                            .with_body_and_content_length("failed to parse the 'time' parameter")
+                            .build()
+                    }
+                },
+                None => 0,
+            };
+
+            let mut log: Log = Default::default();
+
+            match request.raw_query_param("priority") {
+                Some(priority_str) => match Priority::from_str(priority_str) {
+                    Ok(priority) => match priority {
+                        Priority::Info => log.push_logs(Priority::Info),
+                        Priority::TraceHttp => log.push_logs(Priority::TraceHttp),
+                        Priority::Debug => log.push_logs(Priority::Debug),
+                    },
+                    Err(_) => log.push_all(),
+                },
+                None => log.push_all(),
+            }
+
+            log.entries
+                .retain(|entry| entry.timestamp >= max_skip_timestamp);
+
+            fn ordering_from_query_params(sort: Option<&str>, max_skip_timestamp: u64) -> Sort {
+                match sort {
+                    Some(ord_str) => match Sort::from_str(ord_str) {
+                        Ok(order) => order,
+                        Err(_) => {
+                            if max_skip_timestamp == 0 {
+                                Sort::Ascending
+                            } else {
+                                Sort::Descending
+                            }
+                        }
+                    },
+                    None => {
+                        if max_skip_timestamp == 0 {
+                            Sort::Ascending
+                        } else {
+                            Sort::Descending
+                        }
+                    }
+                }
+            }
+
+            log.sort_logs(ordering_from_query_params(
+                request.raw_query_param("sort"),
+                max_skip_timestamp,
+            ));
+
+            const MAX_BODY_SIZE: usize = 3_000_000;
+            HttpResponseBuilder::ok()
+                .header("Content-Type", "application/json; charset=utf-8")
+                .with_body_and_content_length(log.serialize_logs(MAX_BODY_SIZE))
+                .build()
+        }
         _ => HttpResponseBuilder::not_found().build(),
     }
 }
@@ -302,6 +380,13 @@ fn stable_read(offset: u64, length: u64) -> Vec<u8> {
 #[update(guard = "require_admin_or_controller")]
 #[candid_method]
 fn authorize(principal: Principal, auth: Auth) {
+    log!(
+        INFO,
+        "[{}] Authorizing `{:?}` for principal: {}",
+        ic_cdk::caller(),
+        auth,
+        principal
+    );
     do_authorize(principal, auth)
 }
 
@@ -322,6 +407,13 @@ fn get_authorized(auth: Auth) -> Vec<Principal> {
 #[update(guard = "require_admin_or_controller")]
 #[candid_method]
 fn deauthorize(principal: Principal, auth: Auth) {
+    log!(
+        INFO,
+        "[{}] Deauthorizing `{:?}` for principal: {}",
+        ic_cdk::caller(),
+        auth,
+        principal
+    );
     do_deauthorize(principal, auth)
 }
 
@@ -334,6 +426,12 @@ fn get_open_rpc_access() -> bool {
 #[update(name = "setOpenRpcAccess", guard = "require_admin_or_controller")]
 #[candid_method(rename = "setOpenRpcAccess")]
 fn set_open_rpc_access(open_rpc_access: bool) {
+    log!(
+        INFO,
+        "[{}] Setting open RPC access to `{}`",
+        ic_cdk::caller(),
+        open_rpc_access
+    );
     METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         metadata.open_rpc_access = open_rpc_access;

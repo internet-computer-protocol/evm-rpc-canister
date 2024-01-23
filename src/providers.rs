@@ -1,7 +1,9 @@
 use cketh_common::{
     eth_rpc::ProviderError,
     eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
+    logs::INFO,
 };
+use ic_canister_log::log;
 
 use crate::*;
 
@@ -179,9 +181,9 @@ pub fn get_chain_id(service: &RpcService) -> u64 {
     }
 }
 
-pub fn do_register_provider(caller: Principal, provider: RegisterProviderArgs) -> u64 {
-    validate_hostname(&provider.hostname).unwrap();
-    validate_credential_path(&provider.credential_path).unwrap();
+pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> u64 {
+    validate_hostname(&args.hostname).unwrap();
+    validate_credential_path(&args.credential_path).unwrap();
     let provider_id = METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         let id = metadata.next_provider_id;
@@ -190,18 +192,19 @@ pub fn do_register_provider(caller: Principal, provider: RegisterProviderArgs) -
         id
     });
     do_deauthorize(caller, Auth::RegisterProvider);
+    log!(INFO, "[{}] Registering provider: {:?}", caller, provider_id);
     PROVIDERS.with(|providers| {
         providers.borrow_mut().insert(
             provider_id,
             Provider {
                 provider_id,
                 owner: caller,
-                chain_id: provider.chain_id,
-                hostname: provider.hostname,
-                credential_path: provider.credential_path,
-                credential_headers: provider.credential_headers.unwrap_or_default(),
-                cycles_per_call: provider.cycles_per_call,
-                cycles_per_message_byte: provider.cycles_per_message_byte,
+                chain_id: args.chain_id,
+                hostname: args.hostname,
+                credential_path: args.credential_path,
+                credential_headers: args.credential_headers.unwrap_or_default(),
+                cycles_per_call: args.cycles_per_call,
+                cycles_per_message_byte: args.cycles_per_message_byte,
                 cycles_owed: 0,
                 primary: false,
             },
@@ -217,6 +220,12 @@ pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
             if provider.owner != caller {
                 ic_cdk::trap("You are not authorized");
             } else {
+                log!(
+                    INFO,
+                    "[{}] Unregistering provider: {:?}",
+                    caller,
+                    provider_id
+                );
                 providers.remove(&provider_id).is_some()
             }
         } else {
@@ -234,6 +243,7 @@ pub fn do_update_provider(caller: Principal, args: UpdateProviderArgs) {
                 if provider.owner != caller {
                     ic_cdk::trap("Provider owner != caller");
                 } else {
+                    log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
                     if let Some(hostname) = args.hostname {
                         validate_hostname(&hostname).unwrap();
                         provider.hostname = hostname;
@@ -283,6 +293,12 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
 }
 
 pub fn set_service_provider(service: &RpcService, provider: &Provider) {
+    log!(
+        INFO,
+        "Changing service {:?} to use provider: {}",
+        service,
+        provider.provider_id
+    );
     let chain_id = get_chain_id(service);
     if chain_id != provider.chain_id {
         ic_cdk::trap(&format!(

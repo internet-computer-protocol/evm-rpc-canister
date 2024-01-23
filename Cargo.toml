@@ -27,7 +27,7 @@ ic-stable-structures = { workspace = true }
 ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
-cketh-common = { git = "https://github.com/rvanasa/ic", rev = "e9bf2ad9decb97f9fefb8190719c69c0281aef37", package = "ic-cketh-minter" }
+cketh-common = { git = "https://github.com/rvanasa/ic", rev = "13af7fa681e3055adae4e83d172204bd3c8188b6", package = "ic-cketh-minter" }
 maplit = "1.0"
 num = "0.4"
 num-traits = "0.2"
@@ -48,8 +48,8 @@ assert_matches = "1.5"
 
 [workspace.dependencies]
 candid = { version = "0.9" }
+ic-canister-log = "0.2.0"
 getrandom = { version = "0.2", features = ["custom"] }
-ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-metrics-encoder = "1.1"
