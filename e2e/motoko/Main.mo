@@ -12,6 +12,11 @@ shared ({ caller = installer }) actor class Main() {
     public shared ({ caller }) func test() : async () {
         assert caller == installer;
 
+        let ignoredTests : [(EvmRpcCanister.RpcService, Text)] = [
+            // (`RPC service`, `method`)
+            (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
+        ];
+
         let canisterDetails = [
             // (`canister module`, `debug name`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
             (EvmRpcCanister, "default", 13, 61_898_400),
@@ -100,6 +105,12 @@ shared ({ caller = installer }) actor class Main() {
                             switch result {
                                 case (#Ok(_)) {};
                                 case (#Err(err)) {
+                                    for ((ignoredService, ignoredMethod) in ignoredTests.vals()) {
+                                        if (service == ignoredService and method == ignoredMethod) {
+                                            Debug.print("Ignoring error from " # debug_show ignoredService # " " # ignoredMethod);
+                                            return;
+                                        };
+                                    };
                                     Debug.trap("received error in inconsistent results for " # debug_show service # " " # method # ": " # debug_show err);
                                 };
                             };
