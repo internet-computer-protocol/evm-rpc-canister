@@ -45,11 +45,11 @@ shared ({ caller = installer }) actor class Main() {
             let cycles = switch cyclesResult {
                 case (#Ok cycles) { cycles };
                 case (#Err err) {
-                    Debug.trap("unexpected error for `request_cost`: " # (debug_show err));
+                    Debug.trap("Unexpected error for `request_cost`: " # (debug_show err));
                 };
             };
             if (cycles != expectedCycles) {
-                Debug.trap("unexpected number of cycles for " # name # " canister: " # debug_show cycles # " (expected " # debug_show expectedCycles # ")");
+                Debug.trap("Unexpected number of cycles for " # name # " canister: " # debug_show cycles # " (expected " # debug_show expectedCycles # ")");
             };
 
             // `request()` without cycles
@@ -98,7 +98,7 @@ shared ({ caller = installer }) actor class Main() {
                 switch result {
                     case (#Consistent(#Ok _)) {};
                     case (#Consistent(#Err err)) {
-                        Debug.trap("received error for " # method # ": " # debug_show err);
+                        Debug.trap("Received error for " # method # ": " # debug_show err);
                     };
                     case (#Inconsistent(results)) {
                         for ((service, result) in results.vals()) {
@@ -111,7 +111,7 @@ shared ({ caller = installer }) actor class Main() {
                                             return;
                                         };
                                     };
-                                    Debug.trap("received error in inconsistent results for " # debug_show service # " " # method # ": " # debug_show err);
+                                    Debug.trap("Received error in inconsistent results for " # debug_show service # " " # method # ": " # debug_show err);
                                 };
                             };
                         };
@@ -125,7 +125,7 @@ shared ({ caller = installer }) actor class Main() {
             switch (await canister.eth_getBlockByNumber(ethMainnetSource, null, #Latest)) {
                 case (#Consistent(#Err(#ProviderError(#TooFewCycles _)))) {};
                 case result {
-                    Debug.trap("received unexpected result: " # debug_show result);
+                    Debug.trap("Received unexpected result: " # debug_show result);
                 };
             };
 
