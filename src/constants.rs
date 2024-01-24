@@ -23,12 +23,12 @@ pub const NODES_IN_FIDUCIARY_SUBNET: u32 = 28;
 pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
 
 // Providers used by default (when passing `null` with `CandidRpcSource`)
-pub const DEFAULT_ETHEREUM_SERVICES: &[EthMainnetService] = &[
+pub const DEFAULT_ETH_MAINNET_SERVICES: &[EthMainnetService] = &[
     EthMainnetService::Ankr,
     EthMainnetService::Cloudflare,
     EthMainnetService::PublicNode,
 ];
-pub const DEFAULT_SEPOLIA_SERVICES: &[EthSepoliaService] = &[
+pub const DEFAULT_ETH_SEPOLIA_SERVICES: &[EthSepoliaService] = &[
     EthSepoliaService::Ankr,
     EthSepoliaService::BlockPi,
     EthSepoliaService::PublicNode,

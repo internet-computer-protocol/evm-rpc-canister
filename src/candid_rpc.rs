@@ -82,7 +82,7 @@ fn get_rpc_client(
             EthereumNetwork::Mainnet,
             Some(
                 check_services(services)?
-                    .unwrap_or_else(|| DEFAULT_ETHEREUM_SERVICES.to_vec())
+                    .unwrap_or_else(|| DEFAULT_ETH_MAINNET_SERVICES.to_vec())
                     .into_iter()
                     .map(RpcService::EthMainnet)
                     .collect(),
@@ -93,7 +93,7 @@ fn get_rpc_client(
             EthereumNetwork::Sepolia,
             Some(
                 check_services(services)?
-                    .unwrap_or_else(|| DEFAULT_SEPOLIA_SERVICES.to_vec())
+                    .unwrap_or_else(|| DEFAULT_ETH_SEPOLIA_SERVICES.to_vec())
                     .into_iter()
                     .map(RpcService::EthSepolia)
                     .collect(),
