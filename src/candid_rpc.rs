@@ -9,7 +9,7 @@ use cketh_common::{
     eth_rpc_client::{
         providers::{RpcApi, RpcService},
         requests::GetTransactionCountParams,
-        EthRpcClient as CkEthRpcClient, MultiCallError, RpcTransport,
+        EthRpcClient as CkEthRpcClient, MultiCallError, RpcConfig, RpcTransport,
     },
     lifecycle::EthereumNetwork,
 };
@@ -69,7 +69,10 @@ fn check_services<T>(services: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
     }
 }
 
-fn get_rpc_client(source: RpcSource) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
+fn get_rpc_client(
+    source: RpcSource,
+    config: RpcConfig,
+) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
     if !is_rpc_allowed(&ic_cdk::caller()) {
         add_metric!(err_no_permission, 1);
         return Err(ProviderError::NoPermission.into());
@@ -84,6 +87,7 @@ fn get_rpc_client(source: RpcSource) -> RpcResult<CkEthRpcClient<CanisterTranspo
                     .map(RpcService::EthMainnet)
                     .collect(),
             ),
+            config,
         ),
         RpcSource::EthSepolia(services) => CkEthRpcClient::new(
             EthereumNetwork::Sepolia,
@@ -94,6 +98,7 @@ fn get_rpc_client(source: RpcSource) -> RpcResult<CkEthRpcClient<CanisterTranspo
                     .map(RpcService::EthSepolia)
                     .collect(),
             ),
+            config,
         ),
     })
 }
@@ -124,9 +129,9 @@ pub struct CandidRpcClient {
 }
 
 impl CandidRpcClient {
-    pub fn from_source(source: RpcSource) -> RpcResult<Self> {
+    pub fn new(source: RpcSource, config: Option<RpcConfig>) -> RpcResult<Self> {
         Ok(Self {
-            client: get_rpc_client(source)?,
+            client: get_rpc_client(source, config.unwrap_or_default())?,
         })
     }
 
