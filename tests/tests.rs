@@ -516,6 +516,11 @@ fn mock_request_should_succeed_with_request_body() {
 }
 
 #[test]
+fn mock_request_should_succeed_with_max_response_bytes() {
+    mock_request(|builder| builder.with_max_response_bytes(MOCK_REQUEST_RESPONSE_BYTES))
+}
+
+#[test]
 fn mock_request_should_succeed_with_all() {
     mock_request(|builder| {
         builder
