@@ -53,48 +53,61 @@ impl EncoderExtensions for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
 }
 
 pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> std::io::Result<()> {
-    w.encode_gauge(
-        "canister_version",
-        ic_cdk::api::canister_version().metric_value(),
-        "Canister version",
-    )?;
-    w.encode_gauge(
-        "stable_memory_pages",
-        ic_cdk::api::stable::stable64_size().metric_value(),
-        "Size of the stable memory allocated by this canister measured in 64-bit Wasm pages",
-    )?;
     crate::UNSTABLE_METRICS.with(|m| {
         let m = m.borrow();
 
-        w.counter_entries("requests", &m.requests, "Number of JSON-RPC requests");
-        w.counter_entries("responses", &m.responses, "Number of JSON-RPC responses");
+        w.gauge_vec("cycle_balance", "Cycle balance of this canister")?
+            .value(
+                &[("canister", "evmrpc")],
+                ic_cdk::api::canister_balance128().metric_value(),
+            )?;
+        w.encode_gauge(
+            "evmrpc_canister_version",
+            ic_cdk::api::canister_version().metric_value(),
+            "Canister version",
+        )?;
+        w.encode_gauge(
+            "evmrpc_stable_memory_pages",
+            ic_cdk::api::stable::stable64_size().metric_value(),
+            "Size of the stable memory allocated by this canister measured in 64-bit Wasm pages",
+        )?;
         w.counter_entries(
-            "inconsistent_responses",
-            &m.inconsistent_responses,
-            "Number of inconsistent RPC responses",
-        );
-        w.counter_entries(
-            "cycles_charged",
+            "evmrpc_cycles_charged",
             &m.cycles_charged,
             "Number of cycles charged for RPC calls",
         );
         w.encode_counter(
-            "cycles_withdrawn",
+            "evmrpc_cycles_withdrawn",
             m.cycles_withdrawn.metric_value(),
             "Number of accumulated cycles withdrawn by RPC providers",
         )?;
         w.counter_entries(
-            "err_http_outcall",
+            "evmrpc_requests",
+            &m.requests,
+            "Number of JSON-RPC requests",
+        );
+        w.counter_entries(
+            "evmrpc_responses",
+            &m.responses,
+            "Number of JSON-RPC responses",
+        );
+        w.counter_entries(
+            "evmrpc_inconsistent_responses",
+            &m.inconsistent_responses,
+            "Number of inconsistent RPC responses",
+        );
+        w.counter_entries(
+            "evmrpc_err_http_outcall",
             &m.err_http_outcall,
             "Number of unsuccessful HTTP outcalls",
         );
         w.counter_entries(
-            "err_host_not_allowed",
+            "evmrpc_err_host_not_allowed",
             &m.err_host_not_allowed,
             "Number of HostNotAllowed errors",
         );
         w.encode_counter(
-            "err_no_permission",
+            "evmrpc_err_no_permission",
             m.err_no_permission.metric_value(),
             "Number of NoPermission errors",
         )?;
