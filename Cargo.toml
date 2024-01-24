@@ -27,7 +27,7 @@ ic-stable-structures = { workspace = true }
 ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
-cketh-common = { git = "https://github.com/rvanasa/ic", rev = "4cf8effe8c2f60f889955302a79a800f898dfb29", package = "ic-cketh-minter" }
+cketh-common = { git = "https://github.com/rvanasa/ic", rev = "6a8e2eb86e4e48ad8d8a4b49d6477b7112aae12e", package = "ic-cketh-minter" }
 maplit = "1.0"
 num = "0.4"
 num-traits = "0.2"

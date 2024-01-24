@@ -1663,7 +1663,7 @@ fn should_restrict_rpc_access() {
 #[test]
 fn should_use_custom_response_size_estimate() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-    let max_response_bytes = 12345;
+    let max_response_bytes = 1234;
     let expected_response = r#"{"id":0,"jsonrpc":"2.0","result":[{"address":"0xdac17f958d2ee523a2206206994597c13d831ec7","topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef","0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43","0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"],"data":"0x000000000000000000000000000000000000000000000000000000003b9c6433","blockNumber":"0x11dc77e","transactionHash":"0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678","transactionIndex":"0x65","blockHash":"0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629","logIndex":"0xe8","removed":false}]}"#;
     let response = setup
         .eth_get_logs(
@@ -1680,7 +1680,7 @@ fn should_use_custom_response_size_estimate() {
         )
         .mock_http_once(
             MockOutcallBuilder::new(200, expected_response)
-                .with_max_response_bytes(max_response_bytes + 2048),
+                .with_max_response_bytes(max_response_bytes),
         )
         .wait()
         .expect_consistent();
