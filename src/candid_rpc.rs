@@ -17,6 +17,8 @@ use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument
 
 use crate::*;
 
+use self::candid_types::BlockTag;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct CanisterTransport;
 
@@ -136,6 +138,22 @@ impl CandidRpcClient {
         &self,
         args: candid_types::GetLogsArgs,
     ) -> MultiRpcResult<Vec<LogEntry>> {
+        if let (Some(BlockTag::Number(from)), Some(BlockTag::Number(to))) =
+            (&args.from_block, &args.to_block)
+        {
+            let (from, to) = (
+                candid::Nat::from(from.clone()),
+                candid::Nat::from(to.clone()),
+            );
+            let block_count = if to > from { to - from } else { from - to };
+            if block_count > ETH_GET_LOGS_MAX_BLOCKS {
+                return MultiRpcResult::Consistent(Err(ValidationError::Custom(format!(
+                    "Requested {} blocks; limited to {} when specifying a start and end block",
+                    block_count, ETH_GET_LOGS_MAX_BLOCKS
+                ))
+                .into()));
+            }
+        }
         let args: GetLogsParam = match args.try_into() {
             Ok(args) => args,
             Err(err) => return MultiRpcResult::Consistent(Err(RpcError::from(err))),
