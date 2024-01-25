@@ -141,10 +141,7 @@ impl CandidRpcClient {
         if let (Some(BlockTag::Number(from)), Some(BlockTag::Number(to))) =
             (&args.from_block, &args.to_block)
         {
-            let (from, to) = (
-                candid::Nat::from(from.clone()),
-                candid::Nat::from(to.clone()),
-            );
+            let (from, to) = (candid::Nat::from(*from), candid::Nat::from(*to));
             let block_count = if to > from { to - from } else { from - to };
             if block_count > ETH_GET_LOGS_MAX_BLOCKS {
                 return MultiRpcResult::Consistent(Err(ValidationError::Custom(format!(
