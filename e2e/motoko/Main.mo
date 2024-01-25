@@ -98,7 +98,7 @@ shared ({ caller = installer }) actor class Main() {
                 switch result {
                     case (#Consistent(#Ok _)) {};
                     case (#Consistent(#Err err)) {
-                        Debug.trap("received error for " # method # ": " # debug_show err);
+                        Debug.trap("received error for " # name # " " # method # ": " # debug_show err);
                     };
                     case (#Inconsistent(results)) {
                         for ((service, result) in results.vals()) {
@@ -107,11 +107,11 @@ shared ({ caller = installer }) actor class Main() {
                                 case (#Err(err)) {
                                     for ((ignoredService, ignoredMethod) in ignoredTests.vals()) {
                                         if (service == ignoredService and method == ignoredMethod) {
-                                            Debug.print("Ignoring error from " # debug_show ignoredService # " " # ignoredMethod);
+                                            Debug.print("Ignoring error from " # name # " " # debug_show ignoredService # " " # ignoredMethod);
                                             return;
                                         };
                                     };
-                                    Debug.trap("received error in inconsistent results for " # debug_show service # " " # method # ": " # debug_show err);
+                                    Debug.trap("received error in inconsistent results for " # name # " " # debug_show service # " " # method # ": " # debug_show err);
                                 };
                             };
                         };
