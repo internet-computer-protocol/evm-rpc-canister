@@ -9,7 +9,7 @@ use cketh_common::{
     eth_rpc_client::{
         providers::{RpcApi, RpcService},
         requests::GetTransactionCountParams,
-        EthRpcClient as CkEthRpcClient, MultiCallError, RpcTransport,
+        EthRpcClient as CkEthRpcClient, MultiCallError, RpcConfig, RpcTransport,
     },
     lifecycle::EthereumNetwork,
 };
@@ -84,6 +84,7 @@ fn get_rpc_client(source: RpcSource) -> RpcResult<CkEthRpcClient<CanisterTranspo
                     .map(RpcService::EthMainnet)
                     .collect(),
             ),
+            RpcConfig::default(), // https://github.com/internet-computer-protocol/ic-eth-rpc/pull/146
         ),
         RpcSource::EthSepolia(services) => CkEthRpcClient::new(
             EthereumNetwork::Sepolia,
@@ -94,6 +95,7 @@ fn get_rpc_client(source: RpcSource) -> RpcResult<CkEthRpcClient<CanisterTranspo
                     .map(RpcService::EthSepolia)
                     .collect(),
             ),
+            RpcConfig::default(), // https://github.com/internet-computer-protocol/ic-eth-rpc/pull/146
         ),
     })
 }

@@ -726,9 +726,9 @@ checksum = "fd16c4719339c4530435d38e511904438d07cce7950afa3718a84ac36c10e89e"
 
 [[package]]
 name = "chrono"
-version = "0.4.32"
+version = "0.4.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41daef31d7a747c5c847246f36de49ced6f7403b4cdabc807a97b5cc184cda7a"
+checksum = "9f13690e35a5e4ace198e7beea2895d29f3a9cc55015fcebe6336bd2010af9eb"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
@@ -741,9 +741,9 @@ dependencies = [
 
 [[package]]
 name = "ciborium"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "effd91f6c78e5a4ace8a5d3c0b6bfaec9e2baaef55f3efc00e45fb2e477ee926"
+checksum = "42e69ffd6f0917f5c029256a24d0161db17cea3997d185db0d35926308770f0e"
 dependencies = [
  "ciborium-io",
  "ciborium-ll",
@@ -752,18 +752,18 @@ dependencies = [
 
 [[package]]
 name = "ciborium-io"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cdf919175532b369853f5d5e20b26b43112613fd6fe7aee757e35f7a44642656"
+checksum = "05afea1e0a06c9be33d539b876f1ce3692f4afea2cb41f740e7743225ed1c757"
 
 [[package]]
 name = "ciborium-ll"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "defaa24ecc093c77630e6c15e17c51f5e187bf35ee514f4e2d67baaa96dae22b"
+checksum = "57663b653d948a338bfb3eeba9bb2fd5fcfaecb9e199e87e1eda4d9e8b240fd9"
 dependencies = [
  "ciborium-io",
- "half",
+ "half 2.3.1",
 ]
 
 [[package]]
@@ -1818,6 +1818,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eabb4a44450da02c90444cf74558da904edde8fb4e9035a9a6a4e15445af0bd7"
 
 [[package]]
+name = "half"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc52e53916c08643f1b56ec082790d1e86a32e58dc5268f897f313fbae7b4872"
+dependencies = [
+ "cfg-if",
+ "crunchy",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2114,7 +2124,7 @@ dependencies = [
 [[package]]
 name = "ic-base-types"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "base32",
  "byte-unit",
@@ -2157,7 +2167,7 @@ dependencies = [
 [[package]]
 name = "ic-btc-types-internal"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "candid",
  "ic-btc-interface",
@@ -2275,7 +2285,7 @@ dependencies = [
 [[package]]
 name = "ic-canisters-http-types"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "candid",
  "serde",
@@ -2407,7 +2417,7 @@ dependencies = [
 [[package]]
 name = "ic-cketh-minter"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "askama",
  "async-trait",
@@ -2542,7 +2552,7 @@ dependencies = [
 [[package]]
 name = "ic-crypto-ecdsa-secp256k1"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "k256",
  "lazy_static",
@@ -2861,7 +2871,7 @@ dependencies = [
 [[package]]
 name = "ic-crypto-internal-sha2"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "sha2 0.10.8",
 ]
@@ -3027,7 +3037,7 @@ dependencies = [
 [[package]]
 name = "ic-crypto-sha2"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "ic-crypto-internal-sha2 0.9.0",
 ]
@@ -3035,7 +3045,7 @@ dependencies = [
 [[package]]
 name = "ic-crypto-sha3"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "sha3",
 ]
@@ -3249,7 +3259,7 @@ dependencies = [
 [[package]]
 name = "ic-error-types"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "ic-utils 0.9.0",
  "serde",
@@ -3336,7 +3346,7 @@ dependencies = [
 [[package]]
 name = "ic-ic00-types"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "candid",
  "ic-base-types 0.9.0",
@@ -3626,7 +3636,7 @@ dependencies = [
 [[package]]
 name = "ic-protobuf"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "bincode",
  "candid",
@@ -3948,7 +3958,7 @@ dependencies = [
 [[package]]
 name = "ic-sys"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "hex",
  "ic-crypto-sha2 0.9.0",
@@ -4090,7 +4100,7 @@ dependencies = [
 [[package]]
 name = "ic-utils"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "cvt",
  "hex",
@@ -4107,7 +4117,7 @@ dependencies = [
 [[package]]
 name = "ic-utils-ensure"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 
 [[package]]
 name = "ic-utils-lru-cache"
@@ -4185,7 +4195,7 @@ dependencies = [
 [[package]]
 name = "icrc-ledger-client"
 version = "0.1.2"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "async-trait",
  "candid",
@@ -4196,7 +4206,7 @@ dependencies = [
 [[package]]
 name = "icrc-ledger-client-cdk"
 version = "0.1.2"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "async-trait",
  "candid",
@@ -4222,7 +4232,7 @@ dependencies = [
 [[package]]
 name = "icrc-ledger-types"
 version = "0.1.4"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "base32",
  "candid",
@@ -5168,7 +5178,7 @@ dependencies = [
 [[package]]
 name = "phantom_newtype"
 version = "0.9.0"
-source = "git+https://github.com/dfinity/ic?rev=13af7fa681e3055adae4e83d172204bd3c8188b6#13af7fa681e3055adae4e83d172204bd3c8188b6"
+source = "git+https://github.com/rvanasa/ic?rev=13b90a0f6e94243dc5857964cfcdb5b44918d175#13b90a0f6e94243dc5857964cfcdb5b44918d175"
 dependencies = [
  "candid",
  "serde",
@@ -5192,18 +5202,18 @@ checksum = "5be167a7af36ee22fe3115051bc51f6e6c7054c9348e28deb4f49bd6f705a315"
 
 [[package]]
 name = "pin-project"
-version = "1.1.3"
+version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fda4ed1c6c173e3fc7a83629421152e01d7b1f9b7f65fb301e490e8cfc656422"
+checksum = "0302c4a0442c456bd56f841aee5c3bfd17967563f6fadc9ceb9f9c23cf3807e0"
 dependencies = [
  "pin-project-internal",
 ]
 
 [[package]]
 name = "pin-project-internal"
-version = "1.1.3"
+version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4359fd9c9171ec6e8c62926d6faaf553a8dc3f64e1507e76da7911b4f6a04405"
+checksum = "266c042b60c9c76b8d53061e52b2e0d1116abc57cefc8c5cd671619a56ac3690"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5703,9 +5713,9 @@ dependencies = [
 
 [[package]]
 name = "regex-automata"
-version = "0.4.4"
+version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b7fa1134405e2ec9353fd416b17f8dacd46c473d7d3fd1cf202706a14eb792a"
+checksum = "5bb987efffd3c6d0d8f5f89510bb458559eab11e4f869acb20bf845e016259cd"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -6032,7 +6042,7 @@ version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2bef2ebfde456fb76bbcf9f59315333decc4fda0b2b44b420243c11e0f5ec1f5"
 dependencies = [
- "half",
+ "half 1.8.2",
  "serde",
 ]
 
@@ -7160,9 +7170,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-encoder"
-version = "0.39.0"
+version = "0.40.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "111495d6204760238512f57a9af162f45086504da332af210f2f75dd80b34f1d"
+checksum = "d162eb64168969ae90e8668ca0593b0e47667e315aa08e717a9c9574d700d826"
 dependencies = [
  "leb128",
 ]
@@ -7367,21 +7377,21 @@ dependencies = [
 
 [[package]]
 name = "wast"
-version = "70.0.0"
+version = "70.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ee4bc54bbe1c6924160b9f75e374a1d07532e7580eb632c0ee6cdd109bb217e"
+checksum = "f5d415036fe747a32b30c76c8bd6c73f69b7705fb7ebca5f16e852eef0c95802"
 dependencies = [
  "leb128",
  "memchr",
  "unicode-width",
- "wasm-encoder 0.39.0",
+ "wasm-encoder 0.40.0",
 ]
 
 [[package]]
 name = "wat"
-version = "1.0.83"
+version = "1.0.84"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f0dce8cdc288c717cf01e461a1e451a7b8445d53451123536ba576e423a101a"
+checksum = "8241f34599d413d2243a21015ab43aef68bfb32a0e447c54eef8d423525ca15e"
 dependencies = [
  "wast",
 ]
