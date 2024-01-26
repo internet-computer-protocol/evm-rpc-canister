@@ -18,12 +18,12 @@ shared ({ caller = installer }) actor class Main() {
         ];
 
         let canisterDetails = [
-            // (`canister module`, `debug name`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
+            // (`canister module`, `canister type`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
             (EvmRpcCanister, "default", 13, 61_898_400),
             (EvmRpcFidicuaryCanister, "fiduciary", 28, 133_319_630),
         ];
-        for ((canister, name, nodesInSubnet, expectedCycles) in canisterDetails.vals()) {
-            Debug.print("Testing " # name # " canister...");
+        for ((canister, canisterType, nodesInSubnet, expectedCycles) in canisterDetails.vals()) {
+            Debug.print("Testing " # canisterType # " canister...");
 
             let mainnet = Evm.Rpc(
                 #Canister canister,
@@ -49,7 +49,7 @@ shared ({ caller = installer }) actor class Main() {
                 };
             };
             if (cycles != expectedCycles) {
-                Debug.trap("unexpected number of cycles for " # name # " canister: " # debug_show cycles # " (expected " # debug_show expectedCycles # ")");
+                Debug.trap("unexpected number of cycles for " # canisterType # " canister: " # debug_show cycles # " (expected " # debug_show expectedCycles # ")");
             };
 
             // `request()` without cycles
@@ -98,7 +98,7 @@ shared ({ caller = installer }) actor class Main() {
                 switch result {
                     case (#Consistent(#Ok _)) {};
                     case (#Consistent(#Err err)) {
-                        Debug.trap("received error for " # name # " " # method # ": " # debug_show err);
+                        Debug.trap("received error for " # canisterType # " " # method # ": " # debug_show err);
                     };
                     case (#Inconsistent(results)) {
                         for ((service, result) in results.vals()) {
@@ -107,11 +107,11 @@ shared ({ caller = installer }) actor class Main() {
                                 case (#Err(err)) {
                                     for ((ignoredService, ignoredMethod) in ignoredTests.vals()) {
                                         if (service == ignoredService and method == ignoredMethod) {
-                                            Debug.print("Ignoring error from " # name # " " # debug_show ignoredService # " " # ignoredMethod);
+                                            Debug.print("Ignoring error from " # canisterType # " " # debug_show ignoredService # " " # ignoredMethod);
                                             return;
                                         };
                                     };
-                                    Debug.trap("received error in inconsistent results for " # name # " " # debug_show service # " " # method # ": " # debug_show err);
+                                    Debug.trap("received error in inconsistent results for " # canisterType # " " # debug_show service # " " # method # ": " # debug_show err);
                                 };
                             };
                         };
