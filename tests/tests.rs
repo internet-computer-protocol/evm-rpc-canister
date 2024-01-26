@@ -11,7 +11,10 @@ use cketh_common::{
         Block, Data, FeeHistory, FixedSizeData, Hash, HttpOutcallError, JsonRpcError, LogEntry,
         ProviderError, RpcError, SendRawTransactionResult,
     },
-    eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
+    eth_rpc_client::{
+        providers::{EthMainnetService, EthSepoliaService, RpcService},
+        RpcConfig,
+    },
     numeric::{BlockNumber, Wei},
 };
 use ic_base_types::{CanisterId, PrincipalId};
@@ -244,54 +247,66 @@ impl EvmRpcSetup {
     pub fn eth_get_logs(
         &self,
         source: RpcSource,
+        config: Option<RpcConfig>,
         args: candid_types::GetLogsArgs,
     ) -> CallFlow<MultiRpcResult<Vec<LogEntry>>> {
-        self.call_update("eth_getLogs", Encode!(&source, &args).unwrap())
+        self.call_update("eth_getLogs", Encode!(&source, &config, &args).unwrap())
     }
 
     pub fn eth_get_block_by_number(
         &self,
         source: RpcSource,
+        config: Option<RpcConfig>,
         block: candid_types::BlockTag,
     ) -> CallFlow<MultiRpcResult<Block>> {
-        self.call_update("eth_getBlockByNumber", Encode!(&source, &block).unwrap())
+        self.call_update(
+            "eth_getBlockByNumber",
+            Encode!(&source, &config, &block).unwrap(),
+        )
     }
 
     pub fn eth_get_transaction_receipt(
         &self,
         source: RpcSource,
+        config: Option<RpcConfig>,
         address: &str,
     ) -> CallFlow<MultiRpcResult<Option<candid_types::TransactionReceipt>>> {
         self.call_update(
             "eth_getTransactionReceipt",
-            Encode!(&source, &address).unwrap(),
+            Encode!(&source, &config, &address).unwrap(),
         )
     }
 
     pub fn eth_get_transaction_count(
         &self,
         source: RpcSource,
+        config: Option<RpcConfig>,
         args: candid_types::GetTransactionCountArgs,
     ) -> CallFlow<MultiRpcResult<Nat>> {
-        self.call_update("eth_getTransactionCount", Encode!(&source, &args).unwrap())
+        self.call_update(
+            "eth_getTransactionCount",
+            Encode!(&source, &config, &args).unwrap(),
+        )
     }
 
     pub fn eth_fee_history(
         &self,
         source: RpcSource,
+        config: Option<RpcConfig>,
         args: candid_types::FeeHistoryArgs,
     ) -> CallFlow<MultiRpcResult<Option<FeeHistory>>> {
-        self.call_update("eth_feeHistory", Encode!(&source, &args).unwrap())
+        self.call_update("eth_feeHistory", Encode!(&source, &config, &args).unwrap())
     }
 
     pub fn eth_send_raw_transaction(
         &self,
         source: RpcSource,
+        config: Option<RpcConfig>,
         signed_raw_transaction_hex: &str,
     ) -> CallFlow<MultiRpcResult<SendRawTransactionResult>> {
         self.call_update(
             "eth_sendRawTransaction",
-            Encode!(&source, &signed_raw_transaction_hex).unwrap(),
+            Encode!(&source, &config, &signed_raw_transaction_hex).unwrap(),
         )
     }
 }
@@ -498,6 +513,11 @@ fn mock_request_should_succeed_with_request_headers() {
 #[test]
 fn mock_request_should_succeed_with_request_body() {
     mock_request(|builder| builder.with_request_body(MOCK_REQUEST_PAYLOAD))
+}
+
+#[test]
+fn mock_request_should_succeed_with_max_response_bytes() {
+    mock_request(|builder| builder.with_max_response_bytes(MOCK_REQUEST_RESPONSE_BYTES))
 }
 
 #[test]
@@ -800,6 +820,7 @@ fn should_replace_service_provider() {
     let result = setup
         .eth_get_transaction_count(
             RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
             candid_types::GetTransactionCountArgs {
                 address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
                 block: candid_types::BlockTag::Latest,
@@ -957,6 +978,7 @@ fn eth_get_logs_should_succeed() {
     let response = setup
         .eth_get_logs(
             RpcSource::EthMainnet(None),
+            None,
             candid_types::GetLogsArgs {
                 addresses: vec!["0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string()],
                 from_block: None,
@@ -1010,6 +1032,7 @@ fn eth_get_block_by_number_should_succeed() {
     let response = setup
         .eth_get_block_by_number(
             RpcSource::EthMainnet(None),
+            None,
             candid_types::BlockTag::Latest,
         )
         .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","result":{"baseFeePerGas":"0xd7232aa34","difficulty":"0x0","extraData":"0x546974616e2028746974616e6275696c6465722e78797a29","gasLimit":"0x1c9c380","gasUsed":"0xa768c4","hash":"0xc3674be7b9d95580d7f23c03d32e946f2b453679ee6505e3a778f003c5a3cfae","logsBloom":"0x3e6b8420e1a13038902c24d6c2a9720a7ad4860cdc870cd5c0490011e43631134f608935bd83171247407da2c15d85014f9984608c03684c74aad48b20bc24022134cdca5f2e9d2dee3b502a8ccd39eff8040b1d96601c460e119c408c620b44fa14053013220847045556ea70484e67ec012c322830cf56ef75e09bd0db28a00f238adfa587c9f80d7e30d3aba2863e63a5cad78954555966b1055a4936643366a0bb0b1bac68d0e6267fc5bf8304d404b0c69041125219aa70562e6a5a6362331a414a96d0716990a10161b87dd9568046a742d4280014975e232b6001a0360970e569d54404b27807d7a44c949ac507879d9d41ec8842122da6772101bc8b","miner":"0x388c818ca8b9251b393131c08a736a67ccb19297","mixHash":"0x516a58424d4883a3614da00a9c6f18cd5cd54335a08388229a993a8ecf05042f","nonce":"0x0000000000000000","number":"0x11db01d","parentHash":"0x43325027f6adf9befb223f8ae80db057daddcd7b48e41f60cd94bfa8877181ae","receiptsRoot":"0x66934c3fd9c547036fe0e56ad01bc43c84b170be7c4030a86805ddcdab149929","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":"0xcd35","stateRoot":"0x13552447dd62f11ad885f21a583c4fa34144efe923c7e35fb018d6710f06b2b6","timestamp":"0x656f96f3","totalDifficulty":"0xc70d815d562d3cfa955","withdrawalsRoot":"0xecae44b2c53871003c5cc75285995764034c9b5978a904229d36c1280b141d48"},"id":0}"#))
@@ -1050,6 +1073,7 @@ fn eth_get_transaction_receipt_should_succeed() {
     let response = setup
         .eth_get_transaction_receipt(
             RpcSource::EthMainnet(None),
+            None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
         .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":2,"result":{"blockHash":"0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be","blockNumber":"0x11a85ab","contractAddress":null,"cumulativeGasUsed":"0xf02aed","effectiveGasPrice":"0x63c00ee76","from":"0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667","gasUsed":"0x7d89","logs":[],"logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","status":"0x1","to":"0x356cfd6e6d0000400000003900b415f80669009e","transactionHash":"0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f","transactionIndex":"0xd9","type":"0x2"}}"#))
@@ -1082,6 +1106,7 @@ fn eth_get_transaction_count_should_succeed() {
     let response = setup
         .eth_get_transaction_count(
             RpcSource::EthMainnet(None),
+            None,
             candid_types::GetTransactionCountArgs {
                 address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
                 block: candid_types::BlockTag::Latest,
@@ -1103,6 +1128,7 @@ fn eth_fee_history_should_succeed() {
     let response = setup
         .eth_fee_history(
             RpcSource::EthMainnet(None),
+            None,
             candid_types::FeeHistoryArgs {
                 block_count: 3,
                 newest_block: candid_types::BlockTag::Latest,
@@ -1136,6 +1162,7 @@ fn eth_send_raw_transaction_should_succeed() {
     let response = setup
         .eth_send_raw_transaction(
             RpcSource::EthMainnet(None),
+            None,
             "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
         .mock_http(MockOutcallBuilder::new(
@@ -1154,6 +1181,7 @@ fn candid_rpc_should_allow_unexpected_response_fields() {
     let response = setup
         .eth_get_transaction_receipt(
             RpcSource::EthMainnet(None),
+            None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
         .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":{"unexpectedKey":"unexpectedValue","blockHash":"0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35","blockNumber":"0x5bad55","contractAddress":null,"cumulativeGasUsed":"0xb90b0","effectiveGasPrice":"0x746a528800","from":"0x398137383b3d25c92898c656696e41950e47316b","gasUsed":"0x1383f","logs":[],"logsBloom":"0x0","status":"0x1","to":"0x06012c8cf97bead5deae237070f9587f8e7a266d","transactionHash":"0xbb3a336e3f823ec18197f1e13ee875700f08f03e2cab75f0d0b118dabb44cba0","transactionIndex":"0x11","type":"0x0"}}"#))
@@ -1173,6 +1201,7 @@ fn candid_rpc_should_err_without_cycles() {
     let result = setup
         .eth_get_transaction_receipt(
             RpcSource::EthMainnet(None),
+            None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
         .wait()
@@ -1196,6 +1225,7 @@ fn candid_rpc_should_err_during_restricted_access() {
                 EthMainnetService::Cloudflare,
                 EthMainnetService::BlockPi,
             ])),
+            None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
         .wait()
@@ -1219,6 +1249,7 @@ fn candid_rpc_should_err_when_service_unavailable() {
     let result = setup
         .eth_get_transaction_receipt(
             RpcSource::EthMainnet(None),
+            None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
         .mock_http(MockOutcallBuilder::new(503, "Service unavailable"))
@@ -1262,6 +1293,7 @@ fn candid_rpc_should_recognize_json_error() {
                 EthSepoliaService::Ankr,
                 EthSepoliaService::BlockPi,
             ])),
+            None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
         .mock_http(MockOutcallBuilder::new(
@@ -1300,6 +1332,7 @@ fn candid_rpc_should_reject_empty_service_list() {
     let result = setup
         .eth_get_transaction_receipt(
             RpcSource::EthMainnet(Some(vec![])),
+            None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
         .wait()
@@ -1316,6 +1349,7 @@ fn candid_rpc_should_return_inconsistent_results() {
     let results = setup
         .eth_send_raw_transaction(
             RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
+            None,
             "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
         .mock_http_once(MockOutcallBuilder::new(
@@ -1371,6 +1405,7 @@ fn candid_rpc_should_return_inconsistent_results_with_error() {
                 EthMainnetService::Alchemy,
                 EthMainnetService::Ankr,
             ])),
+            None,
             candid_types::GetTransactionCountArgs {
                 address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
                 block: candid_types::BlockTag::Latest,
@@ -1432,6 +1467,7 @@ fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
                 EthMainnetService::Alchemy,
                 EthMainnetService::Ankr,
             ])),
+            None,
             candid_types::GetTransactionCountArgs {
                 address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
                 block: candid_types::BlockTag::Latest,
@@ -1491,6 +1527,7 @@ fn candid_rpc_should_handle_already_known() {
     let result = setup
         .eth_send_raw_transaction(
             RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
+            None,
             "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
         .mock_http_once(MockOutcallBuilder::new(
@@ -1527,6 +1564,7 @@ fn candid_rpc_should_recognize_rate_limit() {
     let result = setup
         .eth_send_raw_transaction(
             RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
+            None,
             "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
         .mock_http(MockOutcallBuilder::new(
@@ -1577,6 +1615,7 @@ fn should_restrict_rpc_access() {
     let result = setup
         .eth_get_transaction_count(
             RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
             candid_types::GetTransactionCountArgs {
                 address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
                 block: candid_types::BlockTag::Latest,
@@ -1592,6 +1631,7 @@ fn should_restrict_rpc_access() {
     let result = setup
         .eth_get_transaction_count(
             RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
             candid_types::GetTransactionCountArgs {
                 address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
                 block: candid_types::BlockTag::Latest,
@@ -1618,4 +1658,31 @@ fn should_restrict_rpc_access() {
             ..Default::default()
         }
     );
+}
+
+#[test]
+fn should_use_custom_response_size_estimate() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let max_response_bytes = 1234;
+    let expected_response = r#"{"id":0,"jsonrpc":"2.0","result":[{"address":"0xdac17f958d2ee523a2206206994597c13d831ec7","topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef","0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43","0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"],"data":"0x000000000000000000000000000000000000000000000000000000003b9c6433","blockNumber":"0x11dc77e","transactionHash":"0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678","transactionIndex":"0x65","blockHash":"0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629","logIndex":"0xe8","removed":false}]}"#;
+    let response = setup
+        .eth_get_logs(
+            RpcSource::EthMainnet(Some(vec![EthMainnetService::Cloudflare])),
+            Some(RpcConfig {
+                response_size_estimate: Some(max_response_bytes),
+            }),
+            candid_types::GetLogsArgs {
+                addresses: vec!["0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string()],
+                from_block: None,
+                to_block: None,
+                topics: None,
+            },
+        )
+        .mock_http_once(
+            MockOutcallBuilder::new(200, expected_response)
+                .with_max_response_bytes(max_response_bytes),
+        )
+        .wait()
+        .expect_consistent();
+    assert_matches!(response, Ok(_));
 }

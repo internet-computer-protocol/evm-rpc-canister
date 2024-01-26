@@ -45,11 +45,11 @@ shared ({ caller = installer }) actor class Main() {
             let cycles = switch cyclesResult {
                 case (#Ok cycles) { cycles };
                 case (#Err err) {
-                    Debug.trap("unexpected error for `request_cost`: " # (debug_show err));
+                    Debug.trap("Unexpected error for `request_cost`: " # (debug_show err));
                 };
             };
             if (cycles != expectedCycles) {
-                Debug.trap("unexpected number of cycles for " # name # " canister: " # debug_show cycles # " (expected " # debug_show expectedCycles # ")");
+                Debug.trap("Unexpected number of cycles for " # name # " canister: " # debug_show cycles # " (expected " # debug_show expectedCycles # ")");
             };
 
             // `request()` without cycles
@@ -98,7 +98,7 @@ shared ({ caller = installer }) actor class Main() {
                 switch result {
                     case (#Consistent(#Ok _)) {};
                     case (#Consistent(#Err err)) {
-                        Debug.trap("received error for " # method # ": " # debug_show err);
+                        Debug.trap("Received error for " # method # ": " # debug_show err);
                     };
                     case (#Inconsistent(results)) {
                         for ((service, result) in results.vals()) {
@@ -111,7 +111,7 @@ shared ({ caller = installer }) actor class Main() {
                                             return;
                                         };
                                     };
-                                    Debug.trap("received error in inconsistent results for " # debug_show service # " " # method # ": " # debug_show err);
+                                    Debug.trap("Received error in inconsistent results for " # debug_show service # " " # method # ": " # debug_show err);
                                 };
                             };
                         };
@@ -122,10 +122,10 @@ shared ({ caller = installer }) actor class Main() {
             let candidRpcCycles = 1_000_000_000_000;
             let ethMainnetSource = #EthMainnet(?[#Alchemy, #Ankr, #Cloudflare, #BlockPi, #PublicNode]);
 
-            switch (await canister.eth_getBlockByNumber(ethMainnetSource, #Latest)) {
+            switch (await canister.eth_getBlockByNumber(ethMainnetSource, null, #Latest)) {
                 case (#Consistent(#Err(#ProviderError(#TooFewCycles _)))) {};
                 case result {
-                    Debug.trap("received unexpected result: " # debug_show result);
+                    Debug.trap("Received unexpected result: " # debug_show result);
                 };
             };
 
@@ -134,6 +134,7 @@ shared ({ caller = installer }) actor class Main() {
                 "eth_getLogs",
                 await canister.eth_getLogs(
                     ethMainnetSource,
+                    null,
                     {
                         addresses = ["0xdAC17F958D2ee523a2206206994597C13D831ec7"];
                         fromBlock = null;
@@ -145,18 +146,19 @@ shared ({ caller = installer }) actor class Main() {
             Cycles.add(candidRpcCycles);
             assertOk(
                 "eth_getBlockByNumber",
-                await canister.eth_getBlockByNumber(ethMainnetSource, #Latest),
+                await canister.eth_getBlockByNumber(ethMainnetSource, null, #Latest),
             );
             Cycles.add(candidRpcCycles);
             assertOk(
                 "eth_getTransactionReceipt",
-                await canister.eth_getTransactionReceipt(ethMainnetSource, "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"),
+                await canister.eth_getTransactionReceipt(ethMainnetSource, null, "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"),
             );
             Cycles.add(candidRpcCycles);
             assertOk(
                 "eth_getTransactionCount",
                 await canister.eth_getTransactionCount(
                     ethMainnetSource,
+                    null,
                     {
                         address = "0x1789F79e95324A47c5Fd6693071188e82E9a3558";
                         block = #Latest;
@@ -168,6 +170,7 @@ shared ({ caller = installer }) actor class Main() {
                 "eth_feeHistory",
                 await canister.eth_feeHistory(
                     ethMainnetSource,
+                    null,
                     {
                         blockCount = 3;
                         newestBlock = #Latest;
@@ -180,6 +183,7 @@ shared ({ caller = installer }) actor class Main() {
                 "eth_sendRawTransaction",
                 await canister.eth_sendRawTransaction(
                     ethMainnetSource,
+                    null,
                     "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
                 ),
             );

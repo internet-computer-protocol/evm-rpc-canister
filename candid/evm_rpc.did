@@ -172,6 +172,7 @@ type SendRawTransactionResult = variant {
 };
 type RequestResult = variant { Ok : text; Err : RpcError };
 type RequestCostResult = variant { Ok : nat; Err : RpcError };
+type RpcConfig = record { responseSizeEstimate : opt nat64 };
 type RpcError = variant {
   JsonRpcError : JsonRpcError;
   ProviderError : ProviderError;
@@ -227,14 +228,14 @@ type ValidationError = variant {
 service : (InitArgs) -> {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
-  eth_feeHistory : (RpcSource, FeeHistoryArgs) -> (MultiFeeHistoryResult);
-  eth_getBlockByNumber : (RpcSource, BlockTag) -> (MultiGetBlockByNumberResult);
-  eth_getLogs : (RpcSource, GetLogsArgs) -> (MultiGetLogsResult);
-  eth_getTransactionCount : (RpcSource, GetTransactionCountArgs) -> (
+  eth_feeHistory : (RpcSource, opt RpcConfig, FeeHistoryArgs) -> (MultiFeeHistoryResult);
+  eth_getBlockByNumber : (RpcSource, opt RpcConfig, BlockTag) -> (MultiGetBlockByNumberResult);
+  eth_getLogs : (RpcSource, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
+  eth_getTransactionCount : (RpcSource, opt RpcConfig, GetTransactionCountArgs) -> (
     MultiGetTransactionCountResult
   );
-  eth_getTransactionReceipt : (RpcSource, text) -> (MultiGetTransactionReceiptResult);
-  eth_sendRawTransaction : (RpcSource, text) -> (MultiSendRawTransactionResult);
+  eth_getTransactionReceipt : (RpcSource, opt RpcConfig, text) -> (MultiGetTransactionReceiptResult);
+  eth_sendRawTransaction : (RpcSource, opt RpcConfig, text) -> (MultiSendRawTransactionResult);
   getAccumulatedCycleCount : (nat64) -> (nat) query;
   getAuthorized : (Auth) -> (vec principal) query;
   getMetrics : () -> (Metrics) query;
