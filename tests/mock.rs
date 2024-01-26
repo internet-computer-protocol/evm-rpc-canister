@@ -32,6 +32,7 @@ impl MockOutcallBuilder {
             url: None,
             request_headers: None,
             request_body: None,
+            max_response_bytes: None,
             response: HttpResponse {
                 status: status.into(),
                 headers: vec![],
@@ -68,6 +69,11 @@ impl MockOutcallBuilder {
         self
     }
 
+    pub fn with_max_response_bytes(mut self, max_response_bytes: u64) -> Self {
+        self.0.max_response_bytes = Some(max_response_bytes);
+        self
+    }
+
     pub fn with_response_header(mut self, name: String, value: String) -> Self {
         self.0.response.headers.push(HttpHeader { name, value });
         self
@@ -90,6 +96,7 @@ pub struct MockOutcall {
     pub url: Option<String>,
     pub request_headers: Option<Vec<HttpHeader>>,
     pub request_body: Option<Vec<u8>>,
+    pub max_response_bytes: Option<u64>,
     pub response: HttpResponse,
 }
 
@@ -110,6 +117,9 @@ impl MockOutcall {
         if let Some(ref body) = self.request_body {
             assert_eq!(body, &request.body.as_deref().unwrap_or_default());
         }
+        if let Some(max_response_bytes) = self.max_response_bytes {
+            assert_eq!(Some(max_response_bytes), request.max_response_bytes);
+        }
     }
 }
 
@@ -120,6 +130,7 @@ impl From<HttpResponse> for MockOutcall {
             url: None,
             request_headers: None,
             request_body: None,
+            max_response_bytes: None,
             response,
         }
     }
