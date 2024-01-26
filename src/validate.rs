@@ -16,9 +16,7 @@ pub fn validate_credential_path(credential_path: &str) -> Result<(), ValidationE
         || credential_path.starts_with('/')
         || credential_path.starts_with('?'))
     {
-        Err(ValidationError::CredentialPathNotAllowed(
-            credential_path.to_string(),
-        ))
+        Err(ValidationError::CredentialPathNotAllowed)
     } else {
         Ok(())
     }
@@ -31,9 +29,7 @@ pub fn validate_credential_headers(
         .iter()
         .any(|HttpHeader { name, .. }| name == CONTENT_TYPE_HEADER)
     {
-        Err(ValidationError::CredentialHeaderNotAllowed(
-            CONTENT_TYPE_HEADER.to_string(),
-        ))
+        Err(ValidationError::CredentialHeaderNotAllowed)
     } else {
         Ok(())
     }
