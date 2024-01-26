@@ -201,7 +201,7 @@ shared ({ caller = installer }) actor class Main() {
         if (errors.size() > 0) {
             var message = "Errors:";
             for (error in errors.vals()) {
-                message #= "\n * " # error;
+                message #= "\n* " # error;
             };
             Debug.trap(message);
         }
