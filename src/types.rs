@@ -365,7 +365,7 @@ impl From<Provider> for ProviderView {
     }
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, CandidType, Deserialize)]
 pub struct RegisterProviderArgs {
     #[serde(rename = "chainId")]
     pub chain_id: u64,
@@ -380,7 +380,7 @@ pub struct RegisterProviderArgs {
     pub cycles_per_message_byte: u64,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, CandidType, Deserialize)]
 pub struct UpdateProviderArgs {
     #[serde(rename = "providerId")]
     pub provider_id: u64,
@@ -404,7 +404,7 @@ pub struct ManageProviderArgs {
     pub service: Option<RpcService>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, CandidType, Deserialize)]
 pub struct Provider {
     #[serde(rename = "providerId")]
     pub provider_id: u64,

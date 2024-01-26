@@ -313,16 +313,16 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
 
             let mut log: Log = Default::default();
 
-            match request.raw_query_param("priority") {
-                Some(priority_str) => match Priority::from_str(priority_str) {
-                    Ok(priority) => match priority {
-                        Priority::Info => log.push_logs(Priority::Info),
-                        Priority::TraceHttp => log.push_logs(Priority::TraceHttp),
-                        Priority::Debug => log.push_logs(Priority::Debug),
-                    },
-                    Err(_) => log.push_all(),
+            match request.raw_query_param("priority").map(Priority::from_str) {
+                Some(Ok(priority)) => match priority {
+                    Priority::Info => log.push_logs(Priority::Info),
+                    Priority::Debug => log.push_logs(Priority::Debug),
+                    Priority::TraceHttp => {}
                 },
-                None => log.push_all(),
+                _ => {
+                    log.push_logs(Priority::Info);
+                    log.push_logs(Priority::Debug);
+                }
             }
 
             log.entries
