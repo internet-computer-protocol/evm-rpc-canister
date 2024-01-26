@@ -198,10 +198,12 @@ shared ({ caller = installer }) actor class Main() {
             );
         };
 
-        var message = "Errors:";
-        for (error in errors.vals()) {
-            message #= "\n * " # error;
-        };
-        Debug.trap(message);
+        if (errors.size() > 0) {
+            var message = "Errors:";
+            for (error in errors.vals()) {
+                message #= "\n * " # error;
+            };
+            Debug.trap(message);
+        }
     };
 };
