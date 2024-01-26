@@ -6421,9 +6421,9 @@ dependencies = [
 
 [[package]]
 name = "stubborn-io"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6363c4322e86e40291f94cf2f62cd8454ffd7abec426f63f11a6945f80718b43"
+checksum = "8cc21d6dc10a89b8004044f2eba7e2239738fbad57b19d5295e2c446f092292c"
 dependencies = [
  "log",
  "rand",
@@ -7592,9 +7592,9 @@ checksum = "dff9641d1cd4be8d1a070daf9e3773c5f67e78b4d9d42263020c057706765c04"
 
 [[package]]
 name = "winnow"
-version = "0.5.34"
+version = "0.5.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7cf47b659b318dccbd69cc4797a39ae128f533dce7902a1096044d1967b9c16"
+checksum = "1931d78a9c73861da0134f453bb1f790ce49b2e30eba8410b4b79bac72b46a2d"
 dependencies = [
  "memchr",
 ]

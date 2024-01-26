@@ -69,7 +69,10 @@ fn check_services<T>(services: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
     }
 }
 
-fn get_rpc_client(source: RpcSource) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
+fn get_rpc_client(
+    source: RpcSource,
+    config: RpcConfig,
+) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
     if !is_rpc_allowed(&ic_cdk::caller()) {
         add_metric!(err_no_permission, 1);
         return Err(ProviderError::NoPermission.into());
@@ -79,23 +82,23 @@ fn get_rpc_client(source: RpcSource) -> RpcResult<CkEthRpcClient<CanisterTranspo
             EthereumNetwork::Mainnet,
             Some(
                 check_services(services)?
-                    .unwrap_or_else(|| DEFAULT_ETHEREUM_SERVICES.to_vec())
+                    .unwrap_or_else(|| DEFAULT_ETH_MAINNET_SERVICES.to_vec())
                     .into_iter()
                     .map(RpcService::EthMainnet)
                     .collect(),
             ),
-            RpcConfig::default(), // https://github.com/internet-computer-protocol/ic-eth-rpc/pull/146
+            config,
         ),
         RpcSource::EthSepolia(services) => CkEthRpcClient::new(
             EthereumNetwork::Sepolia,
             Some(
                 check_services(services)?
-                    .unwrap_or_else(|| DEFAULT_SEPOLIA_SERVICES.to_vec())
+                    .unwrap_or_else(|| DEFAULT_ETH_SEPOLIA_SERVICES.to_vec())
                     .into_iter()
                     .map(RpcService::EthSepolia)
                     .collect(),
             ),
-            RpcConfig::default(), // https://github.com/internet-computer-protocol/ic-eth-rpc/pull/146
+            config,
         ),
     })
 }
@@ -126,9 +129,9 @@ pub struct CandidRpcClient {
 }
 
 impl CandidRpcClient {
-    pub fn from_source(source: RpcSource) -> RpcResult<Self> {
+    pub fn new(source: RpcSource, config: Option<RpcConfig>) -> RpcResult<Self> {
         Ok(Self {
-            client: get_rpc_client(source)?,
+            client: get_rpc_client(source, config.unwrap_or_default())?,
         })
     }
 
