@@ -217,7 +217,7 @@ pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
     PROVIDERS.with(|providers| {
         let mut providers = providers.borrow_mut();
         if let Some(provider) = providers.get(&provider_id) {
-            if provider.owner != caller {
+            if provider.owner != caller && !is_authorized(&caller, Auth::Manage) {
                 ic_cdk::trap("You are not authorized");
             } else {
                 log!(
@@ -276,9 +276,6 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
         let mut providers = providers.borrow_mut();
         match providers.get(&args.provider_id) {
             Some(mut provider) => {
-                if let Some(owner) = args.owner {
-                    provider.owner = owner;
-                }
                 if let Some(primary) = args.primary {
                     provider.primary = primary;
                 }
