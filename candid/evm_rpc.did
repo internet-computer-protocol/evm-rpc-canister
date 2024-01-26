@@ -218,11 +218,11 @@ type UpdateProviderArgs = record {
   providerId : nat64;
 };
 type ValidationError = variant {
-  CredentialPathNotAllowed : text;
   HostNotAllowed : text;
-  CredentialHeaderNotAllowed : text;
   UrlParseError : text;
   InvalidHex : text;
+  CredentialPathNotAllowed;
+  CredentialHeaderNotAllowed;
 };
 service : (InitArgs) -> {
   authorize : (principal, Auth) -> ();
