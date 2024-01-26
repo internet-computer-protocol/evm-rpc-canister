@@ -228,14 +228,14 @@ type ValidationError = variant {
 service : (InitArgs) -> {
   authorize : (principal, Auth) -> ();
   deauthorize : (principal, Auth) -> ();
-  eth_feeHistory : (RpcSource, opt RpcConfig, FeeHistoryArgs) -> (MultiFeeHistoryResult);
-  eth_getBlockByNumber : (RpcSource, opt RpcConfig, BlockTag) -> (MultiGetBlockByNumberResult);
-  eth_getLogs : (RpcSource, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
-  eth_getTransactionCount : (RpcSource, opt RpcConfig, GetTransactionCountArgs) -> (
+  eth_feeHistory : (RpcSource, FeeHistoryArgs, opt RpcConfig) -> (MultiFeeHistoryResult);
+  eth_getBlockByNumber : (RpcSource, BlockTag, opt RpcConfig) -> (MultiGetBlockByNumberResult);
+  eth_getLogs : (RpcSource, GetLogsArgs, opt RpcConfig) -> (MultiGetLogsResult);
+  eth_getTransactionCount : (RpcSource, GetTransactionCountArgs, opt RpcConfig) -> (
     MultiGetTransactionCountResult
   );
-  eth_getTransactionReceipt : (RpcSource, opt RpcConfig, text) -> (MultiGetTransactionReceiptResult);
-  eth_sendRawTransaction : (RpcSource, opt RpcConfig, text) -> (MultiSendRawTransactionResult);
+  eth_getTransactionReceipt : (RpcSource, text, opt RpcConfig) -> (MultiGetTransactionReceiptResult);
+  eth_sendRawTransaction : (RpcSource, text, opt RpcConfig) -> (MultiSendRawTransactionResult);
   getAccumulatedCycleCount : (nat64) -> (nat) query;
   getAuthorized : (Auth) -> (vec principal) query;
   getMetrics : () -> (Metrics) query;

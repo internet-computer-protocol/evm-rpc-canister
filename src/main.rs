@@ -20,8 +20,8 @@ use evm_rpc::*;
 #[candid_method(rename = "eth_getLogs")]
 pub async fn eth_get_logs(
     source: RpcSource,
-    config: Option<RpcConfig>,
     args: candid_types::GetLogsArgs,
+    config: Option<RpcConfig>,
 ) -> MultiRpcResult<Vec<LogEntry>> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_get_logs(args).await,
@@ -33,8 +33,8 @@ pub async fn eth_get_logs(
 #[candid_method(rename = "eth_getBlockByNumber")]
 pub async fn eth_get_block_by_number(
     source: RpcSource,
-    config: Option<RpcConfig>,
     block: candid_types::BlockTag,
+    config: Option<RpcConfig>,
 ) -> MultiRpcResult<Block> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_get_block_by_number(block).await,
@@ -46,8 +46,8 @@ pub async fn eth_get_block_by_number(
 #[candid_method(rename = "eth_getTransactionReceipt")]
 pub async fn eth_get_transaction_receipt(
     source: RpcSource,
-    config: Option<RpcConfig>,
     hash: String,
+    config: Option<RpcConfig>,
 ) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_get_transaction_receipt(hash).await,
@@ -59,8 +59,8 @@ pub async fn eth_get_transaction_receipt(
 #[candid_method(rename = "eth_getTransactionCount")]
 pub async fn eth_get_transaction_count(
     source: RpcSource,
-    config: Option<RpcConfig>,
     args: candid_types::GetTransactionCountArgs,
+    config: Option<RpcConfig>,
 ) -> MultiRpcResult<candid::Nat> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_get_transaction_count(args).await,
@@ -72,8 +72,8 @@ pub async fn eth_get_transaction_count(
 #[candid_method(rename = "eth_feeHistory")]
 pub async fn eth_fee_history(
     source: RpcSource,
-    config: Option<RpcConfig>,
     args: candid_types::FeeHistoryArgs,
+    config: Option<RpcConfig>,
 ) -> MultiRpcResult<Option<FeeHistory>> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_fee_history(args).await,
@@ -85,8 +85,8 @@ pub async fn eth_fee_history(
 #[candid_method(rename = "eth_sendRawTransaction")]
 pub async fn eth_send_raw_transaction(
     source: RpcSource,
-    config: Option<RpcConfig>,
     raw_signed_transaction_hex: String,
+    config: Option<RpcConfig>,
 ) -> MultiRpcResult<SendRawTransactionResult> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => {
