@@ -6,6 +6,7 @@ import Debug "mo:base/Debug";
 import Cycles "mo:base/ExperimentalCycles";
 import Principal "mo:base/Principal";
 import Text "mo:base/Text";
+import Buffer "mo:base/Buffer";
 import Evm "mo:evm";
 
 shared ({ caller = installer }) actor class Main() {
@@ -17,6 +18,7 @@ shared ({ caller = installer }) actor class Main() {
             (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
         ];
 
+        let errors = Buffer.Buffer<Text>(0);
         let canisterDetails = [
             // (`canister module`, `canister type`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
             (EvmRpcCanister, "default", 13, 61_898_400),
@@ -24,6 +26,12 @@ shared ({ caller = installer }) actor class Main() {
         ];
         for ((canister, canisterType, nodesInSubnet, expectedCycles) in canisterDetails.vals()) {
             Debug.print("Testing " # canisterType # " canister...");
+
+            func addError(error : Text) {
+                let message = "[" # canisterType # "] " # error;
+                Debug.print(message);
+                errors.add(message);
+            };
 
             let mainnet = Evm.Rpc(
                 #Canister canister,
@@ -45,11 +53,12 @@ shared ({ caller = installer }) actor class Main() {
             let cycles = switch cyclesResult {
                 case (#Ok cycles) { cycles };
                 case (#Err err) {
-                    Debug.trap("Unexpected error for `request_cost`: " # (debug_show err));
+                    Debug.trap("Unexpected error for `requestCost`: " # debug_show err);
                 };
             };
+
             if (cycles != expectedCycles) {
-                Debug.trap("Unexpected number of cycles for " # canisterType # " canister: " # debug_show cycles # " (expected " # debug_show expectedCycles # ")");
+                addError("Unexpected number of cycles: " # debug_show cycles # " (expected " # debug_show expectedCycles # ")");
             };
 
             // `request()` without cycles
@@ -76,7 +85,7 @@ shared ({ caller = installer }) actor class Main() {
                     };
                     case _ {};
                 };
-                Debug.trap(debug_show result);
+                addError(debug_show result);
             };
 
             // `request()` without sufficient cycles
@@ -98,7 +107,7 @@ shared ({ caller = installer }) actor class Main() {
                 switch result {
                     case (#Consistent(#Ok _)) {};
                     case (#Consistent(#Err err)) {
-                        Debug.trap("Received error for " # canisterType # " " # method # ": " # debug_show err);
+                        Debug.trap("Received error for" # " " # method # ": " # debug_show err);
                     };
                     case (#Inconsistent(results)) {
                         for ((service, result) in results.vals()) {
@@ -111,7 +120,7 @@ shared ({ caller = installer }) actor class Main() {
                                             return;
                                         };
                                     };
-                                    Debug.trap("Received error in inconsistent results for " # canisterType # " " # debug_show service # " " # method # ": " # debug_show err);
+                                    addError("Received error in inconsistent results for " # debug_show service # " " # method # ": " # debug_show err);
                                 };
                             };
                         };
@@ -125,7 +134,7 @@ shared ({ caller = installer }) actor class Main() {
             switch (await canister.eth_getBlockByNumber(ethMainnetSource, null, #Latest)) {
                 case (#Consistent(#Err(#ProviderError(#TooFewCycles _)))) {};
                 case result {
-                    Debug.trap("Received unexpected result: " # debug_show result);
+                    addError("Received unexpected result: " # debug_show result);
                 };
             };
 
@@ -188,5 +197,11 @@ shared ({ caller = installer }) actor class Main() {
                 ),
             );
         };
+
+        var message = "Errors:";
+        for (error in errors.vals()) {
+            message #= "\n * " # error;
+        };
+        Debug.trap(message);
     };
 };
