@@ -217,7 +217,7 @@ pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
     PROVIDERS.with(|providers| {
         let mut providers = providers.borrow_mut();
         if let Some(provider) = providers.get(&provider_id) {
-            if provider.owner != caller && !is_authorized(&caller, Auth::Manage) {
+            if !(provider.owner == caller || is_authorized(&caller, Auth::Manage)) {
                 ic_cdk::trap("You are not authorized");
             } else {
                 log!(

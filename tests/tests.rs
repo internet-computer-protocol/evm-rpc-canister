@@ -729,8 +729,8 @@ fn should_panic_if_unauthorized_unregister_provider() {
 
 #[test]
 #[should_panic(expected = "You are not authorized")]
-fn should_panic_if_manage_auth_unregister_provider() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::Manage);
+fn should_panic_if_manage_auth_register_provider() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
     setup.unregister_provider(3);
 }
 
