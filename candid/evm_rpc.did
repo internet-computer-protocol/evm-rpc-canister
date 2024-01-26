@@ -218,6 +218,7 @@ type UpdateProviderArgs = record {
   providerId : nat64;
 };
 type ValidationError = variant {
+  Custom : text;
   HostNotAllowed : text;
   UrlParseError : text;
   InvalidHex : text;
