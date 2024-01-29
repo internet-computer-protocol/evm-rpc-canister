@@ -4,7 +4,7 @@
 NETWORK=local
 IDENTITY=default
 CANISTER_ID=evm_rpc
-CYCLES=100000000000
+CYCLES=1000000000
 WALLET=$(dfx identity get-wallet --network=$NETWORK --identity=$IDENTITY)
 JSON_SOURCE=Chain=1
 CANDID_SOURCE=EthMainnet
