@@ -18,7 +18,6 @@ module {
 
     public type Source = {
         #Custom : { url : Text; headers : ?[HttpHeader] };
-        #Service : { hostname : Text; network : ?Network };
         #Chain : Network;
         #Provider : Nat64;
     };
@@ -83,15 +82,6 @@ module {
         func wrapActorSource(source : Source) : ActorSource {
             switch source {
                 case (#Custom custom) { #Custom custom };
-                case (#Service { hostname; network }) {
-                    #Service {
-                        hostname;
-                        chainId = switch network {
-                            case (?n) { ?wrapChainId(n) };
-                            case null { null };
-                        };
-                    };
-                };
                 case (#Chain n) { #Chain(wrapChainId(n)) };
                 case (#Provider n) { #Provider n };
             };
