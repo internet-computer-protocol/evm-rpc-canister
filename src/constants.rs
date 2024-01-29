@@ -1,7 +1,7 @@
 use cketh_common::eth_rpc_client::providers::{EthMainnetService, EthSepoliaService};
 
 // HTTP outcall cost calculation
-// See https://internetcomputer.org/docs/current/developer-docs/gas-cost#cycles-price-breakdown
+// See https://internetcomputer.org/docs/current/developer-docs/gas-cost#special-features
 pub const INGRESS_OVERHEAD_BYTES: u128 = 100;
 pub const INGRESS_MESSAGE_RECEIVED_COST: u128 = 1_200_000;
 pub const INGRESS_MESSAGE_BYTE_RECEIVED_COST: u128 = 2_000;
