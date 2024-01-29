@@ -27,16 +27,10 @@ shared ({ caller = installer }) actor class Main() {
 
             let mainnet = Evm.Rpc(
                 #Canister canister,
-                #Service {
-                    hostname = "cloudflare-eth.com";
-                    network = ? #EthMainnet;
-                },
+                #Chain(#EthMainnet),
             );
 
-            let source = #Service {
-                hostname = "cloudflare-eth.com";
-                chainId = ?(1 : Nat64); // Ethereum mainnet
-            };
+            let source = #Chain(0x1 : Nat64);
             let json = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}";
             let maxResponseBytes : Nat64 = 1000;
 
