@@ -84,9 +84,7 @@ fn test_request_cost() {
         );
         let estimated_cost_10_extra_bytes = base_cost
             + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_REQUEST_COST_PER_BYTE)
-                * nodes_in_subnet as u128
-                / NODES_IN_DEFAULT_SUBNET as u128;
-        // Request body with 10 additional bytes should be within 1 cycle of expected cost (due to rounding)
+                * nodes_in_subnet as u128;
         assert_eq!(base_cost_10_extra_bytes, estimated_cost_10_extra_bytes,);
     }
 }
