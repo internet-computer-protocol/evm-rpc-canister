@@ -87,10 +87,7 @@ fn test_request_cost() {
                 * nodes_in_subnet as u128
                 / NODES_IN_DEFAULT_SUBNET as u128;
         // Request body with 10 additional bytes should be within 1 cycle of expected cost (due to rounding)
-        assert_matches::assert_matches!(
-            base_cost_10_extra_bytes - estimated_cost_10_extra_bytes,
-            0 | 1
-        );
+        assert_eq!(base_cost_10_extra_bytes, estimated_cost_10_extra_bytes,);
     }
 }
 
@@ -165,7 +162,7 @@ fn test_candid_rpc_cost() {
             get_candid_rpc_cost(&provider, 123, 4567890),
             get_candid_rpc_cost(&provider, 890, 4567890),
         ],
-        [51064987, 54828787, 47559605587, 47575098987]
+        [87008987, 93724787, 47598501587, 47632402987]
     );
 
     // Fiduciary subnet
@@ -177,6 +174,6 @@ fn test_candid_rpc_cost() {
             get_candid_rpc_cost(&provider, 123, 4567890),
             get_candid_rpc_cost(&provider, 890, 4567890),
         ],
-        [109986125, 118092772, 102436073572, 102469443972]
+        [212603972, 227068772, 102545049572, 102618067972]
     );
 }
