@@ -27,11 +27,6 @@ pub struct InitArgs {
 pub enum JsonRpcSource {
     Chain(u64),
     Provider(u64),
-    Service {
-        hostname: String,
-        #[serde(rename = "chainId")]
-        chain_id: Option<u64>,
-    },
     Custom {
         url: String,
         headers: Option<Vec<HttpHeader>>,
@@ -60,24 +55,6 @@ impl JsonRpcSource {
                         .iter()
                         .find(|(_, p)| p.primary && p.chain_id == id)
                         .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
-                        .ok_or(ProviderError::ProviderNotFound)?
-                        .1)
-                })?)
-            }
-            JsonRpcSource::Service { hostname, chain_id } => {
-                ResolvedJsonRpcSource::Provider(PROVIDERS.with(|providers| {
-                    let matches_provider = |p: &Provider| {
-                        p.hostname == hostname
-                            && match chain_id {
-                                Some(id) => p.chain_id == id,
-                                None => true,
-                            }
-                    };
-                    let providers = providers.borrow();
-                    Ok(providers
-                        .iter()
-                        .find(|(_, p)| p.primary && matches_provider(p))
-                        .or_else(|| providers.iter().find(|(_, p)| matches_provider(p)))
                         .ok_or(ProviderError::ProviderNotFound)?
                         .1)
                 })?)

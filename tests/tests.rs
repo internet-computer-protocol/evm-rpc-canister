@@ -852,9 +852,13 @@ fn should_set_primary_provider() {
     assert_matches!(
         setup
             .request(
-                JsonRpcSource::Service {
-                    hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-                    chain_id: None,
+                JsonRpcSource::Custom {
+                    url: format!(
+                        "https://{}{}",
+                        ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+                        ALCHEMY_ETH_MAINNET_CREDENTIAL.to_string()
+                    ),
+                    headers: None,
                 },
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,
@@ -880,9 +884,13 @@ fn should_set_primary_provider() {
     assert_matches!(
         setup
             .request(
-                JsonRpcSource::Service {
-                    hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-                    chain_id: None,
+                JsonRpcSource::Custom {
+                    url: format!(
+                        "https://{}{}",
+                        ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+                        ALCHEMY_ETH_MAINNET_CREDENTIAL.to_string()
+                    ),
+                    headers: None,
                 },
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,

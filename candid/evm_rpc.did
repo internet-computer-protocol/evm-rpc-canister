@@ -71,7 +71,6 @@ type InitArgs = record {
 type JsonRpcError = record { code : int64; message : text };
 type JsonRpcSource = variant {
   Custom : record { url : text; headers : opt vec HttpHeader };
-  Service : record { hostname : text; chainId : opt nat64 };
   Chain : nat64;
   Provider : nat64;
 };
