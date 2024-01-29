@@ -855,8 +855,7 @@ fn should_set_primary_provider() {
                 JsonRpcSource::Custom {
                     url: format!(
                         "https://{}{}",
-                        ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-                        ALCHEMY_ETH_MAINNET_CREDENTIAL.to_string()
+                        ALCHEMY_ETH_MAINNET_HOSTNAME, ALCHEMY_ETH_MAINNET_CREDENTIAL
                     ),
                     headers: None,
                 },
@@ -887,8 +886,7 @@ fn should_set_primary_provider() {
                 JsonRpcSource::Custom {
                     url: format!(
                         "https://{}{}",
-                        ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-                        ALCHEMY_ETH_MAINNET_CREDENTIAL.to_string()
+                        ALCHEMY_ETH_MAINNET_HOSTNAME, ALCHEMY_ETH_MAINNET_CREDENTIAL
                     ),
                     headers: None,
                 },
