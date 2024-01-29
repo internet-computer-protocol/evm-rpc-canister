@@ -837,35 +837,43 @@ fn should_replace_service_provider() {
 
 #[test]
 fn should_set_primary_provider() {
-    let setup = EvmRpcSetup::new()
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let new_chain_id = 12345;
+    let before_credential = "/before";
+    let after_credential = "/after";
+    setup
+        .clone()
         .authorize_caller(Auth::RegisterProvider)
-        .authorize_caller(Auth::FreeRpc);
-    let new_credential = "/primary-credential";
-    let provider_id = setup.register_provider(RegisterProviderArgs {
-        chain_id: ETH_MAINNET_CHAIN_ID,
-        hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-        credential_path: new_credential.to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
+        .register_provider(RegisterProviderArgs {
+            chain_id: new_chain_id,
+            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+            credential_path: before_credential.to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        });
+    let provider_id = setup
+        .clone()
+        .authorize_caller(Auth::RegisterProvider)
+        .register_provider(RegisterProviderArgs {
+            chain_id: new_chain_id,
+            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+            credential_path: after_credential.to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        });
     assert_matches!(
         setup
             .request(
-                JsonRpcSource::Custom {
-                    url: format!(
-                        "https://{}{}",
-                        ALCHEMY_ETH_MAINNET_HOSTNAME, ALCHEMY_ETH_MAINNET_CREDENTIAL
-                    ),
-                    headers: None,
-                },
+                JsonRpcSource::Chain(new_chain_id),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,
             )
             .mock_http(
                 MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
                     "https://{}{}",
-                    ALCHEMY_ETH_MAINNET_HOSTNAME, ALCHEMY_ETH_MAINNET_CREDENTIAL
+                    ALCHEMY_ETH_MAINNET_HOSTNAME, before_credential
                 ))
             )
             .wait(),
@@ -883,20 +891,14 @@ fn should_set_primary_provider() {
     assert_matches!(
         setup
             .request(
-                JsonRpcSource::Custom {
-                    url: format!(
-                        "https://{}{}",
-                        ALCHEMY_ETH_MAINNET_HOSTNAME, ALCHEMY_ETH_MAINNET_CREDENTIAL
-                    ),
-                    headers: None,
-                },
+                JsonRpcSource::Chain(new_chain_id),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,
             )
             .mock_http(
                 MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
                     "https://{}{}",
-                    ALCHEMY_ETH_MAINNET_HOSTNAME, new_credential
+                    ALCHEMY_ETH_MAINNET_HOSTNAME, after_credential
                 ))
             )
             .wait(),
