@@ -12,10 +12,7 @@ pub async fn test() {
 
     // Define request parameters
     let params = (
-        &JsonRpcSource::Service {
-            hostname: "cloudflare-eth.com".to_string(),
-            chainId: Some(1), // Ethereum mainnet
-        },
+        &JsonRpcSource::Chain(1), // Ethereum mainnet
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}".to_string(),
         1000 as u64,
     );
