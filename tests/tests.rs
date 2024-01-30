@@ -709,11 +709,24 @@ fn should_panic_if_anonymous_manage_provider() {
 #[test]
 #[should_panic(expected = "Provider owner != caller")]
 fn should_panic_if_unauthorized_update_provider() {
-    // Providers can only be updated by the original owner
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    // Providers can only be updated by the original owner or canister controller
+    let setup = EvmRpcSetup::new();
     setup.update_provider(UpdateProviderArgs {
         provider_id: 0,
         hostname: Some("unauthorized.host".to_string()),
+        credential_path: None,
+        credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
+    });
+}
+
+#[test]
+fn should_allow_controller_update_provider() {
+    let setup = EvmRpcSetup::new().as_controller();
+    setup.update_provider(UpdateProviderArgs {
+        provider_id: 0,
+        hostname: Some("controller.host".to_string()),
         credential_path: None,
         credential_headers: None,
         cycles_per_call: None,

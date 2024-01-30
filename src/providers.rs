@@ -213,11 +213,11 @@ pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> u6
     provider_id
 }
 
-pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
+pub fn do_unregister_provider(caller: Principal, is_controller: bool, provider_id: u64) -> bool {
     PROVIDERS.with(|providers| {
         let mut providers = providers.borrow_mut();
         if let Some(provider) = providers.get(&provider_id) {
-            if provider.owner != caller {
+            if !(provider.owner == caller || is_controller) {
                 ic_cdk::trap("You are not authorized");
             } else {
                 log!(
@@ -235,12 +235,12 @@ pub fn do_unregister_provider(caller: Principal, provider_id: u64) -> bool {
 }
 
 /// Changes provider details. The caller must be the owner of the provider.
-pub fn do_update_provider(caller: Principal, args: UpdateProviderArgs) {
+pub fn do_update_provider(caller: Principal, is_controller: bool, args: UpdateProviderArgs) {
     PROVIDERS.with(|providers| {
         let mut providers = providers.borrow_mut();
         match providers.get(&args.provider_id) {
             Some(mut provider) => {
-                if provider.owner != caller {
+                if !(provider.owner == caller || is_controller) {
                     ic_cdk::trap("Provider owner != caller");
                 } else {
                     log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
