@@ -41,9 +41,12 @@ pub fn do_authorize(principal: Principal, auth: Auth) -> bool {
             let mut auth_map = a.borrow_mut();
             let principal = PrincipalStorable(principal);
             let mut auth_set = auth_map.get(&principal).unwrap_or_default();
-            let changed = auth_set.authorize(auth);
-            auth_map.insert(principal, auth_set);
-            changed
+            if auth_set.authorize(auth) {
+                auth_map.insert(principal, auth_set);
+                true
+            } else {
+                false
+            }
         })
     }
 }
