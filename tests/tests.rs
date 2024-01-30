@@ -159,12 +159,12 @@ impl EvmRpcSetup {
         }
     }
 
-    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) {
+    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) -> bool {
         self.call_update("authorize", Encode!(&principal.0, &auth).unwrap())
             .wait()
     }
 
-    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) {
+    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) -> bool {
         self.call_update("deauthorize", Encode!(&principal.0, &auth).unwrap())
             .wait()
     }
