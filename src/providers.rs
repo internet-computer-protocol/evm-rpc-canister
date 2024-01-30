@@ -241,7 +241,7 @@ pub fn do_update_provider(caller: Principal, is_controller: bool, args: UpdatePr
         match providers.get(&args.provider_id) {
             Some(mut provider) => {
                 if !(provider.owner == caller || is_controller) {
-                    ic_cdk::trap("Provider owner != caller");
+                    ic_cdk::trap("You are not authorized");
                 } else {
                     log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
                     if let Some(hostname) = args.hostname {

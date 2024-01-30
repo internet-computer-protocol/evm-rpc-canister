@@ -655,7 +655,7 @@ fn should_panic_if_anonymous_register_provider() {
 }
 
 #[test]
-#[should_panic(expected = "Provider owner != caller")]
+#[should_panic(expected = "You are not authorized")]
 fn should_panic_if_anonymous_update_provider() {
     let setup = EvmRpcSetup::new().as_anonymous();
     setup.update_provider(UpdateProviderArgs {
@@ -707,7 +707,7 @@ fn should_panic_if_anonymous_manage_provider() {
 }
 
 #[test]
-#[should_panic(expected = "Provider owner != caller")]
+#[should_panic(expected = "You are not authorized")]
 fn should_panic_if_unauthorized_update_provider() {
     // Providers can only be updated by the original owner or canister controller
     let setup = EvmRpcSetup::new();
@@ -750,7 +750,7 @@ fn should_panic_if_manage_auth_unregister_provider() {
 }
 
 #[test]
-#[should_panic(expected = "Provider owner != caller")]
+#[should_panic(expected = "You are not authorized")]
 fn should_panic_if_manage_auth_update_non_owned_provider() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
     let provider_id = setup.register_provider(RegisterProviderArgs {
