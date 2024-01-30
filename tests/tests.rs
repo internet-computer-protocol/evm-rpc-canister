@@ -707,7 +707,7 @@ fn should_panic_if_anonymous_manage_provider() {
 }
 
 #[test]
-#[should_panic(expected = "You are not authorized")]
+#[should_panic(expected = "You are not authorized: check provider owner")]
 fn should_panic_if_unauthorized_update_provider() {
     // Providers can only be updated by the original owner or canister controller
     let setup = EvmRpcSetup::new();
@@ -735,33 +735,22 @@ fn should_allow_controller_update_provider() {
 }
 
 #[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_panic_if_unauthorized_unregister_provider() {
-    // Only the `Manage` authorization may unregister a provider
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
-    setup.unregister_provider(0);
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_panic_if_manage_auth_unregister_provider() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::Manage);
-    setup.unregister_provider(3);
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized")]
+#[should_panic(expected = "You are not authorized: check provider owner")]
 fn should_panic_if_manage_auth_update_non_owned_provider() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
-    let provider_id = setup.register_provider(RegisterProviderArgs {
-        chain_id: 123,
-        hostname: "example.com".to_string(),
-        credential_path: "".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
-    setup.as_controller().update_provider(UpdateProviderArgs {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::Manage);
+    let provider_id = setup
+        .clone()
+        .as_controller()
+        .authorize_caller(Auth::RegisterProvider)
+        .register_provider(RegisterProviderArgs {
+            chain_id: 123,
+            hostname: "example.com".to_string(),
+            credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        });
+    setup.update_provider(UpdateProviderArgs {
         provider_id,
         hostname: Some("unauthorized.host".to_string()),
         credential_path: None,
@@ -769,6 +758,21 @@ fn should_panic_if_manage_auth_update_non_owned_provider() {
         cycles_per_call: None,
         cycles_per_message_byte: None,
     });
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized: check provider owner")]
+fn should_panic_if_unauthorized_unregister_provider() {
+    // Only the `Manage` authorization may unregister a provider
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    setup.unregister_provider(0);
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized: check provider owner")]
+fn should_panic_if_manage_auth_unregister_provider() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::Manage);
+    setup.unregister_provider(3);
 }
 
 #[test]
