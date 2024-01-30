@@ -389,7 +389,7 @@ fn stable_read(offset: u64, length: u64) -> Vec<u8> {
 
 #[update(guard = "require_admin_or_controller")]
 #[candid_method]
-fn authorize(principal: Principal, auth: Auth) {
+fn authorize(principal: Principal, auth: Auth) -> bool {
     log!(
         INFO,
         "[{}] Authorizing `{:?}` for principal: {}",
@@ -416,7 +416,7 @@ fn get_authorized(auth: Auth) -> Vec<Principal> {
 
 #[update(guard = "require_admin_or_controller")]
 #[candid_method]
-fn deauthorize(principal: Principal, auth: Auth) {
+fn deauthorize(principal: Principal, auth: Auth) -> bool {
     log!(
         INFO,
         "[{}] Deauthorizing `{:?}` for principal: {}",
