@@ -188,13 +188,15 @@ fn get_service_provider_map() -> Vec<(RpcService, u64)> {
 #[query(name = "getAccumulatedCycleCount")]
 #[candid_method(query, rename = "getAccumulatedCycleCount")]
 fn get_accumulated_cycle_count(provider_id: u64) -> u128 {
-    do_get_accumulated_cycle_count(ic_cdk::caller(), provider_id)
+    let caller = ic_cdk::caller();
+    do_get_accumulated_cycle_count(caller, is_controller(&caller), provider_id)
 }
 
 #[update(name = "withdrawAccumulatedCycles")]
 #[candid_method(rename = "withdrawAccumulatedCycles")]
 async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
-    do_withdraw_accumulated_cycles(ic_cdk::caller(), provider_id, canister_id).await
+    let caller = ic_cdk::caller();
+    do_withdraw_accumulated_cycles(caller, is_controller(&caller), provider_id, canister_id).await
 }
 
 #[query(name = "__transform_json_rpc")]
