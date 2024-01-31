@@ -226,8 +226,8 @@ type ValidationError = variant {
   CredentialHeaderNotAllowed;
 };
 service : (InitArgs) -> {
-  authorize : (principal, Auth) -> ();
-  deauthorize : (principal, Auth) -> ();
+  authorize : (principal, Auth) -> (bool);
+  deauthorize : (principal, Auth) -> (bool);
   eth_feeHistory : (RpcSource, opt RpcConfig, FeeHistoryArgs) -> (MultiFeeHistoryResult);
   eth_getBlockByNumber : (RpcSource, opt RpcConfig, BlockTag) -> (MultiGetBlockByNumberResult);
   eth_getLogs : (RpcSource, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);

@@ -10,6 +10,7 @@ use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
+use ic_cdk::api::is_controller;
 use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
 use ic_nervous_system_common::serve_metrics;
@@ -150,13 +151,15 @@ fn register_provider(provider: RegisterProviderArgs) -> u64 {
 #[update(name = "unregisterProvider")]
 #[candid_method(rename = "unregisterProvider")]
 fn unregister_provider(provider_id: u64) -> bool {
-    do_unregister_provider(ic_cdk::caller(), provider_id)
+    let caller = ic_cdk::caller();
+    do_unregister_provider(caller, is_controller(&caller), provider_id)
 }
 
 #[update(name = "updateProvider")]
 #[candid_method(rename = "updateProvider")]
 fn update_provider(provider: UpdateProviderArgs) {
-    do_update_provider(ic_cdk::caller(), provider)
+    let caller = ic_cdk::caller();
+    do_update_provider(caller, is_controller(&caller), provider)
 }
 
 #[update(name = "manageProvider", guard = "require_admin_or_controller")]
@@ -386,7 +389,7 @@ fn stable_read(offset: u64, length: u64) -> Vec<u8> {
 
 #[update(guard = "require_admin_or_controller")]
 #[candid_method]
-fn authorize(principal: Principal, auth: Auth) {
+fn authorize(principal: Principal, auth: Auth) -> bool {
     log!(
         INFO,
         "[{}] Authorizing `{:?}` for principal: {}",
@@ -413,7 +416,7 @@ fn get_authorized(auth: Auth) -> Vec<Principal> {
 
 #[update(guard = "require_admin_or_controller")]
 #[candid_method]
-fn deauthorize(principal: Principal, auth: Auth) {
+fn deauthorize(principal: Principal, auth: Auth) -> bool {
     log!(
         INFO,
         "[{}] Deauthorizing `{:?}` for principal: {}",
