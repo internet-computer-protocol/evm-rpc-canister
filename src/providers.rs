@@ -217,9 +217,7 @@ pub fn do_unregister_provider(caller: Principal, is_controller: bool, provider_i
     PROVIDERS.with(|providers| {
         let mut providers = providers.borrow_mut();
         if let Some(provider) = providers.get(&provider_id) {
-            if !(provider.owner == caller || is_controller) {
-                ic_cdk::trap("You are not authorized: check provider owner");
-            } else {
+            if provider.owner == caller || is_controller {
                 log!(
                     INFO,
                     "[{}] Unregistering provider: {:?}",
@@ -227,6 +225,8 @@ pub fn do_unregister_provider(caller: Principal, is_controller: bool, provider_i
                     provider_id
                 );
                 providers.remove(&provider_id).is_some()
+            } else {
+                ic_cdk::trap("You are not authorized: check provider owner");
             }
         } else {
             false
@@ -240,9 +240,7 @@ pub fn do_update_provider(caller: Principal, is_controller: bool, args: UpdatePr
         let mut providers = providers.borrow_mut();
         match providers.get(&args.provider_id) {
             Some(mut provider) => {
-                if !(provider.owner == caller || is_controller) {
-                    ic_cdk::trap("You are not authorized: check provider owner");
-                } else {
+                if provider.owner == caller || is_controller {
                     log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
                     if let Some(hostname) = args.hostname {
                         validate_hostname(&hostname).unwrap();
@@ -263,6 +261,8 @@ pub fn do_update_provider(caller: Principal, is_controller: bool, args: UpdatePr
                         provider.cycles_per_message_byte = cycles_per_message_byte;
                     }
                     providers.insert(args.provider_id, provider);
+                } else {
+                    ic_cdk::trap("You are not authorized: check provider owner");
                 }
             }
             None => ic_cdk::trap("Provider not found"),
