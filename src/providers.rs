@@ -289,6 +289,80 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
     })
 }
 
+pub fn do_get_accumulated_cycle_count(caller: Principal) -> u128 {
+    let provider = PROVIDERS
+        .with(|p| {
+            p.borrow()
+                .get(&provider_id)
+                .ok_or(ProviderError::ProviderNotFound)
+        })
+        .expect("Provider not found");
+    if caller != provider.owner {
+        ic_cdk::trap("You are not authorized: check provider owner");
+    }
+    provider.cycles_owed
+}
+
+pub fn do_withdraw_accumulated_cycles(caller: Principal, provider_id: u64, canister_id: Principal) {
+    let provider = PROVIDERS
+        .with(|p| {
+            p.borrow()
+                .get(&provider_id)
+                .ok_or(ProviderError::ProviderNotFound)
+        })
+        .expect("Provider not found");
+    if caller != provider.owner {
+        ic_cdk::trap("You are not authorized: check provider owner");
+    }
+    let amount = provider.cycles_owed;
+    if amount < MINIMUM_WITHDRAWAL_CYCLES {
+        ic_cdk::trap("Too few cycles to withdraw");
+    }
+    PROVIDERS.with(|p| {
+        provider.cycles_owed = 0;
+        p.borrow_mut().insert(provider_id, provider)
+    });
+    log!(
+        INFO,
+        "[{}] Withdrawing {} cycles from provider {} to canister: {}",
+        caller,
+        amount,
+        provider_id,
+        canister_id,
+    );
+    match ic_cdk::api::call::call_with_payment128(
+        Principal::management_canister(),
+        "deposit_cycles",
+        (DepositCyclesArgs { canister_id },),
+        amount,
+    )
+    .await
+    {
+        Ok(()) => add_metric!(cycles_withdrawn, amount),
+        Err(err) => {
+            // Refund on failure to send cycles.
+            log!(
+                INFO,
+                "[{}] Unable to send {} cycles from provider {}: {:?}",
+                canister_id,
+                amount,
+                provider_id,
+                err
+            );
+            let provider = PROVIDERS.with(|p| {
+                p.borrow()
+                    .get(&provider_id)
+                    .ok_or(ProviderError::ProviderNotFound)
+            });
+            let mut provider = provider.expect("Provider not found during refund, cycles lost.");
+            PROVIDERS.with(|p| {
+                provider.cycles_owed += amount;
+                p.borrow_mut().insert(provider_id, provider)
+            });
+        }
+    };
+}
+
 pub fn set_service_provider(service: &RpcService, provider: &Provider) {
     log!(
         INFO,

@@ -185,88 +185,16 @@ fn get_service_provider_map() -> Vec<(RpcService, u64)> {
     })
 }
 
-#[query(name = "getAccumulatedCycleCount", guard = "require_register_provider")]
+#[query(name = "getAccumulatedCycleCount")]
 #[candid_method(query, rename = "getAccumulatedCycleCount")]
 fn get_accumulated_cycle_count(provider_id: u64) -> u128 {
-    let provider = PROVIDERS.with(|p| {
-        p.borrow()
-            .get(&provider_id)
-            .ok_or(ProviderError::ProviderNotFound)
-    });
-    let provider = provider.expect("Provider not found");
-    if ic_cdk::caller() != provider.owner {
-        ic_cdk::trap("Not owner");
-    }
-    provider.cycles_owed
+    do_get_accumulated_cycle_count(ic_cdk::caller())
 }
 
-#[derive(CandidType)]
-struct DepositCyclesArgs {
-    canister_id: Principal,
-}
-
-#[update(
-    name = "withdrawAccumulatedCycles",
-    guard = "require_register_provider"
-)]
+#[update(name = "withdrawAccumulatedCycles")]
 #[candid_method(rename = "withdrawAccumulatedCycles")]
 async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
-    let provider = PROVIDERS.with(|p| {
-        p.borrow()
-            .get(&provider_id)
-            .ok_or(ProviderError::ProviderNotFound)
-    });
-    let mut provider = provider.expect("Provider not found");
-    if ic_cdk::caller() != provider.owner {
-        ic_cdk::trap("Not owner");
-    }
-    let amount = provider.cycles_owed;
-    if amount < MINIMUM_WITHDRAWAL_CYCLES {
-        ic_cdk::trap("Too few cycles to withdraw");
-    }
-    PROVIDERS.with(|p| {
-        provider.cycles_owed = 0;
-        p.borrow_mut().insert(provider_id, provider)
-    });
-    log!(
-        INFO,
-        "[{}] Withdrawing {} cycles from provider {} to canister: {}",
-        ic_cdk::caller(),
-        amount,
-        provider_id,
-        canister_id,
-    );
-    match ic_cdk::api::call::call_with_payment128(
-        Principal::management_canister(),
-        "deposit_cycles",
-        (DepositCyclesArgs { canister_id },),
-        amount,
-    )
-    .await
-    {
-        Ok(()) => add_metric!(cycles_withdrawn, amount),
-        Err(err) => {
-            // Refund on failure to send cycles.
-            log!(
-                INFO,
-                "[{}] Unable to send {} cycles from provider {}: {:?}",
-                canister_id,
-                amount,
-                provider_id,
-                err
-            );
-            let provider = PROVIDERS.with(|p| {
-                p.borrow()
-                    .get(&provider_id)
-                    .ok_or(ProviderError::ProviderNotFound)
-            });
-            let mut provider = provider.expect("Provider not found during refund, cycles lost.");
-            PROVIDERS.with(|p| {
-                provider.cycles_owed += amount;
-                p.borrow_mut().insert(provider_id, provider)
-            });
-        }
-    };
+    do_withdraw_accumulated_cycles(ic_cdk::caller(), provider_id, canister_id)
 }
 
 #[query(name = "__transform_json_rpc")]
