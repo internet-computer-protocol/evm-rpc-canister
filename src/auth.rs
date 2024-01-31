@@ -33,32 +33,40 @@ pub fn is_rpc_allowed(caller: &Principal) -> bool {
     METADATA.with(|m| m.borrow().get().open_rpc_access) || is_authorized(caller, Auth::PriorityRpc)
 }
 
-pub fn do_authorize(principal: Principal, auth: Auth) {
-    AUTH.with(|a| {
-        let mut auth_map = a.borrow_mut();
-        let principal = PrincipalStorable(principal);
-        if let Some(mut v) = auth_map.get(&principal) {
-            v.authorize(auth);
-            auth_map.insert(principal, v);
-        } else {
-            auth_map.insert(principal, AuthSet::new(vec![auth]));
-        }
-    });
+pub fn do_authorize(principal: Principal, auth: Auth) -> bool {
+    if principal == Principal::anonymous() {
+        false
+    } else {
+        AUTH.with(|a| {
+            let mut auth_map = a.borrow_mut();
+            let principal = PrincipalStorable(principal);
+            let mut auth_set = auth_map.get(&principal).unwrap_or_default();
+            if auth_set.authorize(auth) {
+                auth_map.insert(principal, auth_set);
+                true
+            } else {
+                false
+            }
+        })
+    }
 }
 
-pub fn do_deauthorize(principal: Principal, auth: Auth) {
+pub fn do_deauthorize(principal: Principal, auth: Auth) -> bool {
     AUTH.with(|a| {
         let mut auth_map = a.borrow_mut();
         let principal = PrincipalStorable(principal);
-        if let Some(mut v) = auth_map.get(&principal) {
-            v.deauthorize(auth);
-            if v.is_empty() {
+        if let Some(mut auth_set) = auth_map.get(&principal) {
+            let changed = auth_set.deauthorize(auth);
+            if auth_set.is_empty() {
                 auth_map.remove(&principal);
             } else {
-                auth_map.insert(principal, v);
+                auth_map.insert(principal, auth_set);
             }
+            changed
+        } else {
+            false
         }
-    });
+    })
 }
 
 #[test]
