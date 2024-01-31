@@ -67,20 +67,8 @@ jobs:
       - name: Install npm packages
         run: npm ci
 
-      - name: Deploy EVM RPC
-        run: dfx deploy evm_rpc --argument "(record {nodesInSubnet = 13})"
-
-      - name: Deploy EVM RPC fiduciary canister
-        run: dfx deploy evm_rpc_fiduciary --argument "(record {nodesInSubnet = 28})"
-
-      - name: Generate language bindings
-        run: npm run generate
-
-      - name: Test (Motoko)
-        run: dfx deploy e2e_motoko && dfx canister call e2e_motoko test
-
-      - name: Test (Rust)
-        run: dfx deploy e2e_rust && dfx canister call e2e_rust test
-
+      - name: Run E2E tests
+        run: scripts/e2e
+      
       - name: Check formatting
         run: cargo fmt --all -- --check

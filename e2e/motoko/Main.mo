@@ -1,5 +1,5 @@
-import EvmRpcCanister "canister:evm_rpc";
-import EvmRpcFidicuaryCanister "canister:evm_rpc_fiduciary";
+import EvmRpc13Node "canister:evm_rpc_staging_13_node";
+import EvmRpcFidicuary "canister:evm_rpc_staging_fiduciary";
 
 import Blob "mo:base/Blob";
 import Debug "mo:base/Debug";
@@ -13,7 +13,7 @@ shared ({ caller = installer }) actor class Main() {
     public shared ({ caller }) func test() : async () {
         assert caller == installer;
 
-        let ignoredTests : [(EvmRpcCanister.RpcService, Text)] = [
+        let ignoredTests : [(EvmRpc13Node.RpcService, Text)] = [
             // (`RPC service`, `method`)
             (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
         ];
@@ -21,8 +21,8 @@ shared ({ caller = installer }) actor class Main() {
         let errors = Buffer.Buffer<Text>(0);
         let canisterDetails = [
             // (`canister module`, `canister type`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
-            (EvmRpcCanister, "default", 13, 99_330_400),
-            (EvmRpcFidicuaryCanister, "fiduciary", 28, 239_142_400),
+            (EvmRpc13Node, "default", 13, 99_330_400),
+            (EvmRpcFidicuary, "fiduciary", 28, 239_142_400),
         ];
         for ((canister, canisterType, nodesInSubnet, expectedCycles) in canisterDetails.vals()) {
             Debug.print("Testing " # canisterType # " canister...");
@@ -204,6 +204,6 @@ shared ({ caller = installer }) actor class Main() {
                 message #= "\n* " # error;
             };
             Debug.trap(message);
-        }
+        };
     };
 };
