@@ -1,3 +1,4 @@
+use candid::CandidType;
 use cketh_common::{
     eth_rpc::ProviderError,
     eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
@@ -289,7 +290,7 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
     })
 }
 
-pub fn do_get_accumulated_cycle_count(caller: Principal) -> u128 {
+pub fn do_get_accumulated_cycle_count(caller: Principal, provider_id: u64) -> u128 {
     let provider = PROVIDERS
         .with(|p| {
             p.borrow()
@@ -303,8 +304,12 @@ pub fn do_get_accumulated_cycle_count(caller: Principal) -> u128 {
     provider.cycles_owed
 }
 
-pub fn do_withdraw_accumulated_cycles(caller: Principal, provider_id: u64, canister_id: Principal) {
-    let provider = PROVIDERS
+pub async fn do_withdraw_accumulated_cycles(
+    caller: Principal,
+    provider_id: u64,
+    canister_id: Principal,
+) {
+    let mut provider = PROVIDERS
         .with(|p| {
             p.borrow()
                 .get(&provider_id)
@@ -330,6 +335,10 @@ pub fn do_withdraw_accumulated_cycles(caller: Principal, provider_id: u64, canis
         provider_id,
         canister_id,
     );
+    #[derive(CandidType)]
+    struct DepositCyclesArgs {
+        canister_id: Principal,
+    }
     match ic_cdk::api::call::call_with_payment128(
         Principal::management_canister(),
         "deposit_cycles",
@@ -340,7 +349,7 @@ pub fn do_withdraw_accumulated_cycles(caller: Principal, provider_id: u64, canis
     {
         Ok(()) => add_metric!(cycles_withdrawn, amount),
         Err(err) => {
-            // Refund on failure to send cycles.
+            // Refund on failure to send cycles
             log!(
                 INFO,
                 "[{}] Unable to send {} cycles from provider {}: {:?}",
@@ -349,12 +358,13 @@ pub fn do_withdraw_accumulated_cycles(caller: Principal, provider_id: u64, canis
                 provider_id,
                 err
             );
+            // Protect against re-entrancy
             let provider = PROVIDERS.with(|p| {
                 p.borrow()
                     .get(&provider_id)
                     .ok_or(ProviderError::ProviderNotFound)
             });
-            let mut provider = provider.expect("Provider not found during refund, cycles lost.");
+            let mut provider = provider.expect("Provider not found during refund, cycles lost");
             PROVIDERS.with(|p| {
                 provider.cycles_owed += amount;
                 p.borrow_mut().insert(provider_id, provider)
