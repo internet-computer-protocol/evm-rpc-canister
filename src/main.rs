@@ -1,7 +1,5 @@
-use candid::{candid_method, CandidType};
-use cketh_common::eth_rpc::{
-    Block, FeeHistory, LogEntry, ProviderError, RpcError, SendRawTransactionResult,
-};
+use candid::candid_method;
+use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError, SendRawTransactionResult};
 
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
