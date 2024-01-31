@@ -399,7 +399,6 @@ pub struct UpdateProviderArgs {
 pub struct ManageProviderArgs {
     #[serde(rename = "providerId")]
     pub provider_id: u64,
-    pub owner: Option<Principal>,
     pub primary: Option<bool>,
     pub service: Option<RpcService>,
 }
