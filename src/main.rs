@@ -160,7 +160,7 @@ fn update_provider(provider: UpdateProviderArgs) {
     do_update_provider(caller, is_controller(&caller), provider)
 }
 
-#[update(name = "manageProvider", guard = "require_admin_or_controller")]
+#[update(name = "manageProvider", guard = "require_manage_or_controller")]
 #[candid_method(rename = "manageProvider")]
 fn manage_provider(args: ManageProviderArgs) {
     log!(
@@ -172,7 +172,7 @@ fn manage_provider(args: ManageProviderArgs) {
     do_manage_provider(args)
 }
 
-#[query(name = "getServiceProviderMap", guard = "require_admin_or_controller")]
+#[query(name = "getServiceProviderMap", guard = "require_manage_or_controller")]
 #[candid_method(query, rename = "getServiceProviderMap")]
 fn get_service_provider_map() -> Vec<(RpcService, u64)> {
     SERVICE_PROVIDER_MAP.with(|map| {
@@ -302,12 +302,12 @@ fn get_metrics() -> Metrics {
     UNSTABLE_METRICS.with(|metrics| (*metrics.borrow()).clone())
 }
 
-#[query(guard = "require_admin_or_controller")]
+#[query(name = "stableSize", guard = "require_manage_or_controller")]
 fn stable_size() -> u64 {
     ic_cdk::api::stable::stable64_size() * WASM_PAGE_SIZE
 }
 
-#[query(guard = "require_admin_or_controller")]
+#[query(name = "stableRead", guard = "require_manage_or_controller")]
 fn stable_read(offset: u64, length: u64) -> Vec<u8> {
     let mut buffer = Vec::new();
     buffer.resize(length as usize, 0);
@@ -315,7 +315,7 @@ fn stable_read(offset: u64, length: u64) -> Vec<u8> {
     buffer
 }
 
-#[update(guard = "require_admin_or_controller")]
+#[update(guard = "require_manage_or_controller")]
 #[candid_method]
 fn authorize(principal: Principal, auth: Auth) -> bool {
     log!(
@@ -328,7 +328,7 @@ fn authorize(principal: Principal, auth: Auth) -> bool {
     do_authorize(principal, auth)
 }
 
-#[query(name = "getAuthorized", guard = "require_admin_or_controller")]
+#[query(name = "getAuthorized", guard = "require_manage_or_controller")]
 #[candid_method(query, rename = "getAuthorized")]
 fn get_authorized(auth: Auth) -> Vec<Principal> {
     AUTH.with(|a| {
@@ -342,7 +342,7 @@ fn get_authorized(auth: Auth) -> Vec<Principal> {
     })
 }
 
-#[update(guard = "require_admin_or_controller")]
+#[update(guard = "require_manage_or_controller")]
 #[candid_method]
 fn deauthorize(principal: Principal, auth: Auth) -> bool {
     log!(
@@ -355,13 +355,13 @@ fn deauthorize(principal: Principal, auth: Auth) -> bool {
     do_deauthorize(principal, auth)
 }
 
-#[query(name = "getOpenRpcAccess", guard = "require_admin_or_controller")]
+#[query(name = "getOpenRpcAccess", guard = "require_manage_or_controller")]
 #[candid_method(query, rename = "getOpenRpcAccess")]
 fn get_open_rpc_access() -> bool {
     METADATA.with(|m| m.borrow().get().open_rpc_access)
 }
 
-#[update(name = "setOpenRpcAccess", guard = "require_admin_or_controller")]
+#[update(name = "setOpenRpcAccess", guard = "require_manage_or_controller")]
 #[candid_method(rename = "setOpenRpcAccess")]
 fn set_open_rpc_access(open_rpc_access: bool) {
     log!(
