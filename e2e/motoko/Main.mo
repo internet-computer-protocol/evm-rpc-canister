@@ -1,6 +1,6 @@
 import EvmRpcStaging13Node "canister:evm_rpc_staging_13_node";
 import EvmRpcStagingFidicuary "canister:evm_rpc_staging_fiduciary";
-import EvmRpcProduction "canister:evm_rpc";
+import EvmRpcProductionFiduciary "canister:evm_rpc";
 
 import Blob "mo:base/Blob";
 import Debug "mo:base/Debug";
@@ -11,28 +11,46 @@ import Buffer "mo:base/Buffer";
 import Evm "mo:evm";
 
 shared ({ caller = installer }) actor class Main() {
+
+    type TestCategory = { #staging; #production };
+
+    type SubnetTarget = (Nat, Nat);
+    // (`subnet name`, `canister module`, `canister type`, `subnet`)
+    let defaultSubnet = ("13-node", 13, 99_330_400);
+    let fiduciarySubnet = ("fiduciary", 28, 239_142_400);
+
+    // (`nodes in subnet`, `expected cycles for JSON-RPC call`)
+    let testTargets = [
+        (EvmRpcStaging13Node, #staging, defaultSubnet),
+        (EvmRpcStagingFidicuary, #staging, fiduciarySubnet),
+        (EvmRpcProductionFiduciary, #production, fiduciarySubnet),
+    ];
+
     public shared ({ caller }) func test() : async () {
+        await runTests(caller, #staging);
+    };
+
+    public shared ({ caller }) func testProduction() : async () {
+        await runTests(caller, #production);
+    };
+
+    func runTests(caller : Principal, category : TestCategory) : async () {
         assert caller == installer;
 
-        let ignoredTests : [(EvmRpcProduction.RpcService, Text)] = [
+        let ignoredTests = [
             // (`RPC service`, `method`)
             (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
         ];
 
-        // (`nodes in subnet`, `expected cycles for JSON-RPC call`)
-        let defaultSubnet = (13, 99_330_400);
-        let fiduciarySubnet = (28, 239_142_400);
-
-        // [(`canister module`, `canister type`, `subnet`)]
-        let canisterDetails = [
-            (EvmRpcStaging13Node, "default", defaultSubnet),
-            (EvmRpcStagingFidicuary, "fiduciary", fiduciarySubnet),
-            // Backwards-compatibility check when running on mainnet
-            (EvmRpcProduction, "production", fiduciarySubnet),
-        ];
-
         let errors = Buffer.Buffer<Text>(0);
-        for ((canister, canisterType, (nodesInSubnet, expectedCycles)) in canisterDetails.vals()) {
+        var relevantTestCount = 0;
+        label targets for ((canister, testCategory, (subnetName, nodesInSubnet, expectedCycles)) in testTargets.vals()) {
+            if (testCategory != category) {
+                continue targets;
+            };
+            relevantTestCount += 1;
+
+            let canisterType = debug_show category # " " # subnetName;
             Debug.print("Testing " # canisterType # " canister...");
 
             func addError(error : Text) {
@@ -115,7 +133,7 @@ shared ({ caller = installer }) actor class Main() {
                 switch result {
                     case (#Consistent(#Ok _)) {};
                     case (#Consistent(#Err err)) {
-                        Debug.trap("Received error for" # " " # method # ": " # debug_show err);
+                        addError("Received consistent error for" # " " # method # ": " # debug_show err);
                     };
                     case (#Inconsistent(results)) {
                         for ((service, result) in results.vals()) {
@@ -204,6 +222,10 @@ shared ({ caller = installer }) actor class Main() {
                     "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
                 ),
             );
+        };
+
+        if (relevantTestCount == 0) {
+            Debug.trap("No tests found for category: " # debug_show category);
         };
 
         if (errors.size() > 0) {
