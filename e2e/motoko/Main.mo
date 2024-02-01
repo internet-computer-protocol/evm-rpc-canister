@@ -1,5 +1,6 @@
-import EvmRpc13Node "canister:evm_rpc_staging_13_node";
-import EvmRpcFidicuary "canister:evm_rpc_staging_fiduciary";
+import EvmRpcStaging13Node "canister:evm_rpc_staging_13_node";
+import EvmRpcStagingFidicuary "canister:evm_rpc_staging_fiduciary";
+import EvmRpcProduction "canister:evm_rpc";
 
 import Blob "mo:base/Blob";
 import Debug "mo:base/Debug";
@@ -13,18 +14,25 @@ shared ({ caller = installer }) actor class Main() {
     public shared ({ caller }) func test() : async () {
         assert caller == installer;
 
-        let ignoredTests : [(EvmRpc13Node.RpcService, Text)] = [
+        let ignoredTests : [(EvmRpcProduction.RpcService, Text)] = [
             // (`RPC service`, `method`)
             (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
         ];
 
-        let errors = Buffer.Buffer<Text>(0);
+        // (`nodes in subnet`, `expected cycles for JSON-RPC call`)
+        let defaultSubnet = (13, 99_330_400);
+        let fiduciarySubnet = (28, 239_142_400);
+
+        // [(`canister module`, `canister type`, `subnet`)]
         let canisterDetails = [
-            // (`canister module`, `canister type`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
-            (EvmRpc13Node, "default", 13, 99_330_400),
-            (EvmRpcFidicuary, "fiduciary", 28, 239_142_400),
+            (EvmRpcStaging13Node, "default", defaultSubnet),
+            (EvmRpcStagingFidicuary, "fiduciary", fiduciarySubnet),
+            // Backwards-compatibility check when running on mainnet
+            (EvmRpcProduction, "production", fiduciarySubnet),
         ];
-        for ((canister, canisterType, nodesInSubnet, expectedCycles) in canisterDetails.vals()) {
+
+        let errors = Buffer.Buffer<Text>(0);
+        for ((canister, canisterType, (nodesInSubnet, expectedCycles)) in canisterDetails.vals()) {
             Debug.print("Testing " # canisterType # " canister...");
 
             func addError(error : Text) {
