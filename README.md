@@ -51,7 +51,7 @@ Run the following commands to run the canister in your local environment:
 dfx start --background
 
 # Deploy the `evm_rpc` canister
-dfx deploy evm_rpc --argument '(record { nodesInSubnet = 13 })'
+dfx deploy evm_rpc --argument '(record { nodesInSubnet = 28 })'
 
 # Call the `eth_gasPrice` JSON-RPC method
 dfx canister call evm_rpc request '(variant {Url="https://cloudflare-eth.com/v1/mainnet"}, "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}", 1000)' --wallet $(dfx identity get-wallet) --with-cycles 600000000
