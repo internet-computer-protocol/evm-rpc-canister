@@ -50,11 +50,8 @@ Run the following commands to deploy the canister in your local environment:
 # Start the local replica
 dfx start --background
 
-# Deploy the `evm_rpc` canister
+# Locally deploy the `evm_rpc` canister
 dfx deploy evm_rpc --argument '(record { nodesInSubnet = 28 })'
-
-# Call the `eth_gasPrice` JSON-RPC method
-dfx canister call evm_rpc request '(variant {Custom="https://cloudflare-eth.com/v1/mainnet"}, "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}", 1000)' --wallet $(dfx identity get-wallet) --with-cycles 600000000
 ```
 
 The EVM RPC canister also supports [`dfx deps pull`](https://internetcomputer.org/docs/current/references/cli-reference/dfx-deps). Add the following to your `dfx.json` file:
@@ -76,7 +73,7 @@ Next, run the following commands:
 # Start the local replica
 dfx start --background
 
-# Pull and deploy the canister on your local replica
+# Locally deploy the `evm_rpc` canister
 dfx deps pull
 dfx deps init evm_rpc --argument '(record { nodesInSubnet = 28 })'
 dfx deps deploy
