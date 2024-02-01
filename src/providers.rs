@@ -1,3 +1,4 @@
+use candid::CandidType;
 use cketh_common::{
     eth_rpc::ProviderError,
     eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
@@ -287,6 +288,96 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
             None => ic_cdk::trap("Provider not found"),
         }
     })
+}
+
+pub fn do_get_accumulated_cycle_count(
+    caller: Principal,
+    is_controller: bool,
+    provider_id: u64,
+) -> u128 {
+    let provider = PROVIDERS
+        .with(|p| {
+            p.borrow()
+                .get(&provider_id)
+                .ok_or(ProviderError::ProviderNotFound)
+        })
+        .expect("Provider not found");
+    if caller == provider.owner || is_controller {
+        provider.cycles_owed
+    } else {
+        ic_cdk::trap("You are not authorized: check provider owner");
+    }
+}
+
+pub async fn do_withdraw_accumulated_cycles(
+    caller: Principal,
+    is_controller: bool,
+    provider_id: u64,
+    canister_id: Principal,
+) {
+    let mut provider = PROVIDERS
+        .with(|p| {
+            p.borrow()
+                .get(&provider_id)
+                .ok_or(ProviderError::ProviderNotFound)
+        })
+        .expect("Provider not found");
+    if caller == provider.owner || is_controller {
+        let amount = provider.cycles_owed;
+        if amount < MINIMUM_WITHDRAWAL_CYCLES {
+            ic_cdk::trap("Too few cycles to withdraw");
+        }
+        PROVIDERS.with(|p| {
+            provider.cycles_owed = 0;
+            p.borrow_mut().insert(provider_id, provider)
+        });
+        log!(
+            INFO,
+            "[{}] Withdrawing {} cycles from provider {} to canister: {}",
+            caller,
+            amount,
+            provider_id,
+            canister_id,
+        );
+        #[derive(CandidType)]
+        struct DepositCyclesArgs {
+            canister_id: Principal,
+        }
+        match ic_cdk::api::call::call_with_payment128(
+            Principal::management_canister(),
+            "deposit_cycles",
+            (DepositCyclesArgs { canister_id },),
+            amount,
+        )
+        .await
+        {
+            Ok(()) => add_metric!(cycles_withdrawn, amount),
+            Err(err) => {
+                // Refund on failure to send cycles
+                log!(
+                    INFO,
+                    "[{}] Unable to send {} cycles from provider {}: {:?}",
+                    canister_id,
+                    amount,
+                    provider_id,
+                    err
+                );
+                // Protect against re-entrancy
+                let provider = PROVIDERS.with(|p| {
+                    p.borrow()
+                        .get(&provider_id)
+                        .ok_or(ProviderError::ProviderNotFound)
+                });
+                let mut provider = provider.expect("Provider not found during refund, cycles lost");
+                PROVIDERS.with(|p| {
+                    provider.cycles_owed += amount;
+                    p.borrow_mut().insert(provider_id, provider)
+                });
+            }
+        };
+    } else {
+        ic_cdk::trap("You are not authorized: check provider owner");
+    }
 }
 
 pub fn set_service_provider(service: &RpcService, provider: &Provider) {
