@@ -30,7 +30,6 @@ module {
 
     type ActorSource = EvmRpc.JsonRpcSource;
 
-    public type RpcActorClass = EvmRpc.Self;
     public type RpcError = EvmRpc.RpcError;
     public type JsonRpcError = EvmRpc.JsonRpcError;
     public type ProviderError = EvmRpc.ProviderError;
