@@ -15,12 +15,12 @@ shared ({ caller = installer }) actor class Main() {
     type TestCategory = { #staging; #production };
 
     type SubnetTarget = (Nat, Nat);
-    // (`subnet name`, `canister module`, `canister type`, `subnet`)
+    // (`nodes in subnet`, `expected cycles for JSON-RPC call`)
     let defaultSubnet = ("13-node", 13, 99_330_400);
     let fiduciarySubnet = ("fiduciary", 28, 239_142_400);
 
-    // (`nodes in subnet`, `expected cycles for JSON-RPC call`)
     let testTargets = [
+        // (`subnet name`, `canister module`, `canister type`, `subnet`)
         (EvmRpcStaging13Node, #staging, defaultSubnet),
         (EvmRpcStagingFidicuary, #staging, fiduciarySubnet),
         (EvmRpcProductionFiduciary, #production, fiduciarySubnet),
