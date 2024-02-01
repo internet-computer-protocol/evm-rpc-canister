@@ -26,6 +26,11 @@ shared ({ caller = installer }) actor class Main() {
         (EvmRpcProductionFiduciary, #production, fiduciarySubnet),
     ];
 
+    // (`RPC service`, `method`)
+    let ignoredTests = [
+        (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
+    ];
+
     public shared ({ caller }) func test() : async () {
         await runTests(caller, #staging);
     };
@@ -36,11 +41,6 @@ shared ({ caller = installer }) actor class Main() {
 
     func runTests(caller : Principal, category : TestCategory) : async () {
         assert caller == installer;
-
-        let ignoredTests = [
-            // (`RPC service`, `method`)
-            (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
-        ];
 
         let errors = Buffer.Buffer<Text>(0);
         var relevantTestCount = 0;
