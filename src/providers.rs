@@ -390,12 +390,13 @@ pub fn set_service_provider(service: &RpcService, provider: &Provider) {
         service,
         provider.provider_id
     );
-    let chain_id = get_chain_id(service);
-    if chain_id != provider.chain_id {
-        ic_cdk::trap(&format!(
-            "Mismatch between service and provider chain ids ({} != {})",
-            chain_id, provider.chain_id
-        ))
+    if let Some(chain_id) = find_chain_id(service) {
+        if chain_id != provider.chain_id {
+            ic_cdk::trap(&format!(
+                "Mismatch between service and provider chain ids ({} != {})",
+                chain_id, provider.chain_id
+            ))
+        }
     }
     SERVICE_PROVIDER_MAP.with(|mappings| {
         mappings

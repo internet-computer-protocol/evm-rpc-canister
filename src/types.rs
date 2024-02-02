@@ -1,5 +1,5 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-use cketh_common::eth_rpc::{ProviderError, RpcError};
+use cketh_common::eth_rpc::RpcError;
 use cketh_common::eth_rpc_client::providers::{
     EthMainnetService, EthSepoliaService, RpcApi, RpcService,
 };
@@ -13,8 +13,7 @@ use std::collections::HashMap;
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
 use crate::{
-    get_provider_for_service, AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDERS,
-    PROVIDER_MAX_SIZE, RPC_SERVICE_MAX_SIZE,
+    AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDER_MAX_SIZE, RPC_SERVICE_MAX_SIZE,
 };
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

@@ -35,7 +35,9 @@ pub async fn do_json_rpc_request(
         name: CONTENT_TYPE_HEADER.to_string(),
         value: CONTENT_TYPE_VALUE.to_string(),
     }];
-    request_headers.extend(api.headers);
+    if let Some(headers) = api.headers {
+        request_headers.extend(headers);
+    }
     let request = CanisterHttpRequestArgument {
         url: api.url,
         max_response_bytes: Some(max_response_bytes),
