@@ -30,7 +30,7 @@ pub const NODES_IN_DEFAULT_SUBNET: u32 = 13;
 pub const NODES_IN_FIDUCIARY_SUBNET: u32 = 28;
 pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
 
-// Providers used by default (when passing `null` with `CandidRpcSource`)
+// Providers used by default (when passing `null` with `RpcServices`)
 pub const DEFAULT_ETH_MAINNET_SERVICES: &[EthMainnetService] = &[
     EthMainnetService::Ankr,
     EthMainnetService::Cloudflare,
