@@ -1,3 +1,4 @@
+use candid::CandidType;
 use cketh_common::{
     eth_rpc::ProviderError,
     eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
@@ -217,9 +218,7 @@ pub fn do_unregister_provider(caller: Principal, is_controller: bool, provider_i
     PROVIDERS.with(|providers| {
         let mut providers = providers.borrow_mut();
         if let Some(provider) = providers.get(&provider_id) {
-            if !(provider.owner == caller || is_controller) {
-                ic_cdk::trap("You are not authorized: check provider owner");
-            } else {
+            if provider.owner == caller || is_controller {
                 log!(
                     INFO,
                     "[{}] Unregistering provider: {:?}",
@@ -227,6 +226,8 @@ pub fn do_unregister_provider(caller: Principal, is_controller: bool, provider_i
                     provider_id
                 );
                 providers.remove(&provider_id).is_some()
+            } else {
+                ic_cdk::trap("You are not authorized: check provider owner");
             }
         } else {
             false
@@ -240,9 +241,7 @@ pub fn do_update_provider(caller: Principal, is_controller: bool, args: UpdatePr
         let mut providers = providers.borrow_mut();
         match providers.get(&args.provider_id) {
             Some(mut provider) => {
-                if !(provider.owner == caller || is_controller) {
-                    ic_cdk::trap("You are not authorized: check provider owner");
-                } else {
+                if provider.owner == caller || is_controller {
                     log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
                     if let Some(hostname) = args.hostname {
                         validate_hostname(&hostname).unwrap();
@@ -263,6 +262,8 @@ pub fn do_update_provider(caller: Principal, is_controller: bool, args: UpdatePr
                         provider.cycles_per_message_byte = cycles_per_message_byte;
                     }
                     providers.insert(args.provider_id, provider);
+                } else {
+                    ic_cdk::trap("You are not authorized: check provider owner");
                 }
             }
             None => ic_cdk::trap("Provider not found"),
@@ -276,9 +277,6 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
         let mut providers = providers.borrow_mut();
         match providers.get(&args.provider_id) {
             Some(mut provider) => {
-                if let Some(owner) = args.owner {
-                    provider.owner = owner;
-                }
                 if let Some(primary) = args.primary {
                     provider.primary = primary;
                 }
@@ -290,6 +288,96 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
             None => ic_cdk::trap("Provider not found"),
         }
     })
+}
+
+pub fn do_get_accumulated_cycle_count(
+    caller: Principal,
+    is_controller: bool,
+    provider_id: u64,
+) -> u128 {
+    let provider = PROVIDERS
+        .with(|p| {
+            p.borrow()
+                .get(&provider_id)
+                .ok_or(ProviderError::ProviderNotFound)
+        })
+        .expect("Provider not found");
+    if caller == provider.owner || is_controller {
+        provider.cycles_owed
+    } else {
+        ic_cdk::trap("You are not authorized: check provider owner");
+    }
+}
+
+pub async fn do_withdraw_accumulated_cycles(
+    caller: Principal,
+    is_controller: bool,
+    provider_id: u64,
+    canister_id: Principal,
+) {
+    let mut provider = PROVIDERS
+        .with(|p| {
+            p.borrow()
+                .get(&provider_id)
+                .ok_or(ProviderError::ProviderNotFound)
+        })
+        .expect("Provider not found");
+    if caller == provider.owner || is_controller {
+        let amount = provider.cycles_owed;
+        if amount < MINIMUM_WITHDRAWAL_CYCLES {
+            ic_cdk::trap("Too few cycles to withdraw");
+        }
+        PROVIDERS.with(|p| {
+            provider.cycles_owed = 0;
+            p.borrow_mut().insert(provider_id, provider)
+        });
+        log!(
+            INFO,
+            "[{}] Withdrawing {} cycles from provider {} to canister: {}",
+            caller,
+            amount,
+            provider_id,
+            canister_id,
+        );
+        #[derive(CandidType)]
+        struct DepositCyclesArgs {
+            canister_id: Principal,
+        }
+        match ic_cdk::api::call::call_with_payment128(
+            Principal::management_canister(),
+            "deposit_cycles",
+            (DepositCyclesArgs { canister_id },),
+            amount,
+        )
+        .await
+        {
+            Ok(()) => add_metric!(cycles_withdrawn, amount),
+            Err(err) => {
+                // Refund on failure to send cycles
+                log!(
+                    INFO,
+                    "[{}] Unable to send {} cycles from provider {}: {:?}",
+                    canister_id,
+                    amount,
+                    provider_id,
+                    err
+                );
+                // Protect against re-entrancy
+                let provider = PROVIDERS.with(|p| {
+                    p.borrow()
+                        .get(&provider_id)
+                        .ok_or(ProviderError::ProviderNotFound)
+                });
+                let mut provider = provider.expect("Provider not found during refund, cycles lost");
+                PROVIDERS.with(|p| {
+                    provider.cycles_owed += amount;
+                    p.borrow_mut().insert(provider_id, provider)
+                });
+            }
+        };
+    } else {
+        ic_cdk::trap("You are not authorized: check provider owner");
+    }
 }
 
 pub fn set_service_provider(service: &RpcService, provider: &Provider) {

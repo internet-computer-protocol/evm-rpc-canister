@@ -14,19 +14,32 @@
         "init_guide": "Number of nodes in the subnet, e.g. '(record {nodesInSubnet = 28})'"
       }
     },
-    "evm_rpc_fiduciary": {
+    "evm_rpc_staging_13_node": {
+      "candid": "candid/evm_rpc.did",
+      "type": "rust",
+      "package": "evm_rpc"
+    },
+    "evm_rpc_staging_fiduciary": {
       "candid": "candid/evm_rpc.did",
       "type": "rust",
       "package": "evm_rpc"
     },
     "e2e_rust": {
-      "dependencies": ["evm_rpc", "evm_rpc_fiduciary"],
+      "dependencies": [
+        "evm_rpc",
+        "evm_rpc_staging_13_node",
+        "evm_rpc_staging_fiduciary"
+      ],
       "candid": "e2e/rust/e2e_rust.did",
       "type": "rust",
       "package": "e2e"
     },
     "e2e_motoko": {
-      "dependencies": ["evm_rpc", "evm_rpc_fiduciary"],
+      "dependencies": [
+        "evm_rpc",
+        "evm_rpc_staging_13_node",
+        "evm_rpc_staging_fiduciary"
+      ],
       "type": "motoko",
       "main": "e2e/motoko/Main.mo"
     }

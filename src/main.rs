@@ -1,7 +1,5 @@
-use candid::{candid_method, CandidType};
-use cketh_common::eth_rpc::{
-    Block, FeeHistory, LogEntry, ProviderError, RpcError, SendRawTransactionResult,
-};
+use candid::candid_method;
+use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError, SendRawTransactionResult};
 
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
@@ -162,7 +160,7 @@ fn update_provider(provider: UpdateProviderArgs) {
     do_update_provider(caller, is_controller(&caller), provider)
 }
 
-#[update(name = "manageProvider", guard = "require_admin_or_controller")]
+#[update(name = "manageProvider", guard = "require_manage_or_controller")]
 #[candid_method(rename = "manageProvider")]
 fn manage_provider(args: ManageProviderArgs) {
     log!(
@@ -174,7 +172,7 @@ fn manage_provider(args: ManageProviderArgs) {
     do_manage_provider(args)
 }
 
-#[query(name = "getServiceProviderMap", guard = "require_admin_or_controller")]
+#[query(name = "getServiceProviderMap", guard = "require_manage_or_controller")]
 #[candid_method(query, rename = "getServiceProviderMap")]
 fn get_service_provider_map() -> Vec<(RpcService, u64)> {
     SERVICE_PROVIDER_MAP.with(|map| {
@@ -185,88 +183,18 @@ fn get_service_provider_map() -> Vec<(RpcService, u64)> {
     })
 }
 
-#[query(name = "getAccumulatedCycleCount", guard = "require_register_provider")]
+#[query(name = "getAccumulatedCycleCount")]
 #[candid_method(query, rename = "getAccumulatedCycleCount")]
 fn get_accumulated_cycle_count(provider_id: u64) -> u128 {
-    let provider = PROVIDERS.with(|p| {
-        p.borrow()
-            .get(&provider_id)
-            .ok_or(ProviderError::ProviderNotFound)
-    });
-    let provider = provider.expect("Provider not found");
-    if ic_cdk::caller() != provider.owner {
-        ic_cdk::trap("Not owner");
-    }
-    provider.cycles_owed
+    let caller = ic_cdk::caller();
+    do_get_accumulated_cycle_count(caller, is_controller(&caller), provider_id)
 }
 
-#[derive(CandidType)]
-struct DepositCyclesArgs {
-    canister_id: Principal,
-}
-
-#[update(
-    name = "withdrawAccumulatedCycles",
-    guard = "require_register_provider"
-)]
+#[update(name = "withdrawAccumulatedCycles")]
 #[candid_method(rename = "withdrawAccumulatedCycles")]
 async fn withdraw_accumulated_cycles(provider_id: u64, canister_id: Principal) {
-    let provider = PROVIDERS.with(|p| {
-        p.borrow()
-            .get(&provider_id)
-            .ok_or(ProviderError::ProviderNotFound)
-    });
-    let mut provider = provider.expect("Provider not found");
-    if ic_cdk::caller() != provider.owner {
-        ic_cdk::trap("Not owner");
-    }
-    let amount = provider.cycles_owed;
-    if amount < MINIMUM_WITHDRAWAL_CYCLES {
-        ic_cdk::trap("Too few cycles to withdraw");
-    }
-    PROVIDERS.with(|p| {
-        provider.cycles_owed = 0;
-        p.borrow_mut().insert(provider_id, provider)
-    });
-    log!(
-        INFO,
-        "[{}] Withdrawing {} cycles from provider {} to canister: {}",
-        ic_cdk::caller(),
-        amount,
-        provider_id,
-        canister_id,
-    );
-    match ic_cdk::api::call::call_with_payment128(
-        Principal::management_canister(),
-        "deposit_cycles",
-        (DepositCyclesArgs { canister_id },),
-        amount,
-    )
-    .await
-    {
-        Ok(()) => add_metric!(cycles_withdrawn, amount),
-        Err(err) => {
-            // Refund on failure to send cycles.
-            log!(
-                INFO,
-                "[{}] Unable to send {} cycles from provider {}: {:?}",
-                canister_id,
-                amount,
-                provider_id,
-                err
-            );
-            let provider = PROVIDERS.with(|p| {
-                p.borrow()
-                    .get(&provider_id)
-                    .ok_or(ProviderError::ProviderNotFound)
-            });
-            let mut provider = provider.expect("Provider not found during refund, cycles lost.");
-            PROVIDERS.with(|p| {
-                provider.cycles_owed += amount;
-                p.borrow_mut().insert(provider_id, provider)
-            });
-        }
-    };
+    let caller = ic_cdk::caller();
+    do_withdraw_accumulated_cycles(caller, is_controller(&caller), provider_id, canister_id).await
 }
 
 #[query(name = "__transform_json_rpc")]
@@ -374,12 +302,12 @@ fn get_metrics() -> Metrics {
     UNSTABLE_METRICS.with(|metrics| (*metrics.borrow()).clone())
 }
 
-#[query(guard = "require_admin_or_controller")]
+#[query(name = "stableSize", guard = "require_manage_or_controller")]
 fn stable_size() -> u64 {
     ic_cdk::api::stable::stable64_size() * WASM_PAGE_SIZE
 }
 
-#[query(guard = "require_admin_or_controller")]
+#[query(name = "stableRead", guard = "require_manage_or_controller")]
 fn stable_read(offset: u64, length: u64) -> Vec<u8> {
     let mut buffer = Vec::new();
     buffer.resize(length as usize, 0);
@@ -387,7 +315,7 @@ fn stable_read(offset: u64, length: u64) -> Vec<u8> {
     buffer
 }
 
-#[update(guard = "require_admin_or_controller")]
+#[update(guard = "require_manage_or_controller")]
 #[candid_method]
 fn authorize(principal: Principal, auth: Auth) -> bool {
     log!(
@@ -400,7 +328,7 @@ fn authorize(principal: Principal, auth: Auth) -> bool {
     do_authorize(principal, auth)
 }
 
-#[query(name = "getAuthorized", guard = "require_admin_or_controller")]
+#[query(name = "getAuthorized", guard = "require_manage_or_controller")]
 #[candid_method(query, rename = "getAuthorized")]
 fn get_authorized(auth: Auth) -> Vec<Principal> {
     AUTH.with(|a| {
@@ -414,7 +342,7 @@ fn get_authorized(auth: Auth) -> Vec<Principal> {
     })
 }
 
-#[update(guard = "require_admin_or_controller")]
+#[update(guard = "require_manage_or_controller")]
 #[candid_method]
 fn deauthorize(principal: Principal, auth: Auth) -> bool {
     log!(
@@ -427,13 +355,13 @@ fn deauthorize(principal: Principal, auth: Auth) -> bool {
     do_deauthorize(principal, auth)
 }
 
-#[query(name = "getOpenRpcAccess", guard = "require_admin_or_controller")]
+#[query(name = "getOpenRpcAccess", guard = "require_manage_or_controller")]
 #[candid_method(query, rename = "getOpenRpcAccess")]
 fn get_open_rpc_access() -> bool {
     METADATA.with(|m| m.borrow().get().open_rpc_access)
 }
 
-#[update(name = "setOpenRpcAccess", guard = "require_admin_or_controller")]
+#[update(name = "setOpenRpcAccess", guard = "require_manage_or_controller")]
 #[candid_method(rename = "setOpenRpcAccess")]
 fn set_open_rpc_access(open_rpc_access: bool) {
     log!(
