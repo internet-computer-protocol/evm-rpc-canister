@@ -12,7 +12,7 @@ use cketh_common::{
         ProviderError, RpcError, SendRawTransactionResult,
     },
     eth_rpc_client::{
-        providers::{EthMainnetService, EthSepoliaService, RpcService},
+        providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
         RpcConfig,
     },
     numeric::{BlockNumber, Wei},
@@ -222,7 +222,7 @@ impl EvmRpcSetup {
 
     pub fn request_cost(
         &self,
-        source: JsonRpcSource,
+        source: RpcService,
         json_rpc_payload: &str,
         max_response_bytes: u64,
     ) -> Nat {
@@ -234,7 +234,7 @@ impl EvmRpcSetup {
 
     pub fn request(
         &self,
-        source: JsonRpcSource,
+        source: RpcService,
         json_rpc_payload: &str,
         max_response_bytes: u64,
     ) -> CallFlow<RpcResult<String>> {
@@ -466,13 +466,13 @@ fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
     assert_matches!(
         setup
             .request(
-                JsonRpcSource::Custom {
+                RpcService::Custom(RpcApi {
                     url: MOCK_REQUEST_URL.to_string(),
                     headers: Some(vec![HttpHeader {
                         name: "Custom".to_string(),
                         value: "Value".to_string(),
                     }]),
-                },
+                }),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,
             )
@@ -843,7 +843,7 @@ fn should_set_primary_provider() {
     assert_matches!(
         setup
             .request(
-                JsonRpcSource::Chain(new_chain_id),
+                RpcService::Chain(new_chain_id),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,
             )
@@ -867,7 +867,7 @@ fn should_set_primary_provider() {
     assert_matches!(
         setup
             .request(
-                JsonRpcSource::Chain(new_chain_id),
+                RpcService::Chain(new_chain_id),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,
             )
@@ -894,10 +894,10 @@ fn should_canonicalize_json_response() {
     .map(|response| {
         setup
             .request(
-                JsonRpcSource::Custom {
+                RpcService::Custom(RpcApi {
                     url: MOCK_REQUEST_URL.to_string(),
                     headers: None,
-                },
+                }),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,
             )

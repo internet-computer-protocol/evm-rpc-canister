@@ -47,7 +47,7 @@ impl RpcTransport for CanisterTransport {
         );
         let rpc_method = MetricRpcMethod(method.to_string());
         let rpc_host = MetricRpcHost(provider.hostname.to_string());
-        do_http_request_with_metrics(
+        do_http_request(
             ic_cdk::caller(),
             rpc_method,
             rpc_host,

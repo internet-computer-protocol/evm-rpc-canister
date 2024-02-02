@@ -50,10 +50,10 @@ pub async fn do_json_rpc_request(
         )),
     };
     let rpc_host = MetricRpcHost(host.to_string());
-    do_http_request_with_metrics(caller, rpc_method, rpc_host, provider, request, cycles_cost).await
+    do_http_request(caller, rpc_method, rpc_host, provider, request, cycles_cost).await
 }
 
-pub async fn do_http_request_with_metrics(
+pub async fn do_http_request(
     caller: Principal,
     rpc_method: MetricRpcMethod,
     rpc_host: MetricRpcHost,

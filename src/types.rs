@@ -667,6 +667,8 @@ pub mod candid_types {
 
 #[test]
 fn test_multi_rpc_result_map() {
+    use cketh_common::eth_rpc::ProviderError;
+
     let err = RpcError::ProviderError(ProviderError::ProviderNotFound);
     assert_eq!(
         MultiRpcResult::Consistent(Ok(5)).map(|n| n + 1),
