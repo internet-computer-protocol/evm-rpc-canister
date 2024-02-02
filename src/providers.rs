@@ -176,13 +176,13 @@ pub fn get_provider_for_service(service: &RpcService) -> Result<Provider, Provid
 }
 
 pub fn get_known_chain_id(service: &RpcService) -> Option<u64> {
-    Some(match service {
-        RpcService::EthMainnet(_) => ETH_MAINNET_CHAIN_ID,
-        RpcService::EthSepolia(_) => ETH_SEPOLIA_CHAIN_ID,
-        RpcService::Chain(chain_id) => chain_id,
-        RpcService::Provider(_) => None?,
-        RpcService::Custom(_) => None?,
-    })
+    match service {
+        RpcService::EthMainnet(_) => Some(ETH_MAINNET_CHAIN_ID),
+        RpcService::EthSepolia(_) => Some(ETH_SEPOLIA_CHAIN_ID),
+        RpcService::Chain(chain_id) => Some(*chain_id),
+        RpcService::Provider(_) => None,
+        RpcService::Custom(_) => None,
+    }
 }
 
 pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> u64 {
@@ -390,7 +390,7 @@ pub fn set_service_provider(service: &RpcService, provider: &Provider) {
         service,
         provider.provider_id
     );
-    if let Some(chain_id) = find_chain_id(service) {
+    if let Some(chain_id) = get_known_chain_id(service) {
         if chain_id != provider.chain_id {
             ic_cdk::trap(&format!(
                 "Mismatch between service and provider chain ids ({} != {})",

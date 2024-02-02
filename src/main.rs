@@ -100,13 +100,13 @@ pub async fn eth_send_raw_transaction(
 #[update]
 #[candid_method]
 async fn request(
-    source: JsonRpcSource,
+    service: RpcService,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<String, RpcError> {
     let response = do_json_rpc_request(
         ic_cdk::caller(),
-        source.resolve()?,
+        &resolve_rpc_service(service)?,
         MetricRpcMethod("request".to_string()),
         &json_rpc_payload,
         max_response_bytes,
@@ -118,12 +118,12 @@ async fn request(
 #[query(name = "requestCost")]
 #[candid_method(query, rename = "requestCost")]
 fn request_cost(
-    source: JsonRpcSource,
+    service: RpcService,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<u128, RpcError> {
     Ok(get_json_rpc_cost(
-        &source.resolve().unwrap(),
+        &resolve_rpc_service(service)?,
         json_rpc_payload.len() as u64,
         max_response_bytes,
     ))
@@ -210,14 +210,15 @@ fn init(args: InitArgs) {
         do_register_provider(ic_cdk::caller(), provider);
     }
     for (service, hostname) in get_default_service_provider_hostnames() {
-        let provider =
-            find_provider(|p| p.chain_id == get_chain_id(&service) && p.hostname == hostname)
-                .unwrap_or_else(|| {
-                    panic!(
-                        "Missing default provider for service {:?} with hostname {:?}",
-                        service, hostname
-                    )
-                });
+        let provider = find_provider(|p| {
+            Some(p.chain_id) == get_known_chain_id(&service) && p.hostname == hostname
+        })
+        .unwrap_or_else(|| {
+            panic!(
+                "Missing default provider for service {:?} with hostname {:?}",
+                service, hostname
+            )
+        });
         set_service_provider(&service, &provider);
     }
 }
