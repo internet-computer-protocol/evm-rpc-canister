@@ -23,56 +23,7 @@ pub struct InitArgs {
     pub nodes_in_subnet: u32,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum JsonRpcSource {
-    // TODO: https://github.com/internet-computer-protocol/evm-rpc-canister/issues/166
-    EthMainnet(EthMainnetService),
-    EthSepolia(EthSepoliaService),
-    Chain(u64),
-    Provider(u64),
-    Custom {
-        url: String,
-        headers: Option<Vec<HttpHeader>>,
-    },
-}
-
-impl JsonRpcSource {
-    pub fn resolve(self) -> Result<ResolvedJsonRpcSource, ProviderError> {
-        Ok(match self {
-            JsonRpcSource::EthMainnet(service) => ResolvedJsonRpcSource::Api(
-                get_provider_for_service(&RpcService::EthMainnet(service))?.api(),
-            ),
-            JsonRpcSource::EthSepolia(service) => ResolvedJsonRpcSource::Api(
-                get_provider_for_service(&RpcService::EthSepolia(service))?.api(),
-            ),
-            JsonRpcSource::Custom { url, headers } => ResolvedJsonRpcSource::Api(RpcApi {
-                url,
-                headers: headers.unwrap_or_default(),
-            }),
-            JsonRpcSource::Provider(id) => ResolvedJsonRpcSource::Provider({
-                PROVIDERS.with(|providers| {
-                    providers
-                        .borrow()
-                        .get(&id)
-                        .ok_or(ProviderError::ProviderNotFound)
-                })?
-            }),
-            JsonRpcSource::Chain(id) => {
-                ResolvedJsonRpcSource::Provider(PROVIDERS.with(|providers| {
-                    let providers = providers.borrow();
-                    Ok(providers
-                        .iter()
-                        .find(|(_, p)| p.primary && p.chain_id == id)
-                        .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
-                        .ok_or(ProviderError::ProviderNotFound)?
-                        .1)
-                })?)
-            }
-        })
-    }
-}
-
-pub enum ResolvedJsonRpcSource {
+pub enum ResolvedRpcService {
     Api(RpcApi),
     Provider(Provider),
 }
@@ -537,9 +488,10 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum RpcSource {
+pub enum RpcServices {
     EthMainnet(Option<Vec<EthMainnetService>>),
     EthSepolia(Option<Vec<EthSepoliaService>>),
+    Custom(Vec<RpcApi>),
 }
 
 pub mod candid_types {

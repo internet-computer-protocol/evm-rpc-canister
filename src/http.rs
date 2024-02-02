@@ -9,7 +9,7 @@ use crate::*;
 
 pub async fn do_json_rpc_request(
     caller: Principal,
-    source: ResolvedJsonRpcSource,
+    source: ResolvedRpcService,
     rpc_method: MetricRpcMethod,
     json_rpc_payload: &str,
     max_response_bytes: u64,
@@ -20,8 +20,8 @@ pub async fn do_json_rpc_request(
     }
     let cycles_cost = get_json_rpc_cost(&source, json_rpc_payload.len() as u64, max_response_bytes);
     let (api, provider) = match source {
-        ResolvedJsonRpcSource::Api(api) => (api, None),
-        ResolvedJsonRpcSource::Provider(provider) => (provider.api(), Some(provider)),
+        ResolvedRpcService::Api(api) => (api, None),
+        ResolvedRpcService::Provider(provider) => (provider.api(), Some(provider)),
     };
     let parsed_url = match url::Url::parse(&api.url) {
         Ok(url) => url,

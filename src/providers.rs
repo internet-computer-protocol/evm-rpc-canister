@@ -1,7 +1,7 @@
 use candid::CandidType;
 use cketh_common::{
     eth_rpc::ProviderError,
-    eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
+    eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
     logs::INFO,
 };
 use ic_canister_log::log;
@@ -175,11 +175,14 @@ pub fn get_provider_for_service(service: &RpcService) -> Result<Provider, Provid
         .ok_or(ProviderError::ProviderNotFound)
 }
 
-pub fn get_chain_id(service: &RpcService) -> u64 {
-    match service {
+pub fn get_known_chain_id(service: &RpcService) -> Option<u64> {
+    Some(match service {
         RpcService::EthMainnet(_) => ETH_MAINNET_CHAIN_ID,
         RpcService::EthSepolia(_) => ETH_SEPOLIA_CHAIN_ID,
-    }
+        RpcService::Chain(chain_id) => chain_id,
+        RpcService::Provider(_) => None?,
+        RpcService::Custom(_) => None?,
+    })
 }
 
 pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> u64 {
@@ -399,4 +402,36 @@ pub fn set_service_provider(service: &RpcService, provider: &Provider) {
             .borrow_mut()
             .insert(StorableRpcService::new(service), provider.provider_id);
     });
+}
+
+pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, ProviderError> {
+    Ok(match service {
+        RpcService::EthMainnet(service) => ResolvedRpcService::Api(
+            get_provider_for_service(&RpcService::EthMainnet(service))?.api(),
+        ),
+        RpcService::EthSepolia(service) => ResolvedRpcService::Api(
+            get_provider_for_service(&RpcService::EthSepolia(service))?.api(),
+        ),
+        RpcService::Chain(id) => ResolvedRpcService::Provider(PROVIDERS.with(|providers| {
+            let providers = providers.borrow();
+            Ok(providers
+                .iter()
+                .find(|(_, p)| p.primary && p.chain_id == id)
+                .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
+                .ok_or(ProviderError::ProviderNotFound)?
+                .1)
+        })?),
+        RpcService::Provider(id) => ResolvedRpcService::Provider({
+            PROVIDERS.with(|providers| {
+                providers
+                    .borrow()
+                    .get(&id)
+                    .ok_or(ProviderError::ProviderNotFound)
+            })?
+        }),
+        RpcService::Custom(RpcApi { url, headers }) => ResolvedRpcService::Api(RpcApi {
+            url,
+            headers: headers.unwrap_or_default(),
+        }),
+    })
 }

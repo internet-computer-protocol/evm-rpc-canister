@@ -18,7 +18,7 @@ use evm_rpc::*;
 #[update(name = "eth_getLogs")]
 #[candid_method(rename = "eth_getLogs")]
 pub async fn eth_get_logs(
-    source: RpcSource,
+    source: RpcServices,
     config: Option<RpcConfig>,
     args: candid_types::GetLogsArgs,
 ) -> MultiRpcResult<Vec<LogEntry>> {
@@ -31,7 +31,7 @@ pub async fn eth_get_logs(
 #[update(name = "eth_getBlockByNumber")]
 #[candid_method(rename = "eth_getBlockByNumber")]
 pub async fn eth_get_block_by_number(
-    source: RpcSource,
+    source: RpcServices,
     config: Option<RpcConfig>,
     block: candid_types::BlockTag,
 ) -> MultiRpcResult<Block> {
@@ -44,7 +44,7 @@ pub async fn eth_get_block_by_number(
 #[update(name = "eth_getTransactionReceipt")]
 #[candid_method(rename = "eth_getTransactionReceipt")]
 pub async fn eth_get_transaction_receipt(
-    source: RpcSource,
+    source: RpcServices,
     config: Option<RpcConfig>,
     hash: String,
 ) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
@@ -57,7 +57,7 @@ pub async fn eth_get_transaction_receipt(
 #[update(name = "eth_getTransactionCount")]
 #[candid_method(rename = "eth_getTransactionCount")]
 pub async fn eth_get_transaction_count(
-    source: RpcSource,
+    source: RpcServices,
     config: Option<RpcConfig>,
     args: candid_types::GetTransactionCountArgs,
 ) -> MultiRpcResult<candid::Nat> {
@@ -70,7 +70,7 @@ pub async fn eth_get_transaction_count(
 #[update(name = "eth_feeHistory")]
 #[candid_method(rename = "eth_feeHistory")]
 pub async fn eth_fee_history(
-    source: RpcSource,
+    source: RpcServices,
     config: Option<RpcConfig>,
     args: candid_types::FeeHistoryArgs,
 ) -> MultiRpcResult<Option<FeeHistory>> {
@@ -83,7 +83,7 @@ pub async fn eth_fee_history(
 #[update(name = "eth_sendRawTransaction")]
 #[candid_method(rename = "eth_sendRawTransaction")]
 pub async fn eth_send_raw_transaction(
-    source: RpcSource,
+    source: RpcServices,
     config: Option<RpcConfig>,
     raw_signed_transaction_hex: String,
 ) -> MultiRpcResult<SendRawTransactionResult> {

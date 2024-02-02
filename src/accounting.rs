@@ -4,15 +4,15 @@ use crate::*;
 
 /// Returns the cycles cost of a JSON-RPC request.
 pub fn get_json_rpc_cost(
-    source: &ResolvedJsonRpcSource,
+    source: &ResolvedRpcService,
     payload_size_bytes: u64,
     max_response_bytes: u64,
 ) -> u128 {
     match source {
-        ResolvedJsonRpcSource::Api(api) => {
+        ResolvedRpcService::Api(api) => {
             get_http_request_cost(api, payload_size_bytes, max_response_bytes)
         }
-        ResolvedJsonRpcSource::Provider(provider) => {
+        ResolvedRpcService::Provider(provider) => {
             get_candid_rpc_cost(provider, payload_size_bytes, max_response_bytes)
         }
     }
@@ -67,7 +67,7 @@ fn test_request_cost() {
         let url = "https://cloudflare-eth.com";
         let payload = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
         let base_cost = get_json_rpc_cost(
-            &ResolvedJsonRpcSource::Api(RpcApi {
+            &ResolvedRpcService::Api(RpcApi {
                 url: url.to_string(),
                 headers: vec![],
             }),
@@ -75,7 +75,7 @@ fn test_request_cost() {
             1000,
         );
         let base_cost_10_extra_bytes = get_json_rpc_cost(
-            &ResolvedJsonRpcSource::Api(RpcApi {
+            &ResolvedRpcService::Api(RpcApi {
                 url: url.to_string(),
                 headers: vec![],
             }),
