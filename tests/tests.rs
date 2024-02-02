@@ -159,12 +159,12 @@ impl EvmRpcSetup {
         }
     }
 
-    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) {
+    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) -> bool {
         self.call_update("authorize", Encode!(&principal.0, &auth).unwrap())
             .wait()
     }
 
-    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) {
+    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) -> bool {
         self.call_update("deauthorize", Encode!(&principal.0, &auth).unwrap())
             .wait()
     }
@@ -655,7 +655,7 @@ fn should_panic_if_anonymous_register_provider() {
 }
 
 #[test]
-#[should_panic(expected = "Provider owner != caller")]
+#[should_panic(expected = "You are not authorized")]
 fn should_panic_if_anonymous_update_provider() {
     let setup = EvmRpcSetup::new().as_anonymous();
     setup.update_provider(UpdateProviderArgs {
@@ -688,8 +688,7 @@ fn should_panic_if_unauthorized_manage_provider() {
     let setup = EvmRpcSetup::new();
     setup.manage_provider(ManageProviderArgs {
         provider_id: 2,
-        owner: Some(setup.caller.0),
-        primary: None,
+        primary: Some(true),
         service: None,
     });
 }
@@ -700,17 +699,16 @@ fn should_panic_if_anonymous_manage_provider() {
     let setup = EvmRpcSetup::new().as_anonymous();
     setup.manage_provider(ManageProviderArgs {
         provider_id: 3,
-        owner: Some(setup.caller.0),
-        primary: None,
+        primary: Some(true),
         service: None,
     });
 }
 
 #[test]
-#[should_panic(expected = "Provider owner != caller")]
+#[should_panic(expected = "You are not authorized: check provider owner")]
 fn should_panic_if_unauthorized_update_provider() {
-    // Providers can only be updated by the original owner
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    // Providers can only be updated by the original owner or canister controller
+    let setup = EvmRpcSetup::new();
     setup.update_provider(UpdateProviderArgs {
         provider_id: 0,
         hostname: Some("unauthorized.host".to_string()),
@@ -722,33 +720,35 @@ fn should_panic_if_unauthorized_update_provider() {
 }
 
 #[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_panic_if_unauthorized_unregister_provider() {
-    // Only the `Manage` authorization may unregister a provider
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
-    setup.unregister_provider(0);
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_panic_if_manage_auth_unregister_provider() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::Manage);
-    setup.unregister_provider(3);
-}
-
-#[test]
-#[should_panic(expected = "Provider owner != caller")]
-fn should_panic_if_manage_auth_update_non_owned_provider() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
-    let provider_id = setup.register_provider(RegisterProviderArgs {
-        chain_id: 123,
-        hostname: "example.com".to_string(),
-        credential_path: "".to_string(),
+fn should_allow_controller_update_provider() {
+    let setup = EvmRpcSetup::new().as_controller();
+    setup.update_provider(UpdateProviderArgs {
+        provider_id: 0,
+        hostname: Some("controller.host".to_string()),
+        credential_path: None,
         credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
     });
-    setup.as_controller().update_provider(UpdateProviderArgs {
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized: check provider owner")]
+fn should_panic_if_manage_auth_update_non_owned_provider() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::Manage);
+    let provider_id = setup
+        .clone()
+        .as_controller()
+        .authorize_caller(Auth::RegisterProvider)
+        .register_provider(RegisterProviderArgs {
+            chain_id: 123,
+            hostname: "example.com".to_string(),
+            credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        });
+    setup.update_provider(UpdateProviderArgs {
         provider_id,
         hostname: Some("unauthorized.host".to_string()),
         credential_path: None,
@@ -759,40 +759,18 @@ fn should_panic_if_manage_auth_update_non_owned_provider() {
 }
 
 #[test]
-fn should_change_provider_owner() {
-    let mut setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
-    let provider_id = setup.register_provider(RegisterProviderArgs {
-        chain_id: 123,
-        hostname: "example.com".to_string(),
-        credential_path: "".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
-    setup = setup.as_controller();
-    setup.manage_provider(ManageProviderArgs {
-        provider_id,
-        owner: Some(setup.controller.0),
-        primary: None,
-        service: None,
-    });
-    assert_eq!(
-        setup
-            .get_providers()
-            .into_iter()
-            .find(|p| p.provider_id == provider_id)
-            .unwrap()
-            .owner,
-        setup.controller.0
-    );
-    setup.update_provider(UpdateProviderArgs {
-        provider_id,
-        hostname: Some("authorized.host".to_string()),
-        credential_path: None,
-        credential_headers: None,
-        cycles_per_call: None,
-        cycles_per_message_byte: None,
-    });
+#[should_panic(expected = "You are not authorized: check provider owner")]
+fn should_panic_if_unauthorized_unregister_provider() {
+    // Only the `Manage` authorization may unregister a provider
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
+    setup.unregister_provider(0);
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized: check provider owner")]
+fn should_panic_if_manage_auth_unregister_provider() {
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::Manage);
+    setup.unregister_provider(3);
 }
 
 #[test]
@@ -813,8 +791,7 @@ fn should_replace_service_provider() {
         .as_controller()
         .manage_provider(ManageProviderArgs {
             provider_id,
-            owner: None,
-            primary: None,
+            primary: Some(true),
             service: Some(RpcService::EthMainnet(EthMainnetService::Ankr)),
         });
     let result = setup
@@ -884,7 +861,6 @@ fn should_set_primary_provider() {
         .as_controller()
         .manage_provider(ManageProviderArgs {
             provider_id,
-            owner: None,
             primary: Some(true),
             service: None,
         });

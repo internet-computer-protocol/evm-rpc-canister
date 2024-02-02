@@ -39,12 +39,14 @@ pub fn get_http_request_cost(
     let ingress_bytes = payload_size_bytes as u128
         + u32::max(RPC_URL_MIN_COST_BYTES, api.url.len() as u32) as u128
         + INGRESS_OVERHEAD_BYTES;
-    let base_cost = INGRESS_MESSAGE_RECEIVED_COST
+    let cost_per_node = INGRESS_MESSAGE_RECEIVED_COST
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
         + HTTP_OUTCALL_REQUEST_BASE_COST
+        + HTTP_OUTCALL_REQUEST_PER_NODE_COST * nodes_in_subnet as u128
         + HTTP_OUTCALL_REQUEST_COST_PER_BYTE * payload_size_bytes as u128
-        + HTTP_OUTCALL_RESPONSE_COST_PER_BYTE * max_response_bytes as u128;
-    base_cost * (nodes_in_subnet as u128) / NODES_IN_DEFAULT_SUBNET as u128
+        + HTTP_OUTCALL_RESPONSE_COST_PER_BYTE * max_response_bytes as u128
+        + CANISTER_OVERHEAD;
+    cost_per_node * (nodes_in_subnet as u128)
 }
 
 /// Calculate the additional cost for calling a registered JSON-RPC provider.
@@ -82,13 +84,8 @@ fn test_request_cost() {
         );
         let estimated_cost_10_extra_bytes = base_cost
             + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_REQUEST_COST_PER_BYTE)
-                * nodes_in_subnet as u128
-                / NODES_IN_DEFAULT_SUBNET as u128;
-        // Request body with 10 additional bytes should be within 1 cycle of expected cost (due to rounding)
-        assert_matches::assert_matches!(
-            base_cost_10_extra_bytes - estimated_cost_10_extra_bytes,
-            0 | 1
-        );
+                * nodes_in_subnet as u128;
+        assert_eq!(base_cost_10_extra_bytes, estimated_cost_10_extra_bytes,);
     }
 }
 
@@ -163,7 +160,7 @@ fn test_candid_rpc_cost() {
             get_candid_rpc_cost(&provider, 123, 4567890),
             get_candid_rpc_cost(&provider, 890, 4567890),
         ],
-        [51064987, 54828787, 47559605587, 47575098987]
+        [87008987, 93724787, 47598501587, 47632402987]
     );
 
     // Fiduciary subnet
@@ -175,6 +172,6 @@ fn test_candid_rpc_cost() {
             get_candid_rpc_cost(&provider, 123, 4567890),
             get_candid_rpc_cost(&provider, 890, 4567890),
         ],
-        [109986125, 118092772, 102436073572, 102469443972]
+        [212603972, 227068772, 102545049572, 102618067972]
     );
 }

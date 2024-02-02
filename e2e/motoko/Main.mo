@@ -1,5 +1,6 @@
-import EvmRpcCanister "canister:evm_rpc";
-import EvmRpcFidicuaryCanister "canister:evm_rpc_fiduciary";
+import EvmRpcStaging13Node "canister:evm_rpc_staging_13_node";
+import EvmRpcStagingFidicuary "canister:evm_rpc_staging_fiduciary";
+import EvmRpcProductionFiduciary "canister:evm_rpc";
 
 import Blob "mo:base/Blob";
 import Debug "mo:base/Debug";
@@ -10,21 +11,46 @@ import Buffer "mo:base/Buffer";
 import Evm "mo:evm";
 
 shared ({ caller = installer }) actor class Main() {
+
+    type TestCategory = { #staging; #production };
+
+    type SubnetTarget = (Nat, Nat);
+    // (`nodes in subnet`, `expected cycles for JSON-RPC call`)
+    let defaultSubnet = ("13-node", 13, 99_330_400);
+    let fiduciarySubnet = ("fiduciary", 28, 239_142_400);
+
+    let testTargets = [
+        // (`subnet name`, `canister module`, `canister type`, `subnet`)
+        (EvmRpcStaging13Node, #staging, defaultSubnet),
+        (EvmRpcStagingFidicuary, #staging, fiduciarySubnet),
+        (EvmRpcProductionFiduciary, #production, fiduciarySubnet),
+    ];
+
+    // (`RPC service`, `method`)
+    let ignoredTests = [
+        (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
+    ];
+
     public shared ({ caller }) func test() : async () {
+        await runTests(caller, #staging);
+    };
+
+    public shared ({ caller }) func testProduction() : async () {
+        await runTests(caller, #production);
+    };
+
+    func runTests(caller : Principal, category : TestCategory) : async () {
         assert caller == installer;
 
-        let ignoredTests : [(EvmRpcCanister.RpcService, Text)] = [
-            // (`RPC service`, `method`)
-            (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
-        ];
-
         let errors = Buffer.Buffer<Text>(0);
-        let canisterDetails = [
-            // (`canister module`, `canister type`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
-            (EvmRpcCanister, "default", 13, 61_898_400),
-            (EvmRpcFidicuaryCanister, "fiduciary", 28, 133_319_630),
-        ];
-        for ((canister, canisterType, nodesInSubnet, expectedCycles) in canisterDetails.vals()) {
+        var relevantTestCount = 0;
+        label targets for ((canister, testCategory, (subnetName, nodesInSubnet, expectedCycles)) in testTargets.vals()) {
+            if (testCategory != category) {
+                continue targets;
+            };
+            relevantTestCount += 1;
+
+            let canisterType = debug_show category # " " # subnetName;
             Debug.print("Testing " # canisterType # " canister...");
 
             func addError(error : Text) {
@@ -101,7 +127,7 @@ shared ({ caller = installer }) actor class Main() {
                 switch result {
                     case (#Consistent(#Ok _)) {};
                     case (#Consistent(#Err err)) {
-                        Debug.trap("Received error for" # " " # method # ": " # debug_show err);
+                        addError("Received consistent error for" # " " # method # ": " # debug_show err);
                     };
                     case (#Inconsistent(results)) {
                         for ((service, result) in results.vals()) {
@@ -192,12 +218,16 @@ shared ({ caller = installer }) actor class Main() {
             );
         };
 
+        if (relevantTestCount == 0) {
+            Debug.trap("No tests found for category: " # debug_show category);
+        };
+
         if (errors.size() > 0) {
             var message = "Errors:";
             for (error in errors.vals()) {
                 message #= "\n* " # error;
             };
             Debug.trap(message);
-        }
+        };
     };
 };
