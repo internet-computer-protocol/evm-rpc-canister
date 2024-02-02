@@ -557,7 +557,7 @@ pub enum RpcSource {
 }
 
 pub mod candid_types {
-    use std::{ops::Try, str::FromStr};
+    use std::str::FromStr;
 
     use candid::CandidType;
     use cketh_common::{

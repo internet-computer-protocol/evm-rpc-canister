@@ -53,7 +53,7 @@ type GetLogsArgs = record {
   fromBlock : opt BlockTag;
   toBlock : opt BlockTag;
   addresses : vec text;
-  topics : opt vec text;
+  topics : opt vec vec text;
 };
 type GetTransactionCountArgs = record { address : text; block : BlockTag };
 type HttpHeader = record { value : text; name : text };
