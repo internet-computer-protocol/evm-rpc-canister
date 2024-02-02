@@ -557,7 +557,7 @@ pub enum RpcSource {
 }
 
 pub mod candid_types {
-    use std::str::FromStr;
+    use std::{ops::Try, str::FromStr};
 
     use candid::CandidType;
     use cketh_common::{
@@ -602,7 +602,8 @@ pub mod candid_types {
         #[serde(rename = "toBlock")]
         pub to_block: Option<BlockTag>,
         pub addresses: Vec<String>,
-        pub topics: Option<Vec<String>>,
+        #[serde(flatten)]
+        pub topics: Option<Vec<Vec<String>>>,
     }
 
     impl TryFrom<GetLogsArgs> for cketh_common::eth_rpc::GetLogsParam {
@@ -620,8 +621,14 @@ pub mod candid_types {
                     .topics
                     .unwrap_or_default()
                     .into_iter()
-                    .map(|s| {
-                        FixedSizeData::from_str(&s).map_err(|_| ValidationError::InvalidHex(s))
+                    .map(|topic| {
+                        topic
+                            .into_iter()
+                            .map(|s| {
+                                FixedSizeData::from_str(&s)
+                                    .map_err(|_| ValidationError::InvalidHex(s))
+                            })
+                            .collect::<Result<_, _>>()
                     })
                     .collect::<Result<_, _>>()?,
             })
