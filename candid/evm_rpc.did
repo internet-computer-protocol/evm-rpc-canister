@@ -69,11 +69,6 @@ type InitArgs = record {
   nodesInSubnet : nat32;
 };
 type JsonRpcError = record { code : int64; message : text };
-type JsonRpcSource = variant {
-  Custom : record { url : text; headers : opt vec HttpHeader };
-  Chain : nat64;
-  Provider : nat64;
-};
 type LogEntry = record {
   transactionHash : opt text;
   blockNumber : opt nat;
@@ -181,6 +176,9 @@ type RpcError = variant {
 type RpcService = variant {
   EthSepolia : EthSepoliaService;
   EthMainnet : EthMainnetService;
+  Chain : nat64;
+  Provider : nat64;
+  Custom : record { url : text; headers : opt vec HttpHeader };
 };
 type RpcSource = variant {
   EthSepolia : opt vec EthSepoliaService;
