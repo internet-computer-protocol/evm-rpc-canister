@@ -186,7 +186,7 @@ type RpcServices = variant {
   EthMainnet : opt vec EthMainnetService;
   Custom : record {
     chainId : nat64;
-    apis : vec RpcApi;
+    services : vec RpcApi;
   };
 };
 type SendRawTransactionStatus = variant {

@@ -495,6 +495,7 @@ pub enum RpcServices {
     EthMainnet(Option<Vec<EthMainnetService>>),
     EthSepolia(Option<Vec<EthSepoliaService>>),
     Custom {
+        #[serde(rename = "chainId")]
         chain_id: u64,
         services: Vec<RpcApi>,
     },
