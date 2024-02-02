@@ -13,8 +13,8 @@ use std::collections::HashMap;
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
 use crate::{
-    AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDERS, PROVIDER_MAX_SIZE,
-    RPC_SERVICE_MAX_SIZE,
+    get_provider_for_service, AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDERS,
+    PROVIDER_MAX_SIZE, RPC_SERVICE_MAX_SIZE,
 };
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -25,6 +25,9 @@ pub struct InitArgs {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum JsonRpcSource {
+    // TODO: https://github.com/internet-computer-protocol/evm-rpc-canister/issues/166
+    EthMainnet(EthMainnetService),
+    EthSepolia(EthSepoliaService),
     Chain(u64),
     Provider(u64),
     Custom {
@@ -36,6 +39,12 @@ pub enum JsonRpcSource {
 impl JsonRpcSource {
     pub fn resolve(self) -> Result<ResolvedJsonRpcSource, ProviderError> {
         Ok(match self {
+            JsonRpcSource::EthMainnet(service) => ResolvedJsonRpcSource::Api(
+                get_provider_for_service(&RpcService::EthMainnet(service))?.api(),
+            ),
+            JsonRpcSource::EthSepolia(service) => ResolvedJsonRpcSource::Api(
+                get_provider_for_service(&RpcService::EthSepolia(service))?.api(),
+            ),
             JsonRpcSource::Custom { url, headers } => ResolvedJsonRpcSource::Api(RpcApi {
                 url,
                 headers: headers.unwrap_or_default(),
