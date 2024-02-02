@@ -164,7 +164,7 @@ pub fn find_provider(f: impl Fn(&Provider) -> bool) -> Option<Provider> {
     })
 }
 
-pub fn get_provider_for_service(service: &RpcService) -> Result<Provider, ProviderError> {
+fn lookup_provider_for_service(service: &RpcService) -> Result<Provider, ProviderError> {
     let provider_id = SERVICE_PROVIDER_MAP.with(|map| {
         map.borrow()
             .get(&StorableRpcService::new(service))
@@ -407,11 +407,11 @@ pub fn set_service_provider(service: &RpcService, provider: &Provider) {
 
 pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, ProviderError> {
     Ok(match service {
-        RpcService::EthMainnet(service) => ResolvedRpcService::Api(
-            get_provider_for_service(&RpcService::EthMainnet(service))?.api(),
+        RpcService::EthMainnet(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::EthMainnet(service))?,
         ),
-        RpcService::EthSepolia(service) => ResolvedRpcService::Api(
-            get_provider_for_service(&RpcService::EthSepolia(service))?.api(),
+        RpcService::EthSepolia(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::EthSepolia(service))?,
         ),
         RpcService::Chain(id) => ResolvedRpcService::Provider(PROVIDERS.with(|providers| {
             let providers = providers.borrow();

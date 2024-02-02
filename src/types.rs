@@ -27,6 +27,15 @@ pub enum ResolvedRpcService {
     Provider(Provider),
 }
 
+impl ResolvedRpcService {
+    pub fn api(&self) -> RpcApi {
+        match self {
+            Self::Api(api) => api.clone(),
+            Self::Provider(provider) => provider.api(),
+        }
+    }
+}
+
 pub trait MetricValue {
     fn metric_value(&self) -> f64;
 }

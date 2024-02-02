@@ -9,7 +9,7 @@ use crate::*;
 
 pub async fn do_json_rpc_request(
     caller: Principal,
-    source: ResolvedRpcService,
+    service: ResolvedRpcService,
     rpc_method: MetricRpcMethod,
     json_rpc_payload: &str,
     max_response_bytes: u64,
@@ -18,19 +18,8 @@ pub async fn do_json_rpc_request(
         add_metric!(err_no_permission, 1);
         return Err(ProviderError::NoPermission.into());
     }
-    let cycles_cost = get_json_rpc_cost(&source, json_rpc_payload.len() as u64, max_response_bytes);
-    let (api, provider) = match source {
-        ResolvedRpcService::Api(api) => (api, None),
-        ResolvedRpcService::Provider(provider) => (provider.api(), Some(provider)),
-    };
-    let parsed_url = match url::Url::parse(&api.url) {
-        Ok(url) => url,
-        Err(_) => return Err(ValidationError::UrlParseError(api.url).into()),
-    };
-    let host = match parsed_url.host_str() {
-        Some(host) => host,
-        None => return Err(ValidationError::UrlParseError(api.url).into()),
-    };
+    let cycles_cost = get_rpc_cost(&service, json_rpc_payload.len() as u64, max_response_bytes);
+    let api = service.api();
     let mut request_headers = vec![HttpHeader {
         name: CONTENT_TYPE_HEADER.to_string(),
         value: CONTENT_TYPE_VALUE.to_string(),
@@ -49,18 +38,30 @@ pub async fn do_json_rpc_request(
             vec![],
         )),
     };
-    let rpc_host = MetricRpcHost(host.to_string());
-    do_http_request(caller, rpc_method, rpc_host, provider, request, cycles_cost).await
+    do_http_request(caller, rpc_method, service, request, cycles_cost).await
 }
 
 pub async fn do_http_request(
     caller: Principal,
     rpc_method: MetricRpcMethod,
-    rpc_host: MetricRpcHost,
-    provider: Option<Provider>,
+    service: ResolvedRpcService,
     request: CanisterHttpRequestArgument,
     cycles_cost: u128,
 ) -> RpcResult<HttpResponse> {
+    let api = service.api();
+    let provider = match service {
+        ResolvedRpcService::Api(_) => None,
+        ResolvedRpcService::Provider(provider) => Some(provider),
+    };
+    let parsed_url = match url::Url::parse(&api.url) {
+        Ok(url) => url,
+        Err(_) => return Err(ValidationError::UrlParseError(api.url).into()),
+    };
+    let host = match parsed_url.host_str() {
+        Some(host) => host,
+        None => return Err(ValidationError::UrlParseError(api.url).into()),
+    };
+    let rpc_host = MetricRpcHost(host.to_string());
     if SERVICE_HOSTS_BLOCKLIST.contains(&rpc_host.0.as_str()) {
         add_metric_entry!(err_host_not_allowed, rpc_host.clone(), 1);
         return Err(ValidationError::HostNotAllowed(rpc_host.0).into());

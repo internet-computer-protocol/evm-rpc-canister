@@ -26,7 +26,7 @@ struct CanisterTransport;
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RpcTransport for CanisterTransport {
     fn resolve_api(service: &RpcService) -> Result<RpcApi, ProviderError> {
-        Ok(get_provider_for_service(service)?.api())
+        Ok(resolve_rpc_service(service.clone())?.api())
     }
 
     async fn http_request(
@@ -35,9 +35,9 @@ impl RpcTransport for CanisterTransport {
         request: CanisterHttpRequestArgument,
         effective_response_size_estimate: u64,
     ) -> RpcResult<HttpResponse> {
-        let provider = get_provider_for_service(service)?;
-        let cycles_cost = get_candid_rpc_cost(
-            &provider,
+        let service = resolve_rpc_service(service.clone())?;
+        let cycles_cost = get_rpc_cost(
+            &service,
             request
                 .body
                 .as_ref()
@@ -46,16 +46,7 @@ impl RpcTransport for CanisterTransport {
             effective_response_size_estimate,
         );
         let rpc_method = MetricRpcMethod(method.to_string());
-        let rpc_host = MetricRpcHost(provider.hostname.to_string());
-        do_http_request(
-            ic_cdk::caller(),
-            rpc_method,
-            rpc_host,
-            Some(provider),
-            request,
-            cycles_cost,
-        )
-        .await
+        do_http_request(ic_cdk::caller(), rpc_method, service, request, cycles_cost).await
     }
 }
 
@@ -115,7 +106,9 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
             MultiCallError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
             MultiCallError::InconsistentResults(multi_call_results) => {
                 multi_call_results.results.iter().for_each(|(service, _)| {
-                    if let Ok(provider) = get_provider_for_service(service) {
+                    if let Ok(ResolvedRpcService::Provider(provider)) =
+                        resolve_rpc_service(service.clone())
+                    {
                         add_metric_entry!(
                             inconsistent_responses,
                             (method.into(), MetricRpcHost(provider.hostname)),
