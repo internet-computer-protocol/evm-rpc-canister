@@ -10,7 +10,7 @@ pub fn get_rpc_cost(
 ) -> u128 {
     match service {
         ResolvedRpcService::Api(api) => {
-            get_http_request_cost(&api, payload_size_bytes, max_response_bytes)
+            get_http_request_cost(api, payload_size_bytes, max_response_bytes)
         }
         ResolvedRpcService::Provider(provider) => {
             let http_cost =
