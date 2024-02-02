@@ -69,7 +69,7 @@ fn test_request_cost() {
         let base_cost = get_json_rpc_cost(
             &ResolvedRpcService::Api(RpcApi {
                 url: url.to_string(),
-                headers: vec![],
+                headers: None,
             }),
             payload.len() as u64,
             1000,
@@ -77,7 +77,7 @@ fn test_request_cost() {
         let base_cost_10_extra_bytes = get_json_rpc_cost(
             &ResolvedRpcService::Api(RpcApi {
                 url: url.to_string(),
-                headers: vec![],
+                headers: None,
             }),
             payload.len() as u64 + 10,
             1000,

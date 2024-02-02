@@ -184,7 +184,10 @@ type RpcService = variant {
 type RpcServices = variant {
   EthSepolia : opt vec EthSepoliaService;
   EthMainnet : opt vec EthMainnetService;
-  Custom : vec RpcApi;
+  Custom : record {
+    chainId : nat64;
+    apis : vec RpcApi;
+  };
 };
 type SendRawTransactionStatus = variant {
   Ok;

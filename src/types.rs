@@ -365,7 +365,11 @@ impl Provider {
     pub fn api(&self) -> RpcApi {
         RpcApi {
             url: format!("https://{}{}", self.hostname, self.credential_path),
-            headers: self.credential_headers.clone(),
+            headers: if self.credential_headers.is_empty() {
+                None
+            } else {
+                Some(self.credential_headers.clone())
+            },
         }
     }
 }
@@ -487,11 +491,14 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
     }
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, CandidType, Deserialize)]
 pub enum RpcServices {
     EthMainnet(Option<Vec<EthMainnetService>>),
     EthSepolia(Option<Vec<EthSepoliaService>>),
-    Custom(Vec<RpcApi>),
+    Custom {
+        chain_id: u64,
+        services: Vec<RpcApi>,
+    },
 }
 
 pub mod candid_types {

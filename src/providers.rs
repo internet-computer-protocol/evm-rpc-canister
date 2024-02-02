@@ -429,9 +429,8 @@ pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, Pr
                     .ok_or(ProviderError::ProviderNotFound)
             })?
         }),
-        RpcService::Custom(RpcApi { url, headers }) => ResolvedRpcService::Api(RpcApi {
-            url,
-            headers: headers.unwrap_or_default(),
-        }),
+        RpcService::Custom(RpcApi { url, headers }) => {
+            ResolvedRpcService::Api(RpcApi { url, headers })
+        }
     })
 }

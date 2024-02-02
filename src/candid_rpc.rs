@@ -59,16 +59,11 @@ impl RpcTransport for CanisterTransport {
     }
 }
 
-fn check_services<T>(services: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
-    match services {
-        Some(services) => {
-            if services.is_empty() {
-                Err(ProviderError::ProviderNotFound)?;
-            }
-            Ok(Some(services))
-        }
-        None => Ok(None),
+fn check_services<T>(services: Vec<T>) -> RpcResult<Vec<T>> {
+    if services.is_empty() {
+        Err(ProviderError::ProviderNotFound)?;
     }
+    Ok(services)
 }
 
 fn get_rpc_client(
@@ -81,10 +76,9 @@ fn get_rpc_client(
     }
     Ok(match source {
         RpcServices::EthMainnet(services) => CkEthRpcClient::new(
-            EthereumNetwork::Mainnet,
+            EthereumNetwork::MAINNET,
             Some(
-                check_services(services)?
-                    .unwrap_or_else(|| DEFAULT_ETH_MAINNET_SERVICES.to_vec())
+                check_services(services.unwrap_or_else(|| DEFAULT_ETH_MAINNET_SERVICES.to_vec()))?
                     .into_iter()
                     .map(RpcService::EthMainnet)
                     .collect(),
@@ -92,23 +86,21 @@ fn get_rpc_client(
             config,
         ),
         RpcServices::EthSepolia(services) => CkEthRpcClient::new(
-            EthereumNetwork::Sepolia,
+            EthereumNetwork::SEPOLIA,
             Some(
-                check_services(services)?
-                    .unwrap_or_else(|| DEFAULT_ETH_SEPOLIA_SERVICES.to_vec())
+                check_services(services.unwrap_or_else(|| DEFAULT_ETH_SEPOLIA_SERVICES.to_vec()))?
                     .into_iter()
                     .map(RpcService::EthSepolia)
                     .collect(),
             ),
             config,
         ),
-        RpcServices::Custom(apis) => CkEthRpcClient::new(
-            EthereumNetwork::Custom,
+        RpcServices::Custom { chain_id, services } => CkEthRpcClient::new(
+            EthereumNetwork(chain_id),
             Some(
                 check_services(services)?
-                    .unwrap_or_else(|| DEFAULT_ETH_SEPOLIA_SERVICES.to_vec())
                     .into_iter()
-                    .map(RpcService::EthSepolia)
+                    .map(RpcService::Custom)
                     .collect(),
             ),
             config,
