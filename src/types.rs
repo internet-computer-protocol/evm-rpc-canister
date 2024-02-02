@@ -602,7 +602,6 @@ pub mod candid_types {
         #[serde(rename = "toBlock")]
         pub to_block: Option<BlockTag>,
         pub addresses: Vec<String>,
-        #[serde(flatten)]
         pub topics: Option<Vec<Vec<String>>>,
     }
 
