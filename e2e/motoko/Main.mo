@@ -61,7 +61,7 @@ shared ({ caller = installer }) actor class Main() {
 
             let mainnet = Evm.Rpc(
                 #Canister canister,
-                #Chain(#EthMainnet),
+                #EthMainnet(#Cloudflare),
             );
 
             let source = #Chain(0x1 : Nat64);

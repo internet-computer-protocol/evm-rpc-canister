@@ -9,26 +9,12 @@ import JSON "mo:json.mo";
 import EvmRpc "declarations/evm_rpc";
 
 module {
-    public type Network = {
-        #EthMainnet;
-        #EthSepolia;
-        #EthGoerli;
-        #Network : Nat64;
-    };
-
-    public type Source = {
-        #Custom : { url : Text; headers : ?[HttpHeader] };
-        #Chain : Network;
-        #Provider : Nat64;
-    };
-
     type HttpHeader = {
         name : Text;
         value : Text;
     };
 
-    type ActorSource = EvmRpc.JsonRpcSource;
-
+    public type RpcService = EvmRpc.RpcService;
     public type RpcError = EvmRpc.RpcError;
     public type JsonRpcError = EvmRpc.JsonRpcError;
     public type ProviderError = EvmRpc.ProviderError;
@@ -45,7 +31,7 @@ module {
     };
 
     public type RpcActor = actor {
-        request : shared (ActorSource, Text, Nat64) -> async {
+        request : shared (RpcService, Text, Nat64) -> async {
             #Ok : Text;
             #Err : RpcError;
         };
@@ -54,16 +40,6 @@ module {
     public type Provider = {
         #Canister : RpcActor;
         #Principal : Principal;
-    };
-
-    func wrapChainId(network : Network) : Nat64 {
-        // Reference: https://chainlist.org/?testnets=true
-        switch network {
-            case (#EthMainnet) { 1 };
-            case (#EthGoerli) { 5 };
-            case (#EthSepolia) { 11155111 };
-            case (#Network n) { n };
-        };
     };
 
     func unwrapError(rpcError : RpcError) : Error {
@@ -75,23 +51,14 @@ module {
         };
     };
 
-    public class Rpc(provider : Provider, source : Source) = this {
+    public class Rpc(provider : Provider, service : RpcService) = this {
 
         public var defaultCycles = 1_000_000_000;
-
-        func wrapActorSource(source : Source) : ActorSource {
-            switch source {
-                case (#Custom custom) { #Custom custom };
-                case (#Chain n) { #Chain(wrapChainId(n)) };
-                case (#Provider n) { #Provider n };
-            };
-        };
 
         let actor_ = switch provider {
             case (#Canister a) { a };
             case (#Principal p) { actor (Principal.toText(p)) : RpcActor };
         };
-        let actorSource = wrapActorSource(source);
 
         var nextId : Nat = 0;
         public func request(method : Text, params : JSON.JSON, maxResponseBytes : Nat64) : async RpcResult<JSON.JSON> {
@@ -125,7 +92,7 @@ module {
         public func requestPlain(payload : Text, maxResponseBytes : Nat64) : async RpcResult<Text> {
             func requestPlain_(payload : Text, maxResponseBytes : Nat64, cycles : Nat) : async RpcResult<Text> {
                 Cycles.add(cycles);
-                switch (await actor_.request(actorSource, payload, maxResponseBytes)) {
+                switch (await actor_.request(service, payload, maxResponseBytes)) {
                     case (#Ok ok) { #ok ok };
                     case (#Err err) { #err(unwrapError(err)) };
                 };
