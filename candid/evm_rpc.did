@@ -53,7 +53,7 @@ type GetLogsArgs = record {
   fromBlock : opt BlockTag;
   toBlock : opt BlockTag;
   addresses : vec text;
-  topics : opt vec text;
+  topics : opt vec vec text;
 };
 type GetTransactionCountArgs = record { address : text; block : BlockTag };
 type HttpHeader = record { value : text; name : text };
@@ -87,10 +87,9 @@ type LogEntry = record {
   removed : bool;
 };
 type ManageProviderArgs = record {
-  "service" : opt RpcService;
-  owner : opt principal;
-  primary : opt bool;
   providerId : nat64;
+  "service" : opt RpcService;
+  primary : opt bool;
 };
 type Metrics = record {
   requests : vec record { record { text; text }; nat64 };
