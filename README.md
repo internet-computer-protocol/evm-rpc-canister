@@ -1,10 +1,10 @@
-# EVM RPC (Beta) &nbsp;[![GitHub license](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/dfinity/evm-rpc-canister/issues)
+# EVM RPC (Beta) &nbsp;[![GitHub license](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/internet-computer-protocol/evm-rpc-canister/issues)
 
 > #### Interact with [EVM blockchains](https://chainlist.org/?testnets=true) from the [Internet Computer](https://internetcomputer.org/).
 
 ---
 
-This project is currently under active development during the beta testing phase. Please feel free to [submit an issue](https://github.com/dfinity/evm-rpc-canister/issues) if you would like to request a feature, report a bug, or start a conversation about the EVM RPC canister.
+This project is currently under active development during the beta testing phase. Please feel free to [submit an issue](https://github.com/internet-computer-protocol/evm-rpc-canister/issues) if you would like to request a feature, report a bug, or start a conversation about the EVM RPC canister.
 
 ## Overview
 
@@ -32,8 +32,8 @@ Add the following to your `dfx.json` config file (replace the `ic` principal wit
   "canisters": {
     "evm_rpc": {
       "type": "custom",
-      "candid": "https://github.com/dfinity/evm-rpc-canister/releases/latest/download/evm_rpc.did",
-      "wasm": "https://github.com/dfinity/evm-rpc-canister/releases/latest/download/evm_rpc_dev.wasm.gz",
+      "candid": "https://github.com/internet-computer-protocol/evm-rpc-canister/releases/latest/download/evm_rpc.did",
+      "wasm": "https://github.com/internet-computer-protocol/evm-rpc-canister/releases/latest/download/evm_rpc_dev.wasm.gz",
       "remote": {
         "id": {
           "ic": "a6d44-nyaaa-aaaap-abp7q-cai"
@@ -90,13 +90,13 @@ dfx canister call evm_rpc deauthorize "(principal \"$PRINCIPAL\", variant { Regi
 
 ## Contributing
 
-Contributions are welcome! Please check out the [contributor guidelines](https://github.com/dfinity/evm-rpc-canister/blob/main/.github/CONTRIBUTING.md) for more information.
+Contributions are welcome! Please check out the [contributor guidelines](https://github.com/internet-computer-protocol/evm-rpc-canister/blob/main/.github/CONTRIBUTING.md) for more information.
 
 Run the following commands to set up a local development environment:
 
 ```bash
 # Clone the repository and install dependencies
-git clone https://github.com/dfinity/evm-rpc-canister
+git clone https://github.com/internet-computer-protocol/evm-rpc-canister
 cd ic-eth-rpc
 npm install
 
@@ -114,7 +114,7 @@ npm run generate
 
 ## Learn More
 
-* [Candid interface](https://github.com/dfinity/evm-rpc-canister/blob/main/candid/evm_rpc.did)
+* [Candid interface](https://github.com/internet-computer-protocol/evm-rpc-canister/blob/main/candid/evm_rpc.did)
 
 ## Related Projects
 
