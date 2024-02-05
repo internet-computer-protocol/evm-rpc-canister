@@ -18,12 +18,14 @@
     "evm_rpc_staging_13_node": {
       "candid": "candid/evm_rpc.did",
       "type": "rust",
-      "package": "evm_rpc"
+      "package": "evm_rpc",
+      "gzip": true
     },
     "evm_rpc_staging_fiduciary": {
       "candid": "candid/evm_rpc.did",
       "type": "rust",
-      "package": "evm_rpc"
+      "package": "evm_rpc",
+      "gzip": true
     },
     "e2e_rust": {
       "dependencies": [
