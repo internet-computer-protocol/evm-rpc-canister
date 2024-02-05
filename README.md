@@ -44,17 +44,39 @@ Add the following to your `dfx.json` config file (replace the `ic` principal wit
 }
 ```
 
-Run the following commands to run the canister in your local environment:
+Run the following commands to deploy the canister in your local environment:
 
 ```sh
 # Start the local replica
 dfx start --background
 
-# Deploy the `evm_rpc` canister
-dfx deploy evm_rpc --argument '(record { nodesInSubnet = 13 })'
+# Locally deploy the `evm_rpc` canister
+dfx deploy evm_rpc --argument '(record { nodesInSubnet = 28 })'
+```
 
-# Call the `eth_gasPrice` JSON-RPC method
-dfx canister call evm_rpc request '(variant {Url="https://cloudflare-eth.com/v1/mainnet"}, "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}", 1000)' --wallet $(dfx identity get-wallet) --with-cycles 600000000
+The EVM RPC canister also supports [`dfx deps pull`](https://internetcomputer.org/docs/current/references/cli-reference/dfx-deps). Add the following to your `dfx.json` file:
+
+```json
+{
+  "canisters": {
+    "evm_rpc": {
+      "type": "pull",
+      "id": "7hfb6-caaaa-aaaar-qadga-cai",
+    }
+  }
+}
+```
+
+Next, run the following commands:
+
+```sh
+# Start the local replica
+dfx start --background
+
+# Locally deploy the `evm_rpc` canister
+dfx deps pull
+dfx deps init evm_rpc --argument '(record { nodesInSubnet = 28 })'
+dfx deps deploy
 ```
 
 ## Examples
@@ -62,21 +84,21 @@ dfx canister call evm_rpc request '(variant {Url="https://cloudflare-eth.com/v1/
 ### JSON-RPC (IC mainnet)
 
 ```bash
-dfx canister call evm_rpc --network ic --wallet $(dfx identity --network ic get-wallet) --with-cycles 600000000 request '(variant {Chain=0x1},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
+dfx canister call evm_rpc request '(variant {Chain=0x1},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)' --network ic --wallet $(dfx identity --network ic get-wallet) --with-cycles 100000000
 ```
 
 ### JSON-RPC (local replica)
 
 ```bash
 # Use a custom provider
-dfx canister call evm_rpc --wallet $(dfx identity get-wallet) --with-cycles 600000000 request '(variant {Custom="https://cloudflare-eth.com"},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
-dfx canister call evm_rpc --wallet $(dfx identity get-wallet) --with-cycles 600000000 request '(variant {Custom="https://ethereum.publicnode.com"},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
+dfx canister call evm_rpc request '(variant {Custom="https://cloudflare-eth.com"},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)' --wallet $(dfx identity get-wallet) --with-cycles 100000000
+dfx canister call evm_rpc request '(variant {Custom="https://ethereum.publicnode.com"},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)' --wallet $(dfx identity get-wallet) --with-cycles 100000000
 
 # Register your own provider
 dfx canister call evm_rpc registerProvider '(record { chainId=1; hostname="cloudflare-eth.com"; credentialPath="/v1/mainnet"; cyclesPerCall=10; cyclesPerMessageByte=1; })'
 
 # Use a specific EVM chain
-dfx canister call evm_rpc --wallet $(dfx identity get-wallet) --with-cycles 600000000 request '(variant {Chain=0x1},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)'
+dfx canister call evm_rpc request '(variant {Chain=0x1},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)' --wallet $(dfx identity get-wallet) --with-cycles 100000000
 ```
 
 ### Authorization (local replica)
