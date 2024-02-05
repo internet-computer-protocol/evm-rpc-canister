@@ -171,10 +171,16 @@ shared ({ caller = installer }) actor class Main() {
                     ethMainnetSource,
                     null,
                     {
-                        addresses = ["0xdAC17F958D2ee523a2206206994597C13D831ec7"];
+                        addresses = ["0xB9B002e70AdF0F544Cd0F6b80BF12d4925B0695F"];
                         fromBlock = null;
                         toBlock = null;
-                        topics = null;
+                        topics = ?[
+                            ["0x4d69d0bd4287b7f66c548f90154dc81bc98f65a1b362775df5ae171a2ccd262b"],
+                            [
+                                "0x000000000000000000000000352413d00d2963dfc58bc2d6c57caca1e714d428",
+                                "0x000000000000000000000000b6bc16189ec3d33041c893b44511c594b1736b8a",
+                            ],
+                        ];
                     },
                 ),
             );
