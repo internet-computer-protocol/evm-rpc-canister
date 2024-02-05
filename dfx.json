@@ -10,7 +10,7 @@
       },
       "pullable": {
         "dependencies": [],
-        "wasm_url": "https://github.com/internet-computer-protocol/ic-eth-rpc/releases/latest/download/evm_rpc_dev.wasm.gz",
+        "wasm_url": "https://github.com/internet-computer-protocol/evm-rpc-canister/releases/latest/download/evm_rpc.wasm",
         "init_guide": "Number of nodes in the subnet, e.g. '(record {nodesInSubnet = 28})'"
       }
     },
