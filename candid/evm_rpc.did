@@ -82,8 +82,8 @@ type LogEntry = record {
 };
 type ManageProviderArgs = record {
   providerId : nat64;
-  primary : opt bool;
   "service" : opt RpcService;
+  primary : opt bool;
 };
 type Metrics = record {
   requests : vec record { record { text; text }; nat64 };
