@@ -10,19 +10,22 @@
       },
       "pullable": {
         "dependencies": [],
-        "wasm_url": "https://github.com/internet-computer-protocol/evm-rpc-canister/releases/latest/download/evm_rpc_dev.wasm.gz",
+        "wasm_url": "https://github.com/internet-computer-protocol/evm-rpc-canister/releases/latest/download/evm_rpc.wasm.gz",
         "init_guide": "Number of nodes in the subnet, e.g. '(record {nodesInSubnet = 28})'"
-      }
+      },
+      "gzip": true
     },
     "evm_rpc_staging_13_node": {
       "candid": "candid/evm_rpc.did",
       "type": "rust",
-      "package": "evm_rpc"
+      "package": "evm_rpc",
+      "gzip": true
     },
     "evm_rpc_staging_fiduciary": {
       "candid": "candid/evm_rpc.did",
       "type": "rust",
-      "package": "evm_rpc"
+      "package": "evm_rpc",
+      "gzip": true
     },
     "e2e_rust": {
       "dependencies": [
