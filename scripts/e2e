@@ -2,7 +2,6 @@
 # Reinstall all canisters and run E2E tests in your local environment.
 (
     dfx canister create --all &&
-    dfx build &&
     dfx deploy evm_rpc --argument "(record {nodesInSubnet = 28})" --mode reinstall -y &&
     dfx deploy evm_rpc_staging_13_node --argument "(record {nodesInSubnet = 13})" --mode reinstall -y &&
     dfx deploy evm_rpc_staging_fiduciary --argument "(record {nodesInSubnet = 28})" --mode reinstall -y &&
