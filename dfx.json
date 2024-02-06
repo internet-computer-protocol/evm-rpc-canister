@@ -28,11 +28,7 @@
       "gzip": true
     },
     "e2e_rust": {
-      "dependencies": [
-        "evm_rpc",
-        "evm_rpc_staging_13_node",
-        "evm_rpc_staging_fiduciary"
-      ],
+      "dependencies": ["evm_rpc_staging_fiduciary"],
       "candid": "e2e/rust/e2e_rust.did",
       "type": "rust",
       "package": "e2e"

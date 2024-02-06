@@ -185,6 +185,12 @@ fn get_service_provider_map() -> Vec<(RpcService, u64)> {
     })
 }
 
+#[query(name = "getNodesInSubnet")]
+#[candid_method(query, rename = "getNodesInSubnet")]
+async fn get_nodes_in_subnet() -> u32 {
+    UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow())
+}
+
 #[query(name = "getAccumulatedCycleCount")]
 #[candid_method(query, rename = "getAccumulatedCycleCount")]
 fn get_accumulated_cycle_count(provider_id: u64) -> u128 {
@@ -206,7 +212,7 @@ fn transform(args: TransformArgs) -> HttpResponse {
 
 #[ic_cdk::init]
 fn init(args: InitArgs) {
-    UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow_mut() = args.nodes_in_subnet);
+    post_upgrade(args);
 
     for provider in get_default_providers() {
         do_register_provider(ic_cdk::caller(), provider);
@@ -222,6 +228,11 @@ fn init(args: InitArgs) {
                 });
         set_service_provider(&service, &provider);
     }
+}
+
+#[ic_cdk::post_upgrade]
+fn post_upgrade(args: InitArgs) {
+    UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow_mut() = args.nodes_in_subnet);
 }
 
 #[query]

@@ -31,14 +31,6 @@ shared ({ caller = installer }) actor class Main() {
         (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
     ];
 
-    public shared ({ caller }) func test() : async () {
-        await runTests(caller, #staging);
-    };
-
-    public shared ({ caller }) func testProduction() : async () {
-        await runTests(caller, #production);
-    };
-
     func runTests(caller : Principal, category : TestCategory) : async () {
         assert caller == installer;
 
@@ -241,5 +233,13 @@ shared ({ caller = installer }) actor class Main() {
             };
             Debug.trap(message);
         };
+    };
+
+    public shared ({ caller }) func test() : async () {
+        await runTests(caller, #staging);
+    };
+
+    public shared ({ caller }) func testProduction() : async () {
+        await runTests(caller, #production);
     };
 };
