@@ -1,26 +1,26 @@
+import EvmRpcProductionFiduciary "canister:evm_rpc";
 import EvmRpcStaging13Node "canister:evm_rpc_staging_13_node";
 import EvmRpcStagingFidicuary "canister:evm_rpc_staging_fiduciary";
-import EvmRpcProductionFiduciary "canister:evm_rpc";
 
 import Blob "mo:base/Blob";
+import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
 import Cycles "mo:base/ExperimentalCycles";
 import Principal "mo:base/Principal";
 import Text "mo:base/Text";
-import Buffer "mo:base/Buffer";
 import Evm "mo:evm";
 
 shared ({ caller = installer }) actor class Main() {
 
     type TestCategory = { #staging; #production };
 
-    type SubnetTarget = (Nat, Nat);
-    // (`nodes in subnet`, `expected cycles for JSON-RPC call`)
-    let defaultSubnet = ("13-node", 13, 99_330_400);
-    let fiduciarySubnet = ("fiduciary", 28, 239_142_400);
+    // (`subnet name`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
+    type SubnetTarget = (Text, Nat32, Nat);
+    let defaultSubnet: SubnetTarget = ("13-node", 13, 99_330_400);
+    let fiduciarySubnet: SubnetTarget = ("fiduciary", 28, 239_142_400);
 
     let testTargets = [
-        // (`subnet name`, `canister module`, `canister type`, `subnet`)
+        // (`canister module`, `canister type`, `subnet`)
         (EvmRpcStaging13Node, #staging, defaultSubnet),
         (EvmRpcStagingFidicuary, #staging, fiduciarySubnet),
         (EvmRpcProductionFiduciary, #production, fiduciarySubnet),
@@ -30,14 +30,6 @@ shared ({ caller = installer }) actor class Main() {
     let ignoredTests = [
         (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
     ];
-
-    public shared ({ caller }) func test() : async () {
-        await runTests(caller, #staging);
-    };
-
-    public shared ({ caller }) func testProduction() : async () {
-        await runTests(caller, #production);
-    };
 
     func runTests(caller : Principal, category : TestCategory) : async () {
         assert caller == installer;
@@ -73,6 +65,12 @@ shared ({ caller = installer }) actor class Main() {
             };
             let json = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}";
             let maxResponseBytes : Nat64 = 1000;
+
+            // Nodes in subnet
+            let actualNodesInSubnet = await canister.getNodesInSubnet();
+            if (actualNodesInSubnet != nodesInSubnet) {
+                addError("Unexpected number of nodes in subnet (received " # debug_show actualNodesInSubnet # ", expected " # debug_show nodesInSubnet # ")");
+            };
 
             // `requestCost()`
             let cyclesResult = await canister.requestCost(source, json, maxResponseBytes);
@@ -241,5 +239,13 @@ shared ({ caller = installer }) actor class Main() {
             };
             Debug.trap(message);
         };
+    };
+
+    public shared ({ caller }) func test() : async () {
+        await runTests(caller, #staging);
+    };
+
+    public shared ({ caller }) func testProduction() : async () {
+        await runTests(caller, #production);
     };
 };

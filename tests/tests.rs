@@ -82,7 +82,7 @@ impl EvmRpcSetup {
         );
 
         let args = InitArgs {
-            nodes_in_subnet: NODES_IN_DEFAULT_SUBNET,
+            nodes_in_subnet: NODES_IN_STANDARD_SUBNET,
         };
 
         let controller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);

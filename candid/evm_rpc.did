@@ -238,6 +238,7 @@ service : (InitArgs) -> {
   getAccumulatedCycleCount : (nat64) -> (nat) query;
   getAuthorized : (Auth) -> (vec principal) query;
   getMetrics : () -> (Metrics) query;
+  getNodesInSubnet : () -> (nat32) query;
   getOpenRpcAccess : () -> (bool) query;
   getProviders : () -> (vec ProviderView) query;
   getServiceProviderMap : () -> (vec record { RpcService; nat64 }) query;

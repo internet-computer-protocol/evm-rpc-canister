@@ -59,7 +59,7 @@ pub fn get_provider_cost(provider: &Provider, payload_size_bytes: u64) -> u128 {
 
 #[test]
 fn test_request_cost() {
-    for nodes_in_subnet in [1, NODES_IN_DEFAULT_SUBNET, NODES_IN_FIDUCIARY_SUBNET] {
+    for nodes_in_subnet in [1, NODES_IN_STANDARD_SUBNET, NODES_IN_FIDUCIARY_SUBNET] {
         println!("Nodes in subnet: {nodes_in_subnet}");
 
         UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = nodes_in_subnet);
@@ -91,7 +91,7 @@ fn test_request_cost() {
 
 #[test]
 fn test_provider_cost() {
-    for nodes_in_subnet in [1, NODES_IN_DEFAULT_SUBNET, NODES_IN_FIDUCIARY_SUBNET] {
+    for nodes_in_subnet in [1, NODES_IN_STANDARD_SUBNET, NODES_IN_FIDUCIARY_SUBNET] {
         println!("Nodes in subnet: {nodes_in_subnet}");
 
         UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = nodes_in_subnet);
@@ -152,7 +152,8 @@ fn test_candid_rpc_cost() {
     );
     let provider = PROVIDERS.with(|providers| providers.borrow().get(&provider_id).unwrap());
 
-    // Default subnet
+    // 13-node subnet
+    UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = NODES_IN_STANDARD_SUBNET);
     assert_eq!(
         [
             get_candid_rpc_cost(&provider, 0, 0),

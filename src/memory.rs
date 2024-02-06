@@ -6,7 +6,7 @@ use ic_stable_structures::VectorMemory;
 use ic_stable_structures::{Cell, StableBTreeMap};
 use std::cell::RefCell;
 
-use crate::{types::*, NODES_IN_DEFAULT_SUBNET};
+use crate::{types::*, NODES_IN_FIDUCIARY_SUBNET};
 
 #[cfg(not(target_arch = "wasm32"))]
 type Memory = VirtualMemory<VectorMemory>;
@@ -16,7 +16,7 @@ type Memory = VirtualMemory<DefaultMemoryImpl>;
 thread_local! {
     // Unstable static data: this is reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
-    pub static UNSTABLE_SUBNET_SIZE: RefCell<u32> = RefCell::new(NODES_IN_DEFAULT_SUBNET);
+    pub static UNSTABLE_SUBNET_SIZE: RefCell<u32> = RefCell::new(NODES_IN_FIDUCIARY_SUBNET);
 
     // Stable static data: this is preserved when the canister is upgraded.
     #[cfg(not(target_arch = "wasm32"))]
