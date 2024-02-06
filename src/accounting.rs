@@ -153,6 +153,7 @@ fn test_candid_rpc_cost() {
     let provider = PROVIDERS.with(|providers| providers.borrow().get(&provider_id).unwrap());
 
     // Default subnet
+    UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = NODES_IN_DEFAULT_SUBNET);
     assert_eq!(
         [
             get_candid_rpc_cost(&provider, 0, 0),
