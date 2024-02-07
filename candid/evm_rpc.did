@@ -69,12 +69,6 @@ type InitArgs = record {
   nodesInSubnet : nat32;
 };
 type JsonRpcError = record { code : int64; message : text };
-type JsonRpcSource = variant {
-  Custom : record { url : text; headers : opt vec HttpHeader };
-  Service : record { hostname : text; chainId : opt nat64 };
-  Chain : nat64;
-  Provider : nat64;
-};
 type LogEntry = record {
   transactionHash : opt text;
   blockNumber : opt nat;
@@ -178,13 +172,21 @@ type RpcError = variant {
   ValidationError : ValidationError;
   HttpOutcallError : HttpOutcallError;
 };
+type RpcApi = record { url : text; headers : opt vec HttpHeader };
 type RpcService = variant {
   EthSepolia : EthSepoliaService;
   EthMainnet : EthMainnetService;
+  Chain : nat64;
+  Provider : nat64;
+  Custom : RpcApi;
 };
-type RpcSource = variant {
+type RpcServices = variant {
   EthSepolia : opt vec EthSepoliaService;
   EthMainnet : opt vec EthMainnetService;
+  Custom : record {
+    chainId : nat64;
+    services : vec RpcApi;
+  };
 };
 type SendRawTransactionStatus = variant {
   Ok;
@@ -227,14 +229,14 @@ type ValidationError = variant {
 service : (InitArgs) -> {
   authorize : (principal, Auth) -> (bool);
   deauthorize : (principal, Auth) -> (bool);
-  eth_feeHistory : (RpcSource, opt RpcConfig, FeeHistoryArgs) -> (MultiFeeHistoryResult);
-  eth_getBlockByNumber : (RpcSource, opt RpcConfig, BlockTag) -> (MultiGetBlockByNumberResult);
-  eth_getLogs : (RpcSource, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
-  eth_getTransactionCount : (RpcSource, opt RpcConfig, GetTransactionCountArgs) -> (
+  eth_feeHistory : (RpcServices, opt RpcConfig, FeeHistoryArgs) -> (MultiFeeHistoryResult);
+  eth_getBlockByNumber : (RpcServices, opt RpcConfig, BlockTag) -> (MultiGetBlockByNumberResult);
+  eth_getLogs : (RpcServices, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
+  eth_getTransactionCount : (RpcServices, opt RpcConfig, GetTransactionCountArgs) -> (
     MultiGetTransactionCountResult
   );
-  eth_getTransactionReceipt : (RpcSource, opt RpcConfig, text) -> (MultiGetTransactionReceiptResult);
-  eth_sendRawTransaction : (RpcSource, opt RpcConfig, text) -> (MultiSendRawTransactionResult);
+  eth_getTransactionReceipt : (RpcServices, opt RpcConfig, text) -> (MultiGetTransactionReceiptResult);
+  eth_sendRawTransaction : (RpcServices, opt RpcConfig, text) -> (MultiSendRawTransactionResult);
   getAccumulatedCycleCount : (nat64) -> (nat) query;
   getAuthorized : (Auth) -> (vec principal) query;
   getMetrics : () -> (Metrics) query;
@@ -244,8 +246,8 @@ service : (InitArgs) -> {
   getServiceProviderMap : () -> (vec record { RpcService; nat64 }) query;
   manageProvider : (ManageProviderArgs) -> ();
   registerProvider : (RegisterProviderArgs) -> (nat64);
-  request : (JsonRpcSource, text, nat64) -> (RequestResult);
-  requestCost : (JsonRpcSource, text, nat64) -> (RequestCostResult) query;
+  request : (RpcService, text, nat64) -> (RequestResult);
+  requestCost : (RpcService, text, nat64) -> (RequestCostResult) query;
   setOpenRpcAccess : (bool) -> ();
   unregisterProvider : (nat64) -> (bool);
   updateProvider : (UpdateProviderArgs) -> ();

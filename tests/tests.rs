@@ -12,7 +12,7 @@ use cketh_common::{
         ProviderError, RpcError, SendRawTransactionResult,
     },
     eth_rpc_client::{
-        providers::{EthMainnetService, EthSepoliaService, RpcService},
+        providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
         RpcConfig,
     },
     numeric::{BlockNumber, Wei},
@@ -222,7 +222,7 @@ impl EvmRpcSetup {
 
     pub fn request_cost(
         &self,
-        source: JsonRpcSource,
+        source: RpcService,
         json_rpc_payload: &str,
         max_response_bytes: u64,
     ) -> Nat {
@@ -234,7 +234,7 @@ impl EvmRpcSetup {
 
     pub fn request(
         &self,
-        source: JsonRpcSource,
+        source: RpcService,
         json_rpc_payload: &str,
         max_response_bytes: u64,
     ) -> CallFlow<RpcResult<String>> {
@@ -246,7 +246,7 @@ impl EvmRpcSetup {
 
     pub fn eth_get_logs(
         &self,
-        source: RpcSource,
+        source: RpcServices,
         config: Option<RpcConfig>,
         args: candid_types::GetLogsArgs,
     ) -> CallFlow<MultiRpcResult<Vec<LogEntry>>> {
@@ -255,7 +255,7 @@ impl EvmRpcSetup {
 
     pub fn eth_get_block_by_number(
         &self,
-        source: RpcSource,
+        source: RpcServices,
         config: Option<RpcConfig>,
         block: candid_types::BlockTag,
     ) -> CallFlow<MultiRpcResult<Block>> {
@@ -267,7 +267,7 @@ impl EvmRpcSetup {
 
     pub fn eth_get_transaction_receipt(
         &self,
-        source: RpcSource,
+        source: RpcServices,
         config: Option<RpcConfig>,
         address: &str,
     ) -> CallFlow<MultiRpcResult<Option<candid_types::TransactionReceipt>>> {
@@ -279,7 +279,7 @@ impl EvmRpcSetup {
 
     pub fn eth_get_transaction_count(
         &self,
-        source: RpcSource,
+        source: RpcServices,
         config: Option<RpcConfig>,
         args: candid_types::GetTransactionCountArgs,
     ) -> CallFlow<MultiRpcResult<Nat>> {
@@ -291,7 +291,7 @@ impl EvmRpcSetup {
 
     pub fn eth_fee_history(
         &self,
-        source: RpcSource,
+        source: RpcServices,
         config: Option<RpcConfig>,
         args: candid_types::FeeHistoryArgs,
     ) -> CallFlow<MultiRpcResult<Option<FeeHistory>>> {
@@ -300,7 +300,7 @@ impl EvmRpcSetup {
 
     pub fn eth_send_raw_transaction(
         &self,
-        source: RpcSource,
+        source: RpcServices,
         config: Option<RpcConfig>,
         signed_raw_transaction_hex: &str,
     ) -> CallFlow<MultiRpcResult<SendRawTransactionResult>> {
@@ -466,13 +466,13 @@ fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
     assert_matches!(
         setup
             .request(
-                JsonRpcSource::Custom {
+                RpcService::Custom(RpcApi {
                     url: MOCK_REQUEST_URL.to_string(),
                     headers: Some(vec![HttpHeader {
                         name: "Custom".to_string(),
                         value: "Value".to_string(),
                     }]),
-                },
+                }),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,
             )
@@ -796,7 +796,7 @@ fn should_replace_service_provider() {
         });
     let result = setup
         .eth_get_transaction_count(
-            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
             candid_types::GetTransactionCountArgs {
                 address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
@@ -814,32 +814,43 @@ fn should_replace_service_provider() {
 
 #[test]
 fn should_set_primary_provider() {
-    let setup = EvmRpcSetup::new()
+    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let new_chain_id = 12345;
+    let before_credential = "/before";
+    let after_credential = "/after";
+    setup
+        .clone()
         .authorize_caller(Auth::RegisterProvider)
-        .authorize_caller(Auth::FreeRpc);
-    let new_credential = "/primary-credential";
-    let provider_id = setup.register_provider(RegisterProviderArgs {
-        chain_id: ETH_MAINNET_CHAIN_ID,
-        hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-        credential_path: new_credential.to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
+        .register_provider(RegisterProviderArgs {
+            chain_id: new_chain_id,
+            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+            credential_path: before_credential.to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        });
+    let provider_id = setup
+        .clone()
+        .authorize_caller(Auth::RegisterProvider)
+        .register_provider(RegisterProviderArgs {
+            chain_id: new_chain_id,
+            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
+            credential_path: after_credential.to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        });
     assert_matches!(
         setup
             .request(
-                JsonRpcSource::Service {
-                    hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-                    chain_id: None,
-                },
+                RpcService::Chain(new_chain_id),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,
             )
             .mock_http(
                 MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
                     "https://{}{}",
-                    ALCHEMY_ETH_MAINNET_HOSTNAME, ALCHEMY_ETH_MAINNET_CREDENTIAL
+                    ALCHEMY_ETH_MAINNET_HOSTNAME, before_credential
                 ))
             )
             .wait(),
@@ -856,17 +867,14 @@ fn should_set_primary_provider() {
     assert_matches!(
         setup
             .request(
-                JsonRpcSource::Service {
-                    hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-                    chain_id: None,
-                },
+                RpcService::Chain(new_chain_id),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,
             )
             .mock_http(
                 MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
                     "https://{}{}",
-                    ALCHEMY_ETH_MAINNET_HOSTNAME, new_credential
+                    ALCHEMY_ETH_MAINNET_HOSTNAME, after_credential
                 ))
             )
             .wait(),
@@ -886,10 +894,10 @@ fn should_canonicalize_json_response() {
     .map(|response| {
         setup
             .request(
-                JsonRpcSource::Custom {
+                RpcService::Custom(RpcApi {
                     url: MOCK_REQUEST_URL.to_string(),
                     headers: None,
-                },
+                }),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,
             )
@@ -953,7 +961,7 @@ fn eth_get_logs_should_succeed() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let response = setup
         .eth_get_logs(
-            RpcSource::EthMainnet(None),
+            RpcServices::EthMainnet(None),
             None,
             candid_types::GetLogsArgs {
                 addresses: vec!["0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string()],
@@ -1007,7 +1015,7 @@ fn eth_get_block_by_number_should_succeed() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let response = setup
         .eth_get_block_by_number(
-            RpcSource::EthMainnet(None),
+            RpcServices::EthMainnet(None),
             None,
             candid_types::BlockTag::Latest,
         )
@@ -1048,7 +1056,7 @@ fn eth_get_transaction_receipt_should_succeed() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let response = setup
         .eth_get_transaction_receipt(
-            RpcSource::EthMainnet(None),
+            RpcServices::EthMainnet(None),
             None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
@@ -1081,7 +1089,7 @@ fn eth_get_transaction_count_should_succeed() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let response = setup
         .eth_get_transaction_count(
-            RpcSource::EthMainnet(None),
+            RpcServices::EthMainnet(None),
             None,
             candid_types::GetTransactionCountArgs {
                 address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
@@ -1103,7 +1111,7 @@ fn eth_fee_history_should_succeed() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let response = setup
         .eth_fee_history(
-            RpcSource::EthMainnet(None),
+            RpcServices::EthMainnet(None),
             None,
             candid_types::FeeHistoryArgs {
                 block_count: 3,
@@ -1137,7 +1145,7 @@ fn eth_send_raw_transaction_should_succeed() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let response = setup
         .eth_send_raw_transaction(
-            RpcSource::EthMainnet(None),
+            RpcServices::EthMainnet(None),
             None,
             "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
@@ -1156,7 +1164,7 @@ fn candid_rpc_should_allow_unexpected_response_fields() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let response = setup
         .eth_get_transaction_receipt(
-            RpcSource::EthMainnet(None),
+            RpcServices::EthMainnet(None),
             None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
@@ -1176,7 +1184,7 @@ fn candid_rpc_should_err_without_cycles() {
     let setup = EvmRpcSetup::new();
     let result = setup
         .eth_get_transaction_receipt(
-            RpcSource::EthMainnet(None),
+            RpcServices::EthMainnet(None),
             None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
@@ -1197,7 +1205,7 @@ fn candid_rpc_should_err_during_restricted_access() {
     setup.clone().as_controller().set_open_rpc_access(false);
     let result = setup
         .eth_get_transaction_receipt(
-            RpcSource::EthMainnet(Some(vec![
+            RpcServices::EthMainnet(Some(vec![
                 EthMainnetService::Cloudflare,
                 EthMainnetService::BlockPi,
             ])),
@@ -1224,7 +1232,7 @@ fn candid_rpc_should_err_when_service_unavailable() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let result = setup
         .eth_get_transaction_receipt(
-            RpcSource::EthMainnet(None),
+            RpcServices::EthMainnet(None),
             None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
@@ -1265,7 +1273,7 @@ fn candid_rpc_should_recognize_json_error() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let result = setup
         .eth_get_transaction_receipt(
-            RpcSource::EthSepolia(Some(vec![
+            RpcServices::EthSepolia(Some(vec![
                 EthSepoliaService::Ankr,
                 EthSepoliaService::BlockPi,
             ])),
@@ -1307,7 +1315,7 @@ fn candid_rpc_should_reject_empty_service_list() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let result = setup
         .eth_get_transaction_receipt(
-            RpcSource::EthMainnet(Some(vec![])),
+            RpcServices::EthMainnet(Some(vec![])),
             None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
@@ -1324,7 +1332,7 @@ fn candid_rpc_should_return_inconsistent_results() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let results = setup
         .eth_send_raw_transaction(
-            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
             None,
             "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
@@ -1377,7 +1385,7 @@ fn candid_rpc_should_return_inconsistent_results_with_error() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let result = setup
         .eth_get_transaction_count(
-            RpcSource::EthMainnet(Some(vec![
+            RpcServices::EthMainnet(Some(vec![
                 EthMainnetService::Alchemy,
                 EthMainnetService::Ankr,
             ])),
@@ -1439,7 +1447,7 @@ fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let result = setup
         .eth_get_transaction_count(
-            RpcSource::EthMainnet(Some(vec![
+            RpcServices::EthMainnet(Some(vec![
                 EthMainnetService::Alchemy,
                 EthMainnetService::Ankr,
             ])),
@@ -1502,7 +1510,7 @@ fn candid_rpc_should_handle_already_known() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let result = setup
         .eth_send_raw_transaction(
-            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
             None,
             "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
@@ -1539,7 +1547,7 @@ fn candid_rpc_should_recognize_rate_limit() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let result = setup
         .eth_send_raw_transaction(
-            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
             None,
             "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
         )
@@ -1590,7 +1598,7 @@ fn should_restrict_rpc_access() {
     setup.clone().as_controller().set_open_rpc_access(false);
     let result = setup
         .eth_get_transaction_count(
-            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
             candid_types::GetTransactionCountArgs {
                 address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
@@ -1606,7 +1614,7 @@ fn should_restrict_rpc_access() {
     setup = setup.authorize_caller(Auth::PriorityRpc);
     let result = setup
         .eth_get_transaction_count(
-            RpcSource::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
             candid_types::GetTransactionCountArgs {
                 address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
@@ -1643,7 +1651,7 @@ fn should_use_custom_response_size_estimate() {
     let expected_response = r#"{"id":0,"jsonrpc":"2.0","result":[{"address":"0xdac17f958d2ee523a2206206994597c13d831ec7","topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef","0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43","0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"],"data":"0x000000000000000000000000000000000000000000000000000000003b9c6433","blockNumber":"0x11dc77e","transactionHash":"0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678","transactionIndex":"0x65","blockHash":"0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629","logIndex":"0xe8","removed":false}]}"#;
     let response = setup
         .eth_get_logs(
-            RpcSource::EthMainnet(Some(vec![EthMainnetService::Cloudflare])),
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Cloudflare])),
             Some(RpcConfig {
                 response_size_estimate: Some(max_response_bytes),
             }),

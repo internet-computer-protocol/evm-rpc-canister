@@ -2,7 +2,7 @@ use candid::candid_method;
 use ic_cdk_macros::update;
 
 use e2e::declarations::evm_rpc_staging_fiduciary::{
-    evm_rpc_staging_fiduciary as evm_rpc, JsonRpcSource, ProviderError, RpcError,
+    evm_rpc_staging_fiduciary as evm_rpc, ProviderError, RpcError, RpcService,
 };
 
 fn main() {}
@@ -14,10 +14,7 @@ pub async fn test() {
 
     // Define request parameters
     let params = (
-        &JsonRpcSource::Service {
-            hostname: "cloudflare-eth.com".to_string(),
-            chainId: Some(1), // Ethereum mainnet
-        },
+        &RpcService::Chain(1), // Ethereum mainnet
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}".to_string(),
         1000 as u64,
     );

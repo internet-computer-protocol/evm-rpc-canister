@@ -1,7 +1,7 @@
 use candid::CandidType;
 use cketh_common::{
     eth_rpc::ProviderError,
-    eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService},
+    eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
     logs::INFO,
 };
 use ic_canister_log::log;
@@ -164,7 +164,7 @@ pub fn find_provider(f: impl Fn(&Provider) -> bool) -> Option<Provider> {
     })
 }
 
-pub fn get_provider_for_service(service: &RpcService) -> Result<Provider, ProviderError> {
+fn lookup_provider_for_service(service: &RpcService) -> Result<Provider, ProviderError> {
     let provider_id = SERVICE_PROVIDER_MAP.with(|map| {
         map.borrow()
             .get(&StorableRpcService::new(service))
@@ -175,10 +175,13 @@ pub fn get_provider_for_service(service: &RpcService) -> Result<Provider, Provid
         .ok_or(ProviderError::ProviderNotFound)
 }
 
-pub fn get_chain_id(service: &RpcService) -> u64 {
+pub fn get_known_chain_id(service: &RpcService) -> Option<u64> {
     match service {
-        RpcService::EthMainnet(_) => ETH_MAINNET_CHAIN_ID,
-        RpcService::EthSepolia(_) => ETH_SEPOLIA_CHAIN_ID,
+        RpcService::EthMainnet(_) => Some(ETH_MAINNET_CHAIN_ID),
+        RpcService::EthSepolia(_) => Some(ETH_SEPOLIA_CHAIN_ID),
+        RpcService::Chain(chain_id) => Some(*chain_id),
+        RpcService::Provider(_) => None,
+        RpcService::Custom(_) => None,
     }
 }
 
@@ -387,16 +390,48 @@ pub fn set_service_provider(service: &RpcService, provider: &Provider) {
         service,
         provider.provider_id
     );
-    let chain_id = get_chain_id(service);
-    if chain_id != provider.chain_id {
-        ic_cdk::trap(&format!(
-            "Mismatch between service and provider chain ids ({} != {})",
-            chain_id, provider.chain_id
-        ))
+    if let Some(chain_id) = get_known_chain_id(service) {
+        if chain_id != provider.chain_id {
+            ic_cdk::trap(&format!(
+                "Mismatch between service and provider chain ids ({} != {})",
+                chain_id, provider.chain_id
+            ))
+        }
     }
     SERVICE_PROVIDER_MAP.with(|mappings| {
         mappings
             .borrow_mut()
             .insert(StorableRpcService::new(service), provider.provider_id);
     });
+}
+
+pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, ProviderError> {
+    Ok(match service {
+        RpcService::EthMainnet(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::EthMainnet(service))?,
+        ),
+        RpcService::EthSepolia(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::EthSepolia(service))?,
+        ),
+        RpcService::Chain(id) => ResolvedRpcService::Provider(PROVIDERS.with(|providers| {
+            let providers = providers.borrow();
+            Ok(providers
+                .iter()
+                .find(|(_, p)| p.primary && p.chain_id == id)
+                .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
+                .ok_or(ProviderError::ProviderNotFound)?
+                .1)
+        })?),
+        RpcService::Provider(id) => ResolvedRpcService::Provider({
+            PROVIDERS.with(|providers| {
+                providers
+                    .borrow()
+                    .get(&id)
+                    .ok_or(ProviderError::ProviderNotFound)
+            })?
+        }),
+        RpcService::Custom(RpcApi { url, headers }) => {
+            ResolvedRpcService::Api(RpcApi { url, headers })
+        }
+    })
 }
