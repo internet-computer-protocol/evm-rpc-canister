@@ -26,7 +26,7 @@ struct CanisterTransport;
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RpcTransport for CanisterTransport {
     fn resolve_api(service: &RpcService) -> Result<RpcApi, ProviderError> {
-        Ok(get_provider_for_service(service)?.api())
+        Ok(resolve_rpc_service(service.clone())?.api())
     }
 
     async fn http_request(
@@ -35,9 +35,9 @@ impl RpcTransport for CanisterTransport {
         request: CanisterHttpRequestArgument,
         effective_response_size_estimate: u64,
     ) -> RpcResult<HttpResponse> {
-        let provider = get_provider_for_service(service)?;
-        let cycles_cost = get_candid_rpc_cost(
-            &provider,
+        let service = resolve_rpc_service(service.clone())?;
+        let cycles_cost = get_rpc_cost(
+            &service,
             request
                 .body
                 .as_ref()
@@ -46,33 +46,19 @@ impl RpcTransport for CanisterTransport {
             effective_response_size_estimate,
         );
         let rpc_method = MetricRpcMethod(method.to_string());
-        let rpc_host = MetricRpcHost(provider.hostname.to_string());
-        do_http_request_with_metrics(
-            ic_cdk::caller(),
-            rpc_method,
-            rpc_host,
-            Some(provider),
-            request,
-            cycles_cost,
-        )
-        .await
+        do_http_request(ic_cdk::caller(), rpc_method, service, request, cycles_cost).await
     }
 }
 
-fn check_services<T>(services: Option<Vec<T>>) -> RpcResult<Option<Vec<T>>> {
-    match services {
-        Some(services) => {
-            if services.is_empty() {
-                Err(ProviderError::ProviderNotFound)?;
-            }
-            Ok(Some(services))
-        }
-        None => Ok(None),
+fn check_services<T>(services: Vec<T>) -> RpcResult<Vec<T>> {
+    if services.is_empty() {
+        Err(ProviderError::ProviderNotFound)?;
     }
+    Ok(services)
 }
 
 fn get_rpc_client(
-    source: RpcSource,
+    source: RpcServices,
     config: RpcConfig,
 ) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
     if !is_rpc_allowed(&ic_cdk::caller()) {
@@ -80,24 +66,32 @@ fn get_rpc_client(
         return Err(ProviderError::NoPermission.into());
     }
     Ok(match source {
-        RpcSource::EthMainnet(services) => CkEthRpcClient::new(
-            EthereumNetwork::Mainnet,
+        RpcServices::EthMainnet(services) => CkEthRpcClient::new(
+            EthereumNetwork::MAINNET,
             Some(
-                check_services(services)?
-                    .unwrap_or_else(|| DEFAULT_ETH_MAINNET_SERVICES.to_vec())
+                check_services(services.unwrap_or_else(|| DEFAULT_ETH_MAINNET_SERVICES.to_vec()))?
                     .into_iter()
                     .map(RpcService::EthMainnet)
                     .collect(),
             ),
             config,
         ),
-        RpcSource::EthSepolia(services) => CkEthRpcClient::new(
-            EthereumNetwork::Sepolia,
+        RpcServices::EthSepolia(services) => CkEthRpcClient::new(
+            EthereumNetwork::SEPOLIA,
             Some(
-                check_services(services)?
-                    .unwrap_or_else(|| DEFAULT_ETH_SEPOLIA_SERVICES.to_vec())
+                check_services(services.unwrap_or_else(|| DEFAULT_ETH_SEPOLIA_SERVICES.to_vec()))?
                     .into_iter()
                     .map(RpcService::EthSepolia)
+                    .collect(),
+            ),
+            config,
+        ),
+        RpcServices::Custom { chain_id, services } => CkEthRpcClient::new(
+            EthereumNetwork(chain_id),
+            Some(
+                check_services(services)?
+                    .into_iter()
+                    .map(RpcService::Custom)
                     .collect(),
             ),
             config,
@@ -112,7 +106,9 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
             MultiCallError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
             MultiCallError::InconsistentResults(multi_call_results) => {
                 multi_call_results.results.iter().for_each(|(service, _)| {
-                    if let Ok(provider) = get_provider_for_service(service) {
+                    if let Ok(ResolvedRpcService::Provider(provider)) =
+                        resolve_rpc_service(service.clone())
+                    {
                         add_metric_entry!(
                             inconsistent_responses,
                             (method.into(), MetricRpcHost(provider.hostname)),
@@ -131,7 +127,7 @@ pub struct CandidRpcClient {
 }
 
 impl CandidRpcClient {
-    pub fn new(source: RpcSource, config: Option<RpcConfig>) -> RpcResult<Self> {
+    pub fn new(source: RpcServices, config: Option<RpcConfig>) -> RpcResult<Self> {
         Ok(Self {
             client: get_rpc_client(source, config.unwrap_or_default())?,
         })

@@ -1,5 +1,5 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-use cketh_common::eth_rpc::{ProviderError, RpcError};
+use cketh_common::eth_rpc::RpcError;
 use cketh_common::eth_rpc_client::providers::{
     EthMainnetService, EthSepoliaService, RpcApi, RpcService,
 };
@@ -13,8 +13,7 @@ use std::collections::HashMap;
 
 use crate::constants::STRING_STORABLE_MAX_SIZE;
 use crate::{
-    AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDERS, PROVIDER_MAX_SIZE,
-    RPC_SERVICE_MAX_SIZE,
+    AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDER_MAX_SIZE, RPC_SERVICE_MAX_SIZE,
 };
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -23,72 +22,18 @@ pub struct InitArgs {
     pub nodes_in_subnet: u32,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum JsonRpcSource {
-    Chain(u64),
-    Provider(u64),
-    Service {
-        hostname: String,
-        #[serde(rename = "chainId")]
-        chain_id: Option<u64>,
-    },
-    Custom {
-        url: String,
-        headers: Option<Vec<HttpHeader>>,
-    },
-}
-
-impl JsonRpcSource {
-    pub fn resolve(self) -> Result<ResolvedJsonRpcSource, ProviderError> {
-        Ok(match self {
-            JsonRpcSource::Custom { url, headers } => ResolvedJsonRpcSource::Api(RpcApi {
-                url,
-                headers: headers.unwrap_or_default(),
-            }),
-            JsonRpcSource::Provider(id) => ResolvedJsonRpcSource::Provider({
-                PROVIDERS.with(|providers| {
-                    providers
-                        .borrow()
-                        .get(&id)
-                        .ok_or(ProviderError::ProviderNotFound)
-                })?
-            }),
-            JsonRpcSource::Chain(id) => {
-                ResolvedJsonRpcSource::Provider(PROVIDERS.with(|providers| {
-                    let providers = providers.borrow();
-                    Ok(providers
-                        .iter()
-                        .find(|(_, p)| p.primary && p.chain_id == id)
-                        .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
-                        .ok_or(ProviderError::ProviderNotFound)?
-                        .1)
-                })?)
-            }
-            JsonRpcSource::Service { hostname, chain_id } => {
-                ResolvedJsonRpcSource::Provider(PROVIDERS.with(|providers| {
-                    let matches_provider = |p: &Provider| {
-                        p.hostname == hostname
-                            && match chain_id {
-                                Some(id) => p.chain_id == id,
-                                None => true,
-                            }
-                    };
-                    let providers = providers.borrow();
-                    Ok(providers
-                        .iter()
-                        .find(|(_, p)| p.primary && matches_provider(p))
-                        .or_else(|| providers.iter().find(|(_, p)| matches_provider(p)))
-                        .ok_or(ProviderError::ProviderNotFound)?
-                        .1)
-                })?)
-            }
-        })
-    }
-}
-
-pub enum ResolvedJsonRpcSource {
+pub enum ResolvedRpcService {
     Api(RpcApi),
     Provider(Provider),
+}
+
+impl ResolvedRpcService {
+    pub fn api(&self) -> RpcApi {
+        match self {
+            Self::Api(api) => api.clone(),
+            Self::Provider(provider) => provider.api(),
+        }
+    }
 }
 
 pub trait MetricValue {
@@ -428,7 +373,11 @@ impl Provider {
     pub fn api(&self) -> RpcApi {
         RpcApi {
             url: format!("https://{}{}", self.hostname, self.credential_path),
-            headers: self.credential_headers.clone(),
+            headers: if self.credential_headers.is_empty() {
+                None
+            } else {
+                Some(self.credential_headers.clone())
+            },
         }
     }
 }
@@ -550,10 +499,15 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
     }
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum RpcSource {
+#[derive(Clone, CandidType, Deserialize)]
+pub enum RpcServices {
     EthMainnet(Option<Vec<EthMainnetService>>),
     EthSepolia(Option<Vec<EthSepoliaService>>),
+    Custom {
+        #[serde(rename = "chainId")]
+        chain_id: u64,
+        services: Vec<RpcApi>,
+    },
 }
 
 pub mod candid_types {
@@ -723,6 +677,8 @@ pub mod candid_types {
 
 #[test]
 fn test_multi_rpc_result_map() {
+    use cketh_common::eth_rpc::ProviderError;
+
     let err = RpcError::ProviderError(ProviderError::ProviderNotFound);
     assert_eq!(
         MultiRpcResult::Consistent(Ok(5)).map(|n| n + 1),

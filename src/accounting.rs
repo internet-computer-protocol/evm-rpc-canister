@@ -2,31 +2,23 @@ use cketh_common::eth_rpc_client::providers::RpcApi;
 
 use crate::*;
 
-/// Returns the cycles cost of a JSON-RPC request.
-pub fn get_json_rpc_cost(
-    source: &ResolvedJsonRpcSource,
+/// Returns the cycles cost of an RPC request.
+pub fn get_rpc_cost(
+    service: &ResolvedRpcService,
     payload_size_bytes: u64,
     max_response_bytes: u64,
 ) -> u128 {
-    match source {
-        ResolvedJsonRpcSource::Api(api) => {
+    match service {
+        ResolvedRpcService::Api(api) => {
             get_http_request_cost(api, payload_size_bytes, max_response_bytes)
         }
-        ResolvedJsonRpcSource::Provider(provider) => {
-            get_candid_rpc_cost(provider, payload_size_bytes, max_response_bytes)
+        ResolvedRpcService::Provider(provider) => {
+            let http_cost =
+                get_http_request_cost(&provider.api(), payload_size_bytes, max_response_bytes);
+            let provider_cost = get_provider_cost(provider, payload_size_bytes);
+            http_cost + provider_cost
         }
     }
-}
-
-/// Returns the cycles cost of a Candid-RPC request.
-pub fn get_candid_rpc_cost(
-    provider: &Provider,
-    payload_size_bytes: u64,
-    max_response_bytes: u64,
-) -> u128 {
-    let http_cost = get_http_request_cost(&provider.api(), payload_size_bytes, max_response_bytes);
-    let provider_cost = get_provider_cost(provider, payload_size_bytes);
-    http_cost + provider_cost
 }
 
 /// Calculates the baseline cost of sending a JSON-RPC request using HTTP outcalls.
@@ -66,18 +58,18 @@ fn test_request_cost() {
 
         let url = "https://cloudflare-eth.com";
         let payload = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
-        let base_cost = get_json_rpc_cost(
-            &ResolvedJsonRpcSource::Api(RpcApi {
+        let base_cost = get_rpc_cost(
+            &ResolvedRpcService::Api(RpcApi {
                 url: url.to_string(),
-                headers: vec![],
+                headers: None,
             }),
             payload.len() as u64,
             1000,
         );
-        let base_cost_10_extra_bytes = get_json_rpc_cost(
-            &ResolvedJsonRpcSource::Api(RpcApi {
+        let base_cost_10_extra_bytes = get_rpc_cost(
+            &ResolvedRpcService::Api(RpcApi {
                 url: url.to_string(),
-                headers: vec![],
+                headers: None,
             }),
             payload.len() as u64 + 10,
             1000,
@@ -150,16 +142,18 @@ fn test_candid_rpc_cost() {
             cycles_per_message_byte: 1000,
         },
     );
-    let provider = PROVIDERS.with(|providers| providers.borrow().get(&provider_id).unwrap());
+    let service = ResolvedRpcService::Provider(
+        PROVIDERS.with(|providers| providers.borrow().get(&provider_id).unwrap()),
+    );
 
     // 13-node subnet
     UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = NODES_IN_STANDARD_SUBNET);
     assert_eq!(
         [
-            get_candid_rpc_cost(&provider, 0, 0),
-            get_candid_rpc_cost(&provider, 123, 123),
-            get_candid_rpc_cost(&provider, 123, 4567890),
-            get_candid_rpc_cost(&provider, 890, 4567890),
+            get_rpc_cost(&service, 0, 0),
+            get_rpc_cost(&service, 123, 123),
+            get_rpc_cost(&service, 123, 4567890),
+            get_rpc_cost(&service, 890, 4567890),
         ],
         [87008987, 93724787, 47598501587, 47632402987]
     );
@@ -168,10 +162,10 @@ fn test_candid_rpc_cost() {
     UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = NODES_IN_FIDUCIARY_SUBNET);
     assert_eq!(
         [
-            get_candid_rpc_cost(&provider, 0, 0),
-            get_candid_rpc_cost(&provider, 123, 123),
-            get_candid_rpc_cost(&provider, 123, 4567890),
-            get_candid_rpc_cost(&provider, 890, 4567890),
+            get_rpc_cost(&service, 0, 0),
+            get_rpc_cost(&service, 123, 123),
+            get_rpc_cost(&service, 123, 4567890),
+            get_rpc_cost(&service, 890, 4567890),
         ],
         [212603972, 227068772, 102545049572, 102618067972]
     );

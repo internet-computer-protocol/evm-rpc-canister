@@ -20,7 +20,7 @@ use evm_rpc::*;
 #[update(name = "eth_getLogs")]
 #[candid_method(rename = "eth_getLogs")]
 pub async fn eth_get_logs(
-    source: RpcSource,
+    source: RpcServices,
     config: Option<RpcConfig>,
     args: candid_types::GetLogsArgs,
 ) -> MultiRpcResult<Vec<LogEntry>> {
@@ -33,7 +33,7 @@ pub async fn eth_get_logs(
 #[update(name = "eth_getBlockByNumber")]
 #[candid_method(rename = "eth_getBlockByNumber")]
 pub async fn eth_get_block_by_number(
-    source: RpcSource,
+    source: RpcServices,
     config: Option<RpcConfig>,
     block: candid_types::BlockTag,
 ) -> MultiRpcResult<Block> {
@@ -46,7 +46,7 @@ pub async fn eth_get_block_by_number(
 #[update(name = "eth_getTransactionReceipt")]
 #[candid_method(rename = "eth_getTransactionReceipt")]
 pub async fn eth_get_transaction_receipt(
-    source: RpcSource,
+    source: RpcServices,
     config: Option<RpcConfig>,
     hash: String,
 ) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
@@ -59,7 +59,7 @@ pub async fn eth_get_transaction_receipt(
 #[update(name = "eth_getTransactionCount")]
 #[candid_method(rename = "eth_getTransactionCount")]
 pub async fn eth_get_transaction_count(
-    source: RpcSource,
+    source: RpcServices,
     config: Option<RpcConfig>,
     args: candid_types::GetTransactionCountArgs,
 ) -> MultiRpcResult<candid::Nat> {
@@ -72,7 +72,7 @@ pub async fn eth_get_transaction_count(
 #[update(name = "eth_feeHistory")]
 #[candid_method(rename = "eth_feeHistory")]
 pub async fn eth_fee_history(
-    source: RpcSource,
+    source: RpcServices,
     config: Option<RpcConfig>,
     args: candid_types::FeeHistoryArgs,
 ) -> MultiRpcResult<Option<FeeHistory>> {
@@ -85,7 +85,7 @@ pub async fn eth_fee_history(
 #[update(name = "eth_sendRawTransaction")]
 #[candid_method(rename = "eth_sendRawTransaction")]
 pub async fn eth_send_raw_transaction(
-    source: RpcSource,
+    source: RpcServices,
     config: Option<RpcConfig>,
     raw_signed_transaction_hex: String,
 ) -> MultiRpcResult<SendRawTransactionResult> {
@@ -102,13 +102,13 @@ pub async fn eth_send_raw_transaction(
 #[update]
 #[candid_method]
 async fn request(
-    source: JsonRpcSource,
+    service: RpcService,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<String, RpcError> {
     let response = do_json_rpc_request(
         ic_cdk::caller(),
-        source.resolve()?,
+        resolve_rpc_service(service)?,
         MetricRpcMethod("request".to_string()),
         &json_rpc_payload,
         max_response_bytes,
@@ -120,12 +120,12 @@ async fn request(
 #[query(name = "requestCost")]
 #[candid_method(query, rename = "requestCost")]
 fn request_cost(
-    source: JsonRpcSource,
+    service: RpcService,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<u128, RpcError> {
-    Ok(get_json_rpc_cost(
-        &source.resolve().unwrap(),
+    Ok(get_rpc_cost(
+        &resolve_rpc_service(service)?,
         json_rpc_payload.len() as u64,
         max_response_bytes,
     ))
@@ -218,14 +218,15 @@ fn init(args: InitArgs) {
         do_register_provider(ic_cdk::caller(), provider);
     }
     for (service, hostname) in get_default_service_provider_hostnames() {
-        let provider =
-            find_provider(|p| p.chain_id == get_chain_id(&service) && p.hostname == hostname)
-                .unwrap_or_else(|| {
-                    panic!(
-                        "Missing default provider for service {:?} with hostname {:?}",
-                        service, hostname
-                    )
-                });
+        let provider = find_provider(|p| {
+            Some(p.chain_id) == get_known_chain_id(&service) && p.hostname == hostname
+        })
+        .unwrap_or_else(|| {
+            panic!(
+                "Missing default provider for service {:?} with hostname {:?}",
+                service, hostname
+            )
+        });
         set_service_provider(&service, &provider);
     }
 }
