@@ -12,7 +12,7 @@ This project is currently under active development during the beta testing phase
 
 This canister facilitates API requests to JSON-RPC services such as [CloudFlare](https://www.cloudflare.com/en-gb/web3/), [Alchemy](https://www.alchemy.com/), [Ankr](https://www.ankr.com/), or [BlockPI](https://blockpi.io/) using [HTTPS outcalls](https://internetcomputer.org/https-outcalls). This enables functionality similar to traditional Ethereum dApps, including querying Ethereum smart contract states and submitting raw transactions.
 
-Beyond the Ethereum blockchain, this canister also has partial support for Polygon, Avalanche, and other popular EVM networks. Check out [ChainList.org](https://chainlist.org/?testnets=true) for an extensive list of compatible networks and RPC providers.
+Beyond the Ethereum blockchain, this canister also has partial support for Polygon, Avalanche, and other popular EVM networks. Check out [ChainList.org](https://chainlist.org/?testnets=true) for an extensive list of networks and RPC providers.
 
 ## Canisters
 
@@ -36,7 +36,7 @@ Add the following to your `dfx.json` config file (replace the `ic` principal wit
       "wasm": "https://github.com/internet-computer-protocol/evm-rpc-canister/releases/latest/download/evm_rpc_dev.wasm.gz",
       "remote": {
         "id": {
-          "ic": "a6d44-nyaaa-aaaap-abp7q-cai"
+          "ic": "7hfb6-caaaa-aaaar-qadga-cai"
         }
       }
     }
