@@ -267,8 +267,8 @@ shared ({ caller = installer }) actor class Main() {
             };
         };
 
-        for (a in pending.vals()) {
-            await a;
+        for (awaitable in pending.vals()) {
+            await awaitable;
         };
 
         if (relevantTestCount == 0) {
