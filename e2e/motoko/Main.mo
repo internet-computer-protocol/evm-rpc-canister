@@ -122,7 +122,7 @@ shared ({ caller = installer }) actor class Main() {
                 #Inconsistent : [(canister.RpcService, RpcResult<T>)];
             };
 
-            func assertOk<T>(networkName:Text,method : Text, result : MultiRpcResult<T>) {
+            func assertOk<T>(networkName : Text, method : Text, result : MultiRpcResult<T>) {
                 switch result {
                     case (#Consistent(#Ok _)) {};
                     case (#Consistent(#Err err)) {
@@ -147,7 +147,7 @@ shared ({ caller = installer }) actor class Main() {
                 };
             };
 
-            let candidRpcCycles = 1_000_000_000_000;
+            let candidRpcCycles = 100_000_000_000;
             let allServices : [(Text, EvmRpc.RpcServices)] = [
                 (
                     "Ethereum",
@@ -243,16 +243,23 @@ shared ({ caller = installer }) actor class Main() {
                         },
                     ),
                 );
-                Cycles.add(candidRpcCycles);
-                assertOk(
-                    networkName,
-                    "eth_sendRawTransaction",
-                    await canister.eth_sendRawTransaction(
-                        services,
-                        null,
-                        "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
-                    ),
-                );
+                switch services {
+                    case (#Custom _) {
+                        // Skip sending transaction for custom chains due to chain ID mismatch
+                    };
+                    case _ {
+                        Cycles.add(candidRpcCycles);
+                        assertOk(
+                            networkName,
+                            "eth_sendRawTransaction",
+                            await canister.eth_sendRawTransaction(
+                                services,
+                                null,
+                                "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
+                            ),
+                        );
+                    };
+                };
             };
 
             for ((name, services) in allServices.vals()) {
