@@ -1,4 +1,4 @@
-import EvmRpcProductionFiduciary "canister:evm_rpc";
+import EvmRpc "canister:evm_rpc";
 import EvmRpcStaging13Node "canister:evm_rpc_staging_13_node";
 import EvmRpcStagingFidicuary "canister:evm_rpc_staging_fiduciary";
 
@@ -16,14 +16,14 @@ shared ({ caller = installer }) actor class Main() {
 
     // (`subnet name`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
     type SubnetTarget = (Text, Nat32, Nat);
-    let defaultSubnet: SubnetTarget = ("13-node", 13, 99_330_400);
-    let fiduciarySubnet: SubnetTarget = ("fiduciary", 28, 239_142_400);
+    let defaultSubnet : SubnetTarget = ("13-node", 13, 99_330_400);
+    let fiduciarySubnet : SubnetTarget = ("fiduciary", 28, 239_142_400);
 
     let testTargets = [
         // (`canister module`, `canister type`, `subnet`)
+        (EvmRpc, #production, fiduciarySubnet),
         (EvmRpcStaging13Node, #staging, defaultSubnet),
         (EvmRpcStagingFidicuary, #staging, fiduciarySubnet),
-        (EvmRpcProductionFiduciary, #production, fiduciarySubnet),
     ];
 
     // (`RPC service`, `method`)
@@ -36,6 +36,7 @@ shared ({ caller = installer }) actor class Main() {
 
         let errors = Buffer.Buffer<Text>(0);
         var relevantTestCount = 0;
+        let pending : Buffer.Buffer<async ()> = Buffer.Buffer(100);
         label targets for ((canister, testCategory, (subnetName, nodesInSubnet, expectedCycles)) in testTargets.vals()) {
             if (testCategory != category) {
                 continue targets;
@@ -56,7 +57,7 @@ shared ({ caller = installer }) actor class Main() {
                 #EthMainnet(#Cloudflare),
             );
 
-            let source = #Chain(0x1 : Nat64);
+            let service : EvmRpc.RpcService = #Chain(0x1 : Nat64);
             let json = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}";
             let maxResponseBytes : Nat64 = 1000;
 
@@ -67,7 +68,7 @@ shared ({ caller = installer }) actor class Main() {
             };
 
             // `requestCost()`
-            let cyclesResult = await canister.requestCost(source, json, maxResponseBytes);
+            let cyclesResult = await canister.requestCost(service, json, maxResponseBytes);
             let cycles = switch cyclesResult {
                 case (#Ok cycles) { cycles };
                 case (#Err err) {
@@ -80,7 +81,7 @@ shared ({ caller = installer }) actor class Main() {
             };
 
             // `request()` without cycles
-            let resultWithoutCycles = await canister.request(source, json, maxResponseBytes);
+            let resultWithoutCycles = await canister.request(service, json, maxResponseBytes);
             assert switch resultWithoutCycles {
                 case (#Err(#ProviderError(#TooFewCycles { expected }))) expected == cycles;
                 case _ false;
@@ -107,7 +108,7 @@ shared ({ caller = installer }) actor class Main() {
             };
 
             // `request()` without sufficient cycles
-            let resultWithoutEnoughCycles = await canister.request(source, json, maxResponseBytes);
+            let resultWithoutEnoughCycles = await canister.request(service, json, maxResponseBytes);
             Cycles.add(cycles - 1);
             assert switch resultWithoutEnoughCycles {
                 case (#Err(#ProviderError(#TooFewCycles { expected }))) expected == cycles;
@@ -121,11 +122,11 @@ shared ({ caller = installer }) actor class Main() {
                 #Inconsistent : [(canister.RpcService, RpcResult<T>)];
             };
 
-            func assertOk<T>(method : Text, result : MultiRpcResult<T>) {
+            func assertOk<T>(networkName : Text, method : Text, result : MultiRpcResult<T>) {
                 switch result {
                     case (#Consistent(#Ok _)) {};
                     case (#Consistent(#Err err)) {
-                        addError("Received consistent error for" # " " # method # ": " # debug_show err);
+                        addError("Received consistent error for " # networkName # " " # method # ": " # debug_show err);
                     };
                     case (#Inconsistent(results)) {
                         for ((service, result) in results.vals()) {
@@ -146,80 +147,128 @@ shared ({ caller = installer }) actor class Main() {
                 };
             };
 
-            let candidRpcCycles = 1_000_000_000_000;
-            let ethMainnetSource = #EthMainnet(?[#Alchemy, #Ankr, #Cloudflare, #BlockPi, #PublicNode]);
+            let candidRpcCycles = 100_000_000_000;
+            let allServices : [(Text, EvmRpc.RpcServices)] = [
+                (
+                    "Ethereum",
+                    #EthMainnet(?[#Alchemy, #Ankr, #Cloudflare, #BlockPi, #PublicNode]),
+                ),
+                (
+                    "Arbitrum",
+                    #Custom {
+                        chainId = 42161;
+                        services = [{
+                            url = "https://rpc.ankr.com/arbitrum";
+                            headers = null;
+                        }];
+                    },
+                ),
+                (
+                    "Base",
+                    #Custom {
+                        chainId = 8453;
+                        services = [{
+                            url = "https://mainnet.base.org";
+                            headers = null;
+                        }];
+                    },
+                ),
+            ];
 
-            switch (await canister.eth_getBlockByNumber(ethMainnetSource, null, #Latest)) {
-                case (#Consistent(#Err(#ProviderError(#TooFewCycles _)))) {};
-                case result {
-                    addError("Received unexpected result: " # debug_show result);
+            func testCandidRpc(networkName : Text, services : EvmRpc.RpcServices) : async () {
+                switch (await canister.eth_getBlockByNumber(services, null, #Latest)) {
+                    case (#Consistent(#Err(#ProviderError(#TooFewCycles _)))) {};
+                    case result {
+                        addError("Received unexpected result for " # networkName # ": " # debug_show result);
+                    };
+                };
+
+                Cycles.add(candidRpcCycles);
+                assertOk(
+                    networkName,
+                    "eth_getLogs",
+                    await canister.eth_getLogs(
+                        services,
+                        null,
+                        {
+                            addresses = ["0xB9B002e70AdF0F544Cd0F6b80BF12d4925B0695F"];
+                            fromBlock = null;
+                            toBlock = null;
+                            topics = ?[
+                                ["0x4d69d0bd4287b7f66c548f90154dc81bc98f65a1b362775df5ae171a2ccd262b"],
+                                [
+                                    "0x000000000000000000000000352413d00d2963dfc58bc2d6c57caca1e714d428",
+                                    "0x000000000000000000000000b6bc16189ec3d33041c893b44511c594b1736b8a",
+                                ],
+                            ];
+                        },
+                    ),
+                );
+                Cycles.add(candidRpcCycles);
+                assertOk(
+                    networkName,
+                    "eth_getBlockByNumber",
+                    await canister.eth_getBlockByNumber(services, null, #Latest),
+                );
+                Cycles.add(candidRpcCycles);
+                assertOk(
+                    networkName,
+                    "eth_getTransactionReceipt",
+                    await canister.eth_getTransactionReceipt(services, null, "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"),
+                );
+                Cycles.add(candidRpcCycles);
+                assertOk(
+                    networkName,
+                    "eth_getTransactionCount",
+                    await canister.eth_getTransactionCount(
+                        services,
+                        null,
+                        {
+                            address = "0x1789F79e95324A47c5Fd6693071188e82E9a3558";
+                            block = #Latest;
+                        },
+                    ),
+                );
+                Cycles.add(candidRpcCycles);
+                assertOk(
+                    networkName,
+                    "eth_feeHistory",
+                    await canister.eth_feeHistory(
+                        services,
+                        null,
+                        {
+                            blockCount = 3;
+                            newestBlock = #Latest;
+                            rewardPercentiles = null;
+                        },
+                    ),
+                );
+                switch services {
+                    case (#Custom _) {
+                        // Skip sending transaction for custom chains due to chain ID mismatch
+                    };
+                    case _ {
+                        Cycles.add(candidRpcCycles);
+                        assertOk(
+                            networkName,
+                            "eth_sendRawTransaction",
+                            await canister.eth_sendRawTransaction(
+                                services,
+                                null,
+                                "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
+                            ),
+                        );
+                    };
                 };
             };
 
-            Cycles.add(candidRpcCycles);
-            assertOk(
-                "eth_getLogs",
-                await canister.eth_getLogs(
-                    ethMainnetSource,
-                    null,
-                    {
-                        addresses = ["0xB9B002e70AdF0F544Cd0F6b80BF12d4925B0695F"];
-                        fromBlock = null;
-                        toBlock = null;
-                        topics = ?[
-                            ["0x4d69d0bd4287b7f66c548f90154dc81bc98f65a1b362775df5ae171a2ccd262b"],
-                            [
-                                "0x000000000000000000000000352413d00d2963dfc58bc2d6c57caca1e714d428",
-                                "0x000000000000000000000000b6bc16189ec3d33041c893b44511c594b1736b8a",
-                            ],
-                        ];
-                    },
-                ),
-            );
-            Cycles.add(candidRpcCycles);
-            assertOk(
-                "eth_getBlockByNumber",
-                await canister.eth_getBlockByNumber(ethMainnetSource, null, #Latest),
-            );
-            Cycles.add(candidRpcCycles);
-            assertOk(
-                "eth_getTransactionReceipt",
-                await canister.eth_getTransactionReceipt(ethMainnetSource, null, "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"),
-            );
-            Cycles.add(candidRpcCycles);
-            assertOk(
-                "eth_getTransactionCount",
-                await canister.eth_getTransactionCount(
-                    ethMainnetSource,
-                    null,
-                    {
-                        address = "0x1789F79e95324A47c5Fd6693071188e82E9a3558";
-                        block = #Latest;
-                    },
-                ),
-            );
-            Cycles.add(candidRpcCycles);
-            assertOk(
-                "eth_feeHistory",
-                await canister.eth_feeHistory(
-                    ethMainnetSource,
-                    null,
-                    {
-                        blockCount = 3;
-                        newestBlock = #Latest;
-                        rewardPercentiles = null;
-                    },
-                ),
-            );
-            Cycles.add(candidRpcCycles);
-            assertOk(
-                "eth_sendRawTransaction",
-                await canister.eth_sendRawTransaction(
-                    ethMainnetSource,
-                    null,
-                    "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
-                ),
-            );
+            for ((name, services) in allServices.vals()) {
+                pending.add(testCandidRpc(name, services));
+            };
+        };
+
+        for (awaitable in pending.vals()) {
+            await awaitable;
         };
 
         if (relevantTestCount == 0) {
