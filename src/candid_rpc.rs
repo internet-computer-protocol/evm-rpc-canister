@@ -213,12 +213,24 @@ impl CandidRpcClient {
     pub async fn eth_send_raw_transaction(
         &self,
         raw_signed_transaction_hex: String,
-    ) -> MultiRpcResult<SendRawTransactionResult> {
+    ) -> MultiRpcResult<candid_types::SendRawTransactionStatus> {
+        use candid_types::SendRawTransactionStatus::*;
         process_result(
             RpcMethod::EthSendRawTransaction,
             self.client
                 .multi_eth_send_raw_transaction(raw_signed_transaction_hex)
-                .await,
+                .await
+                .map(|result| match result {
+                    SendRawTransactionResult::Ok => Ok({
+                        let tx = ethers_core::types::transaction::response::Transaction::from_str(
+                            raw_signed_transaction_hex,
+                        );
+                        tx.hash().to_str()
+                    }),
+                    SendRawTransactionResult::InsufficientFunds => InsufficientFunds,
+                    SendRawTransactionResult::NonceTooLow => NonceTooLow,
+                    SendRawTransactionResult::NonceTooHigh => NonceTooHigh,
+                }),
         )
     }
 }

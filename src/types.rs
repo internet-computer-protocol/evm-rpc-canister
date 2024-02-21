@@ -673,6 +673,14 @@ pub mod candid_types {
             )
         }
     }
+
+    #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, CandidType)]
+    pub enum SendRawTransactionStatus {
+        Ok(Option<String>),
+        InsufficientFunds,
+        NonceTooLow,
+        NonceTooHigh,
+    }
 }
 
 #[test]

@@ -303,7 +303,7 @@ impl EvmRpcSetup {
         source: RpcServices,
         config: Option<RpcConfig>,
         signed_raw_transaction_hex: &str,
-    ) -> CallFlow<MultiRpcResult<SendRawTransactionResult>> {
+    ) -> CallFlow<MultiRpcResult<candid_types::SendRawTransactionStatus>> {
         self.call_update(
             "eth_sendRawTransaction",
             Encode!(&source, &config, &signed_raw_transaction_hex).unwrap(),
@@ -1156,7 +1156,12 @@ fn eth_send_raw_transaction_should_succeed() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(response, SendRawTransactionResult::Ok);
+    assert_eq!(
+        response,
+        SendRawTransactionStatus::Ok(
+            "0x33469b22e9f636356c4160a87eb19df52b7412e8eac32a4a55ffe88ea8350788".to_string()
+        )
+    );
 }
 
 #[test]
@@ -1351,11 +1356,14 @@ fn candid_rpc_should_return_inconsistent_results() {
         vec![
             (
                 RpcService::EthMainnet(EthMainnetService::Ankr),
-                Ok(SendRawTransactionResult::Ok)
+                Ok(SendRawTransactionStatus::Ok(
+                    "0x33469b22e9f636356c4160a87eb19df52b7412e8eac32a4a55ffe88ea8350788"
+                        .to_string()
+                ))
             ),
             (
                 RpcService::EthMainnet(EthMainnetService::Cloudflare),
-                Ok(SendRawTransactionResult::NonceTooLow)
+                Ok(SendRawTransactionStatus::NonceTooLow)
             )
         ]
     );
@@ -1524,7 +1532,12 @@ fn candid_rpc_should_handle_already_known() {
         ))
         .wait()
         .expect_consistent();
-    assert_eq!(result, Ok(SendRawTransactionResult::Ok));
+    assert_eq!(
+        result,
+        Ok(SendRawTransactionStatus::Ok(
+            "0x33469b22e9f636356c4160a87eb19df52b7412e8eac32a4a55ffe88ea8350788".to_string()
+        ))
+    );
     let rpc_method = || RpcMethod::EthSendRawTransaction.into();
     assert_eq!(
         setup.get_metrics(),

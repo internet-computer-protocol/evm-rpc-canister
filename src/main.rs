@@ -1,7 +1,7 @@
 use std::ffi::OsStr;
 
 use candid::candid_method;
-use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError, SendRawTransactionResult};
+use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError};
 
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
@@ -88,7 +88,7 @@ pub async fn eth_send_raw_transaction(
     source: RpcServices,
     config: Option<RpcConfig>,
     raw_signed_transaction_hex: String,
-) -> MultiRpcResult<SendRawTransactionResult> {
+) -> MultiRpcResult<candid_types::SendRawTransactionStatus> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => {
             source
