@@ -9,7 +9,7 @@ use cketh_common::{
     checked_amount::CheckedAmountOf,
     eth_rpc::{
         Block, Data, FeeHistory, FixedSizeData, Hash, HttpOutcallError, JsonRpcError, LogEntry,
-        ProviderError, RpcError, SendRawTransactionResult,
+        ProviderError, RpcError,
     },
     eth_rpc_client::{
         providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
@@ -31,7 +31,7 @@ use ic_test_utilities_load_wasm::load_wasm;
 use maplit::hashmap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use evm_rpc::*;
+use evm_rpc::{candid_types::SendRawTransactionStatus, *};
 use mock::*;
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
@@ -45,6 +45,10 @@ const MOCK_REQUEST_URL: &str = "https://cloudflare-eth.com";
 const MOCK_REQUEST_PAYLOAD: &str = r#"{"id":1,"jsonrpc":"2.0","method":"eth_gasPrice"}"#;
 const MOCK_REQUEST_RESPONSE: &str = r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#;
 const MOCK_REQUEST_RESPONSE_BYTES: u64 = 1000;
+
+const MOCK_TRANSACTION: &str="0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83";
+const MOCK_TRANSACTION_HASH: &str =
+    "0x33469b22e9f636356c4160a87eb19df52b7412e8eac32a4a55ffe88ea8350788";
 
 fn evm_rpc_wasm() -> Vec<u8> {
     load_wasm(std::env::var("CARGO_MANIFEST_DIR").unwrap(), "evm_rpc", &[])
@@ -1144,11 +1148,7 @@ fn eth_fee_history_should_succeed() {
 fn eth_send_raw_transaction_should_succeed() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let response = setup
-        .eth_send_raw_transaction(
-            RpcServices::EthMainnet(None),
-            None,
-            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
-        )
+        .eth_send_raw_transaction(RpcServices::EthMainnet(None), None, MOCK_TRANSACTION)
         .mock_http(MockOutcallBuilder::new(
             200,
             r#"{"id":0,"jsonrpc":"2.0","result":"Ok"}"#,
@@ -1158,9 +1158,7 @@ fn eth_send_raw_transaction_should_succeed() {
         .unwrap();
     assert_eq!(
         response,
-        SendRawTransactionStatus::Ok(
-            "0x33469b22e9f636356c4160a87eb19df52b7412e8eac32a4a55ffe88ea8350788".to_string()
-        )
+        SendRawTransactionStatus::Ok(Some(Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()))
     );
 }
 
@@ -1337,9 +1335,12 @@ fn candid_rpc_should_return_inconsistent_results() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let results = setup
         .eth_send_raw_transaction(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
+            RpcServices::EthMainnet(Some(vec![
+                EthMainnetService::Ankr,
+                EthMainnetService::Cloudflare,
+            ])),
             None,
-            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
+            MOCK_TRANSACTION,
         )
         .mock_http_once(MockOutcallBuilder::new(
             200,
@@ -1356,10 +1357,9 @@ fn candid_rpc_should_return_inconsistent_results() {
         vec![
             (
                 RpcService::EthMainnet(EthMainnetService::Ankr),
-                Ok(SendRawTransactionStatus::Ok(
-                    "0x33469b22e9f636356c4160a87eb19df52b7412e8eac32a4a55ffe88ea8350788"
-                        .to_string()
-                ))
+                Ok(SendRawTransactionStatus::Ok(Some(
+                    Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()
+                )))
             ),
             (
                 RpcService::EthMainnet(EthMainnetService::Cloudflare),
@@ -1518,9 +1518,12 @@ fn candid_rpc_should_handle_already_known() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let result = setup
         .eth_send_raw_transaction(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
+            RpcServices::EthMainnet(Some(vec![
+                EthMainnetService::Ankr,
+                EthMainnetService::Cloudflare,
+            ])),
             None,
-            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
+            MOCK_TRANSACTION,
         )
         .mock_http_once(MockOutcallBuilder::new(
             200,
@@ -1534,9 +1537,9 @@ fn candid_rpc_should_handle_already_known() {
         .expect_consistent();
     assert_eq!(
         result,
-        Ok(SendRawTransactionStatus::Ok(
-            "0x33469b22e9f636356c4160a87eb19df52b7412e8eac32a4a55ffe88ea8350788".to_string()
-        ))
+        Ok(SendRawTransactionStatus::Ok(Some(
+            Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()
+        )))
     );
     let rpc_method = || RpcMethod::EthSendRawTransaction.into();
     assert_eq!(
@@ -1560,14 +1563,14 @@ fn candid_rpc_should_recognize_rate_limit() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
     let result = setup
         .eth_send_raw_transaction(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr, EthMainnetService::Cloudflare])),
+            RpcServices::EthMainnet(Some(vec![
+                EthMainnetService::Ankr,
+                EthMainnetService::Cloudflare,
+            ])),
             None,
-            "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
+            MOCK_TRANSACTION,
         )
-        .mock_http(MockOutcallBuilder::new(
-            429,
-            "(Rate limit error message)",
-        ))
+        .mock_http(MockOutcallBuilder::new(429, "(Rate limit error message)"))
         .wait()
         .expect_consistent();
     assert_eq!(
