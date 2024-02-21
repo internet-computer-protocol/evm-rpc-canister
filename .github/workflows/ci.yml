@@ -18,6 +18,9 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+
       - run: rustup component add clippy
 
       - name: Cargo clippy
@@ -35,6 +38,9 @@ jobs:
         uses: actions/checkout@master
 
       - uses: Swatinem/rust-cache@v2
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
 
       - name: Cargo test
         run: unset CI && cargo test
