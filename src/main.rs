@@ -340,7 +340,7 @@ fn stable_size() -> u64 {
 #[query(name = "stableRead", guard = "require_manage_or_controller")]
 fn stable_read(offset: u64, length: u64) -> Vec<u8> {
     let mut buffer = vec![0; length as usize];
-    ic_cdk::api::stable::stable64_read(offset, buffer.as_mut_slice());
+    ic_cdk::api::stable::stable64_read(offset, &mut buffer);
     buffer
 }
 

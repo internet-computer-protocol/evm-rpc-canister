@@ -31,7 +31,7 @@ use ic_test_utilities_load_wasm::load_wasm;
 use maplit::hashmap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use evm_rpc::{candid_types::SendRawTransactionStatus, *};
+use evm_rpc::*;
 use mock::*;
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
@@ -1158,7 +1158,9 @@ fn eth_send_raw_transaction_should_succeed() {
         .unwrap();
     assert_eq!(
         response,
-        SendRawTransactionStatus::Ok(Some(Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()))
+        candid_types::SendRawTransactionStatus::Ok(Some(
+            Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()
+        ))
     );
 }
 
@@ -1357,13 +1359,13 @@ fn candid_rpc_should_return_inconsistent_results() {
         vec![
             (
                 RpcService::EthMainnet(EthMainnetService::Ankr),
-                Ok(SendRawTransactionStatus::Ok(Some(
+                Ok(candid_types::SendRawTransactionStatus::Ok(Some(
                     Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()
                 )))
             ),
             (
                 RpcService::EthMainnet(EthMainnetService::Cloudflare),
-                Ok(SendRawTransactionStatus::NonceTooLow)
+                Ok(candid_types::SendRawTransactionStatus::NonceTooLow)
             )
         ]
     );
@@ -1537,7 +1539,7 @@ fn candid_rpc_should_handle_already_known() {
         .expect_consistent();
     assert_eq!(
         result,
-        Ok(SendRawTransactionStatus::Ok(Some(
+        Ok(candid_types::SendRawTransactionStatus::Ok(Some(
             Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()
         )))
     );
