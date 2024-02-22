@@ -13,6 +13,7 @@ use cketh_common::{
     },
     lifecycle::EthereumNetwork,
 };
+use ethers_core::{types::Transaction, utils::rlp};
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 
 use crate::*;
@@ -213,14 +214,28 @@ impl CandidRpcClient {
     pub async fn eth_send_raw_transaction(
         &self,
         raw_signed_transaction_hex: String,
-    ) -> MultiRpcResult<SendRawTransactionResult> {
+    ) -> MultiRpcResult<candid_types::SendRawTransactionStatus> {
+        use candid_types::SendRawTransactionStatus::*;
+        let transaction_hash = get_transaction_hash(&raw_signed_transaction_hex);
         process_result(
             RpcMethod::EthSendRawTransaction,
             self.client
                 .multi_eth_send_raw_transaction(raw_signed_transaction_hex)
                 .await,
         )
+        .map(|result| match result {
+            SendRawTransactionResult::Ok => Ok(transaction_hash),
+            SendRawTransactionResult::InsufficientFunds => InsufficientFunds,
+            SendRawTransactionResult::NonceTooLow => NonceTooLow,
+            SendRawTransactionResult::NonceTooHigh => NonceTooHigh,
+        })
     }
+}
+
+fn get_transaction_hash(raw_signed_transaction_hex: &str) -> Option<Hash> {
+    let bytes = hex_to_bytes(raw_signed_transaction_hex)?;
+    let transaction: Transaction = rlp::decode(&bytes).ok()?;
+    Some(Hash(transaction.hash.0))
 }
 
 #[test]

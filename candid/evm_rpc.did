@@ -189,7 +189,7 @@ type RpcServices = variant {
   };
 };
 type SendRawTransactionStatus = variant {
-  Ok;
+  Ok : opt text;
   NonceTooLow;
   NonceTooHigh;
   InsufficientFunds;

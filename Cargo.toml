@@ -37,6 +37,7 @@ serde_json = "1.0"
 url = "2.4"
 async-trait = "0.1"
 hex = "0.4"
+ethers-core = "2.0"
 
 [dev-dependencies]
 ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
@@ -60,7 +61,7 @@ ic-cdk-macros = "0.7"
 ic-cdk-bindgen = "0.1"
 
 [patch.crates-io]
-wasm-bindgen = { git = "https://github.com/dfinity/wasm-bindgen", rev = "77722c689ed4f2392685efd348c91c7d72e5d07f" }
+wasm-bindgen = { git = "https://github.com/dfinity/wasm-bindgen", rev = "af4023035c9ef832017bcb65502c218382ff61b2" }
 
 [workspace]
 members = ["e2e/rust"]

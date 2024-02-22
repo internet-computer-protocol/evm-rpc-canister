@@ -450,7 +450,7 @@ pub enum MultiRpcResult<T> {
 }
 
 impl<T> MultiRpcResult<T> {
-    pub fn map<R>(self, f: impl Fn(T) -> R) -> MultiRpcResult<R> {
+    pub fn map<R>(self, mut f: impl FnMut(T) -> R) -> MultiRpcResult<R> {
         match self {
             MultiRpcResult::Consistent(result) => MultiRpcResult::Consistent(result.map(f)),
             MultiRpcResult::Inconsistent(results) => MultiRpcResult::Inconsistent(
@@ -672,6 +672,14 @@ pub mod candid_types {
                 },
             )
         }
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
+    pub enum SendRawTransactionStatus {
+        Ok(Option<Hash>),
+        InsufficientFunds,
+        NonceTooLow,
+        NonceTooHigh,
     }
 }
 

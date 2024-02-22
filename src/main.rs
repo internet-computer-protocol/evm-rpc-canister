@@ -1,7 +1,7 @@
 use std::ffi::OsStr;
 
 use candid::candid_method;
-use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError, SendRawTransactionResult};
+use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError};
 
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
@@ -88,7 +88,7 @@ pub async fn eth_send_raw_transaction(
     source: RpcServices,
     config: Option<RpcConfig>,
     raw_signed_transaction_hex: String,
-) -> MultiRpcResult<SendRawTransactionResult> {
+) -> MultiRpcResult<candid_types::SendRawTransactionStatus> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => {
             source
@@ -339,9 +339,8 @@ fn stable_size() -> u64 {
 
 #[query(name = "stableRead", guard = "require_manage_or_controller")]
 fn stable_read(offset: u64, length: u64) -> Vec<u8> {
-    let mut buffer = Vec::new();
-    buffer.resize(length as usize, 0);
-    ic_cdk::api::stable::stable64_read(offset, buffer.as_mut_slice());
+    let mut buffer = vec![0; length as usize];
+    ic_cdk::api::stable::stable64_read(offset, &mut buffer);
     buffer
 }
 
