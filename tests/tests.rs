@@ -539,25 +539,25 @@ fn mock_request_should_succeed_with_all() {
 }
 
 #[test]
-#[should_panic(expected = "assertion failed: `(left == right)`")]
+#[should_panic(expected = "assertion `left == right` failed")]
 fn mock_request_should_fail_with_url() {
     mock_request(|builder| builder.with_url("https://not-the-url.com"))
 }
 
 #[test]
-#[should_panic(expected = "assertion failed: `(left == right)`")]
+#[should_panic(expected = "assertion `left == right` failed")]
 fn mock_request_should_fail_with_method() {
     mock_request(|builder| builder.with_method(HttpMethod::GET))
 }
 
 #[test]
-#[should_panic(expected = "assertion failed: `(left == right)`")]
+#[should_panic(expected = "assertion `left == right` failed")]
 fn mock_request_should_fail_with_request_headers() {
     mock_request(|builder| builder.with_request_headers(vec![("Custom", "NotValue")]))
 }
 
 #[test]
-#[should_panic(expected = "assertion failed: `(left == right)`")]
+#[should_panic(expected = "assertion `left == right` failed")]
 fn mock_request_should_fail_with_request_body() {
     mock_request(|builder| builder.with_request_body(r#"{"different":"body"}"#))
 }
