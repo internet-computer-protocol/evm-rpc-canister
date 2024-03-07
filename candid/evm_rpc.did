@@ -226,30 +226,31 @@ type ValidationError = variant {
   CredentialPathNotAllowed;
   CredentialHeaderNotAllowed;
 };
+type ProviderId = nat64;
 service : (InitArgs) -> {
-  authorize : (principal, Auth) -> (bool);
-  deauthorize : (principal, Auth) -> (bool);
+  authorize : (principal, Auth) -> (success: bool);
+  deauthorize : (principal, Auth) -> (success: bool);
   eth_feeHistory : (RpcServices, opt RpcConfig, FeeHistoryArgs) -> (MultiFeeHistoryResult);
   eth_getBlockByNumber : (RpcServices, opt RpcConfig, BlockTag) -> (MultiGetBlockByNumberResult);
   eth_getLogs : (RpcServices, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
   eth_getTransactionCount : (RpcServices, opt RpcConfig, GetTransactionCountArgs) -> (
     MultiGetTransactionCountResult
   );
-  eth_getTransactionReceipt : (RpcServices, opt RpcConfig, text) -> (MultiGetTransactionReceiptResult);
-  eth_sendRawTransaction : (RpcServices, opt RpcConfig, text) -> (MultiSendRawTransactionResult);
-  getAccumulatedCycleCount : (nat64) -> (nat) query;
+  eth_getTransactionReceipt : (RpcServices, opt RpcConfig, receipt: text) -> (MultiGetTransactionReceiptResult);
+  eth_sendRawTransaction : (RpcServices, opt RpcConfig, receipt: text) -> (MultiSendRawTransactionResult);
+  getAccumulatedCycleCount : (ProviderId) -> (cycles: nat) query;
   getAuthorized : (Auth) -> (vec principal) query;
   getMetrics : () -> (Metrics) query;
-  getNodesInSubnet : () -> (nat32) query;
-  getOpenRpcAccess : () -> (bool) query;
+  getNodesInSubnet : () -> (numberOfNodes: nat32) query;
+  getOpenRpcAccess : () -> (active: bool) query;
   getProviders : () -> (vec ProviderView) query;
   getServiceProviderMap : () -> (vec record { RpcService; nat64 }) query;
   manageProvider : (ManageProviderArgs) -> ();
   registerProvider : (RegisterProviderArgs) -> (nat64);
-  request : (RpcService, text, nat64) -> (RequestResult);
-  requestCost : (RpcService, text, nat64) -> (RequestCostResult) query;
-  setOpenRpcAccess : (bool) -> ();
-  unregisterProvider : (nat64) -> (bool);
+  request : (RpcService, json: text, maxResponseBytes: nat64) -> (RequestResult);
+  requestCost : (RpcService, json: text, maxResponseBytes: nat64) -> (RequestCostResult) query;
+  setOpenRpcAccess : (active: bool) -> ();
+  unregisterProvider : (ProviderId) -> (bool);
   updateProvider : (UpdateProviderArgs) -> ();
-  withdrawAccumulatedCycles : (nat64, principal) -> ();
+  withdrawAccumulatedCycles : (ProviderId, recipient: principal) -> ();
 };
