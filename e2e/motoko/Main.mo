@@ -2,7 +2,6 @@ import EvmRpc "canister:evm_rpc";
 import EvmRpcStaging13Node "canister:evm_rpc_staging_13_node";
 import EvmRpcStagingFidicuary "canister:evm_rpc_staging_fiduciary";
 
-import Blob "mo:base/Blob";
 import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
 import Cycles "mo:base/ExperimentalCycles";
@@ -10,7 +9,7 @@ import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Evm "mo:evm";
 
-shared ({ caller = installer }) actor class Main() {
+shared ({ caller = installer }) actor class () {
 
     type TestCategory = { #staging; #production };
 
@@ -109,7 +108,7 @@ shared ({ caller = installer }) actor class Main() {
 
             // `request()` without sufficient cycles
             let resultWithoutEnoughCycles = await canister.request(service, json, maxResponseBytes);
-            Cycles.add(cycles - 1);
+            Cycles.add<system>(cycles - 1);
             assert switch resultWithoutEnoughCycles {
                 case (#Err(#ProviderError(#TooFewCycles { expected }))) expected == cycles;
                 case _ false;
@@ -183,7 +182,7 @@ shared ({ caller = installer }) actor class Main() {
                     };
                 };
 
-                Cycles.add(candidRpcCycles);
+                Cycles.add<system>(candidRpcCycles);
                 assertOk(
                     networkName,
                     "eth_getLogs",
@@ -204,19 +203,19 @@ shared ({ caller = installer }) actor class Main() {
                         },
                     ),
                 );
-                Cycles.add(candidRpcCycles);
+                Cycles.add<system>(candidRpcCycles);
                 assertOk(
                     networkName,
                     "eth_getBlockByNumber",
                     await canister.eth_getBlockByNumber(services, null, #Latest),
                 );
-                Cycles.add(candidRpcCycles);
+                Cycles.add<system>(candidRpcCycles);
                 assertOk(
                     networkName,
                     "eth_getTransactionReceipt",
                     await canister.eth_getTransactionReceipt(services, null, "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"),
                 );
-                Cycles.add(candidRpcCycles);
+                Cycles.add<system>(candidRpcCycles);
                 assertOk(
                     networkName,
                     "eth_getTransactionCount",
@@ -229,7 +228,7 @@ shared ({ caller = installer }) actor class Main() {
                         },
                     ),
                 );
-                Cycles.add(candidRpcCycles);
+                Cycles.add<system>(candidRpcCycles);
                 assertOk(
                     networkName,
                     "eth_feeHistory",
@@ -248,7 +247,7 @@ shared ({ caller = installer }) actor class Main() {
                         // Skip sending transaction for custom chains due to chain ID mismatch
                     };
                     case _ {
-                        Cycles.add(candidRpcCycles);
+                        Cycles.add<system>(candidRpcCycles);
                         assertOk(
                             networkName,
                             "eth_sendRawTransaction",
