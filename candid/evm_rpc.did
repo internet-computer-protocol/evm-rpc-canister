@@ -254,4 +254,3 @@ service : (InitArgs) -> {
   updateProvider : (UpdateProviderArgs) -> ();
   withdrawAccumulatedCycles : (ProviderId, recipient: principal) -> ();
 };
-a
