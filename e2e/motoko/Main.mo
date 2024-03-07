@@ -9,7 +9,7 @@ import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Evm "mo:evm";
 
-shared ({ caller = installer }) actor class () {
+shared ({ caller = installer }) actor class Main() {
 
     type TestCategory = { #staging; #production };
 
