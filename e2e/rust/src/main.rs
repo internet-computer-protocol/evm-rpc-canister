@@ -1,8 +1,8 @@
 use candid::candid_method;
 use ic_cdk_macros::update;
 
-use e2e::declarations::evm_rpc_staging_fiduciary::{
-    evm_rpc_staging_fiduciary as evm_rpc, ProviderError, RpcError, RpcService,
+use e2e::declarations::EVM_RPC_STAGING_FIDUCIARY::{
+    ProviderError, RpcError, RpcService, EVM_RPC_STAGING_FIDUCIARY as evm_rpc,
 };
 
 fn main() {}

@@ -1,4 +1,3 @@
-import Blob "mo:base/Blob";
 import Debug "mo:base/Debug";
 import Cycles "mo:base/ExperimentalCycles";
 import Nat64 "mo:base/Nat64";
@@ -91,7 +90,7 @@ module {
 
         public func requestPlain(payload : Text, maxResponseBytes : Nat64) : async RpcResult<Text> {
             func requestPlain_(payload : Text, maxResponseBytes : Nat64, cycles : Nat) : async RpcResult<Text> {
-                Cycles.add(cycles);
+                Cycles.add<system>(cycles);
                 switch (await actor_.request(service, payload, maxResponseBytes)) {
                     case (#Ok ok) { #ok ok };
                     case (#Err err) { #err(unwrapError(err)) };
