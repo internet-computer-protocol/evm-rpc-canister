@@ -274,19 +274,6 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
                 .entries
                 .into_iter()
                 .filter(|entry| entry.timestamp >= max_skip_timestamp)
-                .map(|mut entry| {
-                    // Remove absolute file paths
-                    if !entry.file.starts_with("src/") {
-                        entry.file = format!(
-                            ".../{}",
-                            std::path::Path::new(&OsStr::new(&entry.file))
-                                .file_name()
-                                .and_then(|s| s.to_str())
-                                .unwrap_or("<unknown>"),
-                        );
-                    }
-                    entry
-                })
                 .collect();
 
             fn ordering_from_query_params(sort: Option<&str>, max_skip_timestamp: u64) -> Sort {
