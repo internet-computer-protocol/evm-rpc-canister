@@ -27,7 +27,7 @@ ic-stable-structures = { workspace = true }
 ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
-cketh-common = { git = "https://github.com/dfinity/ic", rev = "6a92358bb862d815e16a071228aa64588015da39", package = "ic-cketh-minter" }
+cketh-common = { git = "https://github.com/dfinity/ic", rev = "832120fbe5e665e05d32d767deeedbed0252001a", package = "ic-cketh-minter" }
 maplit = "1.0"
 num = "0.4"
 num-traits = "0.2"
