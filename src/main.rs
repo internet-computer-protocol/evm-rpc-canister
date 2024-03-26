@@ -268,11 +268,8 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
                 }
             }
 
-            log.entries = log
-                .entries
-                .into_iter()
-                .filter(|entry| entry.timestamp >= max_skip_timestamp)
-                .collect();
+            log.entries
+                .retain(|entry| entry.timestamp >= max_skip_timestamp);
 
             fn ordering_from_query_params(sort: Option<&str>, max_skip_timestamp: u64) -> Sort {
                 match sort {
