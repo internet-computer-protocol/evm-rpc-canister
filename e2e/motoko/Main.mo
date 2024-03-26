@@ -191,8 +191,8 @@ shared ({ caller = installer }) actor class Main() {
                         null,
                         {
                             addresses = ["0xB9B002e70AdF0F544Cd0F6b80BF12d4925B0695F"];
-                            fromBlock = null;
-                            toBlock = null;
+                            fromBlock = ?#Number 19520540;
+                            toBlock = ?#Number 19520940;
                             topics = ?[
                                 ["0x4d69d0bd4287b7f66c548f90154dc81bc98f65a1b362775df5ae171a2ccd262b"],
                                 [
