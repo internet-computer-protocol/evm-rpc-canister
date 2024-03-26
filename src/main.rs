@@ -1,5 +1,3 @@
-use std::ffi::OsStr;
-
 use candid::candid_method;
 use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError};
 
