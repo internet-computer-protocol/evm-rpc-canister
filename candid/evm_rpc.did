@@ -236,8 +236,8 @@ service : (InitArgs) -> {
   eth_getTransactionCount : (RpcServices, opt RpcConfig, GetTransactionCountArgs) -> (
     MultiGetTransactionCountResult
   );
-  eth_getTransactionReceipt : (RpcServices, opt RpcConfig, receipt: text) -> (MultiGetTransactionReceiptResult);
-  eth_sendRawTransaction : (RpcServices, opt RpcConfig, receipt: text) -> (MultiSendRawTransactionResult);
+  eth_getTransactionReceipt : (RpcServices, opt RpcConfig, hash: text) -> (MultiGetTransactionReceiptResult);
+  eth_sendRawTransaction : (RpcServices, opt RpcConfig, rawSignedTransactionHex: text) -> (MultiSendRawTransactionResult);
   getAccumulatedCycleCount : (ProviderId) -> (cycles: nat) query;
   getAuthorized : (Auth) -> (vec principal) query;
   getMetrics : () -> (Metrics) query;
