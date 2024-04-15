@@ -1,3 +1,5 @@
+# Bazel workspace
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
@@ -14,7 +16,7 @@ rust_register_toolchains(
     edition = "2021",
     versions = [
         "1.76.0",
-    ]
+    ],
 )
 
 load("@rules_rust//crate_universe:repositories.bzl", "crate_universe_dependencies")
