@@ -6,9 +6,6 @@ authors = ["DFINITY Foundation"]
 readme = "README.md"
 edition = "2021"
 
-[lib]
-crate-type = ["cdylib", "lib"]
-
 [profile.release]
 debug = false
 lto = true
