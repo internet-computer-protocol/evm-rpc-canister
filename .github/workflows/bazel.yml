@@ -10,6 +10,20 @@ on:
     paths-ignore:
       - "README.md"
 jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Bazel sync
+        run: scripts/bazel-sync
+
+      - name: Check unchanged
+        run: git diff -q
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -18,11 +32,11 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-    #   - name: Install dfx
-    #     uses: dfinity/setup-dfx@main
+      #   - name: Install dfx
+      #     uses: dfinity/setup-dfx@main
 
-    #   - name: Start dfx
-    #     run: dfx start --background
+      #   - name: Start dfx
+      #     run: dfx start --background
 
-      - name: Build
+      - name: Bazel build
         run: bazel build evm_rpc
