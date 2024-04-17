@@ -53,7 +53,7 @@ type GetLogsArgs = record {
   fromBlock : opt BlockTag;
   toBlock : opt BlockTag;
   addresses : vec text;
-  topics : opt vec vec text;
+  topics : opt vec Topic;
 };
 type GetTransactionCountArgs = record { address : text; block : BlockTag };
 type HttpHeader = record { value : text; name : text };
@@ -125,6 +125,7 @@ type ProviderError = variant {
   ProviderNotFound;
   NoPermission;
 };
+type ProviderId = nat64;
 type ProviderView = record {
   cyclesPerCall : nat64;
   owner : principal;
@@ -194,6 +195,9 @@ type SendRawTransactionStatus = variant {
   NonceTooHigh;
   InsufficientFunds;
 };
+// Each topic is a `vec text` of topic data composed with the "or" operator.
+// See https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getlogs
+type Topic = vec text;
 type TransactionReceipt = record {
   to : text;
   status : nat;
@@ -226,7 +230,6 @@ type ValidationError = variant {
   CredentialPathNotAllowed;
   CredentialHeaderNotAllowed;
 };
-type ProviderId = nat64;
 service : (InitArgs) -> {
   authorize : (principal, Auth) -> (success: bool);
   deauthorize : (principal, Auth) -> (success: bool);
