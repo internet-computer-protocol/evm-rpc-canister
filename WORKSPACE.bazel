@@ -12,11 +12,6 @@ git_repository(
     commit="ca5e5052886de781021506814d2c6502e375da48",
 )
 
-# local_repository(
-#     name="ic",
-#     path="submodules/ic",
-# )
-
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
