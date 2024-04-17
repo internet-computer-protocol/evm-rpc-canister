@@ -1,0 +1,28 @@
+name: Bazel
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+    paths-ignore:
+      - "README.md"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - uses: Swatinem/rust-cache@v2
+
+    #   - name: Install dfx
+    #     uses: dfinity/setup-dfx@main
+
+    #   - name: Start dfx
+    #     run: dfx start --background
+
+      - name: Build
+        run: bazel build evm_rpc
