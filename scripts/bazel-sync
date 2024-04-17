@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 # Update `cargo-bazel-lock.json`
 
-CARGO_BAZEL_REPIN=1 bazel sync --only=crate_index
+# CARGO_BAZEL_REPIN=1 bazel sync --only=crate_index
+bazel sync

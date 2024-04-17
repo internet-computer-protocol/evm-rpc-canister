@@ -19,7 +19,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Bazel sync
-        run: scripts/bazel-sync
+        run: bazel sync
 
       - name: Check unchanged
         run: git diff -q
