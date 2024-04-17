@@ -10,7 +10,7 @@ on:
     paths-ignore:
       - "README.md"
 jobs:
-  sync:
+  pin:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -18,8 +18,8 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Bazel sync script
-        run: scripts/bazel-sync
+      - name: Bazel pin
+        run: scripts/bazel-pin
 
       - name: Check unchanged
         run: git diff -q
