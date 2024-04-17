@@ -40,18 +40,18 @@ hex = "0.4"
 ethers-core = "2.0"
 
 [dev-dependencies]
-ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+ic-config = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
 assert_matches = "1.5"
 
 [workspace.dependencies]
 candid = { version = "0.9" }
 getrandom = { version = "0.2", features = ["custom"] }
-ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
 ic-certified-map = "0.4"
