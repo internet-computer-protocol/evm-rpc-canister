@@ -11,7 +11,6 @@ use ic_canisters_http_types::{
 use ic_cdk::api::is_controller;
 use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
-use ic_nervous_system_common::serve_metrics;
 
 use evm_rpc::*;
 

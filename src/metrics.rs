@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+use dfn_core::api::time_nanos;
+use ic_canisters_http_types::{HttpResponse, HttpResponseBuilder};
+
 use crate::*;
 
 #[macro_export]
@@ -114,4 +117,21 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
 
         Ok(())
     })
+}
+
+pub fn serve_metrics(
+    encode_metrics: impl FnOnce(&mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> std::io::Result<()>,
+) -> HttpResponse {
+    let mut writer =
+        ic_metrics_encoder::MetricsEncoder::new(vec![], time_nanos() as i64 / 1_000_000);
+
+    match encode_metrics(&mut writer) {
+        Ok(()) => HttpResponseBuilder::ok()
+            .header("Content-Type", "text/plain; version=0.0.4")
+            .with_body_and_content_length(writer.into_inner())
+            .build(),
+        Err(err) => {
+            HttpResponseBuilder::server_error(format!("Failed to encode metrics: {}", err)).build()
+        }
+    }
 }

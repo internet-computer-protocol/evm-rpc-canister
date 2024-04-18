@@ -20,7 +20,6 @@ inherits = "release"
 candid = { workspace = true }
 getrandom = { workspace = true }
 ic-canisters-http-types = { workspace = true }
-ic-nervous-system-common = { workspace = true }
 ic-metrics-encoder = { workspace = true }
 ic-stable-structures = { workspace = true }
 ic-certified-map = { workspace = true }
@@ -28,6 +27,7 @@ ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd", package = "ic-canister-log" }
 cketh-common = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd", package = "ic-cketh-minter" }
+dfn_core = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd", package = "dfn_core" }
 maplit = "1.0"
 num = "0.4"
 num-traits = "0.2"
@@ -54,7 +54,6 @@ ic-wasm = "0.6.0"
 candid = { version = "0.9" }
 getrandom = { version = "0.2", features = ["custom"] }
 ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
-ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
 ic-certified-map = "0.4"
