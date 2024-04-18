@@ -1,5 +1,5 @@
 {
-  "checksum": "41d4be0553e50f6f665dc4a14580deead142b425fc05cdc6044c02ab174298c1",
+  "checksum": "150a4fc13108e48457b16827f315e0d9fd91f6f001a53f313a34aceb6e359ab0",
   "crates": {
     "addr2line 0.19.0": {
       "name": "addr2line",
@@ -1149,7 +1149,7 @@
               "target": "serde"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -1603,7 +1603,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -1658,7 +1658,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -1775,7 +1775,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -3827,7 +3827,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -4677,7 +4677,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -6934,7 +6934,7 @@
               "target": "scratch"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -7035,7 +7035,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -8116,7 +8116,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -8714,7 +8714,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -10510,7 +10510,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -21629,7 +21629,7 @@
               "target": "tokio"
             },
             {
-              "id": "wat 1.204.0",
+              "id": "wat 1.205.0",
               "target": "wat"
             }
           ],
@@ -24097,6 +24097,60 @@
       ],
       "license_file": "LICENSE-APACHE"
     },
+    "itertools 0.12.1": {
+      "name": "itertools",
+      "version": "0.12.1",
+      "package_url": "https://github.com/rust-itertools/itertools",
+      "repository": {
+        "Http": {
+          "url": "https://static.crates.io/crates/itertools/0.12.1/download",
+          "sha256": "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
+        }
+      },
+      "targets": [
+        {
+          "Library": {
+            "crate_name": "itertools",
+            "crate_root": "src/lib.rs",
+            "srcs": {
+              "allow_empty": false,
+              "include": [
+                "**/*.rs"
+              ]
+            }
+          }
+        }
+      ],
+      "library_target_name": "itertools",
+      "common_attrs": {
+        "compile_data_glob": [
+          "**"
+        ],
+        "crate_features": {
+          "common": [
+            "use_alloc"
+          ],
+          "selects": {}
+        },
+        "deps": {
+          "common": [
+            {
+              "id": "either 1.11.0",
+              "target": "either"
+            }
+          ],
+          "selects": {}
+        },
+        "edition": "2018",
+        "version": "0.12.1"
+      },
+      "license": "MIT OR Apache-2.0",
+      "license_ids": [
+        "Apache-2.0",
+        "MIT"
+      ],
+      "license_file": "LICENSE-APACHE"
+    },
     "itoa 1.0.11": {
       "name": "itoa",
       "version": "1.0.11",
@@ -25443,7 +25497,7 @@
               "target": "regex_syntax"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -27277,7 +27331,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -27903,7 +27957,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -27971,7 +28025,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -29631,7 +29685,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -30049,7 +30103,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -31715,7 +31769,7 @@
               "target": "anyhow"
             },
             {
-              "id": "itertools 0.10.5",
+              "id": "itertools 0.12.1",
               "target": "itertools"
             },
             {
@@ -31727,7 +31781,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -35176,7 +35230,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -37539,7 +37593,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -37607,7 +37661,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -37871,14 +37925,14 @@
       ],
       "license_file": "LICENSE-APACHE"
     },
-    "syn 2.0.59": {
+    "syn 2.0.60": {
       "name": "syn",
-      "version": "2.0.59",
+      "version": "2.0.60",
       "package_url": "https://github.com/dtolnay/syn",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/syn/2.0.59/download",
-          "sha256": "4a6531ffc7b071655e4ce2e04bd464c4830bb585a61cabb96cf808f05172615a"
+          "url": "https://static.crates.io/crates/syn/2.0.60/download",
+          "sha256": "909518bc7b1c9b779f1bbf07f2929d35af9f0f37e47c6e9ef7f9dddc1e1821f3"
         }
       },
       "targets": [
@@ -37933,7 +37987,7 @@
           "selects": {}
         },
         "edition": "2021",
-        "version": "2.0.59"
+        "version": "2.0.60"
       },
       "license": "MIT OR Apache-2.0",
       "license_ids": [
@@ -38720,7 +38774,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -39459,7 +39513,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -40597,7 +40651,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -42374,7 +42428,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             },
             {
@@ -42504,7 +42558,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             },
             {
@@ -42691,14 +42745,14 @@
       ],
       "license_file": "LICENSE"
     },
-    "wasm-encoder 0.204.0": {
+    "wasm-encoder 0.205.0": {
       "name": "wasm-encoder",
-      "version": "0.204.0",
+      "version": "0.205.0",
       "package_url": "https://github.com/bytecodealliance/wasm-tools/tree/main/crates/wasm-encoder",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/wasm-encoder/0.204.0/download",
-          "sha256": "500cbde9b4d8dfc0335ec729d226dbf083e51e47501ac71e6addaed10ccb0a51"
+          "url": "https://static.crates.io/crates/wasm-encoder/0.205.0/download",
+          "sha256": "90e95b3563d164f33c1cfb0a7efbd5940c37710019be10cd09f800fdec8b0e5c"
         }
       },
       "targets": [
@@ -42730,7 +42784,7 @@
           "selects": {}
         },
         "edition": "2021",
-        "version": "0.204.0"
+        "version": "0.205.0"
       },
       "license": "Apache-2.0 WITH LLVM-exception",
       "license_ids": [
@@ -44057,14 +44111,14 @@
       ],
       "license_file": "LICENSE"
     },
-    "wast 204.0.0": {
+    "wast 205.0.0": {
       "name": "wast",
-      "version": "204.0.0",
+      "version": "205.0.0",
       "package_url": "https://github.com/bytecodealliance/wasm-tools/tree/main/crates/wast",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/wast/204.0.0/download",
-          "sha256": "a0e3de19692b3d4c2fa13775271a751935decf530ae59c408c9f0b510b4ead62"
+          "url": "https://static.crates.io/crates/wast/205.0.0/download",
+          "sha256": "441a6a195b3b5245e26d450bbcc91366c6b652382a22f63cbe3c73240e13b2bb"
         }
       },
       "targets": [
@@ -44112,14 +44166,14 @@
               "target": "unicode_width"
             },
             {
-              "id": "wasm-encoder 0.204.0",
+              "id": "wasm-encoder 0.205.0",
               "target": "wasm_encoder"
             }
           ],
           "selects": {}
         },
         "edition": "2021",
-        "version": "204.0.0"
+        "version": "205.0.0"
       },
       "license": "Apache-2.0 WITH LLVM-exception",
       "license_ids": [
@@ -44127,14 +44181,14 @@
       ],
       "license_file": "LICENSE"
     },
-    "wat 1.204.0": {
+    "wat 1.205.0": {
       "name": "wat",
-      "version": "1.204.0",
+      "version": "1.205.0",
       "package_url": "https://github.com/bytecodealliance/wasm-tools/tree/main/crates/wat",
       "repository": {
         "Http": {
-          "url": "https://static.crates.io/crates/wat/1.204.0/download",
-          "sha256": "4280322d523214024d03bc05e25bdda6088d5229d9515aecd78c5914b1f3e734"
+          "url": "https://static.crates.io/crates/wat/1.205.0/download",
+          "sha256": "19832624d606e7c6bf3cd4caa73578ecec5eac30c768269256d19c79900beb18"
         }
       },
       "targets": [
@@ -44159,14 +44213,14 @@
         "deps": {
           "common": [
             {
-              "id": "wast 204.0.0",
+              "id": "wast 205.0.0",
               "target": "wast"
             }
           ],
           "selects": {}
         },
         "edition": "2021",
-        "version": "1.204.0"
+        "version": "1.205.0"
       },
       "license": "Apache-2.0 WITH LLVM-exception",
       "license_ids": [
@@ -46434,7 +46488,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
@@ -46547,7 +46601,7 @@
               "target": "quote"
             },
             {
-              "id": "syn 2.0.59",
+              "id": "syn 2.0.60",
               "target": "syn"
             }
           ],
