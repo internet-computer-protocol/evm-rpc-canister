@@ -2,7 +2,7 @@
 
 load("@crate_index//:defs.bzl", "aliases", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_library")
-load("@ic//bazel:canisters.bzl", "rust_canister")
+load("//bazel:canisters.bzl", "rust_canister")
 
 package(default_visibility = ["//visibility:public"])
 
