@@ -30,7 +30,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: bazelbuild/setup-bazelisk@v3
+
+      - name: Setup Bazel cache
+        uses: actions/cache@v4
+        with:
+          path: "~/.cache/bazel"
+          key: bazel
 
       - name: Bazel build
         run: bazel build evm_rpc --action_env=CARGO=$(which cargo) # TODO
