@@ -70,3 +70,41 @@ jobs:
       
       - name: Check formatting
         run: cargo fmt --all -- --check
+
+  bazel-pin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Bazel pin
+        run: scripts/bazel-pin
+
+      - name: Check unchanged
+        run: git diff -q
+
+  bazel-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - uses: bazelbuild/setup-bazelisk@v3
+
+      - name: Setup Bazel cache
+        uses: actions/cache@v4
+        with:
+          path: "~/.cache/bazel"
+          key: bazel
+
+      - name: Bazel build
+        run: bazel build evm_rpc --action_env=CARGO=$(which cargo) --sandbox_writable_path=$HOME/.cache
+
+      #   - name: Install dfx
+      #     uses: dfinity/setup-dfx@main
+
+      #   - name: Start dfx
+      #     run: dfx start --background
+      
