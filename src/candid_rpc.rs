@@ -1,6 +1,8 @@
 use std::str::FromStr;
 
 use async_trait::async_trait;
+use ethers_core::{types::Transaction, utils::rlp};
+use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 use ic_cketh_minter::{
     eth_rpc::{
         into_nat, Block, FeeHistory, GetLogsParam, Hash, LogEntry, ProviderError, RpcError,
@@ -13,8 +15,6 @@ use ic_cketh_minter::{
     },
     lifecycle::EthereumNetwork,
 };
-use ethers_core::{types::Transaction, utils::rlp};
-use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 
 use crate::*;
 

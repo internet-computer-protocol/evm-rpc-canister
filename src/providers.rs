@@ -1,10 +1,10 @@
 use candid::CandidType;
+use ic_canister_log::log;
 use ic_cketh_minter::{
     eth_rpc::ProviderError,
     eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
     logs::INFO,
 };
-use ic_canister_log::log;
 
 use crate::*;
 

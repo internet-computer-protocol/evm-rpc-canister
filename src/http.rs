@@ -1,8 +1,8 @@
-use ic_cketh_minter::eth_rpc::{HttpOutcallError, ProviderError, RpcError, ValidationError};
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs,
     TransformContext,
 };
+use ic_cketh_minter::eth_rpc::{HttpOutcallError, ProviderError, RpcError, ValidationError};
 use num_traits::ToPrimitive;
 
 use crate::*;

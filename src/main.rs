@@ -1,9 +1,6 @@
 use candid::candid_method;
 use ic_cketh_minter::eth_rpc::{Block, FeeHistory, LogEntry, RpcError};
 
-use ic_cketh_minter::eth_rpc_client::providers::RpcService;
-use ic_cketh_minter::eth_rpc_client::RpcConfig;
-use ic_cketh_minter::logs::INFO;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -11,6 +8,9 @@ use ic_canisters_http_types::{
 use ic_cdk::api::is_controller;
 use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
+use ic_cketh_minter::eth_rpc_client::providers::RpcService;
+use ic_cketh_minter::eth_rpc_client::RpcConfig;
+use ic_cketh_minter::logs::INFO;
 
 use evm_rpc::*;
 

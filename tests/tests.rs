@@ -4,6 +4,11 @@ use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
 
 use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
+use ic_base_types::{CanisterId, PrincipalId};
+use ic_cdk::api::management_canister::http_request::{
+    CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse as OutCallHttpResponse,
+    TransformArgs, TransformContext, TransformFunc,
+};
 use ic_cketh_minter::{
     address::Address,
     checked_amount::CheckedAmountOf,
@@ -16,11 +21,6 @@ use ic_cketh_minter::{
         RpcConfig,
     },
     numeric::{BlockNumber, Wei},
-};
-use ic_base_types::{CanisterId, PrincipalId};
-use ic_cdk::api::management_canister::http_request::{
-    CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse as OutCallHttpResponse,
-    TransformArgs, TransformContext, TransformFunc,
 };
 use ic_ic00_types::CanisterSettingsArgsBuilder;
 use ic_state_machine_tests::{
