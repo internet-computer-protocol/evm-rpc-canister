@@ -27,7 +27,7 @@ ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd" }
 ic-cketh-minter = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd" }
-dfn_core = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd" }
+dfn_core = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
 maplit = "1.0"
 num = "0.4"
 num-traits = "0.2"
@@ -40,11 +40,11 @@ hex = "0.4"
 ethers-core = "2.0"
 
 [dev-dependencies]
-ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd" }
-ic-base-types = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd" }
-ic-config = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd" }
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd" }
-ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd" }
+ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+ic-config = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
 assert_matches = "1.5"
 
 # Bazel
@@ -53,7 +53,7 @@ ic-wasm = "0.6.0"
 [workspace.dependencies]
 candid = { version = "0.9" }
 getrandom = { version = "0.2", features = ["custom"] }
-ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd" }
+ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
 ic-certified-map = "0.4"
