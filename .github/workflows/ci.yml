@@ -67,7 +67,7 @@ jobs:
 
       - name: Run examples
         run: scripts/examples
-      
+
       - name: Check formatting
         run: cargo fmt --all -- --check
 
@@ -107,4 +107,3 @@ jobs:
 
       #   - name: Start dfx
       #     run: dfx start --background
-      
