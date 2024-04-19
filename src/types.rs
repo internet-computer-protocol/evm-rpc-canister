@@ -1,6 +1,6 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-use cketh_common::eth_rpc::RpcError;
-use cketh_common::eth_rpc_client::providers::{
+use ic_cketh_minter::eth_rpc::RpcError;
+use ic_cketh_minter::eth_rpc_client::providers::{
     EthMainnetService, EthSepoliaService, RpcApi, RpcService,
 };
 
@@ -514,14 +514,14 @@ pub mod candid_types {
     use std::str::FromStr;
 
     use candid::CandidType;
-    use cketh_common::{
+    use ic_cketh_minter::{
         address::Address,
         eth_rpc::{into_nat, FixedSizeData, ValidationError},
         numeric::BlockNumber,
     };
     use serde::Deserialize;
 
-    pub use cketh_common::eth_rpc::Hash;
+    pub use ic_cketh_minter::eth_rpc::Hash;
 
     #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
     pub enum BlockTag {
@@ -534,10 +534,10 @@ pub mod candid_types {
         Number(BlockNumber),
     }
 
-    impl From<BlockTag> for cketh_common::eth_rpc::BlockSpec {
+    impl From<BlockTag> for ic_cketh_minter::eth_rpc::BlockSpec {
         fn from(value: BlockTag) -> Self {
-            use cketh_common::eth_rpc::BlockSpec::*;
-            use cketh_common::eth_rpc::BlockTag::*;
+            use ic_cketh_minter::eth_rpc::BlockSpec::*;
+            use ic_cketh_minter::eth_rpc::BlockTag::*;
             match value {
                 BlockTag::Number(n) => Number(n),
                 BlockTag::Latest => Tag(Latest),
@@ -559,10 +559,10 @@ pub mod candid_types {
         pub topics: Option<Vec<Vec<String>>>,
     }
 
-    impl TryFrom<GetLogsArgs> for cketh_common::eth_rpc::GetLogsParam {
+    impl TryFrom<GetLogsArgs> for ic_cketh_minter::eth_rpc::GetLogsParam {
         type Error = ValidationError;
         fn try_from(value: GetLogsArgs) -> Result<Self, Self::Error> {
-            Ok(cketh_common::eth_rpc::GetLogsParam {
+            Ok(ic_cketh_minter::eth_rpc::GetLogsParam {
                 from_block: value.from_block.map(|x| x.into()).unwrap_or_default(),
                 to_block: value.to_block.map(|x| x.into()).unwrap_or_default(),
                 address: value
@@ -604,7 +604,7 @@ pub mod candid_types {
         #[serde(rename = "contractAddress")]
         pub contract_address: Option<String>,
         pub from: String,
-        pub logs: Vec<cketh_common::eth_rpc::LogEntry>,
+        pub logs: Vec<ic_cketh_minter::eth_rpc::LogEntry>,
         #[serde(rename = "logsBloom")]
         pub logs_bloom: String,
         pub to: String,
@@ -613,8 +613,8 @@ pub mod candid_types {
         pub r#type: String,
     }
 
-    impl From<cketh_common::eth_rpc_client::responses::TransactionReceipt> for TransactionReceipt {
-        fn from(value: cketh_common::eth_rpc_client::responses::TransactionReceipt) -> Self {
+    impl From<ic_cketh_minter::eth_rpc_client::responses::TransactionReceipt> for TransactionReceipt {
+        fn from(value: ic_cketh_minter::eth_rpc_client::responses::TransactionReceipt) -> Self {
             TransactionReceipt {
                 block_hash: format!("{:#x}", value.block_hash),
                 block_number: value.block_number,
@@ -643,9 +643,9 @@ pub mod candid_types {
         pub reward_percentiles: Option<Vec<u8>>,
     }
 
-    impl From<FeeHistoryArgs> for cketh_common::eth_rpc::FeeHistoryParams {
+    impl From<FeeHistoryArgs> for ic_cketh_minter::eth_rpc::FeeHistoryParams {
         fn from(value: FeeHistoryArgs) -> Self {
-            cketh_common::eth_rpc::FeeHistoryParams {
+            ic_cketh_minter::eth_rpc::FeeHistoryParams {
                 block_count: value.block_count.into(),
                 highest_block: value.newest_block.into(),
                 reward_percentiles: value.reward_percentiles.unwrap_or_default(),
@@ -660,12 +660,12 @@ pub mod candid_types {
     }
 
     impl TryFrom<GetTransactionCountArgs>
-        for cketh_common::eth_rpc_client::requests::GetTransactionCountParams
+        for ic_cketh_minter::eth_rpc_client::requests::GetTransactionCountParams
     {
         type Error = ValidationError;
         fn try_from(value: GetTransactionCountArgs) -> Result<Self, Self::Error> {
             Ok(
-                cketh_common::eth_rpc_client::requests::GetTransactionCountParams {
+                ic_cketh_minter::eth_rpc_client::requests::GetTransactionCountParams {
                     address: Address::from_str(&value.address)
                         .map_err(|_| ValidationError::InvalidHex(value.address))?,
                     block: value.block.into(),
@@ -685,7 +685,7 @@ pub mod candid_types {
 
 #[test]
 fn test_multi_rpc_result_map() {
-    use cketh_common::eth_rpc::ProviderError;
+    use ic_cketh_minter::eth_rpc::ProviderError;
 
     let err = RpcError::ProviderError(ProviderError::ProviderNotFound);
     assert_eq!(

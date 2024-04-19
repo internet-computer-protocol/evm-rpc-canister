@@ -4,7 +4,7 @@ use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
 
 use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
-use cketh_common::{
+use ic_cketh_minter::{
     address::Address,
     checked_amount::CheckedAmountOf,
     eth_rpc::{
@@ -1247,7 +1247,7 @@ fn candid_rpc_should_err_when_service_unavailable() {
     assert_eq!(
         result,
         Err(RpcError::HttpOutcallError(
-            cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
+            ic_cketh_minter::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
                 status: 503,
                 body: "Service unavailable".to_string(),
                 parsing_error: None,
@@ -1578,7 +1578,7 @@ fn candid_rpc_should_recognize_rate_limit() {
     assert_eq!(
         result,
         Err(RpcError::HttpOutcallError(
-            cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
+            ic_cketh_minter::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
                 status: 429,
                 body: "(Rate limit error message)".to_string(),
                 parsing_error: None

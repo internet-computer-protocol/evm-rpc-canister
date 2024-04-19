@@ -1,5 +1,5 @@
 use candid::CandidType;
-use cketh_common::{
+use ic_cketh_minter::{
     eth_rpc::ProviderError,
     eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
     logs::INFO,

@@ -1,4 +1,4 @@
-use cketh_common::eth_rpc_client::providers::RpcApi;
+use ic_cketh_minter::eth_rpc_client::providers::RpcApi;
 
 use crate::*;
 

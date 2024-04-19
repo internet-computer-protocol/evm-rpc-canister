@@ -6,6 +6,19 @@ load("//bazel:canisters.bzl", "rust_canister")
 
 package(default_visibility = ["//visibility:public"])
 
+rust_library(
+    name = "evm_rpc_lib",
+    srcs = glob(
+        ["src/**/*.rs"],
+        exclude = [
+            "src/main.rs",
+        ],
+    ),
+    crate_name = "evm_rpc",
+    deps = all_crate_deps(),
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+)
+
 rust_canister(
     name = "evm_rpc",
     srcs = glob([
@@ -14,8 +27,8 @@ rust_canister(
     crate_features = [],
     crate_name = "evm_rpc",
     service_file = "candid/evm_rpc.did",
-    deps = all_crate_deps(),
-    proc_macro_deps = all_crate_deps(
-        proc_macro = True,
-    ),
+    deps = all_crate_deps() + [
+        ":evm_rpc_lib",
+    ],
+    proc_macro_deps = all_crate_deps(proc_macro = True),
 )

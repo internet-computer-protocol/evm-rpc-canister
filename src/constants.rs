@@ -1,4 +1,4 @@
-use cketh_common::eth_rpc_client::providers::{EthMainnetService, EthSepoliaService};
+use ic_cketh_minter::eth_rpc_client::providers::{EthMainnetService, EthSepoliaService};
 
 // HTTP outcall cost calculation
 // See https://internetcomputer.org/docs/current/developer-docs/gas-cost#special-features

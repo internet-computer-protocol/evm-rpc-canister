@@ -1,9 +1,9 @@
 use candid::candid_method;
-use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError};
+use ic_cketh_minter::eth_rpc::{Block, FeeHistory, LogEntry, RpcError};
 
-use cketh_common::eth_rpc_client::providers::RpcService;
-use cketh_common::eth_rpc_client::RpcConfig;
-use cketh_common::logs::INFO;
+use ic_cketh_minter::eth_rpc_client::providers::RpcService;
+use ic_cketh_minter::eth_rpc_client::RpcConfig;
+use ic_cketh_minter::logs::INFO;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -238,7 +238,7 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
     match request.path() {
         "/metrics" => serve_metrics(encode_metrics),
         "/logs" => {
-            use cketh_common::logs::{Log, Priority, Sort};
+            use ic_cketh_minter::logs::{Log, Priority, Sort};
             use std::str::FromStr;
 
             let max_skip_timestamp = match request.raw_query_param("time") {

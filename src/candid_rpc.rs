@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use async_trait::async_trait;
-use cketh_common::{
+use ic_cketh_minter::{
     eth_rpc::{
         into_nat, Block, FeeHistory, GetLogsParam, Hash, LogEntry, ProviderError, RpcError,
         SendRawTransactionResult, ValidationError,
@@ -240,7 +240,7 @@ fn get_transaction_hash(raw_signed_transaction_hex: &str) -> Option<Hash> {
 
 #[test]
 fn test_process_result_mapping() {
-    use cketh_common::eth_rpc_client::{providers::EthMainnetService, MultiCallResults};
+    use ic_cketh_minter::eth_rpc_client::{providers::EthMainnetService, MultiCallResults};
 
     let method = RpcMethod::EthGetTransactionCount;
 

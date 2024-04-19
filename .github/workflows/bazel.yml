@@ -32,11 +32,11 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - name: Bazel build
+        run: bazel build evm_rpc --action_env=CARGO=$(which cargo) # TODO
+
       #   - name: Install dfx
       #     uses: dfinity/setup-dfx@main
 
       #   - name: Start dfx
       #     run: dfx start --background
-
-      - name: Bazel build
-        run: bazel build evm_rpc

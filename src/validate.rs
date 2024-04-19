@@ -1,4 +1,4 @@
-use cketh_common::eth_rpc::ValidationError;
+use ic_cketh_minter::eth_rpc::ValidationError;
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 
 use crate::*;

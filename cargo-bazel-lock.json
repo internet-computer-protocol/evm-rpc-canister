@@ -1,5 +1,5 @@
 {
-  "checksum": "150a4fc13108e48457b16827f315e0d9fd91f6f001a53f313a34aceb6e359ab0",
+  "checksum": "e1bc9bad72e38f3cc3a9d8f22463648ec6bf7ce23d905e47cfedce2b02257d31",
   "crates": {
     "addr2line 0.19.0": {
       "name": "addr2line",
@@ -9496,8 +9496,7 @@
             },
             {
               "id": "ic-cketh-minter 0.1.0",
-              "target": "ic_cketh_minter",
-              "alias": "cketh_common"
+              "target": "ic_cketh_minter"
             },
             {
               "id": "ic-metrics-encoder 1.1.1",
