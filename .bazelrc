@@ -1,0 +1,2 @@
+build --noenable_bzlmod
+sync --noenable_bzlmod
