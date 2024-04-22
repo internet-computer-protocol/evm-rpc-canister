@@ -68,7 +68,7 @@ pub async fn test() {
             (),
             BlockTag::Number(123.into()),
         ),
-        1000000000,
+        10000000000,
     )
     .await
     .unwrap();
