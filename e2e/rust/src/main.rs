@@ -2,7 +2,8 @@ use candid::candid_method;
 use ic_cdk_macros::update;
 
 use e2e::declarations::EVM_RPC_STAGING_FIDUCIARY::{
-    ProviderError, RpcError, RpcService, EVM_RPC_STAGING_FIDUCIARY as evm_rpc,
+    BlockTag, GetBlockByNumberResult, MultiGetBlockByNumberResult, ProviderError, RpcError,
+    RpcService, RpcServices, EVM_RPC_STAGING_FIDUCIARY as evm_rpc,
 };
 
 fn main() {}
@@ -14,7 +15,7 @@ pub async fn test() {
 
     // Define request parameters
     let params = (
-        &RpcService::Chain(1), // Ethereum mainnet
+        RpcService::Chain(1), // Ethereum mainnet
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}".to_string(),
         1000 as u64,
     );
@@ -55,5 +56,37 @@ pub async fn test() {
             assert_eq!(&response[response.len() - 2..], "\"}");
         }
         Err(err) => ic_cdk::trap(&format!("error in `request` with cycles: {:?}", err)),
+    }
+
+    // Call a Candid-RPC method
+    // This would benefit from a caller-side library with generic type definitions for result values
+    let (results,): (MultiGetBlockByNumberResult,) = ic_cdk::api::call::call_with_payment128(
+        evm_rpc.0,
+        "eth_getBlockByNumber",
+        (
+            RpcServices::EthMainnet(None),
+            (),
+            BlockTag::Number(19709434.into()),
+        ),
+        10000000000,
+    )
+    .await
+    .unwrap();
+    match results {
+        MultiGetBlockByNumberResult::Consistent(result) => match result {
+            GetBlockByNumberResult::Ok(block) => {
+                assert_eq!(
+                    block.hash,
+                    "0x114755458f57fe1a81e7b03e038ad00f9a675681c8b94cf102c30a84c5545c76"
+                );
+            }
+            GetBlockByNumberResult::Err(err) => {
+                ic_cdk::trap(&format!("error in `eth_getBlockByNumber`: {:?}", err))
+            }
+        },
+        MultiGetBlockByNumberResult::Inconsistent(results) => ic_cdk::trap(&format!(
+            "inconsistent results in `eth_getBlockByNumber`: {:?}",
+            results
+        )),
     }
 }
