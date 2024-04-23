@@ -14,8 +14,8 @@ pub const ALCHEMY_ETH_SEPOLIA_HOSTNAME: &str = "eth-sepolia.g.alchemy.com";
 pub const CLOUDFLARE_HOSTNAME: &str = "cloudflare-eth.com";
 pub const BLOCKPI_ETH_MAINNET_HOSTNAME: &str = "ethereum.blockpi.network";
 pub const BLOCKPI_ETH_SEPOLIA_HOSTNAME: &str = "ethereum-sepolia.blockpi.network";
-pub const PUBLICNODE_ETH_MAINNET_HOSTNAME: &str = "ethereum.publicnode.com";
-pub const PUBLICNODE_ETH_SEPOLIA_HOSTNAME: &str = "ethereum-sepolia.publicnode.com";
+pub const PUBLICNODE_ETH_MAINNET_HOSTNAME: &str = "ethereum-rpc.publicnode.com";
+pub const PUBLICNODE_ETH_SEPOLIA_HOSTNAME: &str = "ethereum-sepolia-rpc.publicnode.com";
 pub const ETH_SEPOLIA_HOSTNAME: &str = "rpc.sepolia.org";
 
 // Limited API credentials for local testing.
