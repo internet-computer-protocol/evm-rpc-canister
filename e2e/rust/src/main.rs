@@ -63,7 +63,11 @@ pub async fn test() {
     let (results,): (MultiGetBlockByNumberResult,) = ic_cdk::api::call::call_with_payment128(
         evm_rpc.0,
         "eth_getBlockByNumber",
-        (RpcServices::EthMainnet(None), (), BlockTag::Number(19709434.into())),
+        (
+            RpcServices::EthMainnet(None),
+            (),
+            BlockTag::Number(19709434.into()),
+        ),
         10000000000,
     )
     .await
@@ -71,7 +75,10 @@ pub async fn test() {
     match results {
         MultiGetBlockByNumberResult::Consistent(result) => match result {
             GetBlockByNumberResult::Ok(block) => {
-                assert_eq!(block.hash, "0x114755458f57fe1a81e7b03e038ad00f9a675681c8b94cf102c30a84c5545c76");
+                assert_eq!(
+                    block.hash,
+                    "0x114755458f57fe1a81e7b03e038ad00f9a675681c8b94cf102c30a84c5545c76"
+                );
             }
             GetBlockByNumberResult::Err(err) => {
                 ic_cdk::trap(&format!("error in `eth_getBlockByNumber`: {:?}", err))
