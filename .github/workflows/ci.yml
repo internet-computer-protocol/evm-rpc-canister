@@ -100,7 +100,9 @@ jobs:
           key: bazel
 
       - name: Bazel build
-        run: sudo bazel build evm_rpc --action_env=CARGO=$(which cargo) --sandbox_writable_path=$HOME/.cache
+        run: |
+          mkdir $HOME/.cache
+          sudo bazel build evm_rpc --action_env=CARGO=$(which cargo) --sandbox_writable_path=$HOME/.cache
 
       #   - name: Install dfx
       #     uses: dfinity/setup-dfx@main
