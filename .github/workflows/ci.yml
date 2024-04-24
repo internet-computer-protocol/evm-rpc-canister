@@ -87,10 +87,9 @@ jobs:
 
       - name: Bazel build
         run: |
-          git clone --depth 1 https://github.com/dfinity/ic.git ../ic &&\
+          git clone --depth 1 -b evm-rpc-canister https://github.com/dfinity/ic.git ../ic &&\
           cd ../ic &&\
           ln -s ../../../evm-rpc-canister rs/ethereum/evm_rpc &&\
-          git checkout 22b875f2b9508739b005d4352c14e877995f52fd &&\
           bazel build //rs/ethereum/evm_rpc:evm_rpc &&\
           bazel test //rs/ethereum/evm_rpc:unit_tests //rs/ethereum/evm_rpc:integration_tests &&\
           echo Done
