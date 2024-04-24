@@ -89,6 +89,7 @@ jobs:
         run: |
           git clone --depth 1 -b evm-rpc-canister https://github.com/dfinity/ic.git ../ic &&\
           cd ../ic &&\
+          git fetch --depth=1 origin 6e7ece9491ac2cc229017fdcd136dd667b69b2f3
           ln -s ../../../evm-rpc-canister rs/ethereum/evm_rpc &&\
           bazel build //rs/ethereum/evm_rpc:evm_rpc &&\
           bazel test //rs/ethereum/evm_rpc:unit_tests //rs/ethereum/evm_rpc:integration_tests &&\
