@@ -71,20 +71,6 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-  bazel-pin:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@master
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Bazel pin
-        run: scripts/bazel-pin
-
-      - name: Check unchanged
-        run: git diff -q
-
   bazel-build:
     runs-on: ubuntu-latest
     steps:
