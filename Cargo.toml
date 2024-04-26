@@ -38,6 +38,7 @@ url = "2.4"
 async-trait = "0.1"
 hex = "0.4"
 ethers-core = "2.0"
+wasm-bindgen = { git = "https://github.com/dfinity/wasm-bindgen", rev = "9cde9c9a88c1fad13a8663277650e01b5671843e" }
 
 [dev-dependencies]
 ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
@@ -57,9 +58,6 @@ ic-certified-map = "0.4"
 ic-cdk = "0.10"
 ic-cdk-macros = "0.7"
 ic-cdk-bindgen = "0.1"
-
-[patch.crates-io]
-wasm-bindgen = { git = "https://github.com/dfinity/wasm-bindgen", rev = "9cde9c9a88c1fad13a8663277650e01b5671843e" }
 
 [workspace]
 members = ["e2e/rust"]

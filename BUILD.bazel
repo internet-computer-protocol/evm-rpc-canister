@@ -31,6 +31,7 @@ rust_library(
         "@crate_index//:serde",
         "@crate_index//:serde_json",
         "@crate_index//:url",
+        "@crate_index//:wasm-bindgen",
     ],
     proc_macro_deps = [
         "@crate_index//:async-trait",
