@@ -84,6 +84,9 @@ jobs:
         with:
           path: "~/.cache/bazel"
           key: bazel
+      
+      - name: Install libunwind
+        run: apt install -y libunwind
 
       - name: Bazel build
         run: |
