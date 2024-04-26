@@ -90,8 +90,8 @@ jobs:
           git clone --depth 1 -b evm-rpc-canister https://github.com/dfinity/ic.git ../ic &&\
           cd ../ic &&\
           ln -s ../../../evm-rpc-canister rs/ethereum/evm_rpc &&\
-          bazel build //rs/ethereum/evm_rpc:evm_rpc --bes_best_effort &&\
-          bazel test //rs/ethereum/evm_rpc:unit_tests //rs/ethereum/evm_rpc:integration_tests --bes_best_effort &&\
+          bazel build //rs/ethereum/evm_rpc:evm_rpc --nobes_lifecycle_events &&\
+          bazel test //rs/ethereum/evm_rpc:unit_tests //rs/ethereum/evm_rpc:integration_tests --nobes_lifecycle_events &&\
           echo Done
 
       #   - name: Install dfx
