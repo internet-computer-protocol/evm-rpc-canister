@@ -86,7 +86,7 @@ jobs:
           key: bazel
       
       - name: Install libunwind
-        run: sudo apt-get install -y libunwind
+        run: sudo apt-get install -y libunwind-dev
 
       - name: Bazel build
         run: |
