@@ -84,14 +84,11 @@ rust_test(
     ],
     env = {
         "CARGO_MANIFEST_DIR": "rs/ethereum/evm_rpc",
-        "CKETH_MINTER_WASM_PATH": "$(rootpath :evm_rpc_debug.wasm)",
-        "IC_ICRC1_LEDGER_WASM_PATH": "$(rootpath //rs/rosetta-api/icrc1/ledger:ledger_canister_u256.wasm)",
+        "EVM_RPC_WASM_PATH": "$(rootpath :evm_rpc_debug.wasm)",
         "LAUNCHER_BINARY": "$(rootpath //rs/canister_sandbox/sandbox_launcher)",
         "SANDBOX_BINARY": "$(rootpath //rs/canister_sandbox)",
     },
-    proc_macro_deps = [
-        "@crate_index//:strum_macros",
-    ],
+    proc_macro_deps = [],
     deps = [
         ":evm_rpc_lib",
         "//rs/ethereum/cketh/minter:minter",
@@ -107,10 +104,7 @@ rust_test(
         "@crate_index//:ic-cdk",
         "@crate_index//:maplit",
         "@crate_index//:num-traits",
-        "@crate_index//:rlp",
         "@crate_index//:serde",
-        "@crate_index//:serde_bytes",
         "@crate_index//:serde_json",
-        "@crate_index//:strum",
     ],
 )
