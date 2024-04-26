@@ -47,9 +47,6 @@ ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "ca5e505
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
 assert_matches = "1.5"
 
-# Bazel
-ic-wasm = "0.6.0"
-
 [workspace.dependencies]
 candid = { version = "0.9" }
 getrandom = { version = "0.2", features = ["custom"] }
