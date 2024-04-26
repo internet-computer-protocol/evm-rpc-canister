@@ -1,5 +1,3 @@
-mod mock;
-
 use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
 
 use assert_matches::assert_matches;
