@@ -65,8 +65,11 @@ jobs:
       - name: Run E2E tests
         run: scripts/e2e
 
+      - name: Generate SHA-256 hash
+        run: sha256sum .dfx/local/canisters/evm_rpc/evm_rpc.wasm.gz
+
       - name: Run examples
         run: scripts/examples
-      
+
       - name: Check formatting
         run: cargo fmt --all -- --check
