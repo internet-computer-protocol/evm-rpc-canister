@@ -17,46 +17,47 @@ opt-level = 's'
 inherits = "release"
 
 [dependencies]
+async-trait = "0.1"
 candid = { workspace = true }
+dfn_core = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+ethereum-types = { version = "0.14.1", features = ["rlp"] }
 getrandom = { workspace = true }
+hex = "0.4"
+ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "2e79e7af9a6fa15633d73af69fb021a0ae74df6c" }
 ic-canisters-http-types = { workspace = true }
-ic-metrics-encoder = { workspace = true }
-ic-stable-structures = { workspace = true }
-ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
-ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "2e79e7af9a6fa15633d73af69fb021a0ae74df6c" }
+ic-certified-map = { workspace = true }
 ic-cketh-minter = { git = "https://github.com/dfinity/ic", rev = "2e79e7af9a6fa15633d73af69fb021a0ae74df6c" }
-dfn_core = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+ic-metrics-encoder = { workspace = true }
+ic-stable-structures = { workspace = true }
 maplit = "1.0"
 num = "0.4"
 num-traits = "0.2"
 num-derive = "0.4"
+rlp = "0.5"
 serde = "1.0"
 serde_json = "1.0"
 url = "2.4"
-async-trait = "0.1"
-hex = "0.4"
-ethers-core = "2.0"
 
 [dev-dependencies]
-ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+assert_matches = "1.5"
 ic-base-types = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
 ic-config = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
+ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
 ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
-assert_matches = "1.5"
 
 [workspace.dependencies]
 candid = { version = "0.9" }
 getrandom = { version = "0.2", features = ["custom"] }
 ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "ca5e5052886de781021506814d2c6502e375da48" }
-ic-metrics-encoder = "1.1"
-ic-stable-structures = "0.5"
 ic-certified-map = "0.4"
 ic-cdk = "0.10"
-ic-cdk-macros = "0.7"
 ic-cdk-bindgen = "0.1"
+ic-cdk-macros = "0.7"
+ic-metrics-encoder = "1.1"
+ic-stable-structures = "0.5"
 
 [workspace]
 members = ["e2e/rust"]

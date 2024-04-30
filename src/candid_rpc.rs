@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use async_trait::async_trait;
-use ethers_core::{types::Transaction, utils::rlp};
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 use ic_cketh_minter::{
     eth_rpc::{
@@ -234,7 +233,7 @@ impl CandidRpcClient {
 
 fn get_transaction_hash(raw_signed_transaction_hex: &str) -> Option<Hash> {
     let bytes = hex_to_bytes(raw_signed_transaction_hex)?;
-    let transaction: Transaction = rlp::decode(&bytes).ok()?;
+    let transaction: ethers_core::Transaction = rlp::decode(&bytes).ok()?;
     Some(Hash(transaction.hash.0))
 }
 
