@@ -58,8 +58,5 @@ ic-cdk = "0.10"
 ic-cdk-macros = "0.7"
 ic-cdk-bindgen = "0.1"
 
-[patch.crates-io]
-wasm-bindgen = { git = "https://github.com/dfinity/wasm-bindgen", rev = "9cde9c9a88c1fad13a8663277650e01b5671843e" }
-
 [workspace]
 members = ["e2e/rust"]
