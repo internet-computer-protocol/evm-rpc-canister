@@ -4,7 +4,6 @@ mod accounting;
 mod auth;
 mod candid_rpc;
 mod constants;
-mod ethers_core;
 mod http;
 mod memory;
 mod metrics;

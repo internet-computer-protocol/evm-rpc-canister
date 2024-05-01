@@ -28,10 +28,9 @@ rust_library(
         "@crate_index//:ic-stable-structures",
         "@crate_index//:num",
         "@crate_index//:num-traits",
-        "@crate_index//:primitive-types",
-        "@crate_index//:rlp",
         "@crate_index//:serde",
         "@crate_index//:serde_json",
+        "@crate_index//:tiny-keccak",
         "@crate_index//:url",
     ],
     proc_macro_deps = [

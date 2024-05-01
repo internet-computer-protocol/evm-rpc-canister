@@ -14,6 +14,7 @@ use ic_cketh_minter::{
     },
     lifecycle::EthereumNetwork,
 };
+use tiny_keccak::{Hasher, Keccak};
 
 use crate::*;
 
@@ -233,8 +234,11 @@ impl CandidRpcClient {
 
 fn get_transaction_hash(raw_signed_transaction_hex: &str) -> Option<Hash> {
     let bytes = hex_to_bytes(raw_signed_transaction_hex)?;
-    let transaction: ethers_core::Transaction = rlp::decode(&bytes).ok()?;
-    Some(Hash(transaction.hash.0))
+    let mut output = [0u8; 32];
+    let mut hasher = Keccak::v256();
+    hasher.update(bytes.as_ref());
+    hasher.finalize(&mut output);
+    Some(Hash(output))
 }
 
 #[test]
