@@ -89,11 +89,4 @@ jobs:
         run: sudo apt-get install -y libunwind-dev
 
       - name: Bazel build
-        run: |
-          git clone --depth 1 -b evm-rpc-canister https://github.com/dfinity/ic.git ../ic &&\
-          cd ../ic &&\
-          ln -s ../../../evm-rpc-canister rs/ethereum/evm_rpc &&\
-          sed -i 's/"threadpool"/"tiny-keccak": crate.spec(version = "2.0.2", features = ["keccak"]), "threadpool"/g' bazel/external_crates.bzl && CARGO_BAZEL_REPIN=1 bazel sync --only=crate_index &&\
-          bazel build //rs/ethereum/evm_rpc:evm_rpc --config=local &&\
-          bazel test //rs/ethereum/evm_rpc:unit_tests //rs/ethereum/evm_rpc:integration_tests --config=local &&\
-          echo Done
+        run: scripts/bazel

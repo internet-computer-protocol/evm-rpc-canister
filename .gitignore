@@ -3,4 +3,6 @@ target/
 .dfx/
 .mops/
 
+/bazel
+
 *.generated.did

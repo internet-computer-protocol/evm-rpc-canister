@@ -110,6 +110,12 @@ dfx canister call evm_rpc getAuthorized '(variant { RegisterProvider })'
 dfx canister call evm_rpc deauthorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
 ```
 
+## Reproducible Builds
+
+The EVM RPC canister supports reproducible builds via [Bazel](https://bazel.build/). 
+
+To build and test in the reproducible environment, [install Bazelisk](https://docs.bazel.build/versions/5.3.0/install-bazelisk.html) and then run `scripts/bazel` in your terminal from the root of this repository. Note that on some Linux distributions, you may need to install additional dependencies such as `libunwind-dev` for the reproducible build to work as expected.
+
 ## Contributing
 
 Contributions are welcome! Please check out the [contributor guidelines](https://github.com/internet-computer-protocol/evm-rpc-canister/blob/main/.github/CONTRIBUTING.md) for more information.
