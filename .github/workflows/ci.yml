@@ -53,9 +53,6 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v2
-
       - name: Install dfx
         uses: dfinity/setup-dfx@main
 
