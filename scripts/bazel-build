@@ -14,4 +14,4 @@ bazel build //rs/ethereum/evm_rpc:evm_rpc --config=local || exit 1
 # bazel test //rs/ethereum/evm_rpc:unit_tests //rs/ethereum/evm_rpc:integration_tests --config=local || exit 1
 
 # Display the SHA-256 hash of the canister Wasm
-sha256sum bazel/ic/bazel-bin/rs/ethereum/evm_rpc/evm_rpc.wasm
+sha256sum $(bazel info bazel-bin)/rs/ethereum/evm_rpc/evm_rpc.wasm
