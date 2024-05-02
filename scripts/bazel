@@ -9,12 +9,9 @@ test -d .git || exit 1
 git pull
 ln -fs ../../../.. rs/ethereum/evm_rpc
 
-# Temporary until this is merged: https://gitlab.com/dfinity-lab/public/ic/-/merge_requests/19052
-sed -i='' 's/"threadpool":/"tiny-keccak": crate.spec(version = "2.0.2", features = ["keccak"]), "threadpool" :/g' bazel/external_crates.bzl || exit 1
-CARGO_BAZEL_REPIN=1 bazel sync --only=crate_index || exit 1
-
 # Build and test in reproducible environment
 bazel build //rs/ethereum/evm_rpc:evm_rpc --config=local || exit 1
 # bazel test //rs/ethereum/evm_rpc:unit_tests //rs/ethereum/evm_rpc:integration_tests --config=local || exit 1
 
+# Display the SHA-256 hash of the canister Wasm
 sha256sum bazel/ic/bazel-bin/rs/ethereum/evm_rpc/evm_rpc.wasm
