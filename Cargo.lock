@@ -1301,6 +1301,7 @@ dependencies = [
  "ic-certified-map",
  "ic-cketh-minter",
  "ic-config",
+ "ic-crypto-sha3 0.8.0",
  "ic-ic00-types 0.8.0",
  "ic-metrics-encoder",
  "ic-stable-structures",
@@ -1312,7 +1313,6 @@ dependencies = [
  "num-traits",
  "serde",
  "serde_json",
- "tiny-keccak",
  "url",
 ]
 
@@ -2200,7 +2200,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-crypto-ecdsa-secp256k1 0.9.0",
- "ic-crypto-sha3",
+ "ic-crypto-sha3 0.9.0",
  "ic-ic00-types 0.9.0",
  "ic-metrics-encoder",
  "ic-stable-structures",
@@ -2808,6 +2808,14 @@ version = "0.9.0"
 source = "git+https://github.com/dfinity/ic?rev=2e79e7af9a6fa15633d73af69fb021a0ae74df6c#2e79e7af9a6fa15633d73af69fb021a0ae74df6c"
 dependencies = [
  "ic-crypto-internal-sha2 0.9.0",
+]
+
+[[package]]
+name = "ic-crypto-sha3"
+version = "0.8.0"
+source = "git+https://github.com/dfinity/ic?rev=ca5e5052886de781021506814d2c6502e375da48#ca5e5052886de781021506814d2c6502e375da48"
+dependencies = [
+ "sha3",
 ]
 
 [[package]]
