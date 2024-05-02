@@ -114,7 +114,7 @@ dfx canister call evm_rpc deauthorize "(principal \"$PRINCIPAL\", variant { Regi
 
 The EVM RPC canister supports reproducible builds via [Bazel](https://bazel.build/). 
 
-To build and test in the reproducible environment, [install Bazelisk](https://docs.bazel.build/versions/5.3.0/install-bazelisk.html) and then run `scripts/bazel` in your terminal from the root of this repository. Note that on some Linux distributions, you may need to install additional dependencies such as `libunwind-dev` for the reproducible build to work as expected.
+To build and test in the reproducible environment, [install Bazelisk](https://docs.bazel.build/versions/5.3.0/install-bazelisk.html) and then run `scripts/bazel-build` in your terminal from the root of this repository. Note that on some Linux distributions, you may need to install additional dependencies such as `libunwind-dev` for the reproducible build to work as expected.
 
 ## Contributing
 
