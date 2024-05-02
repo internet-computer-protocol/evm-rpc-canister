@@ -16,3 +16,5 @@ CARGO_BAZEL_REPIN=1 bazel sync --only=crate_index || exit 1
 # Build and test in reproducible environment
 bazel build //rs/ethereum/evm_rpc:evm_rpc --config=local || exit 1
 bazel test //rs/ethereum/evm_rpc:unit_tests //rs/ethereum/evm_rpc:integration_tests --config=local || exit 1
+
+sha256sum bazel/ic/bazel-bin/rs/ethereum/evm_rpc/evm_rpc.wasm
