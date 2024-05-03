@@ -19,11 +19,10 @@ function usage() {
     cat << EOF
 
 Usage:
-  $0 [--only-dependencies] [--evm-rpc]
+  $0 [--only-dependencies]
 
 Options:
   --only-dependencies          only build rust dependencies (no js build, no wasm optimization)
-  --evm-rpc                      build the EVM RPC canister
 EOF
 }
 
@@ -38,7 +37,6 @@ EOF
 }
 
 ONLY_DEPS=
-CANISTERS=()
 
 while [[ $# -gt 0  ]]
 do
@@ -53,10 +51,6 @@ do
             ONLY_DEPS=1
             shift
             ;;
-        --evm-rpc)
-            CANISTERS+=("evm_rpc")
-            shift
-            ;;
         *)
             echo "ERROR: unknown argument $1"
             usage
@@ -66,10 +60,6 @@ do
             ;;
     esac
 done
-
-if [ ${#CANISTERS[@]} -eq 0 ]; then
-    CANISTERS=("evm_rpc")
-fi
 
 # Checking for dependencies
 if [[ ! "$(command -v ic-wasm)" || "$(ic-wasm --version)" != "ic-wasm 0.3.5" ]]
@@ -92,7 +82,7 @@ function build_canister() {
     echo "Building $canister"
     echo
 
-    SRC_DIR="/src/$canister"
+    SRC_DIR="/src"
     TARGET="wasm32-unknown-unknown"
     # standardize source references
     CARGO_HOME="${CARGO_HOME:-"$HOME/.cargo"}"
@@ -122,7 +112,4 @@ function build_canister() {
     fi
 }
 
-for canister in "${CANISTERS[@]}"
-do
-  build_canister "$canister"
-done
+build_canister "evm_rpc"

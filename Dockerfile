@@ -31,12 +31,19 @@ RUN ./scripts/bootstrap
 # that cargo knows to rebuild it with the new content.
 COPY Cargo.lock .
 COPY Cargo.toml .
+COPY e2e/rust/Cargo.toml e2e/rust/Cargo.toml
+COPY e2e/rust/src/lib.rs e2e/rust/src/lib.rs
 ENV CARGO_TARGET_DIR=/cargo_target
 COPY ./scripts/build ./scripts/build
 RUN mkdir -p src \
     && echo "fn main() {}" > src/main.rs \
+    && echo "" > src/lib.rs \
     && ./scripts/build --only-dependencies \
-    && rm -rf src
+    && rm -rf src \
+    && rm -rf Cargo.toml \
+    && rm -rf Cargo.lock \
+    && rm -rf target \
+    && rm -rf e2e
 
 FROM deps as build
 
