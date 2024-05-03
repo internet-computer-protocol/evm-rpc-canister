@@ -1,6 +1,9 @@
 use candid::Principal;
 
-use crate::*;
+use crate::{
+    memory::{AUTH, METADATA},
+    types::{Auth, PrincipalStorable},
+};
 
 pub fn is_authorized(principal: &Principal, auth: Auth) -> bool {
     AUTH.with(|a| {
@@ -69,36 +72,46 @@ pub fn do_deauthorize(principal: Principal, auth: Auth) -> bool {
     })
 }
 
-#[test]
-fn test_authorization() {
-    let principal1 =
-        Principal::from_text("k5dlc-ijshq-lsyre-qvvpq-2bnxr-pb26c-ag3sc-t6zo5-rdavy-recje-zqe")
-            .unwrap();
-    let principal2 =
-        Principal::from_text("yxhtl-jlpgx-wqnzc-ysego-h6yqe-3zwfo-o3grn-gvuhm-nz3kv-ainub-6ae")
-            .unwrap();
-    assert!(!is_authorized(&principal1, Auth::PriorityRpc));
-    assert!(!is_authorized(&principal2, Auth::PriorityRpc));
+#[cfg(test)]
+mod test {
+    use candid::Principal;
 
-    do_authorize(principal1, Auth::PriorityRpc);
-    assert!(is_authorized(&principal1, Auth::PriorityRpc));
-    assert!(!is_authorized(&principal2, Auth::PriorityRpc));
+    use crate::{
+        auth::{do_authorize, do_deauthorize, is_authorized},
+        types::Auth,
+    };
 
-    do_deauthorize(principal1, Auth::PriorityRpc);
-    assert!(!is_authorized(&principal1, Auth::PriorityRpc));
-    assert!(!is_authorized(&principal2, Auth::PriorityRpc));
+    #[test]
+    fn test_authorization() {
+        let principal1 =
+            Principal::from_text("k5dlc-ijshq-lsyre-qvvpq-2bnxr-pb26c-ag3sc-t6zo5-rdavy-recje-zqe")
+                .unwrap();
+        let principal2 =
+            Principal::from_text("yxhtl-jlpgx-wqnzc-ysego-h6yqe-3zwfo-o3grn-gvuhm-nz3kv-ainub-6ae")
+                .unwrap();
+        assert!(!is_authorized(&principal1, Auth::PriorityRpc));
+        assert!(!is_authorized(&principal2, Auth::PriorityRpc));
 
-    do_authorize(principal1, Auth::RegisterProvider);
-    assert!(is_authorized(&principal1, Auth::RegisterProvider));
-    assert!(!is_authorized(&principal2, Auth::RegisterProvider));
+        do_authorize(principal1, Auth::PriorityRpc);
+        assert!(is_authorized(&principal1, Auth::PriorityRpc));
+        assert!(!is_authorized(&principal2, Auth::PriorityRpc));
 
-    do_deauthorize(principal1, Auth::RegisterProvider);
-    assert!(!is_authorized(&principal1, Auth::RegisterProvider));
+        do_deauthorize(principal1, Auth::PriorityRpc);
+        assert!(!is_authorized(&principal1, Auth::PriorityRpc));
+        assert!(!is_authorized(&principal2, Auth::PriorityRpc));
 
-    do_authorize(principal2, Auth::Manage);
-    assert!(!is_authorized(&principal1, Auth::Manage));
-    assert!(is_authorized(&principal2, Auth::Manage));
+        do_authorize(principal1, Auth::RegisterProvider);
+        assert!(is_authorized(&principal1, Auth::RegisterProvider));
+        assert!(!is_authorized(&principal2, Auth::RegisterProvider));
 
-    assert!(!is_authorized(&principal2, Auth::PriorityRpc));
-    assert!(!is_authorized(&principal2, Auth::RegisterProvider));
+        do_deauthorize(principal1, Auth::RegisterProvider);
+        assert!(!is_authorized(&principal1, Auth::RegisterProvider));
+
+        do_authorize(principal2, Auth::Manage);
+        assert!(!is_authorized(&principal1, Auth::Manage));
+        assert!(is_authorized(&principal2, Auth::Manage));
+
+        assert!(!is_authorized(&principal2, Auth::PriorityRpc));
+        assert!(!is_authorized(&principal2, Auth::RegisterProvider));
+    }
 }

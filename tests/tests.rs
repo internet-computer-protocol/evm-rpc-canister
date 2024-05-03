@@ -3,7 +3,7 @@ mod mock;
 use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
 
 use assert_matches::assert_matches;
-use candid::{CandidType, Decode, Encode, Nat};
+use candid::{CandidType, Decode, Encode, Nat, Principal};
 use cketh_common::{
     address::Address,
     checked_amount::CheckedAmountOf,
@@ -31,8 +31,20 @@ use ic_test_utilities_load_wasm::load_wasm;
 use maplit::hashmap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use evm_rpc::*;
-use mock::*;
+use evm_rpc::{
+    constants::{
+        CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, ETH_MAINNET_CHAIN_ID, NODES_IN_STANDARD_SUBNET,
+    },
+    providers::{
+        get_default_providers, ALCHEMY_ETH_MAINNET_HOSTNAME, ANKR_HOSTNAME,
+        BLOCKPI_ETH_SEPOLIA_HOSTNAME, CLOUDFLARE_HOSTNAME, PUBLICNODE_ETH_MAINNET_HOSTNAME,
+    },
+    types::{
+        candid_types, Auth, InitArgs, ManageProviderArgs, Metrics, MultiRpcResult, ProviderView,
+        RegisterProviderArgs, RpcMethod, RpcResult, RpcServices, UpdateProviderArgs,
+    },
+};
+use mock::{MockOutcall, MockOutcallBuilder};
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
 const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;

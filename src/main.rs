@@ -1,9 +1,18 @@
-use candid::candid_method;
+use candid::{candid_method, Principal};
 use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError};
 
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
 use cketh_common::logs::INFO;
+use evm_rpc::accounting::get_rpc_cost;
+use evm_rpc::candid_rpc::CandidRpcClient;
+use evm_rpc::http::get_http_response_body;
+use evm_rpc::metrics::encode_metrics;
+use evm_rpc::providers::{
+    do_get_accumulated_cycle_count, do_withdraw_accumulated_cycles, find_provider,
+    get_default_providers, get_default_service_provider_hostnames, get_known_chain_id,
+    resolve_rpc_service, set_service_provider,
+};
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -13,7 +22,21 @@ use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs
 use ic_cdk::{query, update};
 use ic_nervous_system_common::serve_metrics;
 
-use evm_rpc::*;
+use evm_rpc::{
+    auth::{do_authorize, do_deauthorize, require_manage_or_controller, require_register_provider},
+    constants::WASM_PAGE_SIZE,
+    http::{do_json_rpc_request, do_transform_http_request},
+    memory::{
+        AUTH, METADATA, PROVIDERS, SERVICE_PROVIDER_MAP, UNSTABLE_METRICS, UNSTABLE_SUBNET_SIZE,
+    },
+    providers::{
+        do_manage_provider, do_register_provider, do_unregister_provider, do_update_provider,
+    },
+    types::{
+        candid_types, Auth, InitArgs, ManageProviderArgs, MetricRpcMethod, Metrics, MultiRpcResult,
+        ProviderView, RegisterProviderArgs, RpcServices, UpdateProviderArgs,
+    },
+};
 
 #[update(name = "eth_getLogs")]
 #[candid_method(rename = "eth_getLogs")]
