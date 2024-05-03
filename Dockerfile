@@ -19,6 +19,8 @@ ENV RUSTUP_HOME=/opt/rustup \
     CARGO_HOME=/cargo \
     PATH=/cargo/bin:$PATH
 
+WORKDIR /evm_rpc
+
 RUN mkdir -p ./scripts
 COPY ./scripts/bootstrap ./scripts/bootstrap
 COPY ./rust-toolchain.toml ./rust-toolchain.toml
