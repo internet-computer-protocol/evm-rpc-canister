@@ -12,8 +12,7 @@ ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     apt -yq update && \
     apt -yqq install --no-install-recommends curl ca-certificates \
-        build-essential pkg-config libssl-dev llvm-dev liblmdb-dev clang cmake \
-        protobuf-compiler
+        build-essential pkg-config libssl-dev llvm-dev liblmdb-dev clang cmake
 
 # Install Rust and Cargo in /opt
 ENV RUSTUP_HOME=/opt/rustup \
@@ -54,7 +53,7 @@ COPY . .
 
 RUN touch src/main.rs
 
-RUN ./scripts/build --evm-rpc --test
+RUN ./scripts/build --evm-rpc
 RUN sha256sum evm_rpc.wasm.gz
 
 FROM scratch as scratch_evm_rpc
