@@ -35,7 +35,6 @@ COPY Cargo.lock .
 COPY Cargo.toml .
 COPY e2e/rust/Cargo.toml e2e/rust/Cargo.toml
 COPY e2e/rust/src/lib.rs e2e/rust/src/lib.rs
-ENV CARGO_TARGET_DIR=/cargo_target
 COPY ./scripts/build ./scripts/build
 RUN mkdir -p src \
     && echo "fn main() {}" > src/main.rs \
