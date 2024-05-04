@@ -9,7 +9,7 @@ SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPTS_DIR/.."
 
 function title() {
-    echo "Build EVM RPC inside Docker"
+    echo "Build EVM RPC canister inside Docker"
 }
 
 function usage() {

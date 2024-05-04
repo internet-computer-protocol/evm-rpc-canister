@@ -12,7 +12,7 @@ cd "$SCRIPTS_DIR/.."
 #########
 
 function title() {
-    echo "Builds evm_rpc Canister"
+    echo "Builds EVM RPC canister"
 }
 
 function usage() {
@@ -108,7 +108,6 @@ function build_canister() {
             -o "./$canister.wasm" \
             shrink
         ic-wasm "$canister.wasm" -o "$canister.wasm" metadata candid:service -f "candid/$canister.did" -v public
-        ls .
         gzip --no-name --force "$canister.wasm"
     fi
 }
