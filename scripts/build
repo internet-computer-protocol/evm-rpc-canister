@@ -104,7 +104,7 @@ function build_canister() {
     if [ "$ONLY_DEPS" != "1" ]
     then
         ic-wasm \
-            "/cargo_target/$TARGET/release/$canister.wasm" \
+            "/target/$TARGET/release/$canister.wasm" \
             -o "./$canister.wasm" \
             shrink
         ic-wasm "$canister.wasm" -o "$canister.wasm" metadata candid:service -f "candid/$canister.did" -v public
