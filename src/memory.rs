@@ -7,8 +7,8 @@ use ic_stable_structures::{Cell, StableBTreeMap};
 use std::cell::RefCell;
 
 use crate::{
-    types::{AuthSet, Metadata, Metrics, PrincipalStorable, Provider, StorableRpcService},
     constants::NODES_IN_FIDUCIARY_SUBNET,
+    types::{AuthSet, Metadata, Metrics, PrincipalStorable, Provider, StorableRpcService},
 };
 
 #[cfg(not(target_arch = "wasm32"))]
