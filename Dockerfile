@@ -54,6 +54,7 @@ COPY . .
 RUN touch src/main.rs
 
 RUN ./scripts/build --evm-rpc
+RUN sha256sum evm_rpc.wasm.gz
 
 FROM scratch AS scratch_evm_rpc
-COPY --from=build /evm_rpc.wasm.gz /
+COPY --from=build evm_rpc/evm_rpc.wasm.gz /

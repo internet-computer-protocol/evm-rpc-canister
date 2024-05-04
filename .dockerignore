@@ -5,6 +5,7 @@ node_modules
 target
 Dockerfile
 *.wasm
+*.wasm.gz
 *.swp
 
 # filter out all "hidden" files and directories
