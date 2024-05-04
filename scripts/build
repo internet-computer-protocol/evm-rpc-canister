@@ -37,6 +37,7 @@ EOF
 }
 
 ONLY_DEPS=
+RUN_CARGO_TEST=
 CANISTERS=()
 
 while [[ $# -gt 0  ]]
@@ -50,6 +51,10 @@ do
             ;;
         --only-dependencies)
             ONLY_DEPS=1
+            shift
+            ;;
+        --test)
+            RUN_CARGO_TEST=1
             shift
             ;;
         --evm-rpc)
@@ -105,6 +110,11 @@ function build_canister() {
     echo RUSTFLAGS: "$RUSTFLAGS"
 
     RUSTFLAGS="$RUSTFLAGS" cargo build "${cargo_build_args[@]}"
+
+    if [ "$RUN_CARGO_TEST" == "1" ]
+    then
+        cargo test
+    fi
 
     if [ "$ONLY_DEPS" != "1" ]
     then
