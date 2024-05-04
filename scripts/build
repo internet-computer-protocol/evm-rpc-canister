@@ -37,6 +37,7 @@ EOF
 }
 
 ONLY_DEPS=
+CANISTERS=()
 
 while [[ $# -gt 0  ]]
 do
@@ -49,6 +50,10 @@ do
             ;;
         --only-dependencies)
             ONLY_DEPS=1
+            shift
+            ;;
+        --evm-rpc)
+            CANISTERS+=("evm_rpc")
             shift
             ;;
         *)
@@ -112,4 +117,7 @@ function build_canister() {
     fi
 }
 
-build_canister "evm_rpc"
+for canister in "${CANISTERS[@]}"
+do
+    build_canister "$canister"
+done

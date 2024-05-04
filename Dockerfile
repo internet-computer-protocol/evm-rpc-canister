@@ -34,11 +34,12 @@ RUN ./scripts/bootstrap
 COPY Cargo.lock .
 COPY Cargo.toml .
 COPY e2e/rust/Cargo.toml e2e/rust/Cargo.toml
-COPY e2e/rust/src/lib.rs e2e/rust/src/lib.rs
 COPY ./scripts/build ./scripts/build
 RUN mkdir -p src \
     && echo "fn main() {}" > src/main.rs \
     && echo "" > src/lib.rs \
+    && mkdir -p e2e/rust/src \
+    && echo "" > e2e/rust/src/lib.rs \
     && ./scripts/build --only-dependencies \
     && rm -rf src \
     && rm -rf Cargo.toml \
@@ -52,8 +53,7 @@ COPY . .
 
 RUN touch src/main.rs
 
-RUN ./scripts/build
-RUN sha256sum /evm_rpc.wasm.gz
+RUN ./scripts/build --evm-rpc
 
 FROM scratch AS scratch_evm_rpc
 COPY --from=build /evm_rpc.wasm.gz /
