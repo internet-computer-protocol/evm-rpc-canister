@@ -80,10 +80,6 @@ then
     exit 1
 fi
 
-# Builds a single canister
-# build_canister CANISTER EXTRA_BUILD_ARGS...
-# CANISTER: possible values: [internet_identity, archive]
-# EXTRA_BUILD_ARGS: extra arguments supplied to cargo when building the canister
 function build_canister() {
     local canister=$1
     shift
