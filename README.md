@@ -120,7 +120,7 @@ The EVM RPC canister supports [reproducible builds](https://internetcomputer.org
 
 1. Ensure [Docker](https://www.docker.com/get-started/) is installed on your machine.
 2. Run `scripts/docker-build` in your terminal. 
-3. Run `sha256sum evm_rpc.wasm` on the generated file to view the SHA-256 hash.
+4. Run `sha256sum evm_rpc.wasm.gz` on the generated file to view the SHA-256 hash.
 
 In order to verify the latest EVM RPC Wasm file, please make sure to download the corresponding version of the source code from the latest GitHub release.
 
