@@ -37,7 +37,7 @@ COPY e2e/rust/Cargo.toml e2e/rust/Cargo.toml
 COPY ./scripts/build ./scripts/build
 RUN mkdir -p src \
     && echo "fn main() {}" > src/main.rs \
-    && echo "" > src/lib.rs \
+    && touch src/lib.rs \
     && mkdir -p e2e/rust/src \
     && echo "" > e2e/rust/src/lib.rs \
     && ./scripts/build --only-dependencies \
