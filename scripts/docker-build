@@ -30,9 +30,6 @@ EOF
 
 ## Building
 
-# Builds a single canister using docker
-# build_canister CANISTER
-# CANISTER: possible values: [internet_identity, archive]
 function build() {
     local canister="$1"
 
