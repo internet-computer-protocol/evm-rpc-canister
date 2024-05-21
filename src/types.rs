@@ -501,13 +501,16 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
 
 #[derive(Clone, CandidType, Deserialize)]
 pub enum RpcServices {
-    EthMainnet(Option<Vec<EthMainnetService>>),
-    EthSepolia(Option<Vec<EthSepoliaService>>),
     Custom {
         #[serde(rename = "chainId")]
         chain_id: u64,
         services: Vec<RpcApi>,
     },
+    EthMainnet(Option<Vec<EthMainnetService>>),
+    EthSepolia(Option<Vec<EthSepoliaService>>),
+    ArbitrumMainnet(Option<Vec<L2MainnetService>>),
+    BaseMainnet(Option<Vec<L2MainnetService>>),
+    OptimismMainnet(Option<Vec<L2MainnetService>>),
 }
 
 pub mod candid_types {
