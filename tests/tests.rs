@@ -970,10 +970,11 @@ fn should_decode_transaction_receipt() {
 
 #[test]
 fn eth_get_logs_should_succeed() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-    let response = setup
+    for source in RPC_SERVICES {
+        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let response = setup
         .eth_get_logs(
-            RpcServices::EthMainnet(None),
+            source.clone(),
             None,
             candid_types::GetLogsArgs {
                 addresses: vec!["0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string()],
@@ -986,40 +987,41 @@ fn eth_get_logs_should_succeed() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(
-        response,
-        vec![LogEntry {
-            address: Address::from_str("0xdac17f958d2ee523a2206206994597c13d831ec7").unwrap(),
-            topics: vec![
-                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-                "0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43",
-                "0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"
-            ]
-            .into_iter()
-            .map(|hex| FixedSizeData::from_str(hex).unwrap())
-            .collect(),
-            data: Data(
-                hex::decode("000000000000000000000000000000000000000000000000000000003b9c6433")
+        assert_eq!(
+            response,
+            vec![LogEntry {
+                address: Address::from_str("0xdac17f958d2ee523a2206206994597c13d831ec7").unwrap(),
+                topics: vec![
+                    "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                    "0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43",
+                    "0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"
+                ]
+                .into_iter()
+                .map(|hex| FixedSizeData::from_str(hex).unwrap())
+                .collect(),
+                data: Data(
+                    hex::decode("000000000000000000000000000000000000000000000000000000003b9c6433")
+                        .unwrap()
+                ),
+                block_number: Some(CheckedAmountOf::new(0x11dc77e)),
+                transaction_hash: Some(
+                    Hash::from_str(
+                        "0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678"
+                    )
                     .unwrap()
-            ),
-            block_number: Some(CheckedAmountOf::new(0x11dc77e)),
-            transaction_hash: Some(
-                Hash::from_str(
-                    "0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678"
-                )
-                .unwrap()
-            ),
-            transaction_index: Some(CheckedAmountOf::new(0x65)),
-            block_hash: Some(
-                Hash::from_str(
-                    "0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629"
-                )
-                .unwrap()
-            ),
-            log_index: Some(CheckedAmountOf::new(0xe8)),
-            removed: false
-        }]
-    );
+                ),
+                transaction_index: Some(CheckedAmountOf::new(0x65)),
+                block_hash: Some(
+                    Hash::from_str(
+                        "0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629"
+                    )
+                    .unwrap()
+                ),
+                log_index: Some(CheckedAmountOf::new(0xe8)),
+                removed: false
+            }]
+        );
+    }
 }
 
 #[test]
@@ -1028,7 +1030,7 @@ fn eth_get_block_by_number_should_succeed() {
         let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
         let response = setup
             .eth_get_block_by_number(
-                source,
+                source.clone(),
                 None,
                 candid_types::BlockTag::Latest,
             )
@@ -1071,7 +1073,7 @@ fn eth_get_transaction_receipt_should_succeed() {
         let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
         let response = setup
         .eth_get_transaction_receipt(
-            source,
+            source.clone(),
             None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
@@ -1106,7 +1108,7 @@ fn eth_get_transaction_count_should_succeed() {
         let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
         let response = setup
             .eth_get_transaction_count(
-                source,
+                source.clone(),
                 None,
                 candid_types::GetTransactionCountArgs {
                     address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
@@ -1130,7 +1132,7 @@ fn eth_fee_history_should_succeed() {
         let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
         let response = setup
         .eth_fee_history(
-            source,
+            source.clone(),
             None,
             candid_types::FeeHistoryArgs {
                 block_count: 3,
@@ -1165,7 +1167,7 @@ fn eth_send_raw_transaction_should_succeed() {
     for source in RPC_SERVICES {
         let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
         let response = setup
-            .eth_send_raw_transaction(source, None, MOCK_TRANSACTION)
+            .eth_send_raw_transaction(source.clone(), None, MOCK_TRANSACTION)
             .mock_http(MockOutcallBuilder::new(
                 200,
                 r#"{"id":0,"jsonrpc":"2.0","result":"Ok"}"#,

@@ -177,11 +177,14 @@ fn lookup_provider_for_service(service: &RpcService) -> Result<Provider, Provide
 
 pub fn get_known_chain_id(service: &RpcService) -> Option<u64> {
     match service {
-        RpcService::EthMainnet(_) => Some(ETH_MAINNET_CHAIN_ID),
-        RpcService::EthSepolia(_) => Some(ETH_SEPOLIA_CHAIN_ID),
         RpcService::Chain(chain_id) => Some(*chain_id),
         RpcService::Provider(_) => None,
         RpcService::Custom(_) => None,
+        RpcService::EthMainnet(_) => Some(ETH_MAINNET_CHAIN_ID),
+        RpcService::EthSepolia(_) => Some(ETH_SEPOLIA_CHAIN_ID),
+        RpcService::ArbitrumMainnet(_) => Some(ARBITRUM_MAINNET_CHAIN_ID),
+        RpcService::BaseMainnet(_) => Some(BASE_MAINNET_CHAIN_ID),
+        RpcService::OptimismMainnet(_) => Some(OPTIMISM_MAINNET_CHAIN_ID),
     }
 }
 
