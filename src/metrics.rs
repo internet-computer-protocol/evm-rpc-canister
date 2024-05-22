@@ -1,18 +1,18 @@
 use std::collections::HashMap;
 
-use crate::*;
+use crate::types::{MetricLabels, MetricValue};
 
 #[macro_export]
 macro_rules! add_metric {
     ($metric:ident, $amount:expr) => {{
-        $crate::UNSTABLE_METRICS.with(|m| m.borrow_mut().$metric += $amount);
+        $crate::memory::UNSTABLE_METRICS.with(|m| m.borrow_mut().$metric += $amount);
     }};
 }
 
 #[macro_export]
 macro_rules! add_metric_entry {
     ($metric:ident, $key:expr, $amount:expr) => {{
-        $crate::UNSTABLE_METRICS.with(|m| {
+        $crate::memory::UNSTABLE_METRICS.with(|m| {
             let amount = $amount;
             if amount != 0 {
                 m.borrow_mut()
@@ -53,7 +53,7 @@ impl EncoderExtensions for ic_metrics_encoder::MetricsEncoder<Vec<u8>> {
 }
 
 pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> std::io::Result<()> {
-    crate::UNSTABLE_METRICS.with(|m| {
+    crate::memory::UNSTABLE_METRICS.with(|m| {
         let m = m.borrow();
 
         w.gauge_vec("cycle_balance", "Cycle balance of this canister")?

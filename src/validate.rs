@@ -1,7 +1,7 @@
 use cketh_common::eth_rpc::ValidationError;
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 
-use crate::*;
+use crate::constants::{CONTENT_TYPE_HEADER, SERVICE_HOSTS_BLOCKLIST};
 
 pub fn validate_hostname(hostname: &str) -> Result<(), ValidationError> {
     if SERVICE_HOSTS_BLOCKLIST.contains(&hostname) {
