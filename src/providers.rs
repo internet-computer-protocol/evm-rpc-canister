@@ -407,12 +407,6 @@ pub fn set_service_provider(service: &RpcService, provider: &Provider) {
 
 pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, ProviderError> {
     Ok(match service {
-        RpcService::EthMainnet(service) => ResolvedRpcService::Provider(
-            lookup_provider_for_service(&RpcService::EthMainnet(service))?,
-        ),
-        RpcService::EthSepolia(service) => ResolvedRpcService::Provider(
-            lookup_provider_for_service(&RpcService::EthSepolia(service))?,
-        ),
         RpcService::Chain(id) => ResolvedRpcService::Provider(PROVIDERS.with(|providers| {
             let providers = providers.borrow();
             Ok(providers
@@ -433,5 +427,20 @@ pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, Pr
         RpcService::Custom(RpcApi { url, headers }) => {
             ResolvedRpcService::Api(RpcApi { url, headers })
         }
+        RpcService::EthMainnet(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::EthMainnet(service))?,
+        ),
+        RpcService::EthSepolia(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::EthSepolia(service))?,
+        ),
+        RpcService::ArbitrumMainnet(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::ArbitrumMainnet(service))?,
+        ),
+        RpcService::BaseMainnet(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::BaseMainnet(service))?,
+        ),
+        RpcService::OptimismMainnet(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::OptimismMainnet(service))?,
+        ),
     })
 }
