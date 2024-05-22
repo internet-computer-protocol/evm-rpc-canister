@@ -13,6 +13,10 @@ pub const HTTP_OUTCALL_RESPONSE_COST_PER_BYTE: u128 = 800;
 // Additional cost of operating the canister per subnet node
 pub const CANISTER_OVERHEAD: u128 = 1_000_000;
 
+// Cycles which must be passed with each RPC request in case the
+// third-party JSON-RPC prices increase in the future (currently always refunded)
+pub const COLLATERAL_CYCLES: u128 = 300_000_000;
+
 // Minimum number of bytes charged for a URL; improves consistency of costs between providers
 pub const RPC_URL_MIN_COST_BYTES: u32 = 256;
 
