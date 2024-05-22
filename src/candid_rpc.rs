@@ -67,6 +67,16 @@ fn get_rpc_client(
         return Err(ProviderError::NoPermission.into());
     }
     Ok(match source {
+        RpcServices::Custom { chain_id, services } => CkEthRpcClient::new(
+            EthereumNetwork(chain_id),
+            Some(
+                check_services(services)?
+                    .into_iter()
+                    .map(RpcService::Custom)
+                    .collect(),
+            ),
+            config,
+        ),
         RpcServices::EthMainnet(services) => CkEthRpcClient::new(
             EthereumNetwork::MAINNET,
             Some(
@@ -87,12 +97,32 @@ fn get_rpc_client(
             ),
             config,
         ),
-        RpcServices::Custom { chain_id, services } => CkEthRpcClient::new(
-            EthereumNetwork(chain_id),
+        RpcServices::ArbitrumMainnet(services) => CkEthRpcClient::new(
+            EthereumNetwork::ARBITRUM,
             Some(
-                check_services(services)?
+                check_services(services.unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec()))?
                     .into_iter()
-                    .map(RpcService::Custom)
+                    .map(RpcService::EthSepolia)
+                    .collect(),
+            ),
+            config,
+        ),
+        RpcServices::BaseMainnet(services) => CkEthRpcClient::new(
+            EthereumNetwork::BASE,
+            Some(
+                check_services(services.unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec()))?
+                    .into_iter()
+                    .map(RpcService::EthSepolia)
+                    .collect(),
+            ),
+            config,
+        ),
+        RpcServices::OptimismMainnet(services) => CkEthRpcClient::new(
+            EthereumNetwork::OPTIMISM,
+            Some(
+                check_services(services.unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec()))?
+                    .into_iter()
+                    .map(RpcService::EthSepolia)
                     .collect(),
             ),
             config,

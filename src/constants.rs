@@ -41,6 +41,11 @@ pub const DEFAULT_ETH_SEPOLIA_SERVICES: &[EthSepoliaService] = &[
     EthSepoliaService::BlockPi,
     EthSepoliaService::PublicNode,
 ];
+pub const DEFAULT_ETH_SEPOLIA_SERVICES: &[EthSepoliaService] = &[
+    EthSepoliaService::Ankr,
+    EthSepoliaService::BlockPi,
+    EthSepoliaService::PublicNode,
+];
 
 pub const CONTENT_TYPE_HEADER: &str = "Content-Type";
 pub const CONTENT_TYPE_VALUE: &str = "application/json";
