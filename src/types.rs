@@ -1,7 +1,7 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use cketh_common::eth_rpc::RpcError;
 use cketh_common::eth_rpc_client::providers::{
-    EthMainnetService, EthSepoliaService, L2MainnetService, RpcApi, RpcService
+    EthMainnetService, EthSepoliaService, L2MainnetService, RpcApi, RpcService,
 };
 
 use ic_cdk::api::management_canister::http_request::HttpHeader;
