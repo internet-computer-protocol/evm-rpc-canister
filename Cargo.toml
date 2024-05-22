@@ -26,8 +26,8 @@ ic-stable-structures = { workspace = true }
 ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
-ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd", package = "ic-canister-log" }
-cketh-common = { git = "https://github.com/dfinity/ic", rev = "22b875f2b9508739b005d4352c14e877995f52fd", package = "ic-cketh-minter" }
+ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "7089ee8191a0384a849377463b26cc32eee4285c", package = "ic-canister-log" }
+cketh-common = { git = "https://github.com/dfinity/ic", rev = "7089ee8191a0384a849377463b26cc32eee4285c", package = "ic-cketh-minter" }
 maplit = "1.0"
 num = "0.4"
 num-traits = "0.2"
