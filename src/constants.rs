@@ -1,4 +1,6 @@
-use cketh_common::eth_rpc_client::providers::{EthMainnetService, EthSepoliaService};
+use cketh_common::eth_rpc_client::providers::{
+    EthMainnetService, EthSepoliaService, L2MainnetService,
+};
 
 // HTTP outcall cost calculation
 // See https://internetcomputer.org/docs/current/developer-docs/gas-cost#special-features
@@ -41,10 +43,10 @@ pub const DEFAULT_ETH_SEPOLIA_SERVICES: &[EthSepoliaService] = &[
     EthSepoliaService::BlockPi,
     EthSepoliaService::PublicNode,
 ];
-pub const DEFAULT_ETH_SEPOLIA_SERVICES: &[EthSepoliaService] = &[
-    EthSepoliaService::Ankr,
-    EthSepoliaService::BlockPi,
-    EthSepoliaService::PublicNode,
+pub const DEFAULT_L2_MAINNET_SERVICES: &[L2MainnetService] = &[
+    L2MainnetService::Ankr,
+    L2MainnetService::BlockPi,
+    L2MainnetService::PublicNode,
 ];
 
 pub const CONTENT_TYPE_HEADER: &str = "Content-Type";

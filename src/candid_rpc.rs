@@ -102,7 +102,7 @@ fn get_rpc_client(
             Some(
                 check_services(services.unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec()))?
                     .into_iter()
-                    .map(RpcService::EthSepolia)
+                    .map(RpcService::ArbitrumMainnet)
                     .collect(),
             ),
             config,
@@ -112,7 +112,7 @@ fn get_rpc_client(
             Some(
                 check_services(services.unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec()))?
                     .into_iter()
-                    .map(RpcService::EthSepolia)
+                    .map(RpcService::BaseMainnet)
                     .collect(),
             ),
             config,
@@ -122,7 +122,7 @@ fn get_rpc_client(
             Some(
                 check_services(services.unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec()))?
                     .into_iter()
-                    .map(RpcService::EthSepolia)
+                    .map(RpcService::OptimismMainnet)
                     .collect(),
             ),
             config,
