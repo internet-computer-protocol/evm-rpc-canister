@@ -39,13 +39,12 @@ RUN mkdir -p src \
     && echo "fn main() {}" > src/main.rs \
     && touch src/lib.rs \
     && mkdir -p e2e/rust/src \
-    && echo "" > e2e/rust/src/lib.rs \
+    && touch e2e/rust/src/lib.rs \
     && ./scripts/build --only-dependencies \
     && rm -rf src \
-    && rm -rf Cargo.toml \
-    && rm -rf Cargo.lock \
-    && rm -rf target \
-    && rm -rf e2e
+    && rm Cargo.toml \
+    && rm Cargo.lock \
+    && rm e2e
 
 FROM deps as build
 
