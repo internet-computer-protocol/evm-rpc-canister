@@ -42,9 +42,9 @@ RUN mkdir -p src \
     && touch e2e/rust/src/lib.rs \
     && ./scripts/build --only-dependencies \
     && rm -rf src \
+    && rm -rf e2e \
     && rm Cargo.toml \
-    && rm Cargo.lock \
-    && rm e2e
+    && rm Cargo.lock
 
 FROM deps as build
 
