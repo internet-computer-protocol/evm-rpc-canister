@@ -18,14 +18,11 @@ Beyond the Ethereum blockchain, this canister also has partial support for Polyg
 
 You can find extensive documentation for the EVM RPC canister in the [ICP developer docs](https://internetcomputer.org/docs/current/developer-docs/multi-chain/ethereum/evm-rpc/overview).
 
-## Canisters
+## Canister
 
-* Production canisters (API keys managed by DFINITY):
-  * Fiduciary subnet (28 nodes): [`7hfb6-caaaa-aaaar-qadga-cai`](https://dashboard.internetcomputer.org/canister/7hfb6-caaaa-aaaar-qadga-cai)
+The EVM RPC canister runs on the 28-node fiduciary subnet with the following principal: [`7hfb6-caaaa-aaaar-qadga-cai`](https://dashboard.internetcomputer.org/canister/7hfb6-caaaa-aaaar-qadga-cai). 
 
-* Test canisters (no API keys):
-  * Standard subnet (13 nodes): [`a6d44-nyaaa-aaaap-abp7q-cai`](https://dashboard.internetcomputer.org/canister/a6d44-nyaaa-aaaap-abp7q-cai)
-  * Fiduciary subnet (28 nodes): [`xhcuo-6yaaa-aaaar-qacqq-cai`](https://dashboard.internetcomputer.org/canister/xhcuo-6yaaa-aaaar-qacqq-cai)
+Refer to the [Reproducible Builds](#reproducible-builds) section for information on how to verify the hash of the deployed WebAssembly module.
 
 ## Quick Start
 
@@ -37,7 +34,7 @@ Add the following to your `dfx.json` config file (replace the `ic` principal wit
     "evm_rpc": {
       "type": "custom",
       "candid": "https://github.com/internet-computer-protocol/evm-rpc-canister/releases/latest/download/evm_rpc.did",
-      "wasm": "https://github.com/internet-computer-protocol/evm-rpc-canister/releases/latest/download/evm_rpc_dev.wasm.gz",
+      "wasm": "https://github.com/internet-computer-protocol/evm-rpc-canister/releases/latest/download/evm_rpc.wasm.gz",
       "remote": {
         "id": {
           "ic": "7hfb6-caaaa-aaaar-qadga-cai"
@@ -114,6 +111,16 @@ dfx canister call evm_rpc getAuthorized '(variant { RegisterProvider })'
 dfx canister call evm_rpc deauthorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
 ```
 
+## Reproducible Builds
+
+The EVM RPC canister supports [reproducible builds](https://internetcomputer.org/docs/current/developer-docs/smart-contracts/test/reproducible-builds):
+
+1. Ensure [Docker](https://www.docker.com/get-started/) is installed on your machine.
+2. Run `scripts/docker-build` in your terminal. 
+4. Run `sha256sum evm_rpc.wasm.gz` on the generated file to view the SHA-256 hash.
+
+In order to verify the latest EVM RPC Wasm file, please make sure to download the corresponding version of the source code from the latest GitHub release.
+
 ## Contributing
 
 Contributions are welcome! Please check out the [contributor guidelines](https://github.com/internet-computer-protocol/evm-rpc-canister/blob/main/.github/CONTRIBUTING.md) for more information.
@@ -129,7 +136,7 @@ npm install
 # Deploy to the local replica
 dfx start --background
 npm run generate
-dfx deploy evm_rpc
+dfx deploy evm_rpc --argument "(record {nodesInSubnet = 28})"
 ```
 
 Regenerate language bindings with the `generate` [npm script](https://docs.npmjs.com/cli/v10/using-npm/scripts):

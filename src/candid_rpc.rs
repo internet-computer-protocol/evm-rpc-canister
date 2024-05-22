@@ -16,9 +16,22 @@ use cketh_common::{
 use ethers_core::{types::Transaction, utils::rlp};
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 
-use crate::*;
-
-use self::candid_types::BlockTag;
+use crate::{
+    accounting::get_rpc_cost,
+    add_metric, add_metric_entry,
+    auth::is_rpc_allowed,
+    constants::{
+        DEFAULT_ETH_MAINNET_SERVICES, DEFAULT_ETH_SEPOLIA_SERVICES, ETH_GET_LOGS_MAX_BLOCKS,
+    },
+    http::do_http_request,
+    providers::resolve_rpc_service,
+    types::{
+        candid_types::{self, SendRawTransactionStatus},
+        MetricRpcHost, MetricRpcMethod, MultiRpcResult, ResolvedRpcService, RpcMethod, RpcResult,
+        RpcServices,
+    },
+    util::hex_to_bytes,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct CanisterTransport;
@@ -138,8 +151,10 @@ impl CandidRpcClient {
         &self,
         args: candid_types::GetLogsArgs,
     ) -> MultiRpcResult<Vec<LogEntry>> {
-        if let (Some(BlockTag::Number(from)), Some(BlockTag::Number(to))) =
-            (&args.from_block, &args.to_block)
+        if let (
+            Some(candid_types::BlockTag::Number(from)),
+            Some(candid_types::BlockTag::Number(to)),
+        ) = (&args.from_block, &args.to_block)
         {
             let (from, to) = (candid::Nat::from(*from), candid::Nat::from(*to));
             let block_count = if to > from { to - from } else { from - to };
@@ -215,7 +230,6 @@ impl CandidRpcClient {
         &self,
         raw_signed_transaction_hex: String,
     ) -> MultiRpcResult<candid_types::SendRawTransactionStatus> {
-        use candid_types::SendRawTransactionStatus::*;
         let transaction_hash = get_transaction_hash(&raw_signed_transaction_hex);
         process_result(
             RpcMethod::EthSendRawTransaction,
@@ -224,10 +238,12 @@ impl CandidRpcClient {
                 .await,
         )
         .map(|result| match result {
-            SendRawTransactionResult::Ok => Ok(transaction_hash),
-            SendRawTransactionResult::InsufficientFunds => InsufficientFunds,
-            SendRawTransactionResult::NonceTooLow => NonceTooLow,
-            SendRawTransactionResult::NonceTooHigh => NonceTooHigh,
+            SendRawTransactionResult::Ok => SendRawTransactionStatus::Ok(transaction_hash),
+            SendRawTransactionResult::InsufficientFunds => {
+                SendRawTransactionStatus::InsufficientFunds
+            }
+            SendRawTransactionResult::NonceTooLow => SendRawTransactionStatus::NonceTooLow,
+            SendRawTransactionResult::NonceTooHigh => SendRawTransactionStatus::NonceTooHigh,
         })
     }
 }

@@ -6,7 +6,10 @@ use ic_stable_structures::VectorMemory;
 use ic_stable_structures::{Cell, StableBTreeMap};
 use std::cell::RefCell;
 
-use crate::{types::*, NODES_IN_FIDUCIARY_SUBNET};
+use crate::{
+    constants::NODES_IN_FIDUCIARY_SUBNET,
+    types::{AuthSet, Metadata, Metrics, PrincipalStorable, Provider, StorableRpcService},
+};
 
 #[cfg(not(target_arch = "wasm32"))]
 type Memory = VirtualMemory<VectorMemory>;

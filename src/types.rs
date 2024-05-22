@@ -11,9 +11,9 @@ use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-use crate::constants::STRING_STORABLE_MAX_SIZE;
-use crate::{
+use crate::constants::{
     AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDER_MAX_SIZE, RPC_SERVICE_MAX_SIZE,
+    STRING_STORABLE_MAX_SIZE,
 };
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -536,15 +536,14 @@ pub mod candid_types {
 
     impl From<BlockTag> for cketh_common::eth_rpc::BlockSpec {
         fn from(value: BlockTag) -> Self {
-            use cketh_common::eth_rpc::BlockSpec::*;
-            use cketh_common::eth_rpc::BlockTag::*;
+            use cketh_common::eth_rpc::{self, BlockSpec};
             match value {
-                BlockTag::Number(n) => Number(n),
-                BlockTag::Latest => Tag(Latest),
-                BlockTag::Safe => Tag(Safe),
-                BlockTag::Finalized => Tag(Finalized),
-                BlockTag::Earliest => Tag(Earliest),
-                BlockTag::Pending => Tag(Pending),
+                BlockTag::Number(n) => BlockSpec::Number(n),
+                BlockTag::Latest => BlockSpec::Tag(eth_rpc::BlockTag::Latest),
+                BlockTag::Safe => BlockSpec::Tag(eth_rpc::BlockTag::Safe),
+                BlockTag::Finalized => BlockSpec::Tag(eth_rpc::BlockTag::Finalized),
+                BlockTag::Earliest => BlockSpec::Tag(eth_rpc::BlockTag::Earliest),
+                BlockTag::Pending => BlockSpec::Tag(eth_rpc::BlockTag::Pending),
             }
         }
     }
@@ -683,62 +682,72 @@ pub mod candid_types {
     }
 }
 
-#[test]
-fn test_multi_rpc_result_map() {
-    use cketh_common::eth_rpc::ProviderError;
+#[cfg(test)]
+mod test {
+    use cketh_common::{
+        eth_rpc::RpcError,
+        eth_rpc_client::providers::{EthMainnetService, RpcService},
+    };
 
-    let err = RpcError::ProviderError(ProviderError::ProviderNotFound);
-    assert_eq!(
-        MultiRpcResult::Consistent(Ok(5)).map(|n| n + 1),
-        MultiRpcResult::Consistent(Ok(6))
-    );
-    assert_eq!(
-        MultiRpcResult::Consistent(Err(err.clone())).map(|()| unreachable!()),
-        MultiRpcResult::Consistent(Err(err.clone()))
-    );
-    assert_eq!(
-        MultiRpcResult::Inconsistent(vec![(
-            RpcService::EthMainnet(EthMainnetService::Ankr),
-            Ok(5)
-        )])
-        .map(|n| n + 1),
-        MultiRpcResult::Inconsistent(vec![(
-            RpcService::EthMainnet(EthMainnetService::Ankr),
-            Ok(6)
-        )])
-    );
-    assert_eq!(
-        MultiRpcResult::Inconsistent(vec![
-            (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
-            (
-                RpcService::EthMainnet(EthMainnetService::Cloudflare),
-                Ok(10)
-            )
-        ])
-        .map(|n| n + 1),
-        MultiRpcResult::Inconsistent(vec![
-            (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(6)),
-            (
-                RpcService::EthMainnet(EthMainnetService::Cloudflare),
-                Ok(11)
-            )
-        ])
-    );
-    assert_eq!(
-        MultiRpcResult::Inconsistent(vec![
-            (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
-            (
-                RpcService::EthMainnet(EthMainnetService::PublicNode),
-                Err(err.clone())
-            )
-        ])
-        .map(|n| n + 1),
-        MultiRpcResult::Inconsistent(vec![
-            (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(6)),
-            (
-                RpcService::EthMainnet(EthMainnetService::PublicNode),
-                Err(err)
-            )
-        ])
-    );
+    use crate::types::MultiRpcResult;
+
+    #[test]
+    fn test_multi_rpc_result_map() {
+        use cketh_common::eth_rpc::ProviderError;
+
+        let err = RpcError::ProviderError(ProviderError::ProviderNotFound);
+        assert_eq!(
+            MultiRpcResult::Consistent(Ok(5)).map(|n| n + 1),
+            MultiRpcResult::Consistent(Ok(6))
+        );
+        assert_eq!(
+            MultiRpcResult::Consistent(Err(err.clone())).map(|()| unreachable!()),
+            MultiRpcResult::Consistent(Err(err.clone()))
+        );
+        assert_eq!(
+            MultiRpcResult::Inconsistent(vec![(
+                RpcService::EthMainnet(EthMainnetService::Ankr),
+                Ok(5)
+            )])
+            .map(|n| n + 1),
+            MultiRpcResult::Inconsistent(vec![(
+                RpcService::EthMainnet(EthMainnetService::Ankr),
+                Ok(6)
+            )])
+        );
+        assert_eq!(
+            MultiRpcResult::Inconsistent(vec![
+                (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
+                (
+                    RpcService::EthMainnet(EthMainnetService::Cloudflare),
+                    Ok(10)
+                )
+            ])
+            .map(|n| n + 1),
+            MultiRpcResult::Inconsistent(vec![
+                (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(6)),
+                (
+                    RpcService::EthMainnet(EthMainnetService::Cloudflare),
+                    Ok(11)
+                )
+            ])
+        );
+        assert_eq!(
+            MultiRpcResult::Inconsistent(vec![
+                (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
+                (
+                    RpcService::EthMainnet(EthMainnetService::PublicNode),
+                    Err(err.clone())
+                )
+            ])
+            .map(|n| n + 1),
+            MultiRpcResult::Inconsistent(vec![
+                (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(6)),
+                (
+                    RpcService::EthMainnet(EthMainnetService::PublicNode),
+                    Err(err)
+                )
+            ])
+        );
+    }
 }

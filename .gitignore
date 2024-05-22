@@ -4,3 +4,5 @@ target/
 .mops/
 
 *.generated.did
+*.wasm
+*.wasm.gz

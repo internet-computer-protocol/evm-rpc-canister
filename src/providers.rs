@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use cketh_common::{
     eth_rpc::ProviderError,
     eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
@@ -6,7 +6,17 @@ use cketh_common::{
 };
 use ic_canister_log::log;
 
-use crate::*;
+use crate::{
+    add_metric,
+    auth::do_deauthorize,
+    constants::{ETH_MAINNET_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID, MINIMUM_WITHDRAWAL_CYCLES},
+    memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP},
+    types::{
+        Auth, ManageProviderArgs, Provider, RegisterProviderArgs, ResolvedRpcService,
+        StorableRpcService, UpdateProviderArgs,
+    },
+    validate::{validate_credential_headers, validate_credential_path, validate_hostname},
+};
 
 pub const ANKR_HOSTNAME: &str = "rpc.ankr.com";
 pub const ALCHEMY_ETH_MAINNET_HOSTNAME: &str = "eth-mainnet.g.alchemy.com";
