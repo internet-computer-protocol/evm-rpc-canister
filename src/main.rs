@@ -4,9 +4,10 @@ use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError};
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
 use cketh_common::logs::INFO;
-use evm_rpc::accounting::get_rpc_cost;
+use evm_rpc::accounting::{get_cost_with_collateral, get_rpc_cost};
 use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::http::get_http_response_body;
+use evm_rpc::memory::{get_nodes_in_subnet, set_nodes_in_subnet};
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{
     do_get_accumulated_cycle_count, do_withdraw_accumulated_cycles, find_provider,
@@ -26,9 +27,7 @@ use evm_rpc::{
     auth::{do_authorize, do_deauthorize, require_manage_or_controller, require_register_provider},
     constants::WASM_PAGE_SIZE,
     http::{do_json_rpc_request, do_transform_http_request},
-    memory::{
-        AUTH, METADATA, PROVIDERS, SERVICE_PROVIDER_MAP, UNSTABLE_METRICS, UNSTABLE_SUBNET_SIZE,
-    },
+    memory::{AUTH, METADATA, PROVIDERS, SERVICE_PROVIDER_MAP, UNSTABLE_METRICS},
     providers::{
         do_manage_provider, do_register_provider, do_unregister_provider, do_update_provider,
     },
@@ -145,11 +144,11 @@ fn request_cost(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<u128, RpcError> {
-    Ok(get_rpc_cost(
+    Ok(get_cost_with_collateral(get_rpc_cost(
         &resolve_rpc_service(service)?,
         json_rpc_payload.len() as u64,
         max_response_bytes,
-    ))
+    )))
 }
 
 #[query(name = "getProviders")]
@@ -208,8 +207,8 @@ fn get_service_provider_map() -> Vec<(RpcService, u64)> {
 
 #[query(name = "getNodesInSubnet")]
 #[candid_method(query, rename = "getNodesInSubnet")]
-async fn get_nodes_in_subnet() -> u32 {
-    UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow())
+async fn get_nodes_in_subnet_() -> u32 {
+    get_nodes_in_subnet()
 }
 
 #[query(name = "getAccumulatedCycleCount")]
@@ -254,7 +253,7 @@ fn init(args: InitArgs) {
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade(args: InitArgs) {
-    UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow_mut() = args.nodes_in_subnet);
+    set_nodes_in_subnet(args.nodes_in_subnet);
 }
 
 #[query]
