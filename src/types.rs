@@ -508,7 +508,7 @@ pub enum RpcServices {
     },
     EthMainnet(Option<Vec<EthMainnetService>>),
     EthSepolia(Option<Vec<EthSepoliaService>>),
-    ArbitrumMainnet(Option<Vec<L2MainnetService>>),
+    ArbitrumOne(Option<Vec<L2MainnetService>>),
     BaseMainnet(Option<Vec<L2MainnetService>>),
     OptimismMainnet(Option<Vec<L2MainnetService>>),
 }

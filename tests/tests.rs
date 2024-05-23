@@ -65,7 +65,7 @@ const MOCK_TRANSACTION_HASH: &str =
 const RPC_SERVICES: &[RpcServices] = &[
     RpcServices::EthMainnet(None),
     RpcServices::EthSepolia(None),
-    RpcServices::ArbitrumMainnet(None),
+    RpcServices::ArbitrumOne(None),
     RpcServices::BaseMainnet(None),
     RpcServices::OptimismMainnet(None),
 ];

@@ -278,19 +278,19 @@ pub fn get_default_service_provider_hostnames() -> Vec<(RpcService, &'static str
             PUBLICNODE_ETH_SEPOLIA_HOSTNAME,
         ),
         (
-            RpcService::ArbitrumMainnet(L2MainnetService::Alchemy),
+            RpcService::ArbitrumOne(L2MainnetService::Alchemy),
             ALCHEMY_ARBITRUM_MAINNET_HOSTNAME,
         ),
         (
-            RpcService::ArbitrumMainnet(L2MainnetService::Ankr),
+            RpcService::ArbitrumOne(L2MainnetService::Ankr),
             ANKR_HOSTNAME,
         ),
         (
-            RpcService::ArbitrumMainnet(L2MainnetService::BlockPi),
+            RpcService::ArbitrumOne(L2MainnetService::BlockPi),
             BLOCKPI_ARBITRUM_MAINNET_HOSTNAME,
         ),
         (
-            RpcService::ArbitrumMainnet(L2MainnetService::PublicNode),
+            RpcService::ArbitrumOne(L2MainnetService::PublicNode),
             PUBLICNODE_ARBITRUM_MAINNET_HOSTNAME,
         ),
         (
@@ -359,7 +359,7 @@ pub fn get_known_chain_id(service: &RpcService) -> Option<u64> {
         RpcService::Custom(_) => None,
         RpcService::EthMainnet(_) => Some(ETH_MAINNET_CHAIN_ID),
         RpcService::EthSepolia(_) => Some(ETH_SEPOLIA_CHAIN_ID),
-        RpcService::ArbitrumMainnet(_) => Some(ARBITRUM_MAINNET_CHAIN_ID),
+        RpcService::ArbitrumOne(_) => Some(ARBITRUM_MAINNET_CHAIN_ID),
         RpcService::BaseMainnet(_) => Some(BASE_MAINNET_CHAIN_ID),
         RpcService::OptimismMainnet(_) => Some(OPTIMISM_MAINNET_CHAIN_ID),
     }
@@ -613,8 +613,8 @@ pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, Pr
         RpcService::EthSepolia(service) => ResolvedRpcService::Provider(
             lookup_provider_for_service(&RpcService::EthSepolia(service))?,
         ),
-        RpcService::ArbitrumMainnet(service) => ResolvedRpcService::Provider(
-            lookup_provider_for_service(&RpcService::ArbitrumMainnet(service))?,
+        RpcService::ArbitrumOne(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::ArbitrumOne(service))?,
         ),
         RpcService::BaseMainnet(service) => ResolvedRpcService::Provider(
             lookup_provider_for_service(&RpcService::BaseMainnet(service))?,

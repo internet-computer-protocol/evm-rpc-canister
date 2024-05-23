@@ -158,7 +158,7 @@ shared ({ caller = installer }) actor class Main() {
                 ),
                 (
                     "Arbitrum",
-                    #ArbitrumMainnet(null),
+                    #ArbitrumOne(null),
                 ),
                 (
                     "Base",

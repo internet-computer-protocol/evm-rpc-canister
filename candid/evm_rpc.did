@@ -191,7 +191,7 @@ type RpcService = variant {
   Custom : RpcApi;
   EthSepolia : EthSepoliaService;
   EthMainnet : EthMainnetService;
-  ArbitrumMainnet : L2MainnetService;
+  ArbitrumOne : L2MainnetService;
   BaseMainnet : L2MainnetService;
   OptimismMainnet : L2MainnetService;
 };
@@ -202,7 +202,7 @@ type RpcServices = variant {
   };
   EthSepolia : opt vec EthSepoliaService;
   EthMainnet : opt vec EthMainnetService;
-  ArbitrumMainnet : opt vec L2MainnetService;
+  ArbitrumOne : opt vec L2MainnetService;
   BaseMainnet : opt vec L2MainnetService;
   OptimismMainnet : opt vec L2MainnetService;
 };

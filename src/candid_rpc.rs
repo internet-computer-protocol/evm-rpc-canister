@@ -111,12 +111,12 @@ fn get_rpc_client(
             ),
             config,
         ),
-        RpcServices::ArbitrumMainnet(services) => CkEthRpcClient::new(
+        RpcServices::ArbitrumOne(services) => CkEthRpcClient::new(
             EthereumNetwork::ARBITRUM,
             Some(
                 check_services(services.unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec()))?
                     .into_iter()
-                    .map(RpcService::ArbitrumMainnet)
+                    .map(RpcService::ArbitrumOne)
                     .collect(),
             ),
             config,
