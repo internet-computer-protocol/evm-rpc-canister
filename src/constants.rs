@@ -58,7 +58,7 @@ pub const CONTENT_TYPE_VALUE: &str = "application/json";
 
 pub const ETH_MAINNET_CHAIN_ID: u64 = 1;
 pub const ETH_SEPOLIA_CHAIN_ID: u64 = 11155111;
-pub const ARBITRUM_MAINNET_CHAIN_ID: u64 = 42161;
+pub const ARBITRUM_ONE_CHAIN_ID: u64 = 42161;
 pub const BASE_MAINNET_CHAIN_ID: u64 = 8453;
 pub const OPTIMISM_MAINNET_CHAIN_ID: u64 = 10;
 

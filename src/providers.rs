@@ -12,7 +12,7 @@ use crate::{
     add_metric,
     auth::do_deauthorize,
     constants::{
-        ARBITRUM_MAINNET_CHAIN_ID, BASE_MAINNET_CHAIN_ID, ETH_MAINNET_CHAIN_ID,
+        ARBITRUM_ONE_CHAIN_ID, BASE_MAINNET_CHAIN_ID, ETH_MAINNET_CHAIN_ID,
         ETH_SEPOLIA_CHAIN_ID, MINIMUM_WITHDRAWAL_CYCLES, OPTIMISM_MAINNET_CHAIN_ID,
     },
     memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP},
@@ -32,9 +32,9 @@ pub const BLOCKPI_ETH_SEPOLIA_HOSTNAME: &str = "ethereum-sepolia.blockpi.network
 pub const PUBLICNODE_ETH_MAINNET_HOSTNAME: &str = "ethereum-rpc.publicnode.com";
 pub const PUBLICNODE_ETH_SEPOLIA_HOSTNAME: &str = "ethereum-sepolia-rpc.publicnode.com";
 pub const ETH_SEPOLIA_HOSTNAME: &str = "rpc.sepolia.org";
-pub const ALCHEMY_ARBITRUM_MAINNET_HOSTNAME: &str = "arb-mainnet.g.alchemy.com";
-pub const BLOCKPI_ARBITRUM_MAINNET_HOSTNAME: &str = "arbitrum.blockpi.network";
-pub const PUBLICNODE_ARBITRUM_MAINNET_HOSTNAME: &str = "arbitrum-one-rpc.publicnode.com";
+pub const ALCHEMY_ARBITRUM_ONE_HOSTNAME: &str = "arb-mainnet.g.alchemy.com";
+pub const BLOCKPI_ARBITRUM_ONE_HOSTNAME: &str = "arbitrum.blockpi.network";
+pub const PUBLICNODE_ARBITRUM_ONE_HOSTNAME: &str = "arbitrum-one-rpc.publicnode.com";
 pub const ALCHEMY_BASE_MAINNET_HOSTNAME: &str = "base-mainnet.g.alchemy.com";
 pub const BLOCKPI_BASE_MAINNET_HOSTNAME: &str = "base.blockpi.network";
 pub const PUBLICNODE_BASE_MAINNET_HOSTNAME: &str = "base-rpc.publicnode.com";
@@ -46,12 +46,12 @@ pub const PUBLICNODE_OPTIMISM_MAINNET_HOSTNAME: &str = "optimism-rpc.publicnode.
 // Use `dfx canister call evm_rpc updateProvider ...` to pass your own keys.
 pub const ALCHEMY_ETH_MAINNET_CREDENTIAL: &str = "/v2/zBxaSBUMfuH8XnA-uLIWeXfCx1T8ItkM";
 pub const ALCHEMY_ETH_SEPOLIA_CREDENTIAL: &str = "/v2/Mbow19DWsfPXiTpdgvRu4HQq63iYycU-";
-pub const ALCHEMY_ARBITRUM_MAINNET_CREDENTIAL: &str = "/v2";
+pub const ALCHEMY_ARBITRUM_ONE_CREDENTIAL: &str = "/v2";
 pub const ALCHEMY_BASE_MAINNET_CREDENTIAL: &str = "/v2";
 pub const ALCHEMY_OPTIMISM_MAINNET_CREDENTIAL: &str = "/v2";
 pub const BLOCKPI_ETH_MAINNET_CREDENTIAL: &str = "/v1/rpc/0edc81e20be23ddff051f61a97bb457ec7284a58";
 pub const BLOCKPI_ETH_SEPOLIA_CREDENTIAL: &str = "/v1/rpc/1fe987fddded17db50862311720ff444991d4dab";
-pub const BLOCKPI_ARBITRUM_MAINNET_CREDENTIAL: &str =
+pub const BLOCKPI_ARBITRUM_ONE_CREDENTIAL: &str =
     "/v1/rpc/a8b89a41d2a341e32ee7aefcb20820a7cbb65f35";
 pub const BLOCKPI_BASE_MAINNET_CREDENTIAL: &str =
     "/v1/rpc/bd458bf9f28ed45c77823814a937c812d2efd260";
@@ -141,7 +141,7 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             cycles_per_message_byte: 0,
         },
         RegisterProviderArgs {
-            chain_id: ARBITRUM_MAINNET_CHAIN_ID,
+            chain_id: ARBITRUM_ONE_CHAIN_ID,
             hostname: ANKR_HOSTNAME.to_string(),
             credential_path: "/arbitrum".to_string(),
             credential_headers: None,
@@ -149,24 +149,24 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             cycles_per_message_byte: 0,
         },
         RegisterProviderArgs {
-            chain_id: ARBITRUM_MAINNET_CHAIN_ID,
-            hostname: ALCHEMY_ARBITRUM_MAINNET_HOSTNAME.to_string(),
-            credential_path: ALCHEMY_ARBITRUM_MAINNET_CREDENTIAL.to_string(),
+            chain_id: ARBITRUM_ONE_CHAIN_ID,
+            hostname: ALCHEMY_ARBITRUM_ONE_HOSTNAME.to_string(),
+            credential_path: ALCHEMY_ARBITRUM_ONE_CREDENTIAL.to_string(),
             credential_headers: None,
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
         },
         RegisterProviderArgs {
-            chain_id: ARBITRUM_MAINNET_CHAIN_ID,
-            hostname: BLOCKPI_ARBITRUM_MAINNET_HOSTNAME.to_string(),
-            credential_path: BLOCKPI_ARBITRUM_MAINNET_CREDENTIAL.to_string(),
+            chain_id: ARBITRUM_ONE_CHAIN_ID,
+            hostname: BLOCKPI_ARBITRUM_ONE_HOSTNAME.to_string(),
+            credential_path: BLOCKPI_ARBITRUM_ONE_CREDENTIAL.to_string(),
             credential_headers: None,
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
         },
         RegisterProviderArgs {
-            chain_id: ARBITRUM_MAINNET_CHAIN_ID,
-            hostname: PUBLICNODE_ARBITRUM_MAINNET_HOSTNAME.to_string(),
+            chain_id: ARBITRUM_ONE_CHAIN_ID,
+            hostname: PUBLICNODE_ARBITRUM_ONE_HOSTNAME.to_string(),
             credential_path: "".to_string(),
             credential_headers: None,
             cycles_per_call: 0,
@@ -279,7 +279,7 @@ pub fn get_default_service_provider_hostnames() -> Vec<(RpcService, &'static str
         ),
         (
             RpcService::ArbitrumOne(L2MainnetService::Alchemy),
-            ALCHEMY_ARBITRUM_MAINNET_HOSTNAME,
+            ALCHEMY_ARBITRUM_ONE_HOSTNAME,
         ),
         (
             RpcService::ArbitrumOne(L2MainnetService::Ankr),
@@ -287,11 +287,11 @@ pub fn get_default_service_provider_hostnames() -> Vec<(RpcService, &'static str
         ),
         (
             RpcService::ArbitrumOne(L2MainnetService::BlockPi),
-            BLOCKPI_ARBITRUM_MAINNET_HOSTNAME,
+            BLOCKPI_ARBITRUM_ONE_HOSTNAME,
         ),
         (
             RpcService::ArbitrumOne(L2MainnetService::PublicNode),
-            PUBLICNODE_ARBITRUM_MAINNET_HOSTNAME,
+            PUBLICNODE_ARBITRUM_ONE_HOSTNAME,
         ),
         (
             RpcService::BaseMainnet(L2MainnetService::Alchemy),
@@ -359,7 +359,7 @@ pub fn get_known_chain_id(service: &RpcService) -> Option<u64> {
         RpcService::Custom(_) => None,
         RpcService::EthMainnet(_) => Some(ETH_MAINNET_CHAIN_ID),
         RpcService::EthSepolia(_) => Some(ETH_SEPOLIA_CHAIN_ID),
-        RpcService::ArbitrumOne(_) => Some(ARBITRUM_MAINNET_CHAIN_ID),
+        RpcService::ArbitrumOne(_) => Some(ARBITRUM_ONE_CHAIN_ID),
         RpcService::BaseMainnet(_) => Some(BASE_MAINNET_CHAIN_ID),
         RpcService::OptimismMainnet(_) => Some(OPTIMISM_MAINNET_CHAIN_ID),
     }
