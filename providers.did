@@ -1,0 +1,202 @@
+(
+    vec {
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "cloudflare-eth.com";
+            primary = false;
+            chainId = 1 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 0 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "rpc.ankr.com";
+            primary = false;
+            chainId = 1 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 1 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "ethereum-rpc.publicnode.com";
+            primary = false;
+            chainId = 1 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 2 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "ethereum.blockpi.network";
+            primary = false;
+            chainId = 1 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 3 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "rpc.sepolia.org";
+            primary = false;
+            chainId = 11_155_111 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 4 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "rpc.ankr.com";
+            primary = false;
+            chainId = 11_155_111 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 5 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "ethereum-sepolia.blockpi.network";
+            primary = false;
+            chainId = 11_155_111 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 6 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "ethereum-sepolia-rpc.publicnode.com";
+            primary = false;
+            chainId = 11_155_111 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 7 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "eth-mainnet.g.alchemy.com";
+            primary = false;
+            chainId = 1 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 8 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "eth-sepolia.g.alchemy.com";
+            primary = false;
+            chainId = 11_155_111 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 9 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "arb-mainnet.g.alchemy.com";
+            primary = false;
+            chainId = 42_161 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 10 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "rpc.ankr.com";
+            primary = false;
+            chainId = 42_161 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 11 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "arbitrum.blockpi.network";
+            primary = false;
+            chainId = 42_161 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 12 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "arbitrum-one-rpc.publicnode.com";
+            primary = false;
+            chainId = 42_161 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 13 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "base-mainnet.g.alchemy.com";
+            primary = false;
+            chainId = 42_161 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 14 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "rpc.ankr.com";
+            primary = false;
+            chainId = 42_161 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 15 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "base.blockpi.network";
+            primary = false;
+            chainId = 42_161 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 16 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "base-rpc.publicnode.com";
+            primary = false;
+            chainId = 8_453 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 17 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "opt-mainnet.g.alchemy.com";
+            primary = false;
+            chainId = 10 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 18 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "rpc.ankr.com";
+            primary = false;
+            chainId = 10 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 19 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "optimism.blockpi.network";
+            primary = false;
+            chainId = 10 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 20 : nat64;
+        };
+        record {
+            cyclesPerCall = 0 : nat64;
+            owner = principal "rxqtr-vwnhc-q4tjx-lozjs-u7nxo-2tqsn-cusmy-ip2ke-zy52n-x2ukd-gae";
+            hostname = "optimism-rpc.publicnode.com\n";
+            primary = false;
+            chainId = 10 : nat64;
+            cyclesPerMessageByte = 0 : nat64;
+            providerId = 21 : nat64;
+        };
+    }
+);

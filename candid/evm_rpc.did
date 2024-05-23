@@ -93,6 +93,7 @@ type LogEntry = record {
 };
 type ManageProviderArgs = record {
   providerId : nat64;
+  chainId: opt nat64;
   "service" : opt RpcService;
   primary : opt bool;
 };

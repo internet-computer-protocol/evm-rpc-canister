@@ -344,6 +344,8 @@ pub struct UpdateProviderArgs {
 pub struct ManageProviderArgs {
     #[serde(rename = "providerId")]
     pub provider_id: u64,
+    #[serde(rename = "chainId")]
+    pub chain_id: Option<u64>,
     pub primary: Option<bool>,
     pub service: Option<RpcService>,
 }

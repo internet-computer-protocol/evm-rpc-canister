@@ -466,6 +466,15 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
                 if let Some(service) = args.service {
                     set_service_provider(&service, &provider);
                 }
+                if let Some(chain_id) = args.chain_id {
+                    log!(
+                        INFO,
+                        "Changing provider {:?} to use chain id: {}",
+                        provider.provider_id,
+                        chain_id
+                    );
+                    provider.chain_id = chain_id;
+                }
                 providers.insert(args.provider_id, provider);
             }
             None => ic_cdk::trap("Provider not found"),
