@@ -460,12 +460,6 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
         let mut providers = providers.borrow_mut();
         match providers.get(&args.provider_id) {
             Some(mut provider) => {
-                if let Some(primary) = args.primary {
-                    provider.primary = primary;
-                }
-                if let Some(service) = args.service {
-                    set_service_provider(&service, &provider);
-                }
                 if let Some(chain_id) = args.chain_id {
                     log!(
                         INFO,
@@ -474,6 +468,12 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
                         chain_id
                     );
                     provider.chain_id = chain_id;
+                }
+                if let Some(primary) = args.primary {
+                    provider.primary = primary;
+                }
+                if let Some(service) = args.service {
+                    set_service_provider(&service, &provider);
                 }
                 providers.insert(args.provider_id, provider);
             }
