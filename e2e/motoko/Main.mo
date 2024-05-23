@@ -147,8 +147,7 @@ shared ({ caller = installer }) actor class Main() {
             };
 
             // Any unused cycles will be refunded
-            let candidRpcCycles = 1_000_000_000_000;
-            let l2MainnetServices = [#Alchemy, #Ankr, #BlockPi, #PublicNode];
+            let candidRpcCycles = 200_000_000_000;
             let allServices : [(Text, EvmRpc.RpcServices)] = [
                 (
                     "Ethereum",
@@ -156,15 +155,15 @@ shared ({ caller = installer }) actor class Main() {
                 ),
                 (
                     "Arbitrum",
-                    #ArbitrumMainnet(?l2MainnetServices),
+                    #ArbitrumMainnet(null),
                 ),
                 (
                     "Base",
-                    #BaseMainnet(?l2MainnetServices),
+                    #BaseMainnet(null),
                 ),
                 (
                     "Optimism",
-                    #OptimismMainnet(?l2MainnetServices),
+                    #OptimismMainnet(null),
                 ),
             ];
 
@@ -172,7 +171,24 @@ shared ({ caller = installer }) actor class Main() {
                 switch (await canister.eth_getBlockByNumber(services, null, #Latest)) {
                     case (#Consistent(#Err(#ProviderError(#TooFewCycles _)))) {};
                     case result {
-                        addError("Received unexpected result for " # networkName # ": " # debug_show result);
+                        let expected = switch result {
+                            case (#Inconsistent(results)) {
+                                var expected = true;
+                                for (result in results.vals()) {
+                                    switch result {
+                                        case (_service, #Err(#ProviderError(#TooFewCycles _))) {};
+                                        case _ {
+                                            expected := false;
+                                        };
+                                    };
+                                };
+                                expected;
+                            };
+                            case _ { false };
+                        };
+                        if (not expected) {
+                            addError("Received unexpected `eth_getBlockByNumber` result for " # networkName # ": " # debug_show result);
+                        };
                     };
                 };
 
