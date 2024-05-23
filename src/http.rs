@@ -7,7 +7,7 @@ use ic_cdk::api::management_canister::http_request::{
 use num_traits::ToPrimitive;
 
 use crate::{
-    accounting::{get_provider_cost, get_rpc_cost},
+    accounting::{get_cost_with_collateral, get_provider_cost, get_rpc_cost},
     add_metric, add_metric_entry,
     auth::{is_authorized, is_rpc_allowed},
     constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST},
@@ -77,9 +77,10 @@ pub async fn do_http_request(
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
         let cycles_available = ic_cdk::api::call::msg_cycles_available128();
-        if cycles_available < cycles_cost {
+        let cycles_cost_with_collateral = get_cost_with_collateral(cycles_cost);
+        if cycles_available < cycles_cost_with_collateral {
             return Err(ProviderError::TooFewCycles {
-                expected: cycles_cost,
+                expected: cycles_cost_with_collateral,
                 received: cycles_available,
             }
             .into());

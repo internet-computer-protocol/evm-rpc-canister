@@ -41,7 +41,7 @@
         "evm_rpc_staging_fiduciary"
       ],
       "type": "motoko",
-      "main": "e2e/motoko/Main.mo"
+      "main": "e2e/motoko/main.mo"
     }
   },
   "defaults": {

@@ -19,7 +19,7 @@ type Memory = VirtualMemory<DefaultMemoryImpl>;
 thread_local! {
     // Unstable static data: this is reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
-    pub static UNSTABLE_SUBNET_SIZE: RefCell<u32> = RefCell::new(NODES_IN_FIDUCIARY_SUBNET);
+    static UNSTABLE_SUBNET_SIZE: RefCell<u32> = RefCell::new(NODES_IN_FIDUCIARY_SUBNET);
 
     // Stable static data: this is preserved when the canister is upgraded.
     #[cfg(not(target_arch = "wasm32"))]
@@ -37,4 +37,12 @@ thread_local! {
         StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(2)))));
     pub static SERVICE_PROVIDER_MAP: RefCell<StableBTreeMap<StorableRpcService, u64, Memory>> = RefCell::new(
         StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(3)))));
+}
+
+pub fn get_nodes_in_subnet() -> u32 {
+    UNSTABLE_SUBNET_SIZE.with_borrow(|n| *n)
+}
+
+pub fn set_nodes_in_subnet(nodes_in_subnet: u32) {
+    UNSTABLE_SUBNET_SIZE.with_borrow_mut(|n| *n = nodes_in_subnet)
 }
