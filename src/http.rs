@@ -80,9 +80,11 @@ pub async fn do_http_request(
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
         let cycles_available = ic_cdk::api::call::msg_cycles_available128();
-        if cycles_available < cycles_cost + COLLATERAL_CYCLES_PER_NODE * get_nodes_in_subnet() as u128 {
+        let cycles_cost_with_collateral =
+            cycles_cost + COLLATERAL_CYCLES_PER_NODE * get_nodes_in_subnet() as u128;
+        if cycles_available < cycles_cost_with_collateral {
             return Err(ProviderError::TooFewCycles {
-                expected: cycles_cost,
+                expected: cycles_cost_with_collateral,
                 received: cycles_available,
             }
             .into());
