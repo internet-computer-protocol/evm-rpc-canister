@@ -6,7 +6,7 @@ use cketh_common::eth_rpc_client::RpcConfig;
 use cketh_common::logs::INFO;
 use evm_rpc::accounting::get_rpc_cost;
 use evm_rpc::candid_rpc::CandidRpcClient;
-use evm_rpc::constants::COLLATERAL_CYCLES;
+use evm_rpc::constants::COLLATERAL_CYCLES_PER_NODE;
 use evm_rpc::http::get_http_response_body;
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{
@@ -150,7 +150,7 @@ fn request_cost(
         &resolve_rpc_service(service)?,
         json_rpc_payload.len() as u64,
         max_response_bytes,
-    ) + COLLATERAL_CYCLES)
+    ) + COLLATERAL_CYCLES_PER_NODE * UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow()))
 }
 
 #[query(name = "getProviders")]

@@ -11,9 +11,10 @@ use crate::{
     add_metric, add_metric_entry,
     auth::{is_authorized, is_rpc_allowed},
     constants::{
-        COLLATERAL_CYCLES, CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST,
+        COLLATERAL_CYCLES_PER_NODE, CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE,
+        SERVICE_HOSTS_BLOCKLIST,
     },
-    memory::PROVIDERS,
+    memory::{PROVIDERS, UNSTABLE_SUBNET_SIZE},
     types::{Auth, MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcResult},
     util::canonicalize_json,
 };
@@ -79,7 +80,10 @@ pub async fn do_http_request(
     }
     if !is_authorized(&caller, Auth::FreeRpc) {
         let cycles_available = ic_cdk::api::call::msg_cycles_available128();
-        if cycles_available < cycles_cost + COLLATERAL_CYCLES {
+        if cycles_available
+            < cycles_cost
+                + COLLATERAL_CYCLES_PER_NODE * UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow()) as u128
+        {
             return Err(ProviderError::TooFewCycles {
                 expected: cycles_cost,
                 received: cycles_available,
