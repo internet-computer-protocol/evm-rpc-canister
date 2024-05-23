@@ -146,7 +146,9 @@ shared ({ caller = installer }) actor class Main() {
                 };
             };
 
-            let candidRpcCycles = 100_000_000_000;
+            // Any unused cycles will be refunded
+            let candidRpcCycles = 1_000_000_000_000;
+            let l2MainnetServices = [#Alchemy, #Ankr, #BlockPi, #PublicNode];
             let allServices : [(Text, EvmRpc.RpcServices)] = [
                 (
                     "Ethereum",
@@ -154,23 +156,15 @@ shared ({ caller = installer }) actor class Main() {
                 ),
                 (
                     "Arbitrum",
-                    #Custom {
-                        chainId = 42161;
-                        services = [{
-                            url = "https://rpc.ankr.com/arbitrum";
-                            headers = null;
-                        }];
-                    },
+                    #ArbitrumMainnet(?l2MainnetServices),
                 ),
                 (
                     "Base",
-                    #Custom {
-                        chainId = 8453;
-                        services = [{
-                            url = "https://mainnet.base.org";
-                            headers = null;
-                        }];
-                    },
+                    #BaseMainnet(?l2MainnetServices),
+                ),
+                (
+                    "Optimism",
+                    #OptimismMainnet(?l2MainnetServices),
                 ),
             ];
 
@@ -191,8 +185,8 @@ shared ({ caller = installer }) actor class Main() {
                         null,
                         {
                             addresses = ["0xB9B002e70AdF0F544Cd0F6b80BF12d4925B0695F"];
-                            fromBlock = ?#Number 19520540;
-                            toBlock = ?#Number 19520940;
+                            fromBlock = ? #Number 19520540;
+                            toBlock = ? #Number 19520940;
                             topics = ?[
                                 ["0x4d69d0bd4287b7f66c548f90154dc81bc98f65a1b362775df5ae171a2ccd262b"],
                                 [
@@ -243,10 +237,7 @@ shared ({ caller = installer }) actor class Main() {
                     ),
                 );
                 switch services {
-                    case (#Custom _) {
-                        // Skip sending transaction for custom chains due to chain ID mismatch
-                    };
-                    case _ {
+                    case (#EthMainnet(_)) {
                         Cycles.add<system>(candidRpcCycles);
                         assertOk(
                             networkName,
@@ -257,6 +248,9 @@ shared ({ caller = installer }) actor class Main() {
                                 "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
                             ),
                         );
+                    };
+                    case _ {
+                        // Skip sending transaction for non-Ethereum chains due to chain ID mismatch
                     };
                 };
             };
