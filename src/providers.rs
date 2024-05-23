@@ -205,7 +205,7 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             cycles_per_message_byte: 0,
         },
         RegisterProviderArgs {
-            chain_id: ARBITRUM_MAINNET_CHAIN_ID,
+            chain_id: OPTIMISM_MAINNET_CHAIN_ID,
             hostname: ANKR_HOSTNAME.to_string(),
             credential_path: "/optimism".to_string(),
             credential_headers: None,
