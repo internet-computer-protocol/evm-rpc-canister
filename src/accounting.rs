@@ -7,7 +7,7 @@ use crate::{
         INGRESS_MESSAGE_BYTE_RECEIVED_COST, INGRESS_MESSAGE_RECEIVED_COST, INGRESS_OVERHEAD_BYTES,
         RPC_URL_MIN_COST_BYTES,
     },
-    memory::UNSTABLE_SUBNET_SIZE,
+    memory::get_nodes_in_subnet,
     types::{Provider, ResolvedRpcService},
 };
 
@@ -36,7 +36,7 @@ pub fn get_http_request_cost(
     payload_size_bytes: u64,
     max_response_bytes: u64,
 ) -> u128 {
-    let nodes_in_subnet = UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow());
+    let nodes_in_subnet = get_nodes_in_subnet();
     let ingress_bytes = payload_size_bytes as u128
         + u32::max(RPC_URL_MIN_COST_BYTES, api.url.len() as u32) as u128
         + INGRESS_OVERHEAD_BYTES;
@@ -52,65 +52,63 @@ pub fn get_http_request_cost(
 
 /// Calculate the additional cost for calling a registered JSON-RPC provider.
 pub fn get_provider_cost(provider: &Provider, payload_size_bytes: u64) -> u128 {
-    let nodes_in_subnet = UNSTABLE_SUBNET_SIZE.with(|m| *m.borrow());
+    let nodes_in_subnet = get_nodes_in_subnet();
     let cost_per_node = provider.cycles_per_call as u128
         + provider.cycles_per_message_byte as u128 * payload_size_bytes as u128;
     cost_per_node * (nodes_in_subnet as u128)
 }
 
 #[cfg(test)]
-use crate::constants::{NODES_IN_FIDUCIARY_SUBNET, NODES_IN_STANDARD_SUBNET};
-
-#[test]
-fn test_request_cost() {
-    for nodes_in_subnet in [1, NODES_IN_STANDARD_SUBNET, NODES_IN_FIDUCIARY_SUBNET] {
-        println!("Nodes in subnet: {nodes_in_subnet}");
-
-        UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = nodes_in_subnet);
-
-        let url = "https://cloudflare-eth.com";
-        let payload = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
-        let base_cost = get_rpc_cost(
-            &ResolvedRpcService::Api(RpcApi {
-                url: url.to_string(),
-                headers: None,
-            }),
-            payload.len() as u64,
-            1000,
-        );
-        let base_cost_10_extra_bytes = get_rpc_cost(
-            &ResolvedRpcService::Api(RpcApi {
-                url: url.to_string(),
-                headers: None,
-            }),
-            payload.len() as u64 + 10,
-            1000,
-        );
-        let estimated_cost_10_extra_bytes = base_cost
-            + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_REQUEST_COST_PER_BYTE)
-                * nodes_in_subnet as u128;
-        assert_eq!(base_cost_10_extra_bytes, estimated_cost_10_extra_bytes,);
-    }
-}
-
-#[cfg(test)]
 mod test {
-    use candid::Principal;
-
+    use super::*;
     use crate::{
         accounting::{get_provider_cost, get_rpc_cost},
         constants::{NODES_IN_FIDUCIARY_SUBNET, NODES_IN_STANDARD_SUBNET},
-        memory::{PROVIDERS, UNSTABLE_SUBNET_SIZE},
+        memory::{set_nodes_in_subnet, PROVIDERS},
         providers::do_register_provider,
         types::{Provider, RegisterProviderArgs, ResolvedRpcService},
     };
+    use candid::Principal;
+
+    #[test]
+    fn test_request_cost() {
+        for nodes_in_subnet in [1, NODES_IN_STANDARD_SUBNET, NODES_IN_FIDUCIARY_SUBNET] {
+            println!("Nodes in subnet: {nodes_in_subnet}");
+
+            set_nodes_in_subnet(nodes_in_subnet);
+
+            let url = "https://cloudflare-eth.com";
+            let payload =
+                "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
+            let base_cost = get_rpc_cost(
+                &ResolvedRpcService::Api(RpcApi {
+                    url: url.to_string(),
+                    headers: None,
+                }),
+                payload.len() as u64,
+                1000,
+            );
+            let base_cost_10_extra_bytes = get_rpc_cost(
+                &ResolvedRpcService::Api(RpcApi {
+                    url: url.to_string(),
+                    headers: None,
+                }),
+                payload.len() as u64 + 10,
+                1000,
+            );
+            let estimated_cost_10_extra_bytes = base_cost
+                + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_REQUEST_COST_PER_BYTE)
+                    * nodes_in_subnet as u128;
+            assert_eq!(base_cost_10_extra_bytes, estimated_cost_10_extra_bytes,);
+        }
+    }
 
     #[test]
     fn test_provider_cost() {
         for nodes_in_subnet in [1, NODES_IN_STANDARD_SUBNET, NODES_IN_FIDUCIARY_SUBNET] {
             println!("Nodes in subnet: {nodes_in_subnet}");
 
-            UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = nodes_in_subnet);
+            set_nodes_in_subnet(nodes_in_subnet);
 
             let provider = Provider {
                 provider_id: 0,
@@ -173,7 +171,7 @@ mod test {
         );
 
         // 13-node subnet
-        UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = NODES_IN_STANDARD_SUBNET);
+        set_nodes_in_subnet(NODES_IN_STANDARD_SUBNET);
         assert_eq!(
             [
                 get_rpc_cost(&service, 0, 0),
@@ -185,7 +183,7 @@ mod test {
         );
 
         // Fiduciary subnet
-        UNSTABLE_SUBNET_SIZE.with(|n| *n.borrow_mut() = NODES_IN_FIDUCIARY_SUBNET);
+        set_nodes_in_subnet(NODES_IN_FIDUCIARY_SUBNET);
         assert_eq!(
             [
                 get_rpc_cost(&service, 0, 0),

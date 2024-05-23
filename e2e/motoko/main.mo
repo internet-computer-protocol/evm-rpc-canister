@@ -3,8 +3,9 @@ import EvmRpcStaging13Node "canister:evm_rpc_staging_13_node";
 import EvmRpcStagingFidicuary "canister:evm_rpc_staging_fiduciary";
 
 import Buffer "mo:base/Buffer";
-import Debug "mo:base/Debug";
 import Cycles "mo:base/ExperimentalCycles";
+import Debug "mo:base/Debug";
+import Nat32 "mo:base/Nat32";
 import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Evm "mo:evm";
@@ -15,6 +16,7 @@ shared ({ caller = installer }) actor class Main() {
 
     // (`subnet name`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
     type SubnetTarget = (Text, Nat32, Nat);
+    let collateralCycles = 1_000_000;
     let defaultSubnet : SubnetTarget = ("13-node", 13, 99_330_400);
     let fiduciarySubnet : SubnetTarget = ("fiduciary", 28, 239_142_400);
 
@@ -75,7 +77,7 @@ shared ({ caller = installer }) actor class Main() {
                 };
             };
 
-            if (cycles != expectedCycles) {
+            if (cycles != expectedCycles + collateralCycles * Nat32.toNat(nodesInSubnet)) {
                 addError("Unexpected number of cycles: " # debug_show cycles # " (expected " # debug_show expectedCycles # ")");
             };
 
@@ -191,8 +193,8 @@ shared ({ caller = installer }) actor class Main() {
                         null,
                         {
                             addresses = ["0xB9B002e70AdF0F544Cd0F6b80BF12d4925B0695F"];
-                            fromBlock = ?#Number 19520540;
-                            toBlock = ?#Number 19520940;
+                            fromBlock = ? #Number 19520540;
+                            toBlock = ? #Number 19520940;
                             topics = ?[
                                 ["0x4d69d0bd4287b7f66c548f90154dc81bc98f65a1b362775df5ae171a2ccd262b"],
                                 [
