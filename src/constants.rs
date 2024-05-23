@@ -1,4 +1,6 @@
-use cketh_common::eth_rpc_client::providers::{EthMainnetService, EthSepoliaService};
+use cketh_common::eth_rpc_client::providers::{
+    EthMainnetService, EthSepoliaService, L2MainnetService,
+};
 
 // HTTP outcall cost calculation
 // See https://internetcomputer.org/docs/current/developer-docs/gas-cost#special-features
@@ -45,11 +47,19 @@ pub const DEFAULT_ETH_SEPOLIA_SERVICES: &[EthSepoliaService] = &[
     EthSepoliaService::BlockPi,
     EthSepoliaService::PublicNode,
 ];
+pub const DEFAULT_L2_MAINNET_SERVICES: &[L2MainnetService] = &[
+    L2MainnetService::Ankr,
+    L2MainnetService::BlockPi,
+    L2MainnetService::PublicNode,
+];
 
 pub const CONTENT_TYPE_HEADER: &str = "Content-Type";
 pub const CONTENT_TYPE_VALUE: &str = "application/json";
 
 pub const ETH_MAINNET_CHAIN_ID: u64 = 1;
 pub const ETH_SEPOLIA_CHAIN_ID: u64 = 11155111;
+pub const ARBITRUM_ONE_CHAIN_ID: u64 = 42161;
+pub const BASE_MAINNET_CHAIN_ID: u64 = 8453;
+pub const OPTIMISM_MAINNET_CHAIN_ID: u64 = 10;
 
 pub const SERVICE_HOSTS_BLOCKLIST: &[&str] = &[];

@@ -149,7 +149,8 @@ shared ({ caller = installer }) actor class Main() {
                 };
             };
 
-            let candidRpcCycles = 100_000_000_000;
+            // Any unused cycles will be refunded
+            let candidRpcCycles = 200_000_000_000;
             let allServices : [(Text, EvmRpc.RpcServices)] = [
                 (
                     "Ethereum",
@@ -157,23 +158,15 @@ shared ({ caller = installer }) actor class Main() {
                 ),
                 (
                     "Arbitrum",
-                    #Custom {
-                        chainId = 42161;
-                        services = [{
-                            url = "https://rpc.ankr.com/arbitrum";
-                            headers = null;
-                        }];
-                    },
+                    #ArbitrumOne(null),
                 ),
                 (
                     "Base",
-                    #Custom {
-                        chainId = 8453;
-                        services = [{
-                            url = "https://mainnet.base.org";
-                            headers = null;
-                        }];
-                    },
+                    #BaseMainnet(null),
+                ),
+                (
+                    "Optimism",
+                    #OptimismMainnet(null),
                 ),
             ];
 
@@ -181,7 +174,24 @@ shared ({ caller = installer }) actor class Main() {
                 switch (await canister.eth_getBlockByNumber(services, null, #Latest)) {
                     case (#Consistent(#Err(#ProviderError(#TooFewCycles _)))) {};
                     case result {
-                        addError("Received unexpected result for " # networkName # ": " # debug_show result);
+                        let expected = switch result {
+                            case (#Inconsistent(results)) {
+                                var expected = true;
+                                for (result in results.vals()) {
+                                    switch result {
+                                        case (_service, #Err(#ProviderError(#TooFewCycles _))) {};
+                                        case _ {
+                                            expected := false;
+                                        };
+                                    };
+                                };
+                                expected;
+                            };
+                            case _ { false };
+                        };
+                        if (not expected) {
+                            addError("Received unexpected `eth_getBlockByNumber` result for " # networkName # ": " # debug_show result);
+                        };
                     };
                 };
 
@@ -246,10 +256,7 @@ shared ({ caller = installer }) actor class Main() {
                     ),
                 );
                 switch services {
-                    case (#Custom _) {
-                        // Skip sending transaction for custom chains due to chain ID mismatch
-                    };
-                    case _ {
+                    case (#EthMainnet(_)) {
                         Cycles.add<system>(candidRpcCycles);
                         assertOk(
                             networkName,
@@ -260,6 +267,9 @@ shared ({ caller = installer }) actor class Main() {
                                 "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
                             ),
                         );
+                    };
+                    case _ {
+                        // Skip sending transaction for non-Ethereum chains due to chain ID mismatch
                     };
                 };
             };

@@ -1,7 +1,7 @@
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use cketh_common::eth_rpc::RpcError;
 use cketh_common::eth_rpc_client::providers::{
-    EthMainnetService, EthSepoliaService, RpcApi, RpcService,
+    EthMainnetService, EthSepoliaService, L2MainnetService, RpcApi, RpcService,
 };
 
 use ic_cdk::api::management_canister::http_request::HttpHeader;
@@ -501,13 +501,16 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
 
 #[derive(Clone, CandidType, Deserialize)]
 pub enum RpcServices {
-    EthMainnet(Option<Vec<EthMainnetService>>),
-    EthSepolia(Option<Vec<EthSepoliaService>>),
     Custom {
         #[serde(rename = "chainId")]
         chain_id: u64,
         services: Vec<RpcApi>,
     },
+    EthMainnet(Option<Vec<EthMainnetService>>),
+    EthSepolia(Option<Vec<EthSepoliaService>>),
+    ArbitrumOne(Option<Vec<L2MainnetService>>),
+    BaseMainnet(Option<Vec<L2MainnetService>>),
+    OptimismMainnet(Option<Vec<L2MainnetService>>),
 }
 
 pub mod candid_types {

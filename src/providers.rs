@@ -1,7 +1,9 @@
 use candid::{CandidType, Principal};
 use cketh_common::{
     eth_rpc::ProviderError,
-    eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
+    eth_rpc_client::providers::{
+        EthMainnetService, EthSepoliaService, L2MainnetService, RpcApi, RpcService,
+    },
     logs::INFO,
 };
 use ic_canister_log::log;
@@ -9,7 +11,10 @@ use ic_canister_log::log;
 use crate::{
     add_metric,
     auth::do_deauthorize,
-    constants::{ETH_MAINNET_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID, MINIMUM_WITHDRAWAL_CYCLES},
+    constants::{
+        ARBITRUM_ONE_CHAIN_ID, BASE_MAINNET_CHAIN_ID, ETH_MAINNET_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID,
+        MINIMUM_WITHDRAWAL_CYCLES, OPTIMISM_MAINNET_CHAIN_ID,
+    },
     memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP},
     types::{
         Auth, ManageProviderArgs, Provider, RegisterProviderArgs, ResolvedRpcService,
@@ -27,13 +32,31 @@ pub const BLOCKPI_ETH_SEPOLIA_HOSTNAME: &str = "ethereum-sepolia.blockpi.network
 pub const PUBLICNODE_ETH_MAINNET_HOSTNAME: &str = "ethereum-rpc.publicnode.com";
 pub const PUBLICNODE_ETH_SEPOLIA_HOSTNAME: &str = "ethereum-sepolia-rpc.publicnode.com";
 pub const ETH_SEPOLIA_HOSTNAME: &str = "rpc.sepolia.org";
+pub const ALCHEMY_ARBITRUM_ONE_HOSTNAME: &str = "arb-mainnet.g.alchemy.com";
+pub const BLOCKPI_ARBITRUM_ONE_HOSTNAME: &str = "arbitrum.blockpi.network";
+pub const PUBLICNODE_ARBITRUM_ONE_HOSTNAME: &str = "arbitrum-one-rpc.publicnode.com";
+pub const ALCHEMY_BASE_MAINNET_HOSTNAME: &str = "base-mainnet.g.alchemy.com";
+pub const BLOCKPI_BASE_MAINNET_HOSTNAME: &str = "base.blockpi.network";
+pub const PUBLICNODE_BASE_MAINNET_HOSTNAME: &str = "base-rpc.publicnode.com";
+pub const ALCHEMY_OPT_MAINNET_HOSTNAME: &str = "opt-mainnet.g.alchemy.com";
+pub const BLOCKPI_OPTIMISM_MAINNET_HOSTNAME: &str = "optimism.blockpi.network";
+pub const PUBLICNODE_OPTIMISM_MAINNET_HOSTNAME: &str = "optimism-rpc.publicnode.com";
 
 // Limited API credentials for local testing.
 // Use `dfx canister call evm_rpc updateProvider ...` to pass your own keys.
 pub const ALCHEMY_ETH_MAINNET_CREDENTIAL: &str = "/v2/zBxaSBUMfuH8XnA-uLIWeXfCx1T8ItkM";
 pub const ALCHEMY_ETH_SEPOLIA_CREDENTIAL: &str = "/v2/Mbow19DWsfPXiTpdgvRu4HQq63iYycU-";
+pub const ALCHEMY_ARBITRUM_ONE_CREDENTIAL: &str = "/v2";
+pub const ALCHEMY_BASE_MAINNET_CREDENTIAL: &str = "/v2";
+pub const ALCHEMY_OPTIMISM_MAINNET_CREDENTIAL: &str = "/v2";
 pub const BLOCKPI_ETH_MAINNET_CREDENTIAL: &str = "/v1/rpc/0edc81e20be23ddff051f61a97bb457ec7284a58";
 pub const BLOCKPI_ETH_SEPOLIA_CREDENTIAL: &str = "/v1/rpc/1fe987fddded17db50862311720ff444991d4dab";
+pub const BLOCKPI_ARBITRUM_ONE_CREDENTIAL: &str =
+    "/v1/rpc/a8b89a41d2a341e32ee7aefcb20820a7cbb65f35";
+pub const BLOCKPI_BASE_MAINNET_CREDENTIAL: &str =
+    "/v1/rpc/bd458bf9f28ed45c77823814a937c812d2efd260";
+pub const BLOCKPI_OPTIMISM_MAINNET_CREDENTIAL: &str =
+    "/v1/rpc/d54bfe59299d56b0cbb8b3c69bd122f4ab5ac654";
 
 pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
     vec![
@@ -117,6 +140,102 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
             cycles_per_call: 0,
             cycles_per_message_byte: 0,
         },
+        RegisterProviderArgs {
+            chain_id: ARBITRUM_ONE_CHAIN_ID,
+            hostname: ANKR_HOSTNAME.to_string(),
+            credential_path: "/arbitrum".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: ARBITRUM_ONE_CHAIN_ID,
+            hostname: ALCHEMY_ARBITRUM_ONE_HOSTNAME.to_string(),
+            credential_path: ALCHEMY_ARBITRUM_ONE_CREDENTIAL.to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: ARBITRUM_ONE_CHAIN_ID,
+            hostname: BLOCKPI_ARBITRUM_ONE_HOSTNAME.to_string(),
+            credential_path: BLOCKPI_ARBITRUM_ONE_CREDENTIAL.to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: ARBITRUM_ONE_CHAIN_ID,
+            hostname: PUBLICNODE_ARBITRUM_ONE_HOSTNAME.to_string(),
+            credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: BASE_MAINNET_CHAIN_ID,
+            hostname: ANKR_HOSTNAME.to_string(),
+            credential_path: "/base".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: BASE_MAINNET_CHAIN_ID,
+            hostname: ALCHEMY_BASE_MAINNET_HOSTNAME.to_string(),
+            credential_path: ALCHEMY_BASE_MAINNET_CREDENTIAL.to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: BASE_MAINNET_CHAIN_ID,
+            hostname: BLOCKPI_BASE_MAINNET_HOSTNAME.to_string(),
+            credential_path: BLOCKPI_BASE_MAINNET_CREDENTIAL.to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: BASE_MAINNET_CHAIN_ID,
+            hostname: PUBLICNODE_BASE_MAINNET_HOSTNAME.to_string(),
+            credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: OPTIMISM_MAINNET_CHAIN_ID,
+            hostname: ANKR_HOSTNAME.to_string(),
+            credential_path: "/optimism".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: OPTIMISM_MAINNET_CHAIN_ID,
+            hostname: ALCHEMY_OPT_MAINNET_HOSTNAME.to_string(),
+            credential_path: ALCHEMY_OPTIMISM_MAINNET_CREDENTIAL.to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: OPTIMISM_MAINNET_CHAIN_ID,
+            hostname: BLOCKPI_OPTIMISM_MAINNET_HOSTNAME.to_string(),
+            credential_path: BLOCKPI_OPTIMISM_MAINNET_CREDENTIAL.to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: OPTIMISM_MAINNET_CHAIN_ID,
+            hostname: PUBLICNODE_OPTIMISM_MAINNET_HOSTNAME.to_string(),
+            credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
     ]
 }
 
@@ -158,6 +277,54 @@ pub fn get_default_service_provider_hostnames() -> Vec<(RpcService, &'static str
             RpcService::EthSepolia(EthSepoliaService::PublicNode),
             PUBLICNODE_ETH_SEPOLIA_HOSTNAME,
         ),
+        (
+            RpcService::ArbitrumOne(L2MainnetService::Alchemy),
+            ALCHEMY_ARBITRUM_ONE_HOSTNAME,
+        ),
+        (
+            RpcService::ArbitrumOne(L2MainnetService::Ankr),
+            ANKR_HOSTNAME,
+        ),
+        (
+            RpcService::ArbitrumOne(L2MainnetService::BlockPi),
+            BLOCKPI_ARBITRUM_ONE_HOSTNAME,
+        ),
+        (
+            RpcService::ArbitrumOne(L2MainnetService::PublicNode),
+            PUBLICNODE_ARBITRUM_ONE_HOSTNAME,
+        ),
+        (
+            RpcService::BaseMainnet(L2MainnetService::Alchemy),
+            ALCHEMY_BASE_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::BaseMainnet(L2MainnetService::Ankr),
+            ANKR_HOSTNAME,
+        ),
+        (
+            RpcService::BaseMainnet(L2MainnetService::BlockPi),
+            BLOCKPI_BASE_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::BaseMainnet(L2MainnetService::PublicNode),
+            PUBLICNODE_BASE_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::OptimismMainnet(L2MainnetService::Alchemy),
+            ALCHEMY_OPT_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::OptimismMainnet(L2MainnetService::Ankr),
+            ANKR_HOSTNAME,
+        ),
+        (
+            RpcService::OptimismMainnet(L2MainnetService::BlockPi),
+            BLOCKPI_OPTIMISM_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::OptimismMainnet(L2MainnetService::PublicNode),
+            PUBLICNODE_OPTIMISM_MAINNET_HOSTNAME,
+        ),
     ]
 }
 
@@ -187,11 +354,14 @@ fn lookup_provider_for_service(service: &RpcService) -> Result<Provider, Provide
 
 pub fn get_known_chain_id(service: &RpcService) -> Option<u64> {
     match service {
-        RpcService::EthMainnet(_) => Some(ETH_MAINNET_CHAIN_ID),
-        RpcService::EthSepolia(_) => Some(ETH_SEPOLIA_CHAIN_ID),
         RpcService::Chain(chain_id) => Some(*chain_id),
         RpcService::Provider(_) => None,
         RpcService::Custom(_) => None,
+        RpcService::EthMainnet(_) => Some(ETH_MAINNET_CHAIN_ID),
+        RpcService::EthSepolia(_) => Some(ETH_SEPOLIA_CHAIN_ID),
+        RpcService::ArbitrumOne(_) => Some(ARBITRUM_ONE_CHAIN_ID),
+        RpcService::BaseMainnet(_) => Some(BASE_MAINNET_CHAIN_ID),
+        RpcService::OptimismMainnet(_) => Some(OPTIMISM_MAINNET_CHAIN_ID),
     }
 }
 
@@ -417,12 +587,6 @@ pub fn set_service_provider(service: &RpcService, provider: &Provider) {
 
 pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, ProviderError> {
     Ok(match service {
-        RpcService::EthMainnet(service) => ResolvedRpcService::Provider(
-            lookup_provider_for_service(&RpcService::EthMainnet(service))?,
-        ),
-        RpcService::EthSepolia(service) => ResolvedRpcService::Provider(
-            lookup_provider_for_service(&RpcService::EthSepolia(service))?,
-        ),
         RpcService::Chain(id) => ResolvedRpcService::Provider(PROVIDERS.with(|providers| {
             let providers = providers.borrow();
             Ok(providers
@@ -443,5 +607,20 @@ pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, Pr
         RpcService::Custom(RpcApi { url, headers }) => {
             ResolvedRpcService::Api(RpcApi { url, headers })
         }
+        RpcService::EthMainnet(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::EthMainnet(service))?,
+        ),
+        RpcService::EthSepolia(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::EthSepolia(service))?,
+        ),
+        RpcService::ArbitrumOne(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::ArbitrumOne(service))?,
+        ),
+        RpcService::BaseMainnet(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::BaseMainnet(service))?,
+        ),
+        RpcService::OptimismMainnet(service) => ResolvedRpcService::Provider(
+            lookup_provider_for_service(&RpcService::OptimismMainnet(service))?,
+        ),
     })
 }

@@ -37,7 +37,18 @@ type EthMainnetService = variant {
   Cloudflare;
   PublicNode;
 };
-type EthSepoliaService = variant { Alchemy; Ankr; BlockPi; PublicNode };
+type EthSepoliaService = variant {
+  Alchemy;
+  Ankr;
+  BlockPi;
+  PublicNode;
+};
+type L2MainnetService = variant {
+  Alchemy;
+  Ankr;
+  BlockPi;
+  PublicNode;
+};
 type FeeHistory = record {
   reward : vec vec nat;
   gasUsedRatio : vec float64;
@@ -175,19 +186,25 @@ type RpcError = variant {
 };
 type RpcApi = record { url : text; headers : opt vec HttpHeader };
 type RpcService = variant {
-  EthSepolia : EthSepoliaService;
-  EthMainnet : EthMainnetService;
   Chain : nat64;
   Provider : nat64;
   Custom : RpcApi;
+  EthSepolia : EthSepoliaService;
+  EthMainnet : EthMainnetService;
+  ArbitrumOne : L2MainnetService;
+  BaseMainnet : L2MainnetService;
+  OptimismMainnet : L2MainnetService;
 };
 type RpcServices = variant {
-  EthSepolia : opt vec EthSepoliaService;
-  EthMainnet : opt vec EthMainnetService;
   Custom : record {
     chainId : nat64;
     services : vec RpcApi;
   };
+  EthSepolia : opt vec EthSepoliaService;
+  EthMainnet : opt vec EthMainnetService;
+  ArbitrumOne : opt vec L2MainnetService;
+  BaseMainnet : opt vec L2MainnetService;
+  OptimismMainnet : opt vec L2MainnetService;
 };
 type SendRawTransactionStatus = variant {
   Ok : opt text;
@@ -231,29 +248,29 @@ type ValidationError = variant {
   CredentialHeaderNotAllowed;
 };
 service : (InitArgs) -> {
-  authorize : (principal, Auth) -> (success: bool);
-  deauthorize : (principal, Auth) -> (success: bool);
+  authorize : (principal, Auth) -> (success : bool);
+  deauthorize : (principal, Auth) -> (success : bool);
   eth_feeHistory : (RpcServices, opt RpcConfig, FeeHistoryArgs) -> (MultiFeeHistoryResult);
   eth_getBlockByNumber : (RpcServices, opt RpcConfig, BlockTag) -> (MultiGetBlockByNumberResult);
   eth_getLogs : (RpcServices, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
   eth_getTransactionCount : (RpcServices, opt RpcConfig, GetTransactionCountArgs) -> (
     MultiGetTransactionCountResult
   );
-  eth_getTransactionReceipt : (RpcServices, opt RpcConfig, hash: text) -> (MultiGetTransactionReceiptResult);
-  eth_sendRawTransaction : (RpcServices, opt RpcConfig, rawSignedTransactionHex: text) -> (MultiSendRawTransactionResult);
-  getAccumulatedCycleCount : (ProviderId) -> (cycles: nat) query;
+  eth_getTransactionReceipt : (RpcServices, opt RpcConfig, hash : text) -> (MultiGetTransactionReceiptResult);
+  eth_sendRawTransaction : (RpcServices, opt RpcConfig, rawSignedTransactionHex : text) -> (MultiSendRawTransactionResult);
+  getAccumulatedCycleCount : (ProviderId) -> (cycles : nat) query;
   getAuthorized : (Auth) -> (vec principal) query;
   getMetrics : () -> (Metrics) query;
-  getNodesInSubnet : () -> (numberOfNodes: nat32) query;
-  getOpenRpcAccess : () -> (active: bool) query;
+  getNodesInSubnet : () -> (numberOfNodes : nat32) query;
+  getOpenRpcAccess : () -> (active : bool) query;
   getProviders : () -> (vec ProviderView) query;
   getServiceProviderMap : () -> (vec record { RpcService; nat64 }) query;
   manageProvider : (ManageProviderArgs) -> ();
   registerProvider : (RegisterProviderArgs) -> (nat64);
-  request : (RpcService, json: text, maxResponseBytes: nat64) -> (RequestResult);
-  requestCost : (RpcService, json: text, maxResponseBytes: nat64) -> (RequestCostResult) query;
-  setOpenRpcAccess : (active: bool) -> ();
+  request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
+  requestCost : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestCostResult) query;
+  setOpenRpcAccess : (active : bool) -> ();
   unregisterProvider : (ProviderId) -> (bool);
   updateProvider : (UpdateProviderArgs) -> ();
-  withdrawAccumulatedCycles : (ProviderId, recipient: principal) -> ();
+  withdrawAccumulatedCycles : (ProviderId, recipient : principal) -> ();
 };

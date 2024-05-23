@@ -21,7 +21,8 @@ use crate::{
     add_metric, add_metric_entry,
     auth::is_rpc_allowed,
     constants::{
-        DEFAULT_ETH_MAINNET_SERVICES, DEFAULT_ETH_SEPOLIA_SERVICES, ETH_GET_LOGS_MAX_BLOCKS,
+        DEFAULT_ETH_MAINNET_SERVICES, DEFAULT_ETH_SEPOLIA_SERVICES, DEFAULT_L2_MAINNET_SERVICES,
+        ETH_GET_LOGS_MAX_BLOCKS,
     },
     http::do_http_request,
     providers::resolve_rpc_service,
@@ -80,6 +81,16 @@ fn get_rpc_client(
         return Err(ProviderError::NoPermission.into());
     }
     Ok(match source {
+        RpcServices::Custom { chain_id, services } => CkEthRpcClient::new(
+            EthereumNetwork(chain_id),
+            Some(
+                check_services(services)?
+                    .into_iter()
+                    .map(RpcService::Custom)
+                    .collect(),
+            ),
+            config,
+        ),
         RpcServices::EthMainnet(services) => CkEthRpcClient::new(
             EthereumNetwork::MAINNET,
             Some(
@@ -100,12 +111,32 @@ fn get_rpc_client(
             ),
             config,
         ),
-        RpcServices::Custom { chain_id, services } => CkEthRpcClient::new(
-            EthereumNetwork(chain_id),
+        RpcServices::ArbitrumOne(services) => CkEthRpcClient::new(
+            EthereumNetwork::ARBITRUM,
             Some(
-                check_services(services)?
+                check_services(services.unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec()))?
                     .into_iter()
-                    .map(RpcService::Custom)
+                    .map(RpcService::ArbitrumOne)
+                    .collect(),
+            ),
+            config,
+        ),
+        RpcServices::BaseMainnet(services) => CkEthRpcClient::new(
+            EthereumNetwork::BASE,
+            Some(
+                check_services(services.unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec()))?
+                    .into_iter()
+                    .map(RpcService::BaseMainnet)
+                    .collect(),
+            ),
+            config,
+        ),
+        RpcServices::OptimismMainnet(services) => CkEthRpcClient::new(
+            EthereumNetwork::OPTIMISM,
+            Some(
+                check_services(services.unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec()))?
+                    .into_iter()
+                    .map(RpcService::OptimismMainnet)
                     .collect(),
             ),
             config,
