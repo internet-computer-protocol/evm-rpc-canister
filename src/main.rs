@@ -145,11 +145,11 @@ fn request_cost(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<u128, RpcError> {
-    Ok(get_rpc_cost(
+    Ok(get_cost_with_collateral(get_rpc_cost(
         &resolve_rpc_service(service)?,
         json_rpc_payload.len() as u64,
         max_response_bytes,
-    ) + COLLATERAL_CYCLES_PER_NODE * get_nodes_in_subnet() as u128)
+    )))
 }
 
 #[query(name = "getProviders")]

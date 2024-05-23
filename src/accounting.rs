@@ -2,10 +2,10 @@ use cketh_common::eth_rpc_client::providers::RpcApi;
 
 use crate::{
     constants::{
-        CANISTER_OVERHEAD, HTTP_OUTCALL_REQUEST_BASE_COST, HTTP_OUTCALL_REQUEST_COST_PER_BYTE,
-        HTTP_OUTCALL_REQUEST_PER_NODE_COST, HTTP_OUTCALL_RESPONSE_COST_PER_BYTE,
-        INGRESS_MESSAGE_BYTE_RECEIVED_COST, INGRESS_MESSAGE_RECEIVED_COST, INGRESS_OVERHEAD_BYTES,
-        RPC_URL_MIN_COST_BYTES,
+        CANISTER_OVERHEAD, COLLATERAL_CYCLES_PER_NODE, HTTP_OUTCALL_REQUEST_BASE_COST,
+        HTTP_OUTCALL_REQUEST_COST_PER_BYTE, HTTP_OUTCALL_REQUEST_PER_NODE_COST,
+        HTTP_OUTCALL_RESPONSE_COST_PER_BYTE, INGRESS_MESSAGE_BYTE_RECEIVED_COST,
+        INGRESS_MESSAGE_RECEIVED_COST, INGRESS_OVERHEAD_BYTES, RPC_URL_MIN_COST_BYTES,
     },
     memory::get_nodes_in_subnet,
     types::{Provider, ResolvedRpcService},
@@ -56,6 +56,11 @@ pub fn get_provider_cost(provider: &Provider, payload_size_bytes: u64) -> u128 {
     let cost_per_node = provider.cycles_per_call as u128
         + provider.cycles_per_message_byte as u128 * payload_size_bytes as u128;
     cost_per_node * (nodes_in_subnet as u128)
+}
+
+/// Calculate the cost + collateral cycles for an HTTP request.
+pub fn get_cost_with_collateral(cycles_cost: u128) -> u128 {
+    cycles_cost + COLLATERAL_CYCLES_PER_NODE * get_nodes_in_subnet() as u128
 }
 
 #[cfg(test)]
