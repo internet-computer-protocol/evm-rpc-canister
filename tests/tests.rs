@@ -941,7 +941,7 @@ fn should_set_provider_chain_id() {
     assert_matches!(
         setup
             .request(
-                RpcService::Chain(after_chain_id),
+                RpcService::Chain(before_chain_id),
                 MOCK_REQUEST_PAYLOAD,
                 MOCK_REQUEST_RESPONSE_BYTES,
             )
