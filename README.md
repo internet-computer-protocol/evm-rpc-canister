@@ -1,10 +1,6 @@
-# EVM RPC (Beta) &nbsp;[![GitHub license](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/internet-computer-protocol/evm-rpc-canister/issues)
+# EVM RPC &nbsp;[![GitHub license](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/internet-computer-protocol/evm-rpc-canister/issues)
 
 > #### Interact with [EVM blockchains](https://chainlist.org/?testnets=true) from the [Internet Computer](https://internetcomputer.org/).
-
----
-
-This project is currently under active development during the beta testing phase. Please feel free to [submit an issue](https://github.com/internet-computer-protocol/evm-rpc-canister/issues) if you would like to request a feature, report a bug, or start a conversation about the EVM RPC canister.
 
 ## Overview
 
