@@ -973,8 +973,7 @@ fn should_set_provider_chain_id() {
             .mock_http(
                 MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
                     "https://{}{}",
-                    ALCHEMY_ETH_MAINNET_HOSTNAME,
-                    credential.to_string()
+                    ALCHEMY_ETH_MAINNET_HOSTNAME, credential
                 ))
             )
             .wait(),
