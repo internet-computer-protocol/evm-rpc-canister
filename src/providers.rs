@@ -463,13 +463,21 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
                 if let Some(chain_id) = args.chain_id {
                     log!(
                         INFO,
-                        "Changing provider {:?} to use chain id: {}",
+                        "Changing provider {:?} to use chain id: {} (original value: {})",
                         provider.provider_id,
-                        chain_id
+                        chain_id,
+                        provider.chain_id,
                     );
                     provider.chain_id = chain_id;
                 }
                 if let Some(primary) = args.primary {
+                    log!(
+                        INFO,
+                        "Changing provider {:?} to use primary status: {} (original value: {})",
+                        provider.provider_id,
+                        primary,
+                        provider.primary,
+                    );
                     provider.primary = primary;
                 }
                 if let Some(service) = args.service {
