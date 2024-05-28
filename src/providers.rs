@@ -460,7 +460,24 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
         let mut providers = providers.borrow_mut();
         match providers.get(&args.provider_id) {
             Some(mut provider) => {
+                if let Some(chain_id) = args.chain_id {
+                    log!(
+                        INFO,
+                        "Updating provider {:?} to use chain id: {} (original value: {})",
+                        provider.provider_id,
+                        chain_id,
+                        provider.chain_id,
+                    );
+                    provider.chain_id = chain_id;
+                }
                 if let Some(primary) = args.primary {
+                    log!(
+                        INFO,
+                        "Updating provider {:?} to use primary status: {} (original value: {})",
+                        provider.provider_id,
+                        primary,
+                        provider.primary,
+                    );
                     provider.primary = primary;
                 }
                 if let Some(service) = args.service {
@@ -566,7 +583,7 @@ pub async fn do_withdraw_accumulated_cycles(
 pub fn set_service_provider(service: &RpcService, provider: &Provider) {
     log!(
         INFO,
-        "Changing service {:?} to use provider: {}",
+        "Updating service {:?} to use provider: {}",
         service,
         provider.provider_id
     );
