@@ -463,7 +463,7 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
                 if let Some(chain_id) = args.chain_id {
                     log!(
                         INFO,
-                        "Changing provider {:?} to use chain id: {} (original value: {})",
+                        "Updating provider {:?} to use chain id: {} (original value: {})",
                         provider.provider_id,
                         chain_id,
                         provider.chain_id,
@@ -473,7 +473,7 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
                 if let Some(primary) = args.primary {
                     log!(
                         INFO,
-                        "Changing provider {:?} to use primary status: {} (original value: {})",
+                        "Updating provider {:?} to use primary status: {} (original value: {})",
                         provider.provider_id,
                         primary,
                         provider.primary,
@@ -583,7 +583,7 @@ pub async fn do_withdraw_accumulated_cycles(
 pub fn set_service_provider(service: &RpcService, provider: &Provider) {
     log!(
         INFO,
-        "Changing service {:?} to use provider: {}",
+        "Updating service {:?} to use provider: {}",
         service,
         provider.provider_id
     );
