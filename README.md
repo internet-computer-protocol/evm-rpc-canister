@@ -10,6 +10,8 @@ This canister facilitates API requests to JSON-RPC services such as [CloudFlare]
 
 Beyond the Ethereum blockchain, this canister also has partial support for Polygon, Avalanche, and other popular EVM networks. Check out [ChainList.org](https://chainlist.org/?testnets=true) for an extensive list of networks and RPC providers.
 
+You can read more about the inner workings of the EVM RPC canister [here](https://medium.com/dfinity/icp-ethereum-how-icps-evm-rpc-canister-connects-the-networks-b57909efecf6).
+
 ## Documentation
 
 You can find extensive documentation for the EVM RPC canister in the [ICP developer docs](https://internetcomputer.org/docs/current/developer-docs/multi-chain/ethereum/evm-rpc/overview).
