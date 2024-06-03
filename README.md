@@ -37,7 +37,8 @@ Add the following to your `dfx.json` config file (replace the `ic` principal wit
         "id": {
           "ic": "7hfb6-caaaa-aaaar-qadga-cai"
         }
-      }
+      },
+      "init_arg": "(record { nodesInSubnet = 28 })"
     }
   }
 }
@@ -60,7 +61,7 @@ The EVM RPC canister also supports [`dfx deps pull`](https://internetcomputer.or
   "canisters": {
     "evm_rpc": {
       "type": "pull",
-      "id": "7hfb6-caaaa-aaaar-qadga-cai",
+      "id": "7hfb6-caaaa-aaaar-qadga-cai"
     }
   }
 }
