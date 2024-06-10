@@ -149,26 +149,28 @@ shared ({ caller = installer }) actor class Main() {
                 };
             };
 
-            // Any unused cycles will be refunded
-            let candidRpcCycles = 200_000_000_000;
+            let mainnetServices = [#Alchemy, #Ankr, #Cloudflare, #BlockPi, #PublicNode, #Llama];
+            let l2Services = [#Alchemy, #Ankr, #PublicNode, #Llama];
             let allServices : [(Text, EvmRpc.RpcServices)] = [
                 (
                     "Ethereum",
-                    #EthMainnet(?[#Alchemy, #Ankr, #Cloudflare, #BlockPi, #PublicNode]),
+                    #EthMainnet(?mainnetServices),
                 ),
                 (
                     "Arbitrum",
-                    #ArbitrumOne(null),
+                    #ArbitrumOne(?l2Services),
                 ),
                 (
                     "Base",
-                    #BaseMainnet(null),
+                    #BaseMainnet(?l2Services),
                 ),
                 (
                     "Optimism",
-                    #OptimismMainnet(null),
+                    #OptimismMainnet(?l2Services),
                 ),
             ];
+            // Any unused cycles will be refunded
+            let candidRpcCycles = 200_000_000_000;
 
             func testCandidRpc(networkName : Text, services : EvmRpc.RpcServices) : async () {
                 switch (await canister.eth_getBlockByNumber(services, null, #Latest)) {
