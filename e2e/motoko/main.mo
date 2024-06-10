@@ -150,7 +150,7 @@ shared ({ caller = installer }) actor class Main() {
             };
 
             let mainnetServices = [#Alchemy, #Ankr, #Cloudflare, #BlockPi, #PublicNode, #Llama];
-            let l2Services = [#Alchemy, #Ankr, #PublicNode, #Llama];
+            let l2Services = [#Ankr, #BlockPi, #PublicNode, #Llama];
             let allServices : [(Text, EvmRpc.RpcServices)] = [
                 (
                     "Ethereum",
