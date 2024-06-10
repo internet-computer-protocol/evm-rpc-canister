@@ -41,6 +41,10 @@ pub const PUBLICNODE_BASE_MAINNET_HOSTNAME: &str = "base-rpc.publicnode.com";
 pub const ALCHEMY_OPT_MAINNET_HOSTNAME: &str = "opt-mainnet.g.alchemy.com";
 pub const BLOCKPI_OPTIMISM_MAINNET_HOSTNAME: &str = "optimism.blockpi.network";
 pub const PUBLICNODE_OPTIMISM_MAINNET_HOSTNAME: &str = "optimism-rpc.publicnode.com";
+pub const LLAMA_ETH_MAINNET_HOSTNAME: &str = "eth.llamarpc.com";
+pub const LLAMA_ARBITRUM_ONE_HOSTNAME: &str = "arbitrum.llamarpc.com";
+pub const LLAMA_BASE_MAINNET_HOSTNAME: &str = "base.llamarpc.com";
+pub const LLAMA_OPTIMISM_MAINNET_HOSTNAME: &str = "optimism.llamarpc.com";
 
 // Limited API credentials for local testing.
 // Use `dfx canister call evm_rpc updateProvider ...` to pass your own keys.
@@ -231,6 +235,38 @@ pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
         RegisterProviderArgs {
             chain_id: OPTIMISM_MAINNET_CHAIN_ID,
             hostname: PUBLICNODE_OPTIMISM_MAINNET_HOSTNAME.to_string(),
+            credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: ETH_MAINNET_CHAIN_ID,
+            hostname: LLAMA_ETH_MAINNET_HOSTNAME.to_string(),
+            credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: ARBITRUM_ONE_CHAIN_ID,
+            hostname: LLAMA_ARBITRUM_ONE_HOSTNAME.to_string(),
+            credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: BASE_MAINNET_CHAIN_ID,
+            hostname: LLAMA_BASE_MAINNET_HOSTNAME.to_string(),
+            credential_path: "".to_string(),
+            credential_headers: None,
+            cycles_per_call: 0,
+            cycles_per_message_byte: 0,
+        },
+        RegisterProviderArgs {
+            chain_id: OPTIMISM_MAINNET_CHAIN_ID,
+            hostname: LLAMA_OPTIMISM_MAINNET_HOSTNAME.to_string(),
             credential_path: "".to_string(),
             credential_headers: None,
             cycles_per_call: 0,
