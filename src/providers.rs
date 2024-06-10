@@ -361,6 +361,22 @@ pub fn get_default_service_provider_hostnames() -> Vec<(RpcService, &'static str
             RpcService::OptimismMainnet(L2MainnetService::PublicNode),
             PUBLICNODE_OPTIMISM_MAINNET_HOSTNAME,
         ),
+        (
+            RpcService::EthMainnet(EthMainnetService::Llama),
+            LLAMA_ETH_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::ArbitrumOne(L2MainnetService::Llama),
+            LLAMA_ARBITRUM_ONE_HOSTNAME,
+        ),
+        (
+            RpcService::BaseMainnet(L2MainnetService::Llama),
+            LLAMA_BASE_MAINNET_HOSTNAME,
+        ),
+        (
+            RpcService::OptimismMainnet(L2MainnetService::Llama),
+            LLAMA_OPTIMISM_MAINNET_HOSTNAME,
+        ),
     ]
 }
 
