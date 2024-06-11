@@ -149,26 +149,32 @@ shared ({ caller = installer }) actor class Main() {
                 };
             };
 
-            // Any unused cycles will be refunded
-            let candidRpcCycles = 200_000_000_000;
+            let mainnetServices = [#Alchemy, #Ankr, #Cloudflare, #BlockPi, #PublicNode, #Llama];
+            let l2Services = [#Ankr, #BlockPi, #PublicNode, #Llama];
             let allServices : [(Text, EvmRpc.RpcServices)] = [
                 (
                     "Ethereum",
-                    #EthMainnet(?[#Alchemy, #Ankr, #Cloudflare, #BlockPi, #PublicNode]),
+                    #EthMainnet(?mainnetServices),
                 ),
                 (
                     "Arbitrum",
-                    #ArbitrumOne(null),
+                    #ArbitrumOne(?l2Services),
                 ),
                 (
                     "Base",
-                    #BaseMainnet(null),
+                    #BaseMainnet(?l2Services),
                 ),
                 (
                     "Optimism",
-                    #OptimismMainnet(null),
+                    #OptimismMainnet(?l2Services),
                 ),
             ];
+            
+            // Services to use for `eth_sendRawTransaction`
+            let sendRawTransactionServices = #EthMainnet(?[#Alchemy, #Ankr, #Cloudflare, #BlockPi, #PublicNode]);
+
+            // Any unused cycles will be refunded
+            let candidRpcCycles = 200_000_000_000;
 
             func testCandidRpc(networkName : Text, services : EvmRpc.RpcServices) : async () {
                 switch (await canister.eth_getBlockByNumber(services, null, #Latest)) {
@@ -262,7 +268,7 @@ shared ({ caller = installer }) actor class Main() {
                             networkName,
                             "eth_sendRawTransaction",
                             await canister.eth_sendRawTransaction(
-                                services,
+                                sendRawTransactionServices,
                                 null,
                                 "0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83",
                             ),
