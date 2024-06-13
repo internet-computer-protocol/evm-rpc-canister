@@ -10,15 +10,14 @@ use ic_canister_log::log;
 
 use crate::{
     add_metric,
-    auth::do_deauthorize,
     constants::{
         ARBITRUM_ONE_CHAIN_ID, BASE_MAINNET_CHAIN_ID, ETH_MAINNET_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID,
         MINIMUM_WITHDRAWAL_CYCLES, OPTIMISM_MAINNET_CHAIN_ID,
     },
     memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP},
     types::{
-        Auth, ManageProviderArgs, Provider, RegisterProviderArgs, ResolvedRpcService,
-        StorableRpcService, UpdateProviderArgs,
+        ManageProviderArgs, Provider, RegisterProviderArgs, ResolvedRpcService, StorableRpcService,
+        UpdateProviderArgs,
     },
     validate::{validate_credential_headers, validate_credential_path, validate_hostname},
 };
@@ -427,7 +426,6 @@ pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> u6
         m.borrow_mut().set(metadata).unwrap();
         id
     });
-    do_deauthorize(caller, Auth::RegisterProvider);
     log!(INFO, "[{}] Registering provider: {:?}", caller, provider_id);
     PROVIDERS.with(|providers| {
         providers.borrow_mut().insert(

@@ -233,15 +233,6 @@ type TransactionReceipt = record {
   contractAddress : opt text;
   gasUsed : nat;
 };
-type UpdateProviderArgs = record {
-  cyclesPerCall : opt nat64;
-  credentialPath : opt text;
-  hostname : opt text;
-  credentialHeaders : opt vec HttpHeader;
-  primary : opt bool;
-  cyclesPerMessageByte : opt nat64;
-  providerId : nat64;
-};
 type ValidationError = variant {
   Custom : text;
   HostNotAllowed : text;
@@ -273,7 +264,5 @@ service : (InitArgs) -> {
   request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
   requestCost : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestCostResult) query;
   setOpenRpcAccess : (active : bool) -> ();
-  unregisterProvider : (ProviderId) -> (bool);
-  updateProvider : (UpdateProviderArgs) -> ();
   withdrawAccumulatedCycles : (ProviderId, recipient : principal) -> ();
 };

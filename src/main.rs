@@ -24,16 +24,14 @@ use ic_cdk::{query, update};
 use ic_nervous_system_common::serve_metrics;
 
 use evm_rpc::{
-    auth::{do_authorize, do_deauthorize, require_manage_or_controller, require_register_provider},
+    auth::{do_authorize, do_deauthorize},
     constants::WASM_PAGE_SIZE,
     http::{do_json_rpc_request, do_transform_http_request},
     memory::{AUTH, METADATA, PROVIDERS, SERVICE_PROVIDER_MAP, UNSTABLE_METRICS},
-    providers::{
-        do_manage_provider, do_register_provider, do_unregister_provider, do_update_provider,
-    },
+    providers::{do_manage_provider, do_register_provider},
     types::{
         candid_types, Auth, InitArgs, ManageProviderArgs, MetricRpcMethod, Metrics, MultiRpcResult,
-        ProviderView, RegisterProviderArgs, RpcServices, UpdateProviderArgs,
+        ProviderView, RegisterProviderArgs, RpcServices,
     },
 };
 
@@ -166,20 +164,6 @@ fn get_providers() -> Vec<ProviderView> {
 #[candid_method(rename = "registerProvider")]
 fn register_provider(provider: RegisterProviderArgs) -> u64 {
     do_register_provider(ic_cdk::caller(), provider)
-}
-
-#[update(name = "unregisterProvider")]
-#[candid_method(rename = "unregisterProvider")]
-fn unregister_provider(provider_id: u64) -> bool {
-    let caller = ic_cdk::caller();
-    do_unregister_provider(caller, is_controller(&caller), provider_id)
-}
-
-#[update(name = "updateProvider")]
-#[candid_method(rename = "updateProvider")]
-fn update_provider(provider: UpdateProviderArgs) {
-    let caller = ic_cdk::caller();
-    do_update_provider(caller, is_controller(&caller), provider)
 }
 
 #[update(name = "manageProvider", guard = "require_manage_or_controller")]
