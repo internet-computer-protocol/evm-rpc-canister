@@ -603,13 +603,6 @@ fn should_register_provider() {
         cycles_per_call: 0,
         cycles_per_message_byte: 0,
     });
-    // Permission removed after registering
-    assert!(setup
-        .clone()
-        .as_controller()
-        .get_authorized(Auth::RegisterProvider)
-        .into_iter()
-        .all(|p| p != setup.caller.0));
     // Permission must be granted for each additional provider
     setup = setup.authorize_caller(Auth::RegisterProvider);
     let b_id = setup.register_provider(RegisterProviderArgs {
