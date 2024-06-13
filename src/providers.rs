@@ -12,7 +12,7 @@ use crate::{
     add_metric,
     constants::{
         ARBITRUM_ONE_CHAIN_ID, BASE_MAINNET_CHAIN_ID, ETH_MAINNET_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID,
-        MINIMUM_WITHDRAWAL_CYCLES, OPTIMISM_MAINNET_CHAIN_ID,
+        MAXIMUM_PROVIDER_COUNT, MINIMUM_WITHDRAWAL_CYCLES, OPTIMISM_MAINNET_CHAIN_ID,
     },
     memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP},
     types::{
@@ -427,8 +427,12 @@ pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> u6
         id
     });
     log!(INFO, "[{}] Registering provider: {:?}", caller, provider_id);
-    PROVIDERS.with(|providers| {
-        providers.borrow_mut().insert(
+    PROVIDERS.with_borrow_mut(|providers| {
+        assert!(
+            providers.len() <= MAXIMUM_PROVIDER_COUNT,
+            "Too many providers"
+        );
+        providers.insert(
             provider_id,
             Provider {
                 provider_id,
