@@ -5,6 +5,7 @@ use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
 use cketh_common::logs::INFO;
 use evm_rpc::accounting::{get_cost_with_collateral, get_rpc_cost};
+use evm_rpc::auth::{require_manage_or_controller, require_register_provider};
 use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::http::get_http_response_body;
 use evm_rpc::memory::{get_nodes_in_subnet, set_nodes_in_subnet};

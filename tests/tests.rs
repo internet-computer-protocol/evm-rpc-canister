@@ -41,7 +41,7 @@ use evm_rpc::{
     },
     types::{
         candid_types, Auth, InitArgs, ManageProviderArgs, Metrics, MultiRpcResult, ProviderView,
-        RegisterProviderArgs, RpcMethod, RpcResult, RpcServices, UpdateProviderArgs,
+        RegisterProviderArgs, RpcMethod, RpcResult, RpcServices,
     },
 };
 use mock::{MockOutcall, MockOutcallBuilder};
