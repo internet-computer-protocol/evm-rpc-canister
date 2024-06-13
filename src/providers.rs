@@ -510,16 +510,6 @@ pub fn do_manage_provider(args: ManageProviderArgs) {
         let mut providers = providers.borrow_mut();
         match providers.get(&args.provider_id) {
             Some(mut provider) => {
-                if let Some(chain_id) = args.chain_id {
-                    log!(
-                        INFO,
-                        "Updating provider {:?} to use chain id: {} (original value: {})",
-                        provider.provider_id,
-                        chain_id,
-                        provider.chain_id,
-                    );
-                    provider.chain_id = chain_id;
-                }
                 if let Some(primary) = args.primary {
                     log!(
                         INFO,
