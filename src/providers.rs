@@ -17,9 +17,8 @@ use crate::{
     memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP},
     types::{
         ManageProviderArgs, Provider, RegisterProviderArgs, ResolvedRpcService, StorableRpcService,
-        UpdateProviderArgs,
     },
-    validate::{validate_credential_headers, validate_credential_path, validate_hostname},
+    validate::{validate_credential_path, validate_hostname},
 };
 
 pub const ANKR_HOSTNAME: &str = "rpc.ankr.com";
@@ -449,63 +448,6 @@ pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> u6
         )
     });
     provider_id
-}
-
-pub fn do_unregister_provider(caller: Principal, is_controller: bool, provider_id: u64) -> bool {
-    PROVIDERS.with(|providers| {
-        let mut providers = providers.borrow_mut();
-        if let Some(provider) = providers.get(&provider_id) {
-            if provider.owner == caller || is_controller {
-                log!(
-                    INFO,
-                    "[{}] Unregistering provider: {:?}",
-                    caller,
-                    provider_id
-                );
-                providers.remove(&provider_id).is_some()
-            } else {
-                ic_cdk::trap("You are not authorized: check provider owner");
-            }
-        } else {
-            false
-        }
-    })
-}
-
-/// Changes provider details. The caller must be the owner of the provider.
-pub fn do_update_provider(caller: Principal, is_controller: bool, args: UpdateProviderArgs) {
-    PROVIDERS.with(|providers| {
-        let mut providers = providers.borrow_mut();
-        match providers.get(&args.provider_id) {
-            Some(mut provider) => {
-                if provider.owner == caller || is_controller {
-                    log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
-                    if let Some(hostname) = args.hostname {
-                        validate_hostname(&hostname).unwrap();
-                        provider.hostname = hostname;
-                    }
-                    if let Some(path) = args.credential_path {
-                        validate_credential_path(&path).unwrap();
-                        provider.credential_path = path;
-                    }
-                    if let Some(headers) = args.credential_headers {
-                        validate_credential_headers(&headers).unwrap();
-                        provider.credential_headers = headers;
-                    }
-                    if let Some(cycles_per_call) = args.cycles_per_call {
-                        provider.cycles_per_call = cycles_per_call;
-                    }
-                    if let Some(cycles_per_message_byte) = args.cycles_per_message_byte {
-                        provider.cycles_per_message_byte = cycles_per_message_byte;
-                    }
-                    providers.insert(args.provider_id, provider);
-                } else {
-                    ic_cdk::trap("You are not authorized: check provider owner");
-                }
-            }
-            None => ic_cdk::trap("Provider not found"),
-        }
-    });
 }
 
 /// Changes administrative details for a provider. The caller must have the `Auth::Manage` permission.
