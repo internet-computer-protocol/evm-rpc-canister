@@ -45,7 +45,6 @@ pub const LLAMA_BASE_MAINNET_HOSTNAME: &str = "base.llamarpc.com";
 pub const LLAMA_OPTIMISM_MAINNET_HOSTNAME: &str = "optimism.llamarpc.com";
 
 // Limited API credentials for local testing.
-// Use `dfx canister call evm_rpc updateProvider ...` to pass your own keys.
 pub const ALCHEMY_ETH_MAINNET_CREDENTIAL: &str = "/v2/zBxaSBUMfuH8XnA-uLIWeXfCx1T8ItkM";
 pub const ALCHEMY_ETH_SEPOLIA_CREDENTIAL: &str = "/v2/Mbow19DWsfPXiTpdgvRu4HQq63iYycU-";
 pub const ALCHEMY_ARBITRUM_ONE_CREDENTIAL: &str = "/v2";
