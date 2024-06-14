@@ -361,7 +361,7 @@ fn authorize(principal: Principal, auth: Auth) -> bool {
     do_authorize(principal, auth)
 }
 
-#[query(name = "getAuthorized", guard = "require_manage_or_controller")]
+#[query(name = "getAuthorized")]
 #[candid_method(query, rename = "getAuthorized")]
 fn get_authorized(auth: Auth) -> Vec<Principal> {
     AUTH.with(|a| {
