@@ -15,7 +15,9 @@ pub async fn test() {
 
     // Define request parameters
     let params = (
-        RpcService::Chain(1), // Ethereum mainnet
+        RpcService::EthMainnet(
+            e2e::declarations::EVM_RPC_STAGING_FIDUCIARY::EthMainnetService::PublicNode,
+        ), // Ethereum mainnet
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}".to_string(),
         1000 as u64,
     );
