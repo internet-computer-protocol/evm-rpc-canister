@@ -2,9 +2,8 @@ use candid::candid_method;
 use ic_cdk_macros::update;
 
 use e2e::declarations::EVM_RPC_STAGING_FIDUCIARY::{
-    BlockTag, GetBlockByNumberResult, GetTransactionCountArgs, MultiGetBlockByNumberResult,
-    MultiGetTransactionCountResult, ProviderError, RpcError, RpcService, RpcServices,
-    EVM_RPC_STAGING_FIDUCIARY as evm_rpc,
+    BlockTag, GetTransactionCountArgs, GetTransactionCountResult, MultiGetTransactionCountResult,
+    ProviderError, RpcError, RpcService, RpcServices, EVM_RPC_STAGING_FIDUCIARY as evm_rpc,
 };
 
 fn main() {}
@@ -69,8 +68,8 @@ pub async fn test() {
             RpcServices::EthMainnet(None),
             (),
             GetTransactionCountArgs {
-                address: "0x1789F79e95324A47c5Fd6693071188e82E9a3558".to_string(),
-                block: BlockTag::Latest,
+                address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48".to_string(),
+                block: BlockTag::Number(20113080.into()),
             },
         ),
         10000000000,
@@ -78,13 +77,15 @@ pub async fn test() {
     .await
     .unwrap();
     match results {
-        MultiGetBlockByNumberResult::Consistent(result) => match result {
-            GetBlockByNumberResult::Ok(_count) => {}
-            GetBlockByNumberResult::Err(err) => {
+        MultiGetTransactionCountResult::Consistent(result) => match result {
+            GetTransactionCountResult::Ok(count) => {
+                assert_eq!(count, 1, "Unexpected transaction count")
+            }
+            GetTransactionCountResult::Err(err) => {
                 ic_cdk::trap(&format!("error in `eth_getTransactionCount`: {:?}", err))
             }
         },
-        MultiGetBlockByNumberResult::Inconsistent(results) => ic_cdk::trap(&format!(
+        MultiGetTransactionCountResult::Inconsistent(results) => ic_cdk::trap(&format!(
             "inconsistent results in `eth_getTransactionCount`: {:?}",
             results
         )),
