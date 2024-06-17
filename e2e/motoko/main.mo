@@ -149,7 +149,7 @@ shared ({ caller = installer }) actor class Main() {
                 };
             };
 
-            let mainnetServices = [#Alchemy, #Cloudflare, #BlockPi, #PublicNode, #Llama];
+            let mainnetServices = [#Alchemy, #BlockPi, #PublicNode, #Llama];
             let l2Services = [#Ankr, #BlockPi, #PublicNode, #Llama];
             let allServices : [(Text, EvmRpc.RpcServices)] = [
                 (
