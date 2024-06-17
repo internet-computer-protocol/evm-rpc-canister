@@ -2,8 +2,9 @@ use candid::candid_method;
 use ic_cdk_macros::update;
 
 use e2e::declarations::EVM_RPC_STAGING_FIDUCIARY::{
-    BlockTag, GetTransactionCountArgs, GetTransactionCountResult, MultiGetTransactionCountResult,
-    ProviderError, RpcError, RpcService, RpcServices, EVM_RPC_STAGING_FIDUCIARY as evm_rpc,
+    BlockTag, EthMainnetService, GetTransactionCountArgs, GetTransactionCountResult,
+    MultiGetTransactionCountResult, ProviderError, RpcError, RpcService, RpcServices,
+    EVM_RPC_STAGING_FIDUCIARY as evm_rpc,
 };
 
 fn main() {}
@@ -65,7 +66,12 @@ pub async fn test() {
         evm_rpc.0,
         "eth_getTransactionCount",
         (
-            RpcServices::EthMainnet(None),
+            RpcServices::EthMainnet(Some(vec![
+                EthMainnetService::Ankr,
+                EthMainnetService::BlockPi,
+                EthMainnetService::Llama,
+                EthMainnetService::PublicNode,
+            ])),
             (),
             GetTransactionCountArgs {
                 address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48".to_string(),
