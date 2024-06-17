@@ -149,7 +149,7 @@ shared ({ caller = installer }) actor class Main() {
                 };
             };
 
-            let mainnetServices = [#Alchemy, #BlockPi, #PublicNode, #Llama];
+            let mainnetServices = [#Alchemy, #Ankr, #BlockPi, #PublicNode, #Llama];
             let l2Services = [#Ankr, #BlockPi, #PublicNode, #Llama];
             let allServices : [(Text, EvmRpc.RpcServices)] = [
                 (
@@ -171,7 +171,7 @@ shared ({ caller = installer }) actor class Main() {
             ];
             
             // Services to use for `eth_sendRawTransaction`
-            let sendRawTransactionServices = #EthMainnet(?[#Alchemy, #Ankr, #Cloudflare, #BlockPi, #PublicNode]);
+            let sendRawTransactionServices = #EthMainnet(?[#Alchemy, #Ankr, #BlockPi, #PublicNode]);
 
             // Any unused cycles will be refunded
             let candidRpcCycles = 200_000_000_000;
