@@ -2,8 +2,8 @@ use candid::candid_method;
 use ic_cdk_macros::update;
 
 use e2e::declarations::EVM_RPC_STAGING_FIDUCIARY::{
-    BlockTag, GetBlockByNumberResult, MultiGetBlockByNumberResult, ProviderError, RpcError,
-    RpcService, RpcServices, EVM_RPC_STAGING_FIDUCIARY as evm_rpc,
+    BlockTag, EthMainnetService, GetBlockByNumberResult, MultiGetBlockByNumberResult,
+    ProviderError, RpcError, RpcService, RpcServices, EVM_RPC_STAGING_FIDUCIARY as evm_rpc,
 };
 
 fn main() {}
@@ -15,7 +15,7 @@ pub async fn test() {
 
     // Define request parameters
     let params = (
-        RpcService::Chain(1), // Ethereum mainnet
+        RpcService::EthMainnet(EthMainnetService::PublicNode), // Ethereum mainnet
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}".to_string(),
         1000 as u64,
     );
@@ -59,12 +59,16 @@ pub async fn test() {
     }
 
     // Call a Candid-RPC method
-    // This would benefit from a caller-side library with generic type definitions for result values
     let (results,): (MultiGetBlockByNumberResult,) = ic_cdk::api::call::call_with_payment128(
         evm_rpc.0,
         "eth_getBlockByNumber",
         (
-            RpcServices::EthMainnet(None),
+            RpcServices::EthMainnet(Some(vec![
+                EthMainnetService::Ankr,
+                EthMainnetService::BlockPi,
+                EthMainnetService::Llama,
+                EthMainnetService::PublicNode,
+            ])),
             (),
             BlockTag::Number(19709434.into()),
         ),
