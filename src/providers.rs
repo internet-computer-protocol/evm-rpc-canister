@@ -478,10 +478,6 @@ pub fn do_update_provider(caller: Principal, is_controller: bool, args: UpdatePr
             Some(mut provider) => {
                 if provider.owner == caller || is_controller {
                     log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
-                    if let Some(hostname) = args.hostname {
-                        validate_hostname(&hostname).unwrap();
-                        provider.hostname = hostname;
-                    }
                     if let Some(path) = args.credential_path {
                         validate_credential_path(&path).unwrap();
                         provider.credential_path = path;
@@ -489,12 +485,6 @@ pub fn do_update_provider(caller: Principal, is_controller: bool, args: UpdatePr
                     if let Some(headers) = args.credential_headers {
                         validate_credential_headers(&headers).unwrap();
                         provider.credential_headers = headers;
-                    }
-                    if let Some(cycles_per_call) = args.cycles_per_call {
-                        provider.cycles_per_call = cycles_per_call;
-                    }
-                    if let Some(cycles_per_message_byte) = args.cycles_per_message_byte {
-                        provider.cycles_per_message_byte = cycles_per_message_byte;
                     }
                     providers.insert(args.provider_id, provider);
                 } else {

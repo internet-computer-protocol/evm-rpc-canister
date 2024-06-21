@@ -95,7 +95,7 @@ type LogEntry = record {
 };
 type ManageProviderArgs = record {
   providerId : nat64;
-  chainId: opt nat64;
+  chainId : opt nat64;
   "service" : opt RpcService;
   primary : opt bool;
 };
@@ -234,13 +234,9 @@ type TransactionReceipt = record {
   gasUsed : nat;
 };
 type UpdateProviderArgs = record {
-  cyclesPerCall : opt nat64;
-  credentialPath : opt text;
-  hostname : opt text;
-  credentialHeaders : opt vec HttpHeader;
-  primary : opt bool;
-  cyclesPerMessageByte : opt nat64;
   providerId : nat64;
+  credentialPath : opt text;
+  credentialHeaders : opt vec HttpHeader;
 };
 type ValidationError = variant {
   Custom : text;
