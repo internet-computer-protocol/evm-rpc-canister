@@ -31,6 +31,7 @@ shared ({ caller = installer }) actor class Main() {
     let ignoredTests = [
         (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
         (#EthMainnet(#Llama), "eth_sendRawTransaction"), // Non-standard error message
+        (#ArbitrumOne(#Ankr), "eth_getLogs"), // Timeout expired
     ];
 
     func runTests(caller : Principal, category : TestCategory) : async () {
