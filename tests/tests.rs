@@ -686,6 +686,8 @@ fn should_panic_if_anonymous_update_provider() {
         provider_id: 3,
         credential_path: None,
         credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
     });
 }
 
@@ -736,6 +738,8 @@ fn should_panic_if_unauthorized_update_provider() {
         provider_id: 0,
         credential_path: None,
         credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
     });
 }
 
@@ -746,6 +750,8 @@ fn should_allow_controller_update_provider() {
         provider_id: 0,
         credential_path: None,
         credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
     });
 }
 
@@ -769,6 +775,8 @@ fn should_panic_if_manage_auth_update_non_owned_provider() {
         provider_id,
         credential_path: None,
         credential_headers: None,
+        cycles_per_call: None,
+        cycles_per_message_byte: None,
     });
 }
 

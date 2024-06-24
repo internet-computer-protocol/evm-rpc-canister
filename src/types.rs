@@ -333,6 +333,10 @@ pub struct UpdateProviderArgs {
     pub credential_path: Option<String>,
     #[serde(rename = "credentialHeaders")]
     pub credential_headers: Option<Vec<HttpHeader>>,
+    #[serde(rename = "cyclesPerCall")]
+    pub cycles_per_call: Option<u64>,
+    #[serde(rename = "cyclesPerMessageByte")]
+    pub cycles_per_message_byte: Option<u64>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

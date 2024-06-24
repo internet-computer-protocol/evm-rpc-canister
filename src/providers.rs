@@ -486,6 +486,12 @@ pub fn do_update_provider(caller: Principal, is_controller: bool, args: UpdatePr
                         validate_credential_headers(&headers).unwrap();
                         provider.credential_headers = headers;
                     }
+                    if let Some(cycles_per_call) = args.cycles_per_call {
+                        provider.cycles_per_call = cycles_per_call;
+                    }
+                    if let Some(cycles_per_message_byte) = args.cycles_per_message_byte {
+                        provider.cycles_per_message_byte = cycles_per_message_byte;
+                    }
                     providers.insert(args.provider_id, provider);
                 } else {
                     ic_cdk::trap("You are not authorized: check provider owner");
