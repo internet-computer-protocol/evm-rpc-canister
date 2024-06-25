@@ -478,10 +478,6 @@ pub fn do_update_provider(caller: Principal, is_controller: bool, args: UpdatePr
             Some(mut provider) => {
                 if provider.owner == caller || is_controller {
                     log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
-                    if let Some(hostname) = args.hostname {
-                        validate_hostname(&hostname).unwrap();
-                        provider.hostname = hostname;
-                    }
                     if let Some(path) = args.credential_path {
                         validate_credential_path(&path).unwrap();
                         provider.credential_path = path;

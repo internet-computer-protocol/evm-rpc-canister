@@ -329,7 +329,6 @@ pub struct RegisterProviderArgs {
 pub struct UpdateProviderArgs {
     #[serde(rename = "providerId")]
     pub provider_id: u64,
-    pub hostname: Option<String>,
     #[serde(rename = "credentialPath")]
     pub credential_path: Option<String>,
     #[serde(rename = "credentialHeaders")]

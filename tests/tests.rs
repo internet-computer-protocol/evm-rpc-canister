@@ -684,7 +684,6 @@ fn should_panic_if_anonymous_update_provider() {
     let setup = EvmRpcSetup::new().as_anonymous();
     setup.update_provider(UpdateProviderArgs {
         provider_id: 3,
-        hostname: Some("unauthorized.host".to_string()),
         credential_path: None,
         credential_headers: None,
         cycles_per_call: None,
@@ -737,7 +736,6 @@ fn should_panic_if_unauthorized_update_provider() {
     let setup = EvmRpcSetup::new();
     setup.update_provider(UpdateProviderArgs {
         provider_id: 0,
-        hostname: Some("unauthorized.host".to_string()),
         credential_path: None,
         credential_headers: None,
         cycles_per_call: None,
@@ -750,7 +748,6 @@ fn should_allow_controller_update_provider() {
     let setup = EvmRpcSetup::new().as_controller();
     setup.update_provider(UpdateProviderArgs {
         provider_id: 0,
-        hostname: Some("controller.host".to_string()),
         credential_path: None,
         credential_headers: None,
         cycles_per_call: None,
@@ -776,7 +773,6 @@ fn should_panic_if_manage_auth_update_non_owned_provider() {
         });
     setup.update_provider(UpdateProviderArgs {
         provider_id,
-        hostname: Some("unauthorized.host".to_string()),
         credential_path: None,
         credential_headers: None,
         cycles_per_call: None,

@@ -234,13 +234,11 @@ type TransactionReceipt = record {
   gasUsed : nat;
 };
 type UpdateProviderArgs = record {
+  providerId : nat64;
   cyclesPerCall : opt nat64;
   credentialPath : opt text;
-  hostname : opt text;
   credentialHeaders : opt vec HttpHeader;
-  primary : opt bool;
   cyclesPerMessageByte : opt nat64;
-  providerId : nat64;
 };
 type ValidationError = variant {
   Custom : text;
