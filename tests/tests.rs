@@ -1124,8 +1124,8 @@ fn eth_get_block_by_number_should_succeed() {
         assert_eq!(
             response,
             Block {
-                base_fee_per_gas: Wei::new(57_750_497_844),
-                difficulty: CheckedAmountOf::new(0),
+                base_fee_per_gas: Some(Wei::new(57_750_497_844)),
+                difficulty: Some(CheckedAmountOf::new(0)),
                 extra_data: "0x546974616e2028746974616e6275696c6465722e78797a29".to_string(),
                 gas_limit: CheckedAmountOf::new(0x1c9c380),
                 gas_used: CheckedAmountOf::new(0xa768c4),
@@ -1141,7 +1141,7 @@ fn eth_get_block_by_number_should_succeed() {
                 size: CheckedAmountOf::new(0xcd35),
                 state_root: "0x13552447dd62f11ad885f21a583c4fa34144efe923c7e35fb018d6710f06b2b6".to_string(),
                 timestamp: CheckedAmountOf::new(0x656f96f3),
-                total_difficulty: CheckedAmountOf::new(0xc70d815d562d3cfa955),
+                total_difficulty: Some(CheckedAmountOf::new(0xc70d815d562d3cfa955)),
                 transactions: vec![],
                 transactions_root: None,
                 uncles: vec![],
