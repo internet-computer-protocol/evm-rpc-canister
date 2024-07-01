@@ -1151,6 +1151,49 @@ fn eth_get_block_by_number_should_succeed() {
 }
 
 #[test]
+fn eth_get_block_by_number_pre_london_fork_should_succeed() {
+    for source in RPC_SERVICES {
+        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let response = setup
+            .eth_get_block_by_number(
+                source.clone(),
+                None,
+                candid_types::BlockTag::Latest,
+            )
+            .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":1,"result":{"number":"0x0","hash":"0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3","transactions":[],"totalDifficulty":"0x400000000","logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","receiptsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","extraData":"0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa","nonce":"0x0000000000000042","miner":"0x0000000000000000000000000000000000000000","difficulty":"0x400000000","gasLimit":"0x1388","gasUsed":"0x0","uncles":[],"sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":"0x21c","transactionsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","stateRoot":"0xd7f8974fb5ac78d9ac099b9ad5018bedc2ce0a72dad1827a1709da30580f0544","mixHash":"0x0000000000000000000000000000000000000000000000000000000000000000","parentHash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"0x0"}}"#))
+            .wait()
+            .expect_consistent()
+            .unwrap();
+        assert_eq!(
+            response,
+            Block {
+                base_fee_per_gas: None,
+                difficulty: Some(CheckedAmountOf::new(0x400000000)),
+                extra_data: "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa".to_string(),
+                gas_limit: CheckedAmountOf::new(0x1388),
+                gas_used: CheckedAmountOf::new(0x0),
+                hash: "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3".to_string(),
+                logs_bloom: "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string(),
+                miner: "0x0000000000000000000000000000000000000000".to_string(),
+                mix_hash: "0x0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+                nonce: CheckedAmountOf::new(0x0000000000000042),
+                number: BlockNumber::new(0),
+                parent_hash: "0x0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+                receipts_root: "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421".to_string(),
+                sha3_uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347".to_string(),
+                size: CheckedAmountOf::new(0x21c),
+                state_root: "0xd7f8974fb5ac78d9ac099b9ad5018bedc2ce0a72dad1827a1709da30580f0544".to_string(),
+                timestamp: CheckedAmountOf::new(0x0),
+                total_difficulty: Some(CheckedAmountOf::new(0x400000000)),
+                transactions: vec![],
+                transactions_root: Some("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421".to_string()),
+                uncles: vec![],
+            }
+        );
+    }
+}
+
+#[test]
 fn eth_get_transaction_receipt_should_succeed() {
     for source in RPC_SERVICES {
         let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
