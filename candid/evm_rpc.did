@@ -1,14 +1,14 @@
 type Auth = variant { FreeRpc; PriorityRpc; RegisterProvider; Manage };
 type Block = record {
   miner : text;
-  totalDifficulty : nat;
+  totalDifficulty : opt nat;
   receiptsRoot : text;
   stateRoot : text;
   hash : text;
-  difficulty : nat;
+  difficulty : opt nat;
   size : nat;
   uncles : vec text;
-  baseFeePerGas : nat;
+  baseFeePerGas : opt nat;
   extraData : text;
   transactionsRoot : opt text;
   sha3Uncles : text;
