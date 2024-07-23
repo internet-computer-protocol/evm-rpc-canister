@@ -166,7 +166,7 @@ type RejectionCode = variant {
   SysFatal;
   CanisterReject;
 };
-type FeeHistoryResult = variant { Ok : opt FeeHistory; Err : RpcError };
+type FeeHistoryResult = variant { Ok : FeeHistory; Err : RpcError };
 type GetBlockByNumberResult = variant { Ok : Block; Err : RpcError };
 type GetLogsResult = variant { Ok : vec LogEntry; Err : RpcError };
 type GetTransactionCountResult = variant { Ok : nat; Err : RpcError };
