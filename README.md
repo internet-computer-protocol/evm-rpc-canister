@@ -152,4 +152,4 @@ npm run generate
 
 * [Bitcoin canister](https://github.com/dfinity/bitcoin-canister): interact with the Bitcoin blockchain from the Internet Computer.
 * [ckETH](https://forum.dfinity.org/t/cketh-a-canister-issued-ether-twin-token-on-the-ic/22819): a canister-issued Ether twin token on the Internet Computer.
-* [IC 🔗 ETH](https://github.com/dfinity/ic-eth-starter): a full-stack starter project for calling Ethereum smart contracts from an IC dapp.
+* [ICP 🔗 ETH](https://github.com/dfinity/icp-eth-starter): a full-stack starter project for calling Ethereum smart contracts from an IC dapp.
