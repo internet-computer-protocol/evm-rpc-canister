@@ -95,7 +95,7 @@ pub async fn eth_fee_history(
     source: RpcServices,
     config: Option<RpcConfig>,
     args: candid_types::FeeHistoryArgs,
-) -> MultiRpcResult<Option<FeeHistory>> {
+) -> MultiRpcResult<FeeHistory> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_fee_history(args).await,
         Err(err) => Err(err).into(),

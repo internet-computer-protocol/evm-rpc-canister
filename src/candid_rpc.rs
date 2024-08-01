@@ -249,12 +249,12 @@ impl CandidRpcClient {
     pub async fn eth_fee_history(
         &self,
         args: candid_types::FeeHistoryArgs,
-    ) -> MultiRpcResult<Option<FeeHistory>> {
+    ) -> MultiRpcResult<FeeHistory> {
         process_result(
             RpcMethod::EthFeeHistory,
             self.client.eth_fee_history(args.into()).await,
         )
-        .map(|history| history.into())
+        .map(|history| history)
     }
 
     pub async fn eth_send_raw_transaction(
