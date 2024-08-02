@@ -254,6 +254,12 @@ fn init(args: InitArgs) {
 #[ic_cdk::post_upgrade]
 fn post_upgrade(args: InitArgs) {
     set_nodes_in_subnet(args.nodes_in_subnet);
+
+    // TODO: replace with data structure in minter canister
+    // See https://gitlab.com/dfinity-lab/public/ic/-/merge_requests/20463
+    pub static PRINT_LOG_FILTER: std::sync::Mutex<Option<Vec<String>>> =
+        std::sync::Mutex::new(None);
+    *PRINT_LOG_FILTER.lock().unwrap() = args.log_message_filter;
 }
 
 #[query]

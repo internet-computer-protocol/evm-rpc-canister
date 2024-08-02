@@ -20,6 +20,8 @@ use crate::constants::{
 pub struct InitArgs {
     #[serde(rename = "nodesInSubnet")]
     pub nodes_in_subnet: u32,
+    #[serde(rename = "logMessageFilter")]
+    pub log_message_filter: Option<Vec<String>>,
 }
 
 pub enum ResolvedRpcService {
