@@ -139,7 +139,10 @@ shared ({ caller = installer }) actor class Main() {
                                 case (#Err(err)) {
                                     for ((ignoredService, ignoredMethod) in ignoredTests.vals()) {
                                         if (ignoredService == service and (ignoredMethod == null or ignoredMethod == ?method)) {
-                                            Debug.print("Ignoring error from " # canisterType # " " # debug_show ignoredService # " " # ignoredMethod);
+                                            Debug.print("Ignoring error from " # canisterType # " " # debug_show ignoredService # " " # (switch ignoredMethod {
+                                                case null "*";
+                                                case (?method) method;
+                                            }));
                                             return;
                                         };
                                     };
