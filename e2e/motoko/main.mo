@@ -28,10 +28,10 @@ shared ({ caller = installer }) actor class Main() {
 
     // (`RPC service`, `method`)
     let ignoredTests = [
-        (#EthMainnet(#BlockPi), "eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
-        (#EthMainnet(#Llama), "eth_sendRawTransaction"), // Non-standard error message
-        (#ArbitrumOne(#Ankr), "eth_getLogs"), // Timeout expired
-        (#BaseMainnet(#Llama), "*"), // No response (temporary issue)
+        (#EthMainnet(#BlockPi), ?"eth_sendRawTransaction"), // "Private transaction replacement (same nonce) with gas price change lower than 10% is not allowed within 30 sec from the previous transaction."
+        (#EthMainnet(#Llama), ?"eth_sendRawTransaction"), // Non-standard error message
+        (#ArbitrumOne(#Ankr), ?"eth_getLogs"), // Timeout expired
+        (#BaseMainnet(#Llama), null), // No response (temporary issue)
     ];
 
     func runTests(caller : Principal, category : TestCategory) : async () {
@@ -138,7 +138,7 @@ shared ({ caller = installer }) actor class Main() {
                                 case (#Ok(_)) {};
                                 case (#Err(err)) {
                                     for ((ignoredService, ignoredMethod) in ignoredTests.vals()) {
-                                        if (service == ignoredService and (method == ignoredMethod or ignoredMethod == "*")) {
+                                        if (ignoredService == service and (ignoredMethod == null or ignoredMethod == ?method)) {
                                             Debug.print("Ignoring error from " # canisterType # " " # debug_show ignoredService # " " # ignoredMethod);
                                             return;
                                         };
