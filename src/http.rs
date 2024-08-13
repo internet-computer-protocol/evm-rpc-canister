@@ -7,7 +7,7 @@ use ic_cdk::api::management_canister::http_request::{
 use num_traits::ToPrimitive;
 
 use crate::{
-    accounting::{get_cost_with_collateral, get_provider_cost, get_rpc_cost},
+    accounting::{get_cost_with_collateral, get_rpc_cost},
     add_metric, add_metric_entry,
     auth::{is_authorized, is_rpc_allowed},
     constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST},
@@ -86,15 +86,7 @@ pub async fn do_http_request(
             .into());
         }
         ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
-        if let Some(mut provider) = provider {
-            provider.cycles_owed += get_provider_cost(
-                &provider,
-                request
-                    .body
-                    .as_ref()
-                    .map(|bytes| bytes.len() as u64)
-                    .unwrap_or_default(),
-            );
+        if let Some(provider) = provider {
             PROVIDERS.with(|p| {
                 // Error should not happen here as it was checked before
                 p.borrow_mut()

@@ -287,7 +287,8 @@ pub struct ProviderView {
     pub provider_id: u64,
     #[serde(rename = "chainId")]
     pub chain_id: u64,
-    pub hostname: String,
+    pub url_pattern: String,
+    pub header_patterns: Vec<HttpHeader>,
     pub primary: bool,
 }
 
@@ -296,7 +297,8 @@ impl From<Provider> for ProviderView {
         ProviderView {
             provider_id: provider.provider_id,
             chain_id: provider.chain_id,
-            hostname: provider.hostname,
+            url_pattern: provider.url_pattern,
+            header_patterns: provider.header_patterns,
             primary: provider.primary,
         }
     }
@@ -306,11 +308,10 @@ impl From<Provider> for ProviderView {
 pub struct RegisterProviderArgs {
     #[serde(rename = "chainId")]
     pub chain_id: u64,
-    pub hostname: String,
     #[serde(rename = "urlPattern")]
     pub url_pattern: String,
     #[serde(rename = "headerPatterns")]
-    pub header_patterns: Option<Vec<HttpHeader>>,
+    pub header_patterns: Vec<HttpHeader>,
 }
 
 #[derive(Clone, CandidType, Deserialize)]
@@ -320,7 +321,7 @@ pub struct UpdateProviderArgs {
     #[serde(rename = "urlPattern")]
     pub url_pattern: Option<String>,
     #[serde(rename = "headerPatterns")]
-    pub header_patterns: Option<Vec<HttpHeader>>,
+    pub header_patterns: Vec<HttpHeader>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -339,7 +340,6 @@ pub struct Provider {
     pub provider_id: u64,
     #[serde(rename = "chainId")]
     pub chain_id: u64,
-    pub hostname: String,
     #[serde(rename = "urlPattern")]
     pub url_pattern: String,
     #[serde(rename = "headerPatterns")]
@@ -350,12 +350,12 @@ pub struct Provider {
 impl Provider {
     pub fn api(&self) -> RpcApi {
         RpcApi {
-            url: format!("https://{}{}", self.hostname, self.credential_path),
-            headers: if self.credential_headers.is_empty() {
-                None
-            } else {
-                Some(self.credential_headers.clone())
-            },
+            url: resolve_url_pattern(self, self.url_pattern),
+            headers: self
+                .header_patterns
+                .iter()
+                .map(|header| resolve_header_pattern(self, header))
+                .collect(),
         }
     }
 }

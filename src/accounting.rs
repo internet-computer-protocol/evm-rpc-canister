@@ -60,7 +60,7 @@ mod test {
         constants::{NODES_IN_FIDUCIARY_SUBNET, NODES_IN_STANDARD_SUBNET},
         memory::{set_nodes_in_subnet, PROVIDERS},
         providers::do_register_provider,
-        types::{Provider, RegisterProviderArgs, ResolvedRpcService},
+        types::{RegisterProviderArgs, ResolvedRpcService},
     };
     use candid::Principal;
 
@@ -104,10 +104,8 @@ mod test {
             RegisterProviderArgs {
                 chain_id: 0,
                 hostname: "rpc.example.com".to_string(),
-                credential_headers: None,
-                credential_path: "".to_string(),
-                cycles_per_call: 999,
-                cycles_per_message_byte: 1000,
+                url_pattern: "".to_string(),
+                header_patterns: vec![],
             },
         );
         let service = ResolvedRpcService::Provider(

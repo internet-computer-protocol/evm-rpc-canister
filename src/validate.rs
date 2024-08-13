@@ -11,7 +11,7 @@ pub fn validate_hostname(hostname: &str) -> Result<(), ValidationError> {
     }
 }
 
-pub fn validate_credential_path(credential_path: &str) -> Result<(), ValidationError> {
+pub fn validate_url_pattern(credential_path: &str) -> Result<(), ValidationError> {
     if !(credential_path.is_empty()
         || credential_path.starts_with('/')
         || credential_path.starts_with('?'))

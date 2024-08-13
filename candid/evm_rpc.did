@@ -141,16 +141,16 @@ type ProviderError = variant {
 };
 type ProviderId = nat64;
 type ProviderView = record {
-  hostname : text;
-  primary : bool;
-  chainId : nat64;
   providerId : nat64;
-};
-type RegisterProviderArgs = record {
-  hostname : text;
+  chainId : nat64;
   urlPattern : text;
   headerPatterns : opt vec HttpHeader;
+  primary : bool;
+};
+type RegisterProviderArgs = record {
   chainId : nat64;
+  urlPattern : text;
+  headerPatterns : opt vec HttpHeader;
 };
 type RejectionCode = variant {
   NoError;
@@ -259,12 +259,8 @@ service : (InitArgs) -> {
   getOpenRpcAccess : () -> (active : bool) query;
   getProviders : () -> (vec ProviderView) query;
   getServiceProviderMap : () -> (vec record { RpcService; nat64 }) query;
-  manageProvider : (ManageProviderArgs) -> ();
-  registerProvider : (RegisterProviderArgs) -> (nat64);
   request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
   requestCost : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestCostResult) query;
   setOpenRpcAccess : (active : bool) -> ();
-  unregisterProvider : (ProviderId) -> (bool);
-  updateProvider : (UpdateProviderArgs) -> ();
   withdrawAccumulatedCycles : (ProviderId, recipient : principal) -> ();
 };

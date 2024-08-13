@@ -162,38 +162,6 @@ fn get_providers() -> Vec<ProviderView> {
     })
 }
 
-#[update(name = "registerProvider", guard = "require_register_provider")]
-#[candid_method(rename = "registerProvider")]
-fn register_provider(provider: RegisterProviderArgs) -> u64 {
-    do_register_provider(ic_cdk::caller(), provider)
-}
-
-#[update(name = "unregisterProvider")]
-#[candid_method(rename = "unregisterProvider")]
-fn unregister_provider(provider_id: u64) -> bool {
-    let caller = ic_cdk::caller();
-    do_unregister_provider(caller, is_controller(&caller), provider_id)
-}
-
-#[update(name = "updateProvider")]
-#[candid_method(rename = "updateProvider")]
-fn update_provider(provider: UpdateProviderArgs) {
-    let caller = ic_cdk::caller();
-    do_update_provider(caller, is_controller(&caller), provider)
-}
-
-#[update(name = "manageProvider", guard = "require_manage_or_controller")]
-#[candid_method(rename = "manageProvider")]
-fn manage_provider(args: ManageProviderArgs) {
-    log!(
-        INFO,
-        "[{}] Managing provider: {}",
-        ic_cdk::caller(),
-        args.provider_id
-    );
-    do_manage_provider(args)
-}
-
 #[query(name = "getServiceProviderMap", guard = "require_manage_or_controller")]
 #[candid_method(query, rename = "getServiceProviderMap")]
 fn get_service_provider_map() -> Vec<(RpcService, u64)> {

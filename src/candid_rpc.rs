@@ -156,7 +156,10 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
                     {
                         add_metric_entry!(
                             inconsistent_responses,
-                            (method.into(), MetricRpcHost(provider.hostname)),
+                            (
+                                method.into(),
+                                MetricRpcHost(get_hostname(provider.url_pattern))
+                            ),
                             1
                         )
                     }
