@@ -5,36 +5,32 @@ use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
 use cketh_common::logs::INFO;
 use evm_rpc::accounting::{get_cost_with_collateral, get_rpc_cost};
+use evm_rpc::auth::require_manage_or_controller;
 use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::http::get_http_response_body;
 use evm_rpc::memory::{get_nodes_in_subnet, set_nodes_in_subnet};
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{
-    do_get_accumulated_cycle_count, do_withdraw_accumulated_cycles, find_provider,
-    get_default_providers, get_default_service_provider_hostnames, get_known_chain_id,
-    resolve_rpc_service, set_service_provider,
+    find_provider, get_default_providers, get_default_service_provider_hostnames,
+    get_known_chain_id, resolve_rpc_service, set_service_provider,
 };
+use evm_rpc::types::Provider;
+use evm_rpc::util::hostname_from_url;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
-use ic_cdk::api::is_controller;
 use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
 use ic_nervous_system_common::serve_metrics;
 
 use evm_rpc::{
-    auth::{do_authorize, do_deauthorize, require_manage_or_controller, require_register_provider},
+    auth::{do_authorize, do_deauthorize},
     constants::WASM_PAGE_SIZE,
     http::{do_json_rpc_request, do_transform_http_request},
     memory::{AUTH, METADATA, PROVIDERS, SERVICE_PROVIDER_MAP, UNSTABLE_METRICS},
-    providers::{
-        do_manage_provider, do_register_provider, do_unregister_provider, do_update_provider,
-    },
-    types::{
-        candid_types, Auth, InitArgs, ManageProviderArgs, MetricRpcMethod, Metrics, MultiRpcResult,
-        ProviderView, RegisterProviderArgs, RpcServices, UpdateProviderArgs,
-    },
+    providers::do_register_provider,
+    types::{candid_types, Auth, InitArgs, MetricRpcMethod, Metrics, MultiRpcResult, RpcServices},
 };
 
 #[update(name = "eth_getLogs")]
@@ -153,12 +149,12 @@ fn request_cost(
 
 #[query(name = "getProviders")]
 #[candid_method(query, rename = "getProviders")]
-fn get_providers() -> Vec<ProviderView> {
+fn get_providers() -> Vec<Provider> {
     PROVIDERS.with(|p| {
         p.borrow()
             .iter()
             .map(|(_, provider)| provider.into())
-            .collect::<Vec<ProviderView>>()
+            .collect::<Vec<Provider>>()
     })
 }
 
@@ -193,7 +189,8 @@ fn init(args: InitArgs) {
     }
     for (service, hostname) in get_default_service_provider_hostnames() {
         let provider = find_provider(|p| {
-            Some(p.chain_id) == get_known_chain_id(&service) && p.hostname == hostname
+            Some(p.chain_id) == get_known_chain_id(&service)
+                && hostname_from_url(&p.url_pattern).as_deref() == Some(hostname)
         })
         .unwrap_or_else(|| {
             panic!(
