@@ -103,8 +103,7 @@ mod test {
             Principal::anonymous(),
             RegisterProviderArgs {
                 chain_id: 0,
-                hostname: "rpc.example.com".to_string(),
-                url_pattern: "".to_string(),
+                url_pattern: "https://rpc.example.com".to_string(),
                 header_patterns: vec![],
             },
         );

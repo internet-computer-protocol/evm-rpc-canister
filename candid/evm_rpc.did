@@ -95,7 +95,7 @@ type LogEntry = record {
 };
 type ManageProviderArgs = record {
   providerId : nat64;
-  chainId: opt nat64;
+  chainId : opt nat64;
   "service" : opt RpcService;
   primary : opt bool;
 };
@@ -140,7 +140,7 @@ type ProviderError = variant {
   NoPermission;
 };
 type ProviderId = nat64;
-type ProviderView = record {
+type Provider = record {
   providerId : nat64;
   chainId : nat64;
   urlPattern : text;
@@ -252,15 +252,13 @@ service : (InitArgs) -> {
   );
   eth_getTransactionReceipt : (RpcServices, opt RpcConfig, hash : text) -> (MultiGetTransactionReceiptResult);
   eth_sendRawTransaction : (RpcServices, opt RpcConfig, rawSignedTransactionHex : text) -> (MultiSendRawTransactionResult);
-  getAccumulatedCycleCount : (ProviderId) -> (cycles : nat) query;
   getAuthorized : (Auth) -> (vec principal) query;
   getMetrics : () -> (Metrics) query;
   getNodesInSubnet : () -> (numberOfNodes : nat32) query;
   getOpenRpcAccess : () -> (active : bool) query;
-  getProviders : () -> (vec ProviderView) query;
+  getProviders : () -> (vec Provider) query;
   getServiceProviderMap : () -> (vec record { RpcService; nat64 }) query;
   request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
   requestCost : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestCostResult) query;
   setOpenRpcAccess : (active : bool) -> ();
-  withdrawAccumulatedCycles : (ProviderId, recipient : principal) -> ();
 };

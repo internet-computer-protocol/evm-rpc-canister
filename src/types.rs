@@ -281,29 +281,6 @@ impl BoundedStorable for PrincipalStorable {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize)]
-pub struct ProviderView {
-    #[serde(rename = "providerId")]
-    pub provider_id: u64,
-    #[serde(rename = "chainId")]
-    pub chain_id: u64,
-    pub url_pattern: String,
-    pub header_patterns: Vec<HttpHeader>,
-    pub primary: bool,
-}
-
-impl From<Provider> for ProviderView {
-    fn from(provider: Provider) -> Self {
-        ProviderView {
-            provider_id: provider.provider_id,
-            chain_id: provider.chain_id,
-            url_pattern: provider.url_pattern,
-            header_patterns: provider.header_patterns,
-            primary: provider.primary,
-        }
-    }
-}
-
 #[derive(Clone, CandidType, Deserialize)]
 pub struct RegisterProviderArgs {
     #[serde(rename = "chainId")]
@@ -321,7 +298,7 @@ pub struct UpdateProviderArgs {
     #[serde(rename = "urlPattern")]
     pub url_pattern: Option<String>,
     #[serde(rename = "headerPatterns")]
-    pub header_patterns: Vec<HttpHeader>,
+    pub header_patterns: Option<Vec<HttpHeader>>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
