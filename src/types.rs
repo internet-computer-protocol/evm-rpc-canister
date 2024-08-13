@@ -12,8 +12,8 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::constants::{
-    AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDER_MAX_SIZE, RPC_SERVICE_MAX_SIZE,
-    STRING_STORABLE_MAX_SIZE,
+    API_KEY_REPLACE_STRING, AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDER_MAX_SIZE,
+    RPC_SERVICE_MAX_SIZE, STRING_STORABLE_MAX_SIZE,
 };
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -326,13 +326,18 @@ pub struct Provider {
 
 impl Provider {
     pub fn api(&self) -> RpcApi {
+        let api_key = "TODO"; // TODO
         RpcApi {
-            url: resolve_url_pattern(self, self.url_pattern),
-            headers: self
-                .header_patterns
-                .iter()
-                .map(|header| resolve_header_pattern(self, header))
-                .collect(),
+            url: self.url_pattern.replace(API_KEY_REPLACE_STRING, api_key),
+            headers: Some(
+                self.header_patterns
+                    .iter()
+                    .map(|header| HttpHeader {
+                        name: header.name.clone(),
+                        value: header.value.replace(API_KEY_REPLACE_STRING, api_key),
+                    })
+                    .collect(),
+            ),
         }
     }
 }

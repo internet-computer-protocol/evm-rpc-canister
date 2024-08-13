@@ -31,7 +31,7 @@ use crate::{
         MetricRpcHost, MetricRpcMethod, MultiRpcResult, ResolvedRpcService, RpcMethod, RpcResult,
         RpcServices,
     },
-    util::hex_to_bytes,
+    util::{hex_to_bytes, hostname_from_url},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -158,7 +158,11 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
                             inconsistent_responses,
                             (
                                 method.into(),
-                                MetricRpcHost(get_hostname(provider.url_pattern))
+                                MetricRpcHost(
+                                    hostname_from_url(&provider.url_pattern)
+                                        .unwrap_or("(unknown)")
+                                        .to_string()
+                                )
                             ),
                             1
                         )

@@ -36,6 +36,8 @@ pub const NODES_IN_STANDARD_SUBNET: u32 = 13;
 pub const NODES_IN_FIDUCIARY_SUBNET: u32 = 28;
 pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
 
+pub const API_KEY_REPLACE_STRING: &str = "{API_KEY}";
+
 // Providers used by default (when passing `null` with `RpcServices`)
 pub const DEFAULT_ETH_MAINNET_SERVICES: &[EthMainnetService] = &[
     EthMainnetService::Ankr,
