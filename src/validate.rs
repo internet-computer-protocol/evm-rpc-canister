@@ -11,25 +11,28 @@ pub fn validate_hostname(hostname: &str) -> Result<(), ValidationError> {
     }
 }
 
-pub fn validate_url_pattern(credential_path: &str) -> Result<(), ValidationError> {
-    if !(credential_path.is_empty()
-        || credential_path.starts_with('/')
-        || credential_path.starts_with('?'))
-    {
-        Err(ValidationError::CredentialPathNotAllowed)
+pub fn validate_url_pattern(url_pattern: &str) -> Result<(), ValidationError> {
+    if !(url_pattern.is_empty() || url_pattern.starts_with('/') || url_pattern.starts_with('?')) {
+        Err(ValidationError::CredentialPathNotAllowed) // TODO: rename to `UrlNotAllowed`
     } else {
         Ok(())
     }
 }
 
-pub fn validate_credential_headers(
-    credential_headers: &[HttpHeader],
-) -> Result<(), ValidationError> {
-    if credential_headers
+pub fn validate_header_patterns(header_patterns: &[HttpHeader]) -> Result<(), ValidationError> {
+    if header_patterns
         .iter()
         .any(|HttpHeader { name, .. }| name == CONTENT_TYPE_HEADER)
     {
-        Err(ValidationError::CredentialHeaderNotAllowed)
+        Err(ValidationError::CredentialHeaderNotAllowed) // TODO: rename to `HeaderNotAllowed`
+    } else {
+        Ok(())
+    }
+}
+
+pub fn validate_api_key(api_key: &str) -> Result<(), ValidationError> {
+    if api_key.contains("/") {
+        Err(ValidationError::CredentialPathNotAllowed) // TODO: rename to `ApiKeyNotAllowed`
     } else {
         Ok(())
     }

@@ -1,4 +1,4 @@
-use candid::{CandidType, Principal};
+use candid::Principal;
 use cketh_common::{
     eth_rpc::ProviderError,
     eth_rpc_client::providers::{
@@ -9,18 +9,17 @@ use cketh_common::{
 use ic_canister_log::log;
 
 use crate::{
-    add_metric,
     auth::do_deauthorize,
     constants::{
         ARBITRUM_ONE_CHAIN_ID, BASE_MAINNET_CHAIN_ID, ETH_MAINNET_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID,
-        MINIMUM_WITHDRAWAL_CYCLES, OPTIMISM_MAINNET_CHAIN_ID,
+        OPTIMISM_MAINNET_CHAIN_ID,
     },
     memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP},
     types::{
         Auth, ManageProviderArgs, Provider, RegisterProviderArgs, ResolvedRpcService,
         StorableRpcService, UpdateProviderArgs,
     },
-    validate::{validate_credential_headers, validate_hostname, validate_url_pattern},
+    validate::{validate_header_patterns, validate_url_pattern},
 };
 
 pub const ANKR_HOSTNAME: &str = "rpc.ankr.com";
