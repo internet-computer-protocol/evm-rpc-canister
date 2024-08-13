@@ -8,7 +8,7 @@ use crate::{
         INGRESS_MESSAGE_RECEIVED_COST, INGRESS_OVERHEAD_BYTES, RPC_URL_MIN_COST_BYTES,
     },
     memory::get_nodes_in_subnet,
-    types::{Provider, ResolvedRpcService},
+    types::ResolvedRpcService,
 };
 
 /// Returns the cycles cost of an RPC request.
@@ -22,10 +22,7 @@ pub fn get_rpc_cost(
             get_http_request_cost(api, payload_size_bytes, max_response_bytes)
         }
         ResolvedRpcService::Provider(provider) => {
-            let http_cost =
-                get_http_request_cost(&provider.api(), payload_size_bytes, max_response_bytes);
-            let provider_cost = get_provider_cost(provider, payload_size_bytes);
-            http_cost + provider_cost
+            get_http_request_cost(&provider.api(), payload_size_bytes, max_response_bytes)
         }
     }
 }
@@ -50,14 +47,6 @@ pub fn get_http_request_cost(
     cost_per_node * (nodes_in_subnet as u128)
 }
 
-/// Calculate the additional cost for calling a registered JSON-RPC provider.
-pub fn get_provider_cost(provider: &Provider, payload_size_bytes: u64) -> u128 {
-    let nodes_in_subnet = get_nodes_in_subnet();
-    let cost_per_node = provider.cycles_per_call as u128
-        + provider.cycles_per_message_byte as u128 * payload_size_bytes as u128;
-    cost_per_node * (nodes_in_subnet as u128)
-}
-
 /// Calculate the cost + collateral cycles for an HTTP request.
 pub fn get_cost_with_collateral(cycles_cost: u128) -> u128 {
     cycles_cost + COLLATERAL_CYCLES_PER_NODE * get_nodes_in_subnet() as u128
@@ -67,7 +56,7 @@ pub fn get_cost_with_collateral(cycles_cost: u128) -> u128 {
 mod test {
     use super::*;
     use crate::{
-        accounting::{get_provider_cost, get_rpc_cost},
+        accounting::get_rpc_cost,
         constants::{NODES_IN_FIDUCIARY_SUBNET, NODES_IN_STANDARD_SUBNET},
         memory::{set_nodes_in_subnet, PROVIDERS},
         providers::do_register_provider,
@@ -105,56 +94,6 @@ mod test {
                 + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_REQUEST_COST_PER_BYTE)
                     * nodes_in_subnet as u128;
             assert_eq!(base_cost_10_extra_bytes, estimated_cost_10_extra_bytes,);
-        }
-    }
-
-    #[test]
-    fn test_provider_cost() {
-        for nodes_in_subnet in [1, NODES_IN_STANDARD_SUBNET, NODES_IN_FIDUCIARY_SUBNET] {
-            println!("Nodes in subnet: {nodes_in_subnet}");
-
-            set_nodes_in_subnet(nodes_in_subnet);
-
-            let provider = Provider {
-                provider_id: 0,
-                hostname: "".to_string(),
-                credential_path: "".to_string(),
-                credential_headers: vec![],
-                owner: Principal::anonymous(),
-                chain_id: 1,
-                cycles_owed: 0,
-                cycles_per_call: 0,
-                cycles_per_message_byte: 2,
-                primary: false,
-            };
-            let base_cost = get_provider_cost(
-                &provider,
-                "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".len()
-                    as u64,
-            );
-
-            let provider_10_extra_bytes = Provider {
-                provider_id: 0,
-                hostname: "".to_string(),
-                credential_path: "".to_string(),
-                credential_headers: vec![],
-                owner: Principal::anonymous(),
-                chain_id: 1,
-                cycles_owed: 0,
-                cycles_per_call: 1000,
-                cycles_per_message_byte: 2,
-                primary: false,
-            };
-            let base_cost_10_extra_bytes = get_provider_cost(
-                &provider_10_extra_bytes,
-                "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}".len()
-                    as u64
-                    + 10,
-            );
-            assert_eq!(
-                base_cost + (10 * 2 + 1000) * nodes_in_subnet as u128,
-                base_cost_10_extra_bytes
-            )
         }
     }
 

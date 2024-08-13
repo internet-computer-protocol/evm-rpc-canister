@@ -285,14 +285,9 @@ impl BoundedStorable for PrincipalStorable {
 pub struct ProviderView {
     #[serde(rename = "providerId")]
     pub provider_id: u64,
-    pub owner: Principal,
     #[serde(rename = "chainId")]
     pub chain_id: u64,
     pub hostname: String,
-    #[serde(rename = "cyclesPerCall")]
-    pub cycles_per_call: u64,
-    #[serde(rename = "cyclesPerMessageByte")]
-    pub cycles_per_message_byte: u64,
     pub primary: bool,
 }
 
@@ -300,11 +295,8 @@ impl From<Provider> for ProviderView {
     fn from(provider: Provider) -> Self {
         ProviderView {
             provider_id: provider.provider_id,
-            owner: provider.owner,
             chain_id: provider.chain_id,
             hostname: provider.hostname,
-            cycles_per_call: provider.cycles_per_call,
-            cycles_per_message_byte: provider.cycles_per_message_byte,
             primary: provider.primary,
         }
     }
@@ -315,28 +307,20 @@ pub struct RegisterProviderArgs {
     #[serde(rename = "chainId")]
     pub chain_id: u64,
     pub hostname: String,
-    #[serde(rename = "credentialPath")]
-    pub credential_path: String,
-    #[serde(rename = "credentialHeaders")]
-    pub credential_headers: Option<Vec<HttpHeader>>,
-    #[serde(rename = "cyclesPerCall")]
-    pub cycles_per_call: u64,
-    #[serde(rename = "cyclesPerMessageByte")]
-    pub cycles_per_message_byte: u64,
+    #[serde(rename = "urlPattern")]
+    pub url_pattern: String,
+    #[serde(rename = "headerPatterns")]
+    pub header_patterns: Option<Vec<HttpHeader>>,
 }
 
 #[derive(Clone, CandidType, Deserialize)]
 pub struct UpdateProviderArgs {
     #[serde(rename = "providerId")]
     pub provider_id: u64,
-    #[serde(rename = "credentialPath")]
-    pub credential_path: Option<String>,
-    #[serde(rename = "credentialHeaders")]
-    pub credential_headers: Option<Vec<HttpHeader>>,
-    #[serde(rename = "cyclesPerCall")]
-    pub cycles_per_call: Option<u64>,
-    #[serde(rename = "cyclesPerMessageByte")]
-    pub cycles_per_message_byte: Option<u64>,
+    #[serde(rename = "urlPattern")]
+    pub url_pattern: Option<String>,
+    #[serde(rename = "headerPatterns")]
+    pub header_patterns: Option<Vec<HttpHeader>>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -353,20 +337,13 @@ pub struct ManageProviderArgs {
 pub struct Provider {
     #[serde(rename = "providerId")]
     pub provider_id: u64,
-    pub owner: Principal,
     #[serde(rename = "chainId")]
     pub chain_id: u64,
     pub hostname: String,
-    #[serde(rename = "credentialPath")]
-    pub credential_path: String,
-    #[serde(rename = "credentialHeaders")]
-    pub credential_headers: Vec<HttpHeader>,
-    #[serde(rename = "cyclesPerCall")]
-    pub cycles_per_call: u64,
-    #[serde(rename = "cyclesPerMessageByte")]
-    pub cycles_per_message_byte: u64,
-    #[serde(rename = "cyclesOwed")]
-    pub cycles_owed: u128,
+    #[serde(rename = "urlPattern")]
+    pub url_pattern: String,
+    #[serde(rename = "headerPatterns")]
+    pub header_patterns: Vec<HttpHeader>,
     pub primary: bool,
 }
 

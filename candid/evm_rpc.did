@@ -141,21 +141,16 @@ type ProviderError = variant {
 };
 type ProviderId = nat64;
 type ProviderView = record {
-  cyclesPerCall : nat64;
-  owner : principal;
   hostname : text;
   primary : bool;
   chainId : nat64;
-  cyclesPerMessageByte : nat64;
   providerId : nat64;
 };
 type RegisterProviderArgs = record {
-  cyclesPerCall : nat64;
-  credentialPath : text;
   hostname : text;
-  credentialHeaders : opt vec HttpHeader;
+  urlPattern : text;
+  headerPatterns : opt vec HttpHeader;
   chainId : nat64;
-  cyclesPerMessageByte : nat64;
 };
 type RejectionCode = variant {
   NoError;
@@ -235,10 +230,8 @@ type TransactionReceipt = record {
 };
 type UpdateProviderArgs = record {
   providerId : nat64;
-  cyclesPerCall : opt nat64;
-  credentialPath : opt text;
-  credentialHeaders : opt vec HttpHeader;
-  cyclesPerMessageByte : opt nat64;
+  urlPattern : opt text;
+  headerPatterns : opt vec HttpHeader;
 };
 type ValidationError = variant {
   Custom : text;
