@@ -311,7 +311,7 @@ pub struct ManageProviderArgs {
     pub service: Option<RpcService>,
 }
 
-#[derive(Clone, CandidType, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
 pub struct Provider {
     #[serde(rename = "providerId")]
     pub provider_id: u64,

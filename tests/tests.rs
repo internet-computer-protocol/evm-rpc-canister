@@ -40,7 +40,7 @@ use evm_rpc::{
         BLOCKPI_ETH_SEPOLIA_HOSTNAME, CLOUDFLARE_HOSTNAME, PUBLICNODE_ETH_MAINNET_HOSTNAME,
     },
     types::{
-        candid_types, Auth, InitArgs, ManageProviderArgs, Metrics, MultiRpcResult, ProviderView,
+        candid_types, Auth, InitArgs, ManageProviderArgs, Metrics, MultiRpcResult, Provider,
         RegisterProviderArgs, RpcMethod, RpcResult, RpcServices, UpdateProviderArgs,
     },
 };
@@ -201,7 +201,7 @@ impl EvmRpcSetup {
         self.call_query("getMetrics", Encode!().unwrap())
     }
 
-    pub fn get_providers(&self) -> Vec<ProviderView> {
+    pub fn get_providers(&self) -> Vec<Provider> {
         self.call_query("getProviders", Encode!().unwrap())
     }
 
@@ -589,11 +589,11 @@ fn should_register_provider() {
         setup
             .get_providers()
             .into_iter()
-            .map(|p| (p.chain_id, p.hostname))
+            .map(|p| (p.chain_id, p.url_pattern))
             .collect::<Vec<_>>(),
         get_default_providers()
             .into_iter()
-            .map(|p| (p.chain_id, p.hostname))
+            .map(|p| (p.chain_id, p.url_pattern))
             .collect::<Vec<_>>()
     );
     let n_providers = 2;
@@ -607,11 +607,8 @@ fn should_register_provider() {
     );
     let a_id = setup.register_provider(RegisterProviderArgs {
         chain_id: 1,
-        hostname: ANKR_HOSTNAME.to_string(),
-        credential_path: "".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
+        url_pattern: format!("https://{ANKR_HOSTNAME}"),
+        header_patterns: vec![],
     });
     // Permission removed after registering
     assert!(setup
@@ -624,14 +621,11 @@ fn should_register_provider() {
     setup = setup.authorize_caller(Auth::RegisterProvider);
     let b_id = setup.register_provider(RegisterProviderArgs {
         chain_id: 5,
-        hostname: CLOUDFLARE_HOSTNAME.to_string(),
-        credential_path: "/test-path".to_string(),
-        credential_headers: Some(vec![HttpHeader {
+        url_pattern: format!("https://{CLOUDFLARE_HOSTNAME}/test-path"),
+        header_patterns: vec![HttpHeader {
             name: "Test-Authorization".to_string(),
             value: "---".to_string(),
-        }]),
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
+        }],
     });
     assert_eq!(a_id + 1, b_id);
     let providers = setup.get_providers();
@@ -640,22 +634,21 @@ fn should_register_provider() {
     assert_eq!(
         providers[providers.len() - n_providers..],
         vec![
-            ProviderView {
+            Provider {
                 provider_id: first_new_id,
-                owner: setup.caller.0,
                 chain_id: 1,
-                hostname: ANKR_HOSTNAME.to_string(),
-                cycles_per_call: 0,
-                cycles_per_message_byte: 0,
+                url_pattern: format!("https://{ANKR_HOSTNAME}"),
+                header_patterns: vec![],
                 primary: false,
             },
-            ProviderView {
+            Provider {
                 provider_id: first_new_id + 1,
-                owner: setup.caller.0,
                 chain_id: 5,
-                hostname: CLOUDFLARE_HOSTNAME.to_string(),
-                cycles_per_call: 0,
-                cycles_per_message_byte: 0,
+                url_pattern: format!("https://{CLOUDFLARE_HOSTNAME}/test-path"),
+                header_patterns: vec![HttpHeader {
+                    name: "Test-Authorization".to_string(),
+                    value: "---".to_string(),
+                }],
                 primary: false,
             }
         ]
@@ -670,11 +663,8 @@ fn should_panic_if_anonymous_register_provider() {
     let setup = EvmRpcSetup::new().as_anonymous();
     setup.register_provider(RegisterProviderArgs {
         chain_id: 1,
-        hostname: ANKR_HOSTNAME.to_string(),
-        credential_path: "".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
+        url_pattern: format!("https://{ANKR_HOSTNAME}"),
+        header_patterns: vec![],
     });
 }
 
@@ -684,10 +674,8 @@ fn should_panic_if_anonymous_update_provider() {
     let setup = EvmRpcSetup::new().as_anonymous();
     setup.update_provider(UpdateProviderArgs {
         provider_id: 3,
-        credential_path: None,
-        credential_headers: None,
-        cycles_per_call: None,
-        cycles_per_message_byte: None,
+        url_pattern: None,
+        header_patterns: None,
     });
 }
 
@@ -697,11 +685,8 @@ fn should_panic_if_unauthorized_register_provider() {
     let setup = EvmRpcSetup::new();
     setup.register_provider(RegisterProviderArgs {
         chain_id: 1,
-        hostname: ANKR_HOSTNAME.to_string(),
-        credential_path: "".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
+        url_pattern: format!("https://{ANKR_HOSTNAME}"),
+        header_patterns: vec![],
     });
 }
 
@@ -736,10 +721,8 @@ fn should_panic_if_unauthorized_update_provider() {
     let setup = EvmRpcSetup::new();
     setup.update_provider(UpdateProviderArgs {
         provider_id: 0,
-        credential_path: None,
-        credential_headers: None,
-        cycles_per_call: None,
-        cycles_per_message_byte: None,
+        url_pattern: None,
+        header_patterns: None,
     });
 }
 
@@ -748,10 +731,8 @@ fn should_allow_controller_update_provider() {
     let setup = EvmRpcSetup::new().as_controller();
     setup.update_provider(UpdateProviderArgs {
         provider_id: 0,
-        credential_path: None,
-        credential_headers: None,
-        cycles_per_call: None,
-        cycles_per_message_byte: None,
+        url_pattern: None,
+        header_patterns: None,
     });
 }
 
@@ -765,18 +746,13 @@ fn should_panic_if_manage_auth_update_non_owned_provider() {
         .authorize_caller(Auth::RegisterProvider)
         .register_provider(RegisterProviderArgs {
             chain_id: 123,
-            hostname: "example.com".to_string(),
-            credential_path: "".to_string(),
-            credential_headers: None,
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
+            url_pattern: format!("https://example.com"),
+            header_patterns: vec![],
         });
     setup.update_provider(UpdateProviderArgs {
         provider_id,
-        credential_path: None,
-        credential_headers: None,
-        cycles_per_call: None,
-        cycles_per_message_byte: None,
+        url_pattern: None,
+        header_patterns: None,
     });
 }
 
@@ -802,11 +778,8 @@ fn should_replace_service_provider() {
         .authorize_caller(Auth::FreeRpc);
     let provider_id = setup.register_provider(RegisterProviderArgs {
         chain_id: ETH_MAINNET_CHAIN_ID,
-        hostname: "ankr2.com".to_string(),
-        credential_path: "/v2/mainnet".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
+        url_pattern: format!("https://ankr2.com/v2/mainnet"),
+        header_patterns: vec![],
     });
     setup
         .clone()
@@ -846,22 +819,16 @@ fn should_set_primary_provider() {
         .authorize_caller(Auth::RegisterProvider)
         .register_provider(RegisterProviderArgs {
             chain_id: new_chain_id,
-            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-            credential_path: before_credential.to_string(),
-            credential_headers: None,
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
+            url_pattern: format!("https://{ALCHEMY_ETH_MAINNET_HOSTNAME}{before_credential}"),
+            header_patterns: vec![],
         });
     let provider_id = setup
         .clone()
         .authorize_caller(Auth::RegisterProvider)
         .register_provider(RegisterProviderArgs {
             chain_id: new_chain_id,
-            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-            credential_path: after_credential.to_string(),
-            credential_headers: None,
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
+            url_pattern: format!("https://{ALCHEMY_ETH_MAINNET_HOSTNAME}{after_credential}"),
+            header_patterns: vec![],
         });
     assert_matches!(
         setup
@@ -917,22 +884,16 @@ fn should_set_provider_chain_id() {
         .authorize_caller(Auth::RegisterProvider)
         .register_provider(RegisterProviderArgs {
             chain_id: before_chain_id,
-            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-            credential_path: credential.to_string(),
-            credential_headers: None,
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
+            url_pattern: format!("https://{ALCHEMY_ETH_MAINNET_HOSTNAME}{credential}"),
+            header_patterns: vec![],
         });
     let provider_id = setup
         .clone()
         .authorize_caller(Auth::RegisterProvider)
         .register_provider(RegisterProviderArgs {
             chain_id: before_chain_id,
-            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-            credential_path: credential.to_string(),
-            credential_headers: None,
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
+            url_pattern: format!("https://{ALCHEMY_ETH_MAINNET_HOSTNAME}{credential}"),
+            header_patterns: vec![],
         });
     assert_matches!(
         setup
