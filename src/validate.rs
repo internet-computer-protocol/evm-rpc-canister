@@ -1,7 +1,10 @@
 use cketh_common::eth_rpc::ValidationError;
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 
-use crate::constants::{CONTENT_TYPE_HEADER, SERVICE_HOSTS_BLOCKLIST};
+use crate::{
+    constants::{CONTENT_TYPE_HEADER, SERVICE_HOSTS_BLOCKLIST},
+    util::hostname_from_url,
+};
 
 pub fn validate_hostname(hostname: &str) -> Result<(), ValidationError> {
     if SERVICE_HOSTS_BLOCKLIST.contains(&hostname) {
@@ -12,7 +15,11 @@ pub fn validate_hostname(hostname: &str) -> Result<(), ValidationError> {
 }
 
 pub fn validate_url_pattern(url_pattern: &str) -> Result<(), ValidationError> {
-    if !(url_pattern.is_empty() || url_pattern.starts_with('/') || url_pattern.starts_with('?')) {
+    if !(url_pattern.is_empty()
+        || url_pattern.starts_with('/')
+        || url_pattern.starts_with('?')
+        || hostname_from_url(url_pattern).is_none())
+    {
         Err(ValidationError::CredentialPathNotAllowed) // TODO: rename to `UrlNotAllowed`
     } else {
         Ok(())

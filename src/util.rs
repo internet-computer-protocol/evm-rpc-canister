@@ -15,7 +15,13 @@ pub fn canonicalize_json(text: &[u8]) -> Option<Vec<u8>> {
 
 pub fn hostname_from_url(url: &str) -> Option<String> {
     url::Url::parse(&url).ok().and_then(|url| match url.host() {
-        Some(Host::Domain(domain)) => Some(domain.to_string()),
+        Some(Host::Domain(domain)) => {
+            if !domain.contains(&['{', '}']) {
+                Some(domain.to_string())
+            } else {
+                None
+            }
+        }
         _ => None,
     })
 }
