@@ -32,7 +32,7 @@ pub fn validate_header_patterns(header_patterns: &[HttpHeader]) -> Result<(), Va
 }
 
 pub fn validate_api_key(api_key: &str) -> Result<(), ValidationError> {
-    if api_key.contains("/") {
+    if api_key.contains(&['.', '/', '?', '&']) {
         Err(ValidationError::CredentialPathNotAllowed) // TODO: rename to `ApiKeyNotAllowed`
     } else {
         Ok(())
@@ -87,7 +87,23 @@ mod test {
     pub fn test_validate_api_key() {
         assert_eq!(validate_api_key("abc"), Ok(()));
         assert_eq!(
-            validate_api_key("abc"),
+            validate_api_key(".."),
+            Err(ValidationError::CredentialPathNotAllowed)
+        );
+        assert_eq!(
+            validate_api_key("abc/def"),
+            Err(ValidationError::CredentialPathNotAllowed)
+        );
+        assert_eq!(
+            validate_api_key("../def"),
+            Err(ValidationError::CredentialPathNotAllowed)
+        );
+        assert_eq!(
+            validate_api_key("abc/.."),
+            Err(ValidationError::CredentialPathNotAllowed)
+        );
+        assert_eq!(
+            validate_api_key("../.."),
             Err(ValidationError::CredentialPathNotAllowed)
         );
     }
