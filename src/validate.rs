@@ -15,15 +15,9 @@ pub fn validate_hostname(hostname: &str) -> Result<(), ValidationError> {
 }
 
 pub fn validate_url_pattern(url_pattern: &str) -> Result<(), ValidationError> {
-    if !(url_pattern.is_empty()
-        || url_pattern.starts_with('/')
-        || url_pattern.starts_with('?')
-        || hostname_from_url(url_pattern).is_none())
-    {
-        Err(ValidationError::CredentialPathNotAllowed) // TODO: rename to `UrlNotAllowed`
-    } else {
-        Ok(())
-    }
+    validate_hostname(
+        &hostname_from_url(&url_pattern).ok_or(ValidationError::CredentialPathNotAllowed)?,
+    )
 }
 
 pub fn validate_header_patterns(header_patterns: &[HttpHeader]) -> Result<(), ValidationError> {
@@ -42,5 +36,59 @@ pub fn validate_api_key(api_key: &str) -> Result<(), ValidationError> {
         Err(ValidationError::CredentialPathNotAllowed) // TODO: rename to `ApiKeyNotAllowed`
     } else {
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    pub fn test_validate_url_pattern() {
+        assert_eq!(validate_url_pattern("https://example.com"), Ok(()));
+        assert_eq!(validate_url_pattern("https://example.com/v1/rpc"), Ok(()));
+        assert_eq!(
+            validate_url_pattern("https://example.com/{API_KEY}"),
+            Ok(())
+        );
+        assert_eq!(
+            validate_url_pattern("https://{API_KEY}"),
+            Err(ValidationError::CredentialPathNotAllowed)
+        );
+        assert_eq!(
+            validate_url_pattern("https://{API_KEY}/v1/rpc"),
+            Err(ValidationError::CredentialPathNotAllowed)
+        );
+        assert_eq!(
+            validate_url_pattern("https://{API_KEY}/{API_KEY}"),
+            Err(ValidationError::CredentialPathNotAllowed)
+        );
+    }
+
+    #[test]
+    pub fn test_validate_header_patterns() {
+        assert_eq!(
+            validate_header_patterns(&[HttpHeader {
+                name: "abc".to_string(),
+                value: "123".to_string(),
+            }]),
+            Ok(())
+        );
+        assert_eq!(
+            validate_header_patterns(&[HttpHeader {
+                name: CONTENT_TYPE_HEADER.to_string(),
+                value: "text/xml".to_string(),
+            }]),
+            Err(ValidationError::CredentialHeaderNotAllowed)
+        );
+    }
+
+    #[test]
+    pub fn test_validate_api_key() {
+        assert_eq!(validate_api_key("abc"), Ok(()));
+        assert_eq!(
+            validate_api_key("abc"),
+            Err(ValidationError::CredentialPathNotAllowed)
+        );
     }
 }
