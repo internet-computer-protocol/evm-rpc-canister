@@ -364,25 +364,17 @@ pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> Pr
     provider_id
 }
 
-pub fn do_unregister_provider(
-    caller: Principal,
-    is_controller: bool,
-    provider_id: ProviderId,
-) -> bool {
+pub fn do_unregister_provider(caller: Principal, provider_id: ProviderId) -> bool {
     PROVIDERS.with(|providers| {
         let mut providers = providers.borrow_mut();
         if providers.contains_key(&provider_id) {
-            if is_controller {
-                log!(
-                    INFO,
-                    "[{}] Unregistering provider: {:?}",
-                    caller,
-                    provider_id
-                );
-                providers.remove(&provider_id).is_some()
-            } else {
-                ic_cdk::trap("You are not authorized: check provider owner");
-            }
+            log!(
+                INFO,
+                "[{}] Unregistering provider: {:?}",
+                caller,
+                provider_id
+            );
+            providers.remove(&provider_id).is_some()
         } else {
             false
         }
@@ -390,25 +382,21 @@ pub fn do_unregister_provider(
 }
 
 /// Changes provider details. The caller must be the owner of the provider.
-pub fn do_update_provider(caller: Principal, is_controller: bool, args: UpdateProviderArgs) {
+pub fn do_update_provider(caller: Principal, args: UpdateProviderArgs) {
     PROVIDERS.with(|providers| {
         let mut providers = providers.borrow_mut();
         match providers.get(&args.provider_id) {
             Some(mut provider) => {
-                if is_controller {
-                    log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
-                    if let Some(url_pattern) = args.url_pattern {
-                        validate_url_pattern(&url_pattern).unwrap();
-                        provider.url_pattern = url_pattern;
-                    }
-                    if let Some(header_patterns) = args.header_patterns {
-                        validate_header_patterns(&header_patterns).unwrap();
-                        provider.header_patterns = header_patterns;
-                    }
-                    providers.insert(args.provider_id, provider);
-                } else {
-                    ic_cdk::trap("You are not authorized: check provider owner");
+                log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
+                if let Some(url_pattern) = args.url_pattern {
+                    validate_url_pattern(&url_pattern).unwrap();
+                    provider.url_pattern = url_pattern;
                 }
+                if let Some(header_patterns) = args.header_patterns {
+                    validate_header_patterns(&header_patterns).unwrap();
+                    provider.header_patterns = header_patterns;
+                }
+                providers.insert(args.provider_id, provider);
             }
             None => ic_cdk::trap("Provider not found"),
         }

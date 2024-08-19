@@ -182,8 +182,6 @@ fn transform(args: TransformArgs) -> HttpResponse {
 
 #[ic_cdk::init]
 fn init(args: InitArgs) {
-    post_upgrade(args);
-
     for provider in get_default_providers() {
         do_register_provider(ic_cdk::caller(), provider);
     }
@@ -200,11 +198,17 @@ fn init(args: InitArgs) {
         });
         set_service_provider(&service, &provider);
     }
+    post_upgrade(args);
 }
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade(args: InitArgs) {
     set_nodes_in_subnet(args.nodes_in_subnet);
+    if let Some(actions) = args.actions {
+        for action in actions {
+            action.run(ic_cdk::caller());
+        }
+    }
 }
 
 #[query]

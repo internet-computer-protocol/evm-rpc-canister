@@ -107,6 +107,7 @@ impl EvmRpcSetup {
 
         let args = InitArgs {
             nodes_in_subnet: NODES_IN_STANDARD_SUBNET,
+            actions: Some(vec![]),
         };
 
         let controller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);

@@ -16,11 +16,36 @@ use crate::constants::{
     API_KEY_REPLACE_STRING, AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDER_MAX_SIZE,
     RPC_SERVICE_MAX_SIZE, STRING_STORABLE_MAX_SIZE,
 };
+use crate::providers::{do_register_provider, do_unregister_provider, do_update_provider};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
     #[serde(rename = "nodesInSubnet")]
     pub nodes_in_subnet: u32,
+    pub actions: Option<Vec<Action>>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum Action {
+    RegisterProvider(RegisterProviderArgs),
+    UpdateProvider(UpdateProviderArgs),
+    UnregisterProvider(ProviderId),
+}
+
+impl Action {
+    pub fn run(self, caller: Principal) {
+        match self {
+            Action::RegisterProvider(args) => {
+                do_register_provider(caller, args);
+            }
+            Action::UpdateProvider(args) => {
+                do_update_provider(caller, args);
+            }
+            Action::UnregisterProvider(provider_id) => {
+                do_unregister_provider(caller, provider_id);
+            }
+        }
+    }
 }
 
 pub enum ResolvedRpcService {
@@ -282,7 +307,7 @@ impl BoundedStorable for PrincipalStorable {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(Clone, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct RegisterProviderArgs {
     #[serde(rename = "chainId")]
     pub chain_id: u64,
@@ -292,7 +317,7 @@ pub struct RegisterProviderArgs {
     pub header_patterns: Vec<HttpHeader>,
 }
 
-#[derive(Clone, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct UpdateProviderArgs {
     #[serde(rename = "providerId")]
     pub provider_id: ProviderId,

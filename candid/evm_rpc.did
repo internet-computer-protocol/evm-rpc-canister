@@ -80,6 +80,12 @@ type HttpOutcallError = variant {
 };
 type InitArgs = record {
   nodesInSubnet : nat32;
+  actions : vec Action;
+};
+type Action = variant {
+  RegisterProvider : RegisterProviderArgs;
+  UpdateProvider : UpdateProviderArgs;
+  UnregisterProvider : ProviderId;
 };
 type JsonRpcError = record { code : int64; message : text };
 type LogEntry = record {
