@@ -316,8 +316,8 @@ pub struct ManageProviderArgs {
 pub struct ProviderId(u64);
 
 impl ProviderId {
-    pub fn increment(&mut self) {
-        self.0 += 1;
+    pub fn next_id(self) -> Self {
+        ProviderId(self.0 + 1)
     }
 }
 

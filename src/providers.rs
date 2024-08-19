@@ -343,7 +343,7 @@ pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> Pr
     let provider_id = METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         let id = metadata.next_provider_id;
-        metadata.next_provider_id.increment();
+        metadata.next_provider_id = metadata.next_provider_id.next_id();
         m.borrow_mut().set(metadata).unwrap();
         id
     });

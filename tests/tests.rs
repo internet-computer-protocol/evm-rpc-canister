@@ -41,7 +41,7 @@ use evm_rpc::{
     },
     types::{
         candid_types, Auth, InitArgs, ManageProviderArgs, Metrics, MultiRpcResult, Provider,
-        RegisterProviderArgs, RpcMethod, RpcResult, RpcServices, UpdateProviderArgs,
+        ProviderId, RegisterProviderArgs, RpcMethod, RpcResult, RpcServices, UpdateProviderArgs,
     },
 };
 use mock::{MockOutcall, MockOutcallBuilder};
@@ -205,16 +205,16 @@ impl EvmRpcSetup {
         self.call_query("getProviders", Encode!().unwrap())
     }
 
-    pub fn get_service_provider_map(&self) -> Vec<(RpcService, u64)> {
+    pub fn get_service_provider_map(&self) -> Vec<(RpcService, ProviderId)> {
         self.call_query("getServiceProviderMap", Encode!().unwrap())
     }
 
-    pub fn register_provider(&self, args: RegisterProviderArgs) -> u64 {
+    pub fn register_provider(&self, args: RegisterProviderArgs) -> ProviderId {
         self.call_update("registerProvider", Encode!(&args).unwrap())
             .wait()
     }
 
-    pub fn unregister_provider(&self, provider_id: u64) -> bool {
+    pub fn unregister_provider(&self, provider_id: ProviderId) -> bool {
         self.call_update("unregisterProvider", Encode!(&provider_id).unwrap())
             .wait()
     }
@@ -627,10 +627,10 @@ fn should_register_provider() {
             value: "---".to_string(),
         }],
     });
-    assert_eq!(a_id + 1, b_id);
+    assert_eq!(a_id.next_id(), b_id);
     let providers = setup.get_providers();
     assert_eq!(providers.len(), get_default_providers().len() + n_providers);
-    let first_new_id = (providers.len() - n_providers) as u64;
+    let first_new_id = ((providers.len() - n_providers) as u64).into();
     assert_eq!(
         providers[providers.len() - n_providers..],
         vec![
@@ -642,7 +642,7 @@ fn should_register_provider() {
                 primary: false,
             },
             Provider {
-                provider_id: first_new_id + 1,
+                provider_id: first_new_id.next_id(),
                 chain_id: 5,
                 url_pattern: format!("https://{CLOUDFLARE_HOSTNAME}/test-path"),
                 header_patterns: vec![HttpHeader {
@@ -673,7 +673,7 @@ fn should_panic_if_anonymous_register_provider() {
 fn should_panic_if_anonymous_update_provider() {
     let setup = EvmRpcSetup::new().as_anonymous();
     setup.update_provider(UpdateProviderArgs {
-        provider_id: 3,
+        provider_id: 3.into(),
         url_pattern: None,
         header_patterns: None,
     });
@@ -695,7 +695,7 @@ fn should_panic_if_unauthorized_register_provider() {
 fn should_panic_if_unauthorized_manage_provider() {
     let setup = EvmRpcSetup::new();
     setup.manage_provider(ManageProviderArgs {
-        provider_id: 2,
+        provider_id: 2.into(),
         chain_id: None,
         primary: Some(true),
         service: None,
@@ -707,7 +707,7 @@ fn should_panic_if_unauthorized_manage_provider() {
 fn should_panic_if_anonymous_manage_provider() {
     let setup = EvmRpcSetup::new().as_anonymous();
     setup.manage_provider(ManageProviderArgs {
-        provider_id: 3,
+        provider_id: 3.into(),
         chain_id: None,
         primary: Some(true),
         service: None,
@@ -720,7 +720,7 @@ fn should_panic_if_unauthorized_update_provider() {
     // Providers can only be updated by the original owner or canister controller
     let setup = EvmRpcSetup::new();
     setup.update_provider(UpdateProviderArgs {
-        provider_id: 0,
+        provider_id: 0.into(),
         url_pattern: None,
         header_patterns: None,
     });
@@ -730,7 +730,7 @@ fn should_panic_if_unauthorized_update_provider() {
 fn should_allow_controller_update_provider() {
     let setup = EvmRpcSetup::new().as_controller();
     setup.update_provider(UpdateProviderArgs {
-        provider_id: 0,
+        provider_id: 0.into(),
         url_pattern: None,
         header_patterns: None,
     });
@@ -761,14 +761,14 @@ fn should_panic_if_manage_auth_update_non_owned_provider() {
 fn should_panic_if_unauthorized_unregister_provider() {
     // Only the `Manage` authorization may unregister a provider
     let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
-    setup.unregister_provider(0);
+    setup.unregister_provider(0.into());
 }
 
 #[test]
 #[should_panic(expected = "You are not authorized: check provider owner")]
 fn should_panic_if_manage_auth_unregister_provider() {
     let setup = EvmRpcSetup::new().authorize_caller(Auth::Manage);
-    setup.unregister_provider(3);
+    setup.unregister_provider(3.into());
 }
 
 #[test]
