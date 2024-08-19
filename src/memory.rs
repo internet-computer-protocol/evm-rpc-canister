@@ -8,7 +8,9 @@ use std::cell::RefCell;
 
 use crate::{
     constants::NODES_IN_FIDUCIARY_SUBNET,
-    types::{AuthSet, Metadata, Metrics, PrincipalStorable, Provider, StorableRpcService},
+    types::{
+        AuthSet, Metadata, Metrics, PrincipalStorable, Provider, ProviderId, StorableRpcService,
+    },
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -33,9 +35,9 @@ thread_local! {
             Metadata::default()).unwrap());
     pub static AUTH: RefCell<StableBTreeMap<PrincipalStorable, AuthSet, Memory>> = RefCell::new(
         StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(1)))));
-    pub static PROVIDERS: RefCell<StableBTreeMap<u64, Provider, Memory>> = RefCell::new(
+    pub static PROVIDERS: RefCell<StableBTreeMap<ProviderId, Provider, Memory>> = RefCell::new(
         StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(2)))));
-    pub static SERVICE_PROVIDER_MAP: RefCell<StableBTreeMap<StorableRpcService, u64, Memory>> = RefCell::new(
+    pub static SERVICE_PROVIDER_MAP: RefCell<StableBTreeMap<StorableRpcService, ProviderId, Memory>> = RefCell::new(
         StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(3)))));
 }
 

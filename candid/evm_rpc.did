@@ -95,7 +95,7 @@ type LogEntry = record {
 };
 type ManageProviderArgs = record {
   providerId : ProviderId;
-  chainId : opt nat64;
+  chainId : opt ChainId;
   "service" : opt RpcService;
   primary : opt bool;
 };
@@ -140,15 +140,16 @@ type ProviderError = variant {
   NoPermission;
 };
 type ProviderId = nat64;
+type ChainId = nat64;
 type Provider = record {
   providerId : ProviderId;
-  chainId : nat64;
+  chainId : ChainId;
   urlPattern : text;
   headerPatterns : opt vec HttpHeader;
   primary : bool;
 };
 type RegisterProviderArgs = record {
-  chainId : nat64;
+  chainId : ChainId;
   urlPattern : text;
   headerPatterns : opt vec HttpHeader;
 };
@@ -195,7 +196,7 @@ type RpcService = variant {
 };
 type RpcServices = variant {
   Custom : record {
-    chainId : nat64;
+    chainId : ChainId;
     services : vec RpcApi;
   };
   EthSepolia : opt vec EthSepoliaService;
@@ -257,7 +258,7 @@ service : (InitArgs) -> {
   getNodesInSubnet : () -> (numberOfNodes : nat32) query;
   getOpenRpcAccess : () -> (active : bool) query;
   getProviders : () -> (vec Provider) query;
-  getServiceProviderMap : () -> (vec record { RpcService; nat64 }) query;
+  getServiceProviderMap : () -> (vec record { RpcService; ProviderId }) query;
   request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
   requestCost : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestCostResult) query;
   setOpenRpcAccess : (active : bool) -> ();

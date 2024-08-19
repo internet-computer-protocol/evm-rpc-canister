@@ -14,7 +14,7 @@ use evm_rpc::providers::{
     find_provider, get_default_providers, get_default_service_provider_hostnames,
     get_known_chain_id, resolve_rpc_service, set_service_provider,
 };
-use evm_rpc::types::Provider;
+use evm_rpc::types::{Provider, ProviderId};
 use evm_rpc::util::hostname_from_url;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
@@ -160,7 +160,7 @@ fn get_providers() -> Vec<Provider> {
 
 #[query(name = "getServiceProviderMap", guard = "require_manage_or_controller")]
 #[candid_method(query, rename = "getServiceProviderMap")]
-fn get_service_provider_map() -> Vec<(RpcService, u64)> {
+fn get_service_provider_map() -> Vec<(RpcService, ProviderId)> {
     SERVICE_PROVIDER_MAP.with(|map| {
         map.borrow()
             .iter()

@@ -90,7 +90,7 @@ pub async fn do_http_request(
             PROVIDERS.with(|p| {
                 // Error should not happen here as it was checked before
                 p.borrow_mut()
-                    .insert(provider.provider_id, provider)
+                    .insert(provider.provider_id.clone(), provider)
                     .expect("unable to update Provider");
             });
         }

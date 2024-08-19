@@ -10,6 +10,7 @@ use ic_stable_structures::{BoundedStorable, Storable};
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::fmt;
 
 use crate::constants::{
     API_KEY_REPLACE_STRING, AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDER_MAX_SIZE,
@@ -231,14 +232,14 @@ impl BoundedStorable for AuthSet {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Metadata {
-    pub next_provider_id: u64,
+    pub next_provider_id: ProviderId,
     pub open_rpc_access: bool,
 }
 
 impl Default for Metadata {
     fn default() -> Self {
         Self {
-            next_provider_id: 0,
+            next_provider_id: 0.into(),
             open_rpc_access: DEFAULT_OPEN_RPC_ACCESS,
         }
     }
@@ -294,7 +295,7 @@ pub struct RegisterProviderArgs {
 #[derive(Clone, CandidType, Deserialize)]
 pub struct UpdateProviderArgs {
     #[serde(rename = "providerId")]
-    pub provider_id: u64,
+    pub provider_id: ProviderId,
     #[serde(rename = "urlPattern")]
     pub url_pattern: Option<String>,
     #[serde(rename = "headerPatterns")]
@@ -304,17 +305,52 @@ pub struct UpdateProviderArgs {
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct ManageProviderArgs {
     #[serde(rename = "providerId")]
-    pub provider_id: u64,
+    pub provider_id: ProviderId,
     #[serde(rename = "chainId")]
     pub chain_id: Option<u64>,
     pub primary: Option<bool>,
     pub service: Option<RpcService>,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize)]
+pub struct ProviderId(u64);
+
+impl ProviderId {
+    pub fn increment(&mut self) {
+        self.0 += 1;
+    }
+}
+
+impl From<u64> for ProviderId {
+    fn from(value: u64) -> Self {
+        ProviderId(value)
+    }
+}
+
+impl fmt::Display for ProviderId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Storable for ProviderId {
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        ProviderId(u64::from_bytes(bytes))
+    }
+    fn to_bytes(&self) -> Cow<[u8]> {
+        self.0.to_bytes()
+    }
+}
+
+impl BoundedStorable for ProviderId {
+    const IS_FIXED_SIZE: bool = true;
+    const MAX_SIZE: u32 = u64::MAX_SIZE;
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
 pub struct Provider {
     #[serde(rename = "providerId")]
-    pub provider_id: u64,
+    pub provider_id: ProviderId,
     #[serde(rename = "chainId")]
     pub chain_id: u64,
     #[serde(rename = "urlPattern")]

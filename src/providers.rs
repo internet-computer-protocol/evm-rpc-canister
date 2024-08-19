@@ -16,7 +16,7 @@ use crate::{
     },
     memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP},
     types::{
-        Auth, ManageProviderArgs, Provider, RegisterProviderArgs, ResolvedRpcService,
+        Auth, ManageProviderArgs, Provider, ProviderId, RegisterProviderArgs, ResolvedRpcService,
         StorableRpcService, UpdateProviderArgs,
     },
     validate::{validate_header_patterns, validate_url_pattern},
@@ -338,12 +338,12 @@ pub fn get_known_chain_id(service: &RpcService) -> Option<u64> {
     }
 }
 
-pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> u64 {
+pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> ProviderId {
     validate_url_pattern(&args.url_pattern).unwrap();
     let provider_id = METADATA.with(|m| {
         let mut metadata = m.borrow().get().clone();
         let id = metadata.next_provider_id;
-        metadata.next_provider_id += 1;
+        metadata.next_provider_id.increment();
         m.borrow_mut().set(metadata).unwrap();
         id
     });
@@ -364,7 +364,11 @@ pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> u6
     provider_id
 }
 
-pub fn do_unregister_provider(caller: Principal, is_controller: bool, provider_id: u64) -> bool {
+pub fn do_unregister_provider(
+    caller: Principal,
+    is_controller: bool,
+    provider_id: ProviderId,
+) -> bool {
     PROVIDERS.with(|providers| {
         let mut providers = providers.borrow_mut();
         if providers.contains_key(&provider_id) {
@@ -484,7 +488,7 @@ pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, Pr
             PROVIDERS.with(|providers| {
                 providers
                     .borrow()
-                    .get(&id)
+                    .get(&id.into())
                     .ok_or(ProviderError::ProviderNotFound)
             })?
         }),
