@@ -94,7 +94,7 @@ type LogEntry = record {
   removed : bool;
 };
 type ManageProviderArgs = record {
-  providerId : nat64;
+  providerId : ProviderId;
   chainId : opt nat64;
   "service" : opt RpcService;
   primary : opt bool;
@@ -141,7 +141,7 @@ type ProviderError = variant {
 };
 type ProviderId = nat64;
 type Provider = record {
-  providerId : nat64;
+  providerId : ProviderId;
   chainId : nat64;
   urlPattern : text;
   headerPatterns : opt vec HttpHeader;
@@ -229,7 +229,7 @@ type TransactionReceipt = record {
   gasUsed : nat;
 };
 type UpdateProviderArgs = record {
-  providerId : nat64;
+  providerId : ProviderId;
   urlPattern : opt text;
   headerPatterns : opt vec HttpHeader;
 };
