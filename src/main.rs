@@ -1,4 +1,4 @@
-use candid::{candid_method, Principal};
+use candid::candid_method;
 use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError};
 
 use cketh_common::eth_rpc_client::providers::RpcService;
@@ -25,11 +25,10 @@ use ic_cdk::{query, update};
 use ic_nervous_system_common::serve_metrics;
 
 use evm_rpc::{
-    auth::{do_authorize, do_deauthorize},
     http::{do_json_rpc_request, do_transform_http_request},
-    memory::{AUTH, METADATA, PROVIDERS, SERVICE_PROVIDER_MAP, UNSTABLE_METRICS},
+    memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP, UNSTABLE_METRICS},
     providers::do_register_provider,
-    types::{candid_types, Auth, InitArgs, MetricRpcMethod, Metrics, MultiRpcResult, RpcServices},
+    types::{candid_types, InitArgs, MetricRpcMethod, Metrics, MultiRpcResult, RpcServices},
 };
 
 #[update(name = "eth_getLogs")]
@@ -296,46 +295,6 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
 #[candid_method(query, rename = "getMetrics")]
 fn get_metrics() -> Metrics {
     UNSTABLE_METRICS.with(|metrics| (*metrics.borrow()).clone())
-}
-
-#[update(guard = "require_manage_or_controller")]
-#[candid_method]
-fn authorize(principal: Principal, auth: Auth) -> bool {
-    log!(
-        INFO,
-        "[{}] Authorizing `{:?}` for principal: {}",
-        ic_cdk::caller(),
-        auth,
-        principal
-    );
-    do_authorize(principal, auth)
-}
-
-#[query(name = "getAuthorized")]
-#[candid_method(query, rename = "getAuthorized")]
-fn get_authorized(auth: Auth) -> Vec<Principal> {
-    AUTH.with(|a| {
-        let mut result = Vec::new();
-        for (k, v) in a.borrow().iter() {
-            if v.is_authorized(auth) {
-                result.push(k.0);
-            }
-        }
-        result
-    })
-}
-
-#[update(guard = "require_manage_or_controller")]
-#[candid_method]
-fn deauthorize(principal: Principal, auth: Auth) -> bool {
-    log!(
-        INFO,
-        "[{}] Deauthorizing `{:?}` for principal: {}",
-        ic_cdk::caller(),
-        auth,
-        principal
-    );
-    do_deauthorize(principal, auth)
 }
 
 #[query(name = "getOpenRpcAccess", guard = "require_manage_or_controller")]

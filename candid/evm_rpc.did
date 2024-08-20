@@ -249,8 +249,6 @@ type ValidationError = variant {
   CredentialHeaderNotAllowed;
 };
 service : (InitArgs) -> {
-  authorize : (principal, Auth) -> (success : bool);
-  deauthorize : (principal, Auth) -> (success : bool);
   eth_feeHistory : (RpcServices, opt RpcConfig, FeeHistoryArgs) -> (MultiFeeHistoryResult);
   eth_getBlockByNumber : (RpcServices, opt RpcConfig, BlockTag) -> (MultiGetBlockByNumberResult);
   eth_getLogs : (RpcServices, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);
@@ -259,7 +257,6 @@ service : (InitArgs) -> {
   );
   eth_getTransactionReceipt : (RpcServices, opt RpcConfig, hash : text) -> (MultiGetTransactionReceiptResult);
   eth_sendRawTransaction : (RpcServices, opt RpcConfig, rawSignedTransactionHex : text) -> (MultiSendRawTransactionResult);
-  getAuthorized : (Auth) -> (vec principal) query;
   getMetrics : () -> (Metrics) query;
   getNodesInSubnet : () -> (numberOfNodes : nat32) query;
   getOpenRpcAccess : () -> (active : bool) query;

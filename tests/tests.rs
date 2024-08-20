@@ -184,20 +184,6 @@ impl EvmRpcSetup {
         }
     }
 
-    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) -> bool {
-        self.call_update("authorize", Encode!(&principal.0, &auth).unwrap())
-            .wait()
-    }
-
-    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) -> bool {
-        self.call_update("deauthorize", Encode!(&principal.0, &auth).unwrap())
-            .wait()
-    }
-
-    pub fn get_authorized(&self, auth: Auth) -> Vec<Principal> {
-        self.call_query("getAuthorized", Encode!(&auth).unwrap())
-    }
-
     pub fn get_metrics(&self) -> Metrics {
         self.call_query("getMetrics", Encode!().unwrap())
     }
@@ -208,36 +194,6 @@ impl EvmRpcSetup {
 
     pub fn get_service_provider_map(&self) -> Vec<(RpcService, ProviderId)> {
         self.call_query("getServiceProviderMap", Encode!().unwrap())
-    }
-
-    pub fn register_provider(&self, args: RegisterProviderArgs) -> ProviderId {
-        self.call_update("registerProvider", Encode!(&args).unwrap())
-            .wait()
-    }
-
-    pub fn unregister_provider(&self, provider_id: ProviderId) -> bool {
-        self.call_update("unregisterProvider", Encode!(&provider_id).unwrap())
-            .wait()
-    }
-
-    pub fn update_provider(&self, args: UpdateProviderArgs) {
-        self.call_update("updateProvider", Encode!(&args).unwrap())
-            .wait()
-    }
-
-    pub fn manage_provider(&self, args: ManageProviderArgs) {
-        self.call_update("manageProvider", Encode!(&args).unwrap())
-            .wait()
-    }
-
-    pub fn authorize_caller(self, auth: Auth) -> Self {
-        self.clone().as_controller().authorize(&self.caller, auth);
-        self
-    }
-
-    pub fn deauthorize_caller(self, auth: Auth) -> Self {
-        self.clone().as_controller().deauthorize(&self.caller, auth);
-        self
     }
 
     pub fn set_open_rpc_access(&self, open_rpc_access: bool) {
