@@ -265,6 +265,7 @@ service : (InitArgs) -> {
   getOpenRpcAccess : () -> (active : bool) query;
   getProviders : () -> (vec Provider) query;
   getServiceProviderMap : () -> (vec record { RpcService; ProviderId }) query;
+  insertApiKeys : (vec record { ProviderId; text });
   request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
   requestCost : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestCostResult) query;
   setOpenRpcAccess : (active : bool) -> ();

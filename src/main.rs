@@ -8,13 +8,13 @@ use evm_rpc::accounting::{get_cost_with_collateral, get_rpc_cost};
 use evm_rpc::auth::require_manage_or_controller;
 use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::http::get_http_response_body;
-use evm_rpc::memory::{get_nodes_in_subnet, set_nodes_in_subnet};
+use evm_rpc::memory::{get_nodes_in_subnet, insert_api_key, set_nodes_in_subnet};
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{
     find_provider, get_default_providers, get_default_service_provider_hostnames,
     get_known_chain_id, resolve_rpc_service, set_service_provider,
 };
-use evm_rpc::types::{Provider, ProviderId};
+use evm_rpc::types::{ApiKey, Provider, ProviderId};
 use evm_rpc::util::hostname_from_url;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
@@ -173,6 +173,14 @@ fn get_service_provider_map() -> Vec<(RpcService, ProviderId)> {
 #[candid_method(query, rename = "getNodesInSubnet")]
 async fn get_nodes_in_subnet_() -> u32 {
     get_nodes_in_subnet()
+}
+
+#[update(name = "insertApiKeys")]
+#[candid_method(rename = "insertApiKeys")]
+async fn insert_api_keys(api_keys: Vec<(ProviderId, String)>) {
+    for (provider_id, api_key) in api_keys {
+        insert_api_key(provider_id, ApiKey(api_key));
+    }
 }
 
 #[query(name = "__transform_json_rpc")]

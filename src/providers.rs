@@ -375,6 +375,7 @@ pub fn do_unregister_provider(caller: Principal, provider_id: ProviderId) -> boo
                 provider_id
             );
             providers.remove(&provider_id).is_some()
+            
         } else {
             false
         }

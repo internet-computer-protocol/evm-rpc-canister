@@ -13,9 +13,10 @@ use std::collections::HashMap;
 use std::fmt;
 
 use crate::constants::{
-    API_KEY_REPLACE_STRING, AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS, PROVIDER_MAX_SIZE,
-    RPC_SERVICE_MAX_SIZE, STRING_STORABLE_MAX_SIZE,
+    API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS,
+    PROVIDER_MAX_SIZE, RPC_SERVICE_MAX_SIZE, STRING_STORABLE_MAX_SIZE,
 };
+use crate::memory::get_api_key;
 use crate::providers::{do_register_provider, do_unregister_provider, do_update_provider};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -307,6 +308,24 @@ impl BoundedStorable for PrincipalStorable {
     const IS_FIXED_SIZE: bool = false;
 }
 
+#[derive(Clone)]
+pub struct ApiKey(pub String);
+
+impl Storable for ApiKey {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        self.0.to_bytes()
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        Self(String::from_bytes(bytes))
+    }
+}
+
+impl BoundedStorable for ApiKey {
+    const MAX_SIZE: u32 = API_KEY_MAX_SIZE;
+    const IS_FIXED_SIZE: bool = false;
+}
+
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct RegisterProviderArgs {
     #[serde(rename = "chainId")]
@@ -387,15 +406,15 @@ pub struct Provider {
 
 impl Provider {
     pub fn api(&self) -> RpcApi {
-        let api_key = "TODO"; // TODO
+        let api_key = get_api_key(self.provider_id).0;
         RpcApi {
-            url: self.url_pattern.replace(API_KEY_REPLACE_STRING, api_key),
+            url: self.url_pattern.replace(API_KEY_REPLACE_STRING, &api_key),
             headers: Some(
                 self.header_patterns
                     .iter()
                     .map(|header| HttpHeader {
                         name: header.name.clone(),
-                        value: header.value.replace(API_KEY_REPLACE_STRING, api_key),
+                        value: header.value.replace(API_KEY_REPLACE_STRING, &api_key),
                     })
                     .collect(),
             ),
