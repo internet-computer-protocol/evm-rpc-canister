@@ -24,14 +24,6 @@ pub fn require_manage_or_controller() -> Result<(), String> {
     }
 }
 
-pub fn require_register_provider() -> Result<(), String> {
-    if is_authorized(&ic_cdk::caller(), Auth::RegisterProvider) {
-        Ok(())
-    } else {
-        Err("You are not authorized".to_string())
-    }
-}
-
 pub fn is_rpc_allowed(caller: &Principal) -> bool {
     METADATA.with(|m| m.borrow().get().open_rpc_access) || is_authorized(caller, Auth::PriorityRpc)
 }
@@ -100,18 +92,18 @@ mod test {
         assert!(!is_authorized(&principal1, Auth::PriorityRpc));
         assert!(!is_authorized(&principal2, Auth::PriorityRpc));
 
-        do_authorize(principal1, Auth::RegisterProvider);
-        assert!(is_authorized(&principal1, Auth::RegisterProvider));
-        assert!(!is_authorized(&principal2, Auth::RegisterProvider));
+        do_authorize(principal1, Auth::FreeRpc);
+        assert!(is_authorized(&principal1, Auth::FreeRpc));
+        assert!(!is_authorized(&principal2, Auth::FreeRpc));
 
-        do_deauthorize(principal1, Auth::RegisterProvider);
-        assert!(!is_authorized(&principal1, Auth::RegisterProvider));
+        do_deauthorize(principal1, Auth::FreeRpc);
+        assert!(!is_authorized(&principal1, Auth::FreeRpc));
 
         do_authorize(principal2, Auth::Manage);
         assert!(!is_authorized(&principal1, Auth::Manage));
         assert!(is_authorized(&principal2, Auth::Manage));
 
         assert!(!is_authorized(&principal2, Auth::PriorityRpc));
-        assert!(!is_authorized(&principal2, Auth::RegisterProvider));
+        assert!(!is_authorized(&principal2, Auth::FreeRpc));
     }
 }

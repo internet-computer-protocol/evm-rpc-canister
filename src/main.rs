@@ -26,7 +26,6 @@ use ic_nervous_system_common::serve_metrics;
 
 use evm_rpc::{
     auth::{do_authorize, do_deauthorize},
-    constants::WASM_PAGE_SIZE,
     http::{do_json_rpc_request, do_transform_http_request},
     memory::{AUTH, METADATA, PROVIDERS, SERVICE_PROVIDER_MAP, UNSTABLE_METRICS},
     providers::do_register_provider,
@@ -297,18 +296,6 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
 #[candid_method(query, rename = "getMetrics")]
 fn get_metrics() -> Metrics {
     UNSTABLE_METRICS.with(|metrics| (*metrics.borrow()).clone())
-}
-
-#[query(name = "stableSize", guard = "require_manage_or_controller")]
-fn stable_size() -> u64 {
-    ic_cdk::api::stable::stable64_size() * WASM_PAGE_SIZE
-}
-
-#[query(name = "stableRead", guard = "require_manage_or_controller")]
-fn stable_read(offset: u64, length: u64) -> Vec<u8> {
-    let mut buffer = vec![0; length as usize];
-    ic_cdk::api::stable::stable64_read(offset, &mut buffer);
-    buffer
 }
 
 #[update(guard = "require_manage_or_controller")]

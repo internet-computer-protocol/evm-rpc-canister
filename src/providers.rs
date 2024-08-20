@@ -9,14 +9,13 @@ use cketh_common::{
 use ic_canister_log::log;
 
 use crate::{
-    auth::do_deauthorize,
     constants::{
         ARBITRUM_ONE_CHAIN_ID, BASE_MAINNET_CHAIN_ID, ETH_MAINNET_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID,
         OPTIMISM_MAINNET_CHAIN_ID,
     },
     memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP},
     types::{
-        Auth, ManageProviderArgs, Provider, ProviderId, RegisterProviderArgs, ResolvedRpcService,
+        ManageProviderArgs, Provider, ProviderId, RegisterProviderArgs, ResolvedRpcService,
         StorableRpcService, UpdateProviderArgs,
     },
     validate::{validate_header_patterns, validate_url_pattern},
@@ -347,7 +346,6 @@ pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> Pr
         m.borrow_mut().set(metadata).unwrap();
         id
     });
-    do_deauthorize(caller, Auth::RegisterProvider);
     log!(INFO, "[{}] Registering provider: {:?}", caller, provider_id);
     PROVIDERS.with(|providers| {
         providers.borrow_mut().insert(
@@ -375,7 +373,6 @@ pub fn do_unregister_provider(caller: Principal, provider_id: ProviderId) -> boo
                 provider_id
             );
             providers.remove(&provider_id).is_some()
-            
         } else {
             false
         }

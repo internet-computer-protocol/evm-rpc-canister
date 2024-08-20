@@ -195,7 +195,6 @@ impl RpcMethod {
 #[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]
 pub enum Auth {
     Manage,
-    RegisterProvider,
     PriorityRpc,
     FreeRpc,
 }
