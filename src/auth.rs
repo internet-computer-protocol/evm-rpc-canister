@@ -28,12 +28,11 @@ pub fn is_rpc_allowed(caller: &Principal) -> bool {
     METADATA.with(|m| m.borrow().get().open_rpc_access) || is_authorized(caller, Auth::PriorityRpc)
 }
 
-pub fn do_authorize(principal: Principal, auth: Auth) -> bool {
+pub fn authorize(principal: Principal, auth: Auth) -> bool {
     if principal == Principal::anonymous() {
         false
     } else {
-        AUTH.with(|a| {
-            let mut auth_map = a.borrow_mut();
+        AUTH.with_borrow_mut(|auth_map| {
             let principal = PrincipalStorable(principal);
             let mut auth_set = auth_map.get(&principal).unwrap_or_default();
             if auth_set.authorize(auth) {
@@ -46,9 +45,8 @@ pub fn do_authorize(principal: Principal, auth: Auth) -> bool {
     }
 }
 
-pub fn do_deauthorize(principal: Principal, auth: Auth) -> bool {
-    AUTH.with(|a| {
-        let mut auth_map = a.borrow_mut();
+pub fn deauthorize(principal: Principal, auth: Auth) -> bool {
+    AUTH.with_borrow_mut(|auth_map| {
         let principal = PrincipalStorable(principal);
         if let Some(mut auth_set) = auth_map.get(&principal) {
             let changed = auth_set.deauthorize(auth);
@@ -69,7 +67,7 @@ mod test {
     use candid::Principal;
 
     use crate::{
-        auth::{do_authorize, do_deauthorize, is_authorized},
+        auth::{authorize, deauthorize, is_authorized},
         types::Auth,
     };
 
@@ -84,22 +82,22 @@ mod test {
         assert!(!is_authorized(&principal1, Auth::PriorityRpc));
         assert!(!is_authorized(&principal2, Auth::PriorityRpc));
 
-        do_authorize(principal1, Auth::PriorityRpc);
+        authorize(principal1, Auth::PriorityRpc);
         assert!(is_authorized(&principal1, Auth::PriorityRpc));
         assert!(!is_authorized(&principal2, Auth::PriorityRpc));
 
-        do_deauthorize(principal1, Auth::PriorityRpc);
+        deauthorize(principal1, Auth::PriorityRpc);
         assert!(!is_authorized(&principal1, Auth::PriorityRpc));
         assert!(!is_authorized(&principal2, Auth::PriorityRpc));
 
-        do_authorize(principal1, Auth::FreeRpc);
+        authorize(principal1, Auth::FreeRpc);
         assert!(is_authorized(&principal1, Auth::FreeRpc));
         assert!(!is_authorized(&principal2, Auth::FreeRpc));
 
-        do_deauthorize(principal1, Auth::FreeRpc);
+        deauthorize(principal1, Auth::FreeRpc);
         assert!(!is_authorized(&principal1, Auth::FreeRpc));
 
-        do_authorize(principal2, Auth::Manage);
+        authorize(principal2, Auth::Manage);
         assert!(!is_authorized(&principal1, Auth::Manage));
         assert!(is_authorized(&principal2, Auth::Manage));
 

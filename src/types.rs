@@ -17,13 +17,14 @@ use crate::constants::{
     PROVIDER_MAX_SIZE, RPC_SERVICE_MAX_SIZE, STRING_STORABLE_MAX_SIZE,
 };
 use crate::memory::get_api_key;
-use crate::providers::{do_register_provider, do_unregister_provider, do_update_provider};
+use crate::providers::{register_provider, unregister_provider, update_provider};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
     #[serde(rename = "nodesInSubnet")]
     pub nodes_in_subnet: u32,
     pub actions: Option<Vec<Action>>,
+    pub permissions: Option<Vec<(Principal, Auth)>>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -37,13 +38,13 @@ impl Action {
     pub fn run(self, caller: Principal) {
         match self {
             Action::RegisterProvider(args) => {
-                do_register_provider(caller, args);
+                register_provider(caller, args);
             }
             Action::UpdateProvider(args) => {
-                do_update_provider(caller, args);
+                update_provider(caller, args);
             }
             Action::UnregisterProvider(provider_id) => {
-                do_unregister_provider(caller, provider_id);
+                unregister_provider(caller, provider_id);
             }
         }
     }

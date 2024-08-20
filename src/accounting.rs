@@ -59,7 +59,7 @@ mod test {
         accounting::get_rpc_cost,
         constants::{NODES_IN_FIDUCIARY_SUBNET, NODES_IN_STANDARD_SUBNET},
         memory::{set_nodes_in_subnet, PROVIDERS},
-        providers::do_register_provider,
+        providers::register_provider,
         types::{RegisterProviderArgs, ResolvedRpcService},
     };
     use candid::Principal;
@@ -99,7 +99,7 @@ mod test {
 
     #[test]
     fn test_candid_rpc_cost() {
-        let provider_id = do_register_provider(
+        let provider_id = register_provider(
             Principal::anonymous(),
             RegisterProviderArgs {
                 chain_id: 0,

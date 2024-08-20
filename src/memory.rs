@@ -19,6 +19,8 @@ type Memory = VirtualMemory<VectorMemory>;
 #[cfg(target_arch = "wasm32")]
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
+const AUTH_MEMORY_ID: u8 = 1;
+
 thread_local! {
     // Unstable static data: this is reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
@@ -35,7 +37,7 @@ thread_local! {
         MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(0))),
         Metadata::default()).unwrap());
     pub static AUTH: RefCell<StableBTreeMap<PrincipalStorable, AuthSet, Memory>> = RefCell::new(
-        StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(1)))));
+        StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(AUTH_MEMORY_ID)))));
     pub static PROVIDERS: RefCell<StableBTreeMap<ProviderId, Provider, Memory>> = RefCell::new(
         StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(2)))));
     pub static SERVICE_PROVIDER_MAP: RefCell<StableBTreeMap<StorableRpcService, ProviderId, Memory>> = RefCell::new(
@@ -66,4 +68,12 @@ pub fn insert_api_key(provider_id: ProviderId, api_key: ApiKey) {
 
 pub fn remove_api_key(provider_id: ProviderId) {
     API_KEY_MAP.with_borrow_mut(|map| map.remove(&provider_id));
+}
+
+pub fn clear_permissions() {
+    AUTH.with_borrow_mut(|auth_map| {
+        *auth_map = StableBTreeMap::new(
+            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(AUTH_MEMORY_ID))),
+        )
+    });
 }

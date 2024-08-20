@@ -16,7 +16,7 @@ use crate::{
     util::canonicalize_json,
 };
 
-pub async fn do_json_rpc_request(
+pub async fn json_rpc_request(
     caller: Principal,
     service: ResolvedRpcService,
     rpc_method: MetricRpcMethod,
@@ -47,10 +47,10 @@ pub async fn do_json_rpc_request(
             vec![],
         )),
     };
-    do_http_request(caller, rpc_method, service, request, cycles_cost).await
+    http_request(caller, rpc_method, service, request, cycles_cost).await
 }
 
-pub async fn do_http_request(
+pub async fn http_request(
     caller: Principal,
     rpc_method: MetricRpcMethod,
     service: ResolvedRpcService,
@@ -87,9 +87,9 @@ pub async fn do_http_request(
         }
         ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
         if let Some(provider) = provider {
-            PROVIDERS.with(|p| {
+            PROVIDERS.with_borrow_mut(|providers| {
                 // Error should not happen here as it was checked before
-                p.borrow_mut()
+                providers
                     .insert(provider.provider_id.clone(), provider)
                     .expect("unable to update Provider");
             });
@@ -114,7 +114,7 @@ pub async fn do_http_request(
     }
 }
 
-pub fn do_transform_http_request(args: TransformArgs) -> HttpResponse {
+pub fn transform_http_request(args: TransformArgs) -> HttpResponse {
     HttpResponse {
         status: args.response.status,
         body: canonicalize_json(&args.response.body).unwrap_or(args.response.body),

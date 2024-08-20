@@ -337,18 +337,18 @@ pub fn get_known_chain_id(service: &RpcService) -> Option<u64> {
     }
 }
 
-pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> ProviderId {
+pub fn register_provider(caller: Principal, args: RegisterProviderArgs) -> ProviderId {
     validate_url_pattern(&args.url_pattern).unwrap();
-    let provider_id = METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
+    let provider_id = METADATA.with_borrow_mut(|m| {
+        let mut metadata = m.get().clone();
         let id = metadata.next_provider_id;
         metadata.next_provider_id = metadata.next_provider_id.next_id();
-        m.borrow_mut().set(metadata).unwrap();
+        m.set(metadata).unwrap();
         id
     });
     log!(INFO, "[{}] Registering provider: {:?}", caller, provider_id);
-    PROVIDERS.with(|providers| {
-        providers.borrow_mut().insert(
+    PROVIDERS.with_borrow_mut(|providers| {
+        providers.insert(
             provider_id,
             Provider {
                 provider_id,
@@ -362,9 +362,8 @@ pub fn do_register_provider(caller: Principal, args: RegisterProviderArgs) -> Pr
     provider_id
 }
 
-pub fn do_unregister_provider(caller: Principal, provider_id: ProviderId) -> bool {
-    PROVIDERS.with(|providers| {
-        let mut providers = providers.borrow_mut();
+pub fn unregister_provider(caller: Principal, provider_id: ProviderId) -> bool {
+    PROVIDERS.with_borrow_mut(|providers| {
         if providers.contains_key(&provider_id) {
             log!(
                 INFO,
@@ -379,61 +378,55 @@ pub fn do_unregister_provider(caller: Principal, provider_id: ProviderId) -> boo
     })
 }
 
-/// Changes provider details. The caller must be the owner of the provider.
-pub fn do_update_provider(caller: Principal, args: UpdateProviderArgs) {
-    PROVIDERS.with(|providers| {
-        let mut providers = providers.borrow_mut();
-        match providers.get(&args.provider_id) {
-            Some(mut provider) => {
-                log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
-                if let Some(url_pattern) = args.url_pattern {
-                    validate_url_pattern(&url_pattern).unwrap();
-                    provider.url_pattern = url_pattern;
-                }
-                if let Some(header_patterns) = args.header_patterns {
-                    validate_header_patterns(&header_patterns).unwrap();
-                    provider.header_patterns = header_patterns;
-                }
-                providers.insert(args.provider_id, provider);
+/// Changes provider details.
+pub fn update_provider(caller: Principal, args: UpdateProviderArgs) {
+    PROVIDERS.with_borrow_mut(|providers| match providers.get(&args.provider_id) {
+        Some(mut provider) => {
+            log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
+            if let Some(url_pattern) = args.url_pattern {
+                validate_url_pattern(&url_pattern).unwrap();
+                provider.url_pattern = url_pattern;
             }
-            None => ic_cdk::trap("Provider not found"),
+            if let Some(header_patterns) = args.header_patterns {
+                validate_header_patterns(&header_patterns).unwrap();
+                provider.header_patterns = header_patterns;
+            }
+            providers.insert(args.provider_id, provider);
         }
+        None => ic_cdk::trap("Provider not found"),
     });
 }
 
-/// Changes administrative details for a provider. The caller must have the `Auth::Manage` permission.
-pub fn do_manage_provider(args: ManageProviderArgs) {
-    PROVIDERS.with(|providers| {
-        let mut providers = providers.borrow_mut();
-        match providers.get(&args.provider_id) {
-            Some(mut provider) => {
-                if let Some(chain_id) = args.chain_id {
-                    log!(
-                        INFO,
-                        "Updating provider {:?} to use chain id: {} (original value: {})",
-                        provider.provider_id,
-                        chain_id,
-                        provider.chain_id,
-                    );
-                    provider.chain_id = chain_id;
-                }
-                if let Some(primary) = args.primary {
-                    log!(
-                        INFO,
-                        "Updating provider {:?} to use primary status: {} (original value: {})",
-                        provider.provider_id,
-                        primary,
-                        provider.primary,
-                    );
-                    provider.primary = primary;
-                }
-                if let Some(service) = args.service {
-                    set_service_provider(&service, &provider);
-                }
-                providers.insert(args.provider_id, provider);
+/// Changes administrative details for a provider.
+pub fn manage_provider(args: ManageProviderArgs) {
+    PROVIDERS.with_borrow_mut(|providers| match providers.get(&args.provider_id) {
+        Some(mut provider) => {
+            if let Some(chain_id) = args.chain_id {
+                log!(
+                    INFO,
+                    "Updating provider {:?} to use chain id: {} (original value: {})",
+                    provider.provider_id,
+                    chain_id,
+                    provider.chain_id,
+                );
+                provider.chain_id = chain_id;
             }
-            None => ic_cdk::trap("Provider not found"),
+            if let Some(primary) = args.primary {
+                log!(
+                    INFO,
+                    "Updating provider {:?} to use primary status: {} (original value: {})",
+                    provider.provider_id,
+                    primary,
+                    provider.primary,
+                );
+                provider.primary = primary;
+            }
+            if let Some(service) = args.service {
+                set_service_provider(&service, &provider);
+            }
+            providers.insert(args.provider_id, provider);
         }
+        None => ic_cdk::trap("Provider not found"),
     })
 }
 
@@ -452,10 +445,8 @@ pub fn set_service_provider(service: &RpcService, provider: &Provider) {
             ))
         }
     }
-    SERVICE_PROVIDER_MAP.with(|mappings| {
-        mappings
-            .borrow_mut()
-            .insert(StorableRpcService::new(service), provider.provider_id);
+    SERVICE_PROVIDER_MAP.with_borrow_mut(|mappings| {
+        mappings.insert(StorableRpcService::new(service), provider.provider_id);
     });
 }
 

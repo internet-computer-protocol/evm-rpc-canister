@@ -5,10 +5,12 @@ use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
 use cketh_common::logs::INFO;
 use evm_rpc::accounting::{get_cost_with_collateral, get_rpc_cost};
-use evm_rpc::auth::require_manage_or_controller;
+use evm_rpc::auth::{authorize, require_manage_or_controller};
 use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::http::get_http_response_body;
-use evm_rpc::memory::{get_nodes_in_subnet, insert_api_key, set_nodes_in_subnet};
+use evm_rpc::memory::{
+    clear_permissions, get_nodes_in_subnet, insert_api_key, set_nodes_in_subnet,
+};
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{
     find_provider, get_default_providers, get_default_service_provider_hostnames,
@@ -25,9 +27,9 @@ use ic_cdk::{query, update};
 use ic_nervous_system_common::serve_metrics;
 
 use evm_rpc::{
-    http::{do_json_rpc_request, do_transform_http_request},
+    http::{json_rpc_request, transform_http_request},
     memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP, UNSTABLE_METRICS},
-    providers::do_register_provider,
+    providers::register_provider,
     types::{candid_types, InitArgs, MetricRpcMethod, Metrics, MultiRpcResult, RpcServices},
 };
 
@@ -120,7 +122,7 @@ async fn request(
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<String, RpcError> {
-    let response = do_json_rpc_request(
+    let response = json_rpc_request(
         ic_cdk::caller(),
         resolve_rpc_service(service)?,
         MetricRpcMethod("request".to_string()),
@@ -183,13 +185,13 @@ async fn insert_api_keys(api_keys: Vec<(ProviderId, String)>) {
 
 #[query(name = "__transform_json_rpc")]
 fn transform(args: TransformArgs) -> HttpResponse {
-    do_transform_http_request(args)
+    transform_http_request(args)
 }
 
 #[ic_cdk::init]
 fn init(args: InitArgs) {
     for provider in get_default_providers() {
-        do_register_provider(ic_cdk::caller(), provider);
+        register_provider(ic_cdk::caller(), provider);
     }
     for (service, hostname) in get_default_service_provider_hostnames() {
         let provider = find_provider(|p| {
@@ -213,6 +215,12 @@ fn post_upgrade(args: InitArgs) {
     if let Some(actions) = args.actions {
         for action in actions {
             action.run(ic_cdk::caller());
+        }
+    }
+    if let Some(permissions) = args.permissions {
+        clear_permissions();
+        for (principal, auth) in permissions {
+            authorize(principal, auth);
         }
     }
 }
@@ -312,10 +320,10 @@ fn set_open_rpc_access(open_rpc_access: bool) {
         ic_cdk::caller(),
         open_rpc_access
     );
-    METADATA.with(|m| {
-        let mut metadata = m.borrow().get().clone();
+    METADATA.with_borrow_mut(|m| {
+        let mut metadata = m.get().clone();
         metadata.open_rpc_access = open_rpc_access;
-        m.borrow_mut().set(metadata).unwrap();
+        m.set(metadata).unwrap();
     });
 }
 

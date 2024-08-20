@@ -24,7 +24,7 @@ use crate::{
         DEFAULT_ETH_MAINNET_SERVICES, DEFAULT_ETH_SEPOLIA_SERVICES, DEFAULT_L2_MAINNET_SERVICES,
         ETH_GET_LOGS_MAX_BLOCKS,
     },
-    http::do_http_request,
+    http::http_request,
     providers::resolve_rpc_service,
     types::{
         candid_types::{self, SendRawTransactionStatus},
@@ -61,7 +61,7 @@ impl RpcTransport for CanisterTransport {
             effective_response_size_estimate,
         );
         let rpc_method = MetricRpcMethod(method.to_string());
-        do_http_request(ic_cdk::caller(), rpc_method, service, request, cycles_cost).await
+        http_request(ic_cdk::caller(), rpc_method, service, request, cycles_cost).await
     }
 }
 
