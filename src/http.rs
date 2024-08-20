@@ -51,7 +51,7 @@ pub async fn json_rpc_request(
 }
 
 pub async fn http_request(
-    caller: Principal,
+    _caller: Principal,
     rpc_method: MetricRpcMethod,
     service: ResolvedRpcService,
     request: CanisterHttpRequestArgument,
