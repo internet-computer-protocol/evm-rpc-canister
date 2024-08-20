@@ -72,6 +72,7 @@ pub fn remove_api_key(provider_id: ProviderId) {
 
 pub fn clear_permissions() {
     AUTH.with_borrow_mut(|auth_map| {
+        // Workaround for `StableBTreeMap::clear()` requiring ownership of the stable structure
         *auth_map = StableBTreeMap::new(
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(AUTH_MEMORY_ID))),
         )
