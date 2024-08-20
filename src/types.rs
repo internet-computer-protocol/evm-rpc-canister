@@ -16,8 +16,10 @@ use crate::constants::{
     API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS,
     PROVIDER_MAX_SIZE, RPC_SERVICE_MAX_SIZE, STRING_STORABLE_MAX_SIZE,
 };
-use crate::memory::get_api_key;
-use crate::providers::{register_provider, unregister_provider, update_provider};
+use crate::memory::{get_api_key, PROVIDERS};
+use crate::providers::{
+    register_provider, set_service_provider, unregister_provider, update_provider,
+};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
@@ -32,10 +34,12 @@ pub enum Action {
     RegisterProvider(RegisterProviderArgs),
     UpdateProvider(UpdateProviderArgs),
     UnregisterProvider(ProviderId),
+    SetServiceProvider(RpcService, ProviderId),
 }
 
 impl Action {
     pub fn run(self, caller: Principal) {
+        // TODO: log messages
         match self {
             Action::RegisterProvider(args) => {
                 register_provider(caller, args);
@@ -45,6 +49,20 @@ impl Action {
             }
             Action::UnregisterProvider(provider_id) => {
                 unregister_provider(caller, provider_id);
+            }
+            Action::SetServiceProvider(service, provider_id) => {
+                if let Some(provider) =
+                    PROVIDERS.with_borrow(|providers| providers.get(&provider_id))
+                {
+                    set_service_provider(&service, &provider);
+                } else {
+                    ic_cdk::trap(&format!(
+                        "[{}] Warning: unknown provider {} for RPC service: {:?}",
+                        ic_cdk::caller(),
+                        provider_id,
+                        service,
+                    ));
+                }
             }
         }
     }

@@ -301,8 +301,7 @@ pub fn get_default_service_provider_hostnames() -> Vec<(RpcService, &'static str
 }
 
 pub fn find_provider(f: impl Fn(&Provider) -> bool) -> Option<Provider> {
-    PROVIDERS.with(|providers| {
-        let providers = providers.borrow();
+    PROVIDERS.with_borrow(|providers| {
         Some(
             providers
                 .iter()
