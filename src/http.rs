@@ -9,10 +9,10 @@ use num_traits::ToPrimitive;
 use crate::{
     accounting::{get_cost_with_collateral, get_rpc_cost},
     add_metric, add_metric_entry,
-    auth::{is_authorized, is_rpc_allowed},
+    auth::is_rpc_allowed,
     constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST},
     memory::PROVIDERS,
-    types::{Auth, MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcResult},
+    types::{MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcResult},
     util::canonicalize_json,
 };
 
@@ -75,31 +75,29 @@ pub async fn http_request(
         add_metric_entry!(err_host_not_allowed, rpc_host.clone(), 1);
         return Err(ValidationError::HostNotAllowed(rpc_host.0).into());
     }
-    if !is_authorized(&caller, Auth::FreeRpc) {
-        let cycles_available = ic_cdk::api::call::msg_cycles_available128();
-        let cycles_cost_with_collateral = get_cost_with_collateral(cycles_cost);
-        if cycles_available < cycles_cost_with_collateral {
-            return Err(ProviderError::TooFewCycles {
-                expected: cycles_cost_with_collateral,
-                received: cycles_available,
-            }
-            .into());
+    let cycles_available = ic_cdk::api::call::msg_cycles_available128();
+    let cycles_cost_with_collateral = get_cost_with_collateral(cycles_cost);
+    if cycles_available < cycles_cost_with_collateral {
+        return Err(ProviderError::TooFewCycles {
+            expected: cycles_cost_with_collateral,
+            received: cycles_available,
         }
-        ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
-        if let Some(provider) = provider {
-            PROVIDERS.with_borrow_mut(|providers| {
-                // Error should not happen here as it was checked before
-                providers
-                    .insert(provider.provider_id.clone(), provider)
-                    .expect("unable to update Provider");
-            });
-        }
-        add_metric_entry!(
-            cycles_charged,
-            (rpc_method.clone(), rpc_host.clone()),
-            cycles_cost
-        );
+        .into());
     }
+    ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
+    if let Some(provider) = provider {
+        PROVIDERS.with_borrow_mut(|providers| {
+            // Error should not happen here as it was checked before
+            providers
+                .insert(provider.provider_id.clone(), provider)
+                .expect("unable to update Provider");
+        });
+    }
+    add_metric_entry!(
+        cycles_charged,
+        (rpc_method.clone(), rpc_host.clone()),
+        cycles_cost
+    );
     add_metric_entry!(requests, (rpc_method.clone(), rpc_host.clone()), 1);
     match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost).await {
         Ok((response,)) => {

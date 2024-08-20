@@ -90,18 +90,10 @@ mod test {
         assert!(!is_authorized(&principal1, Auth::PriorityRpc));
         assert!(!is_authorized(&principal2, Auth::PriorityRpc));
 
-        authorize(principal1, Auth::FreeRpc);
-        assert!(is_authorized(&principal1, Auth::FreeRpc));
-        assert!(!is_authorized(&principal2, Auth::FreeRpc));
-
-        deauthorize(principal1, Auth::FreeRpc);
-        assert!(!is_authorized(&principal1, Auth::FreeRpc));
-
         authorize(principal2, Auth::Manage);
         assert!(!is_authorized(&principal1, Auth::Manage));
         assert!(is_authorized(&principal2, Auth::Manage));
 
         assert!(!is_authorized(&principal2, Auth::PriorityRpc));
-        assert!(!is_authorized(&principal2, Auth::FreeRpc));
     }
 }

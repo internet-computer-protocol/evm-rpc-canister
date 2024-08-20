@@ -195,9 +195,9 @@ impl RpcMethod {
 
 #[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]
 pub enum Auth {
+    // TODO: remove distinction between individual `Auth` capabilities for simplicity?
     Manage,
     PriorityRpc,
-    FreeRpc,
 }
 
 #[derive(Clone, Debug, PartialEq, CandidType, Serialize, Deserialize, Default)]
