@@ -16,7 +16,7 @@ pub fn validate_hostname(hostname: &str) -> Result<(), ValidationError> {
 
 pub fn validate_url_pattern(url_pattern: &str) -> Result<(), ValidationError> {
     validate_hostname(
-        &hostname_from_url(&url_pattern).ok_or(ValidationError::CredentialPathNotAllowed)?,
+        &hostname_from_url(url_pattern).ok_or(ValidationError::CredentialPathNotAllowed)?,
     )
 }
 
@@ -32,7 +32,7 @@ pub fn validate_header_patterns(header_patterns: &[HttpHeader]) -> Result<(), Va
 }
 
 pub fn validate_api_key(api_key: &str) -> Result<(), ValidationError> {
-    if api_key.contains(&['.', '/', '?', '&']) {
+    if api_key.contains(['.', '/', '?', '&']) {
         Err(ValidationError::CredentialPathNotAllowed) // TODO: rename to `ApiKeyNotAllowed`
     } else {
         Ok(())

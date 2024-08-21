@@ -33,7 +33,6 @@ thread_local! {
 pub fn get_api_key(provider_id: ProviderId) -> ApiKey {
     API_KEY_MAP.with_borrow_mut(|map| {
         map.get(&provider_id)
-            .map(|api_key| api_key.clone())
             .unwrap_or_else(|| ApiKey("".to_string()))
     })
 }

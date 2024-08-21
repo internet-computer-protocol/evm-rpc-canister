@@ -155,11 +155,7 @@ fn get_providers() -> Vec<Provider> {
 #[query(name = "getServiceProviderMap")]
 #[candid_method(query, rename = "getServiceProviderMap")]
 fn get_service_provider_map() -> Vec<(RpcService, ProviderId)> {
-    SERVICE_PROVIDER_MAP.with(|map| {
-        map.iter()
-            .filter_map(|(k, v)| Some((k.clone(), *v)))
-            .collect()
-    })
+    SERVICE_PROVIDER_MAP.with(|map| map.iter().map(|(k, v)| (k.clone(), *v)).collect())
 }
 
 #[query(name = "getNodesInSubnet")]
