@@ -7,11 +7,10 @@ use ic_cdk::api::management_canister::http_request::{
 use num_traits::ToPrimitive;
 
 use crate::{
-    accounting::{get_cost_with_collateral, get_rpc_cost},
+    accounting::{get_cost_with_collateral, get_http_request_cost},
     add_metric, add_metric_entry,
     auth::is_rpc_allowed,
     constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST},
-    memory::PROVIDERS,
     types::{MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcResult},
     util::canonicalize_json,
 };
@@ -27,7 +26,7 @@ pub async fn json_rpc_request(
         add_metric!(err_no_permission, 1);
         return Err(ProviderError::NoPermission.into());
     }
-    let cycles_cost = get_rpc_cost(&service, json_rpc_payload.len() as u64, max_response_bytes);
+    let cycles_cost = get_http_request_cost(json_rpc_payload.len() as u64, max_response_bytes);
     let api = service.api();
     let mut request_headers = vec![HttpHeader {
         name: CONTENT_TYPE_HEADER.to_string(),
@@ -47,21 +46,16 @@ pub async fn json_rpc_request(
             vec![],
         )),
     };
-    http_request(caller, rpc_method, service, request, cycles_cost).await
+    http_request(rpc_method, service, request, cycles_cost).await
 }
 
 pub async fn http_request(
-    _caller: Principal,
     rpc_method: MetricRpcMethod,
     service: ResolvedRpcService,
     request: CanisterHttpRequestArgument,
     cycles_cost: u128,
 ) -> RpcResult<HttpResponse> {
     let api = service.api();
-    let provider = match service {
-        ResolvedRpcService::Api(_) => None,
-        ResolvedRpcService::Provider(provider) => Some(provider),
-    };
     let parsed_url = match url::Url::parse(&api.url) {
         Ok(url) => url,
         Err(_) => return Err(ValidationError::UrlParseError(api.url).into()),
@@ -85,14 +79,6 @@ pub async fn http_request(
         .into());
     }
     ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
-    if let Some(provider) = provider {
-        PROVIDERS.with_borrow_mut(|providers| {
-            // Error should not happen here as it was checked before
-            providers
-                .insert(provider.provider_id.clone(), provider)
-                .expect("unable to update Provider");
-        });
-    }
     add_metric_entry!(
         cycles_charged,
         (rpc_method.clone(), rpc_host.clone()),

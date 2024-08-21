@@ -10,62 +10,18 @@ use ic_stable_structures::{BoundedStorable, Storable};
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::fmt;
 
 use crate::constants::{
     API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS,
     PROVIDER_MAX_SIZE, RPC_SERVICE_MAX_SIZE, STRING_STORABLE_MAX_SIZE,
 };
-use crate::memory::{get_api_key, PROVIDERS};
-use crate::providers::{
-    register_provider, set_service_provider, unregister_provider, update_provider,
-};
+use crate::memory::get_api_key;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
     #[serde(rename = "nodesInSubnet")]
     pub nodes_in_subnet: u32,
-    pub actions: Option<Vec<Action>>,
     pub permissions: Option<Vec<(Principal, Auth)>>,
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum Action {
-    RegisterProvider(RegisterProviderArgs),
-    UpdateProvider(UpdateProviderArgs),
-    UnregisterProvider(ProviderId),
-    SetServiceProvider(RpcService, ProviderId),
-}
-
-impl Action {
-    pub fn run(self, caller: Principal) {
-        // TODO: log messages
-        match self {
-            Action::RegisterProvider(args) => {
-                register_provider(caller, args);
-            }
-            Action::UpdateProvider(args) => {
-                update_provider(caller, args);
-            }
-            Action::UnregisterProvider(provider_id) => {
-                unregister_provider(caller, provider_id);
-            }
-            Action::SetServiceProvider(service, provider_id) => {
-                if let Some(provider) =
-                    PROVIDERS.with_borrow(|providers| providers.get(&provider_id))
-                {
-                    set_service_provider(&service, &provider);
-                } else {
-                    ic_cdk::trap(&format!(
-                        "[{}] Warning: unknown provider {} for RPC service: {:?}",
-                        ic_cdk::caller(),
-                        provider_id,
-                        service,
-                    ));
-                }
-            }
-        }
-    }
 }
 
 pub enum ResolvedRpcService {
@@ -283,7 +239,7 @@ pub struct Metadata {
 impl Default for Metadata {
     fn default() -> Self {
         Self {
-            next_provider_id: 0.into(),
+            next_provider_id: 0,
             open_rpc_access: DEFAULT_OPEN_RPC_ACCESS,
         }
     }
@@ -344,70 +300,7 @@ impl BoundedStorable for ApiKey {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct RegisterProviderArgs {
-    #[serde(rename = "chainId")]
-    pub chain_id: u64,
-    #[serde(rename = "urlPattern")]
-    pub url_pattern: String,
-    #[serde(rename = "headerPatterns")]
-    pub header_patterns: Vec<HttpHeader>,
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct UpdateProviderArgs {
-    #[serde(rename = "providerId")]
-    pub provider_id: ProviderId,
-    #[serde(rename = "urlPattern")]
-    pub url_pattern: Option<String>,
-    #[serde(rename = "headerPatterns")]
-    pub header_patterns: Option<Vec<HttpHeader>>,
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct ManageProviderArgs {
-    #[serde(rename = "providerId")]
-    pub provider_id: ProviderId,
-    #[serde(rename = "chainId")]
-    pub chain_id: Option<u64>,
-    pub primary: Option<bool>,
-    pub service: Option<RpcService>,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize)]
-pub struct ProviderId(u64);
-
-impl ProviderId {
-    pub fn next_id(self) -> Self {
-        ProviderId(self.0 + 1)
-    }
-}
-
-impl From<u64> for ProviderId {
-    fn from(value: u64) -> Self {
-        ProviderId(value)
-    }
-}
-
-impl fmt::Display for ProviderId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl Storable for ProviderId {
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        ProviderId(u64::from_bytes(bytes))
-    }
-    fn to_bytes(&self) -> Cow<[u8]> {
-        self.0.to_bytes()
-    }
-}
-
-impl BoundedStorable for ProviderId {
-    const IS_FIXED_SIZE: bool = true;
-    const MAX_SIZE: u32 = u64::MAX_SIZE;
-}
+pub type ProviderId = u64;
 
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
 pub struct Provider {
@@ -419,7 +312,6 @@ pub struct Provider {
     pub url_pattern: String,
     #[serde(rename = "headerPatterns")]
     pub header_patterns: Vec<HttpHeader>,
-    pub primary: bool,
 }
 
 impl Provider {

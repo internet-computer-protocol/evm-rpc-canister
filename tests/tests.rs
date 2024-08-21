@@ -36,12 +36,12 @@ use evm_rpc::{
         CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, ETH_MAINNET_CHAIN_ID, NODES_IN_STANDARD_SUBNET,
     },
     providers::{
-        get_default_providers, ALCHEMY_ETH_MAINNET_HOSTNAME, ANKR_HOSTNAME,
-        BLOCKPI_ETH_SEPOLIA_HOSTNAME, CLOUDFLARE_HOSTNAME, PUBLICNODE_ETH_MAINNET_HOSTNAME,
+        ALCHEMY_ETH_MAINNET_HOSTNAME, ANKR_HOSTNAME, BLOCKPI_ETH_SEPOLIA_HOSTNAME,
+        CLOUDFLARE_HOSTNAME, PUBLICNODE_ETH_MAINNET_HOSTNAME,
     },
     types::{
-        candid_types, Auth, InitArgs, ManageProviderArgs, Metrics, MultiRpcResult, Provider,
-        ProviderId, RegisterProviderArgs, RpcMethod, RpcResult, RpcServices, UpdateProviderArgs,
+        candid_types, Auth, InitArgs, Metrics, MultiRpcResult, Provider, ProviderId, RpcMethod,
+        RpcResult, RpcServices,
     },
 };
 use mock::{MockOutcall, MockOutcallBuilder};
@@ -107,7 +107,7 @@ impl EvmRpcSetup {
 
         let args = InitArgs {
             nodes_in_subnet: NODES_IN_STANDARD_SUBNET,
-            actions: Some(vec![]),
+            permissions: Some(vec![]), // TODO
         };
 
         let controller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);

@@ -17,7 +17,7 @@ use ethers_core::{types::Transaction, utils::rlp};
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 
 use crate::{
-    accounting::get_rpc_cost,
+    accounting::get_http_request_cost,
     add_metric, add_metric_entry,
     auth::is_rpc_allowed,
     constants::{
@@ -51,8 +51,7 @@ impl RpcTransport for CanisterTransport {
         effective_response_size_estimate: u64,
     ) -> RpcResult<HttpResponse> {
         let service = resolve_rpc_service(service.clone())?;
-        let cycles_cost = get_rpc_cost(
-            &service,
+        let cycles_cost = get_http_request_cost(
             request
                 .body
                 .as_ref()
@@ -61,7 +60,7 @@ impl RpcTransport for CanisterTransport {
             effective_response_size_estimate,
         );
         let rpc_method = MetricRpcMethod(method.to_string());
-        http_request(ic_cdk::caller(), rpc_method, service, request, cycles_cost).await
+        http_request(rpc_method, service, request, cycles_cost).await
     }
 }
 

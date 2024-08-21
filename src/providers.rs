@@ -1,24 +1,19 @@
-use candid::Principal;
+use std::collections::HashMap;
+
 use cketh_common::{
     eth_rpc::ProviderError,
     eth_rpc_client::providers::{
         EthMainnetService, EthSepoliaService, L2MainnetService, RpcApi, RpcService,
     },
-    logs::INFO,
 };
-use ic_canister_log::log;
+use maplit::hashmap;
 
 use crate::{
     constants::{
         ARBITRUM_ONE_CHAIN_ID, BASE_MAINNET_CHAIN_ID, ETH_MAINNET_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID,
         OPTIMISM_MAINNET_CHAIN_ID,
     },
-    memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP},
-    types::{
-        ManageProviderArgs, Provider, ProviderId, RegisterProviderArgs, ResolvedRpcService,
-        StorableRpcService, UpdateProviderArgs,
-    },
-    validate::{validate_header_patterns, validate_url_pattern},
+    types::{Provider, ProviderId, ResolvedRpcService},
 };
 
 pub const ANKR_HOSTNAME: &str = "rpc.ankr.com";
@@ -44,282 +39,219 @@ pub const LLAMA_ARBITRUM_ONE_HOSTNAME: &str = "arbitrum.llamarpc.com";
 pub const LLAMA_BASE_MAINNET_HOSTNAME: &str = "base.llamarpc.com";
 pub const LLAMA_OPTIMISM_MAINNET_HOSTNAME: &str = "optimism.llamarpc.com";
 
-// Limited API credentials for local testing.
-// Use `dfx canister call evm_rpc updateProvider ...` to pass your own keys.
-pub const ALCHEMY_ETH_MAINNET_CREDENTIAL: &str = "/v2/zBxaSBUMfuH8XnA-uLIWeXfCx1T8ItkM";
-pub const ALCHEMY_ETH_SEPOLIA_CREDENTIAL: &str = "/v2/Mbow19DWsfPXiTpdgvRu4HQq63iYycU-";
-pub const ALCHEMY_ARBITRUM_ONE_CREDENTIAL: &str = "/v2";
-pub const ALCHEMY_BASE_MAINNET_CREDENTIAL: &str = "/v2";
-pub const ALCHEMY_OPTIMISM_MAINNET_CREDENTIAL: &str = "/v2";
-pub const BLOCKPI_ETH_MAINNET_CREDENTIAL: &str = "/v1/rpc/0edc81e20be23ddff051f61a97bb457ec7284a58";
-pub const BLOCKPI_ETH_SEPOLIA_CREDENTIAL: &str = "/v1/rpc/1fe987fddded17db50862311720ff444991d4dab";
-pub const BLOCKPI_ARBITRUM_ONE_CREDENTIAL: &str =
-    "/v1/rpc/a8b89a41d2a341e32ee7aefcb20820a7cbb65f35";
-pub const BLOCKPI_BASE_MAINNET_CREDENTIAL: &str =
-    "/v1/rpc/bd458bf9f28ed45c77823814a937c812d2efd260";
-pub const BLOCKPI_OPTIMISM_MAINNET_CREDENTIAL: &str =
-    "/v1/rpc/d54bfe59299d56b0cbb8b3c69bd122f4ab5ac654";
-
-pub fn get_default_providers() -> Vec<RegisterProviderArgs> {
-    vec![
-        RegisterProviderArgs {
+thread_local! {
+    pub static PROVIDERS: Vec<Provider> = vec![
+        Provider {
+            provider_id: 0,
             chain_id: ETH_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{CLOUDFLARE_HOSTNAME}/v1/mainnet"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 1,
             chain_id: ETH_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{ANKR_HOSTNAME}/eth"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 2,
             chain_id: ETH_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{PUBLICNODE_ETH_MAINNET_HOSTNAME}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 3,
             chain_id: ETH_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{BLOCKPI_ETH_MAINNET_HOSTNAME}/v1/rpc/{{API_KEY}}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 4,
             chain_id: ETH_SEPOLIA_CHAIN_ID,
             url_pattern: format!("https://{ETH_SEPOLIA_HOSTNAME}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 5,
             chain_id: ETH_SEPOLIA_CHAIN_ID,
             url_pattern: format!("https://{ANKR_HOSTNAME}/eth_sepolia"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 6,
             chain_id: ETH_SEPOLIA_CHAIN_ID,
             url_pattern: format!("https://{BLOCKPI_ETH_SEPOLIA_HOSTNAME}/v1/rpc/{{API_KEY}}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 7,
             chain_id: ETH_SEPOLIA_CHAIN_ID,
             url_pattern: format!("https://{PUBLICNODE_ETH_SEPOLIA_HOSTNAME}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 8,
             chain_id: ETH_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{ALCHEMY_ETH_MAINNET_HOSTNAME}/v2/{{API_KEY}}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 9,
             chain_id: ETH_SEPOLIA_CHAIN_ID,
             url_pattern: format!("https://{ALCHEMY_ETH_SEPOLIA_HOSTNAME}/v2/{{API_KEY}}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 10,
             chain_id: ARBITRUM_ONE_CHAIN_ID,
             url_pattern: format!("https://{ANKR_HOSTNAME}/arbitrum"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 11,
             chain_id: ARBITRUM_ONE_CHAIN_ID,
             url_pattern: format!("https://{ALCHEMY_ARBITRUM_ONE_HOSTNAME}/v2"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 12,
             chain_id: ARBITRUM_ONE_CHAIN_ID,
             url_pattern: format!("https://{BLOCKPI_ARBITRUM_ONE_HOSTNAME}/v1/rpc/{{API_KEY}}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 13,
             chain_id: ARBITRUM_ONE_CHAIN_ID,
             url_pattern: format!("https://{PUBLICNODE_ARBITRUM_ONE_HOSTNAME}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 14,
             chain_id: BASE_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{ANKR_HOSTNAME}/base"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 15,
             chain_id: BASE_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{ALCHEMY_BASE_MAINNET_HOSTNAME}/v2"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 16,
             chain_id: BASE_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{BLOCKPI_BASE_MAINNET_HOSTNAME}/v1/rpc/{{API_KEY}}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 17,
             chain_id: BASE_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{PUBLICNODE_BASE_MAINNET_HOSTNAME}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 18,
             chain_id: OPTIMISM_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{ANKR_HOSTNAME}/optimism"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 19,
             chain_id: OPTIMISM_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{ALCHEMY_OPT_MAINNET_HOSTNAME}/v2"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 20,
             chain_id: OPTIMISM_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{BLOCKPI_OPTIMISM_MAINNET_HOSTNAME}/v1/rpc/{{API_KEY}}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 21,
             chain_id: OPTIMISM_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{PUBLICNODE_OPTIMISM_MAINNET_HOSTNAME}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 22,
             chain_id: ETH_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{LLAMA_ETH_MAINNET_HOSTNAME}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 23,
             chain_id: ARBITRUM_ONE_CHAIN_ID,
             url_pattern: format!("https://{LLAMA_ARBITRUM_ONE_HOSTNAME}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 24,
             chain_id: BASE_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{LLAMA_BASE_MAINNET_HOSTNAME}"),
             header_patterns: vec![],
         },
-        RegisterProviderArgs {
+        Provider {
+            provider_id: 25,
             chain_id: OPTIMISM_MAINNET_CHAIN_ID,
             url_pattern: format!("https://{LLAMA_OPTIMISM_MAINNET_HOSTNAME}"),
             header_patterns: vec![],
         },
-    ]
-}
+    ];
 
-pub fn get_default_service_provider_hostnames() -> Vec<(RpcService, &'static str)> {
-    vec![
-        (
-            RpcService::EthMainnet(EthMainnetService::Alchemy),
-            ALCHEMY_ETH_MAINNET_HOSTNAME,
-        ),
-        (
-            RpcService::EthMainnet(EthMainnetService::Ankr),
-            ANKR_HOSTNAME,
-        ),
-        (
-            RpcService::EthMainnet(EthMainnetService::BlockPi),
-            BLOCKPI_ETH_MAINNET_HOSTNAME,
-        ),
-        (
-            RpcService::EthMainnet(EthMainnetService::Cloudflare),
-            CLOUDFLARE_HOSTNAME,
-        ),
-        (
-            RpcService::EthMainnet(EthMainnetService::PublicNode),
-            PUBLICNODE_ETH_MAINNET_HOSTNAME,
-        ),
-        (
-            RpcService::EthSepolia(EthSepoliaService::Alchemy),
-            ALCHEMY_ETH_SEPOLIA_HOSTNAME,
-        ),
-        (
-            RpcService::EthSepolia(EthSepoliaService::Ankr),
-            ANKR_HOSTNAME,
-        ),
-        (
-            RpcService::EthSepolia(EthSepoliaService::BlockPi),
-            BLOCKPI_ETH_SEPOLIA_HOSTNAME,
-        ),
-        (
-            RpcService::EthSepolia(EthSepoliaService::PublicNode),
-            PUBLICNODE_ETH_SEPOLIA_HOSTNAME,
-        ),
-        (
-            RpcService::ArbitrumOne(L2MainnetService::Alchemy),
-            ALCHEMY_ARBITRUM_ONE_HOSTNAME,
-        ),
-        (
-            RpcService::ArbitrumOne(L2MainnetService::Ankr),
-            ANKR_HOSTNAME,
-        ),
-        (
-            RpcService::ArbitrumOne(L2MainnetService::BlockPi),
-            BLOCKPI_ARBITRUM_ONE_HOSTNAME,
-        ),
-        (
-            RpcService::ArbitrumOne(L2MainnetService::PublicNode),
-            PUBLICNODE_ARBITRUM_ONE_HOSTNAME,
-        ),
-        (
-            RpcService::BaseMainnet(L2MainnetService::Alchemy),
-            ALCHEMY_BASE_MAINNET_HOSTNAME,
-        ),
-        (
-            RpcService::BaseMainnet(L2MainnetService::Ankr),
-            ANKR_HOSTNAME,
-        ),
-        (
-            RpcService::BaseMainnet(L2MainnetService::BlockPi),
-            BLOCKPI_BASE_MAINNET_HOSTNAME,
-        ),
-        (
-            RpcService::BaseMainnet(L2MainnetService::PublicNode),
-            PUBLICNODE_BASE_MAINNET_HOSTNAME,
-        ),
-        (
-            RpcService::OptimismMainnet(L2MainnetService::Alchemy),
-            ALCHEMY_OPT_MAINNET_HOSTNAME,
-        ),
-        (
-            RpcService::OptimismMainnet(L2MainnetService::Ankr),
-            ANKR_HOSTNAME,
-        ),
-        (
-            RpcService::OptimismMainnet(L2MainnetService::BlockPi),
-            BLOCKPI_OPTIMISM_MAINNET_HOSTNAME,
-        ),
-        (
-            RpcService::OptimismMainnet(L2MainnetService::PublicNode),
-            PUBLICNODE_OPTIMISM_MAINNET_HOSTNAME,
-        ),
-        (
-            RpcService::EthMainnet(EthMainnetService::Llama),
-            LLAMA_ETH_MAINNET_HOSTNAME,
-        ),
-        (
-            RpcService::ArbitrumOne(L2MainnetService::Llama),
-            LLAMA_ARBITRUM_ONE_HOSTNAME,
-        ),
-        (
-            RpcService::BaseMainnet(L2MainnetService::Llama),
-            LLAMA_BASE_MAINNET_HOSTNAME,
-        ),
-        (
-            RpcService::OptimismMainnet(L2MainnetService::Llama),
-            LLAMA_OPTIMISM_MAINNET_HOSTNAME,
-        ),
-    ]
+    pub static PROVIDER_MAP: HashMap<ProviderId, Provider> =
+        PROVIDERS.with(|providers| providers.iter()
+            .map(|provider| (provider.provider_id, provider.clone())).collect());
+
+    pub static SERVICE_PROVIDER_MAP: HashMap<RpcService, ProviderId> = hashmap! {
+        RpcService::EthMainnet(EthMainnetService::Cloudflare) => 0,
+        RpcService::EthMainnet(EthMainnetService::Ankr) => 1,
+        RpcService::EthMainnet(EthMainnetService::PublicNode) => 2,
+        RpcService::EthMainnet(EthMainnetService::BlockPi) => 3,
+        // RpcService::EthMainnet(EthSepoliaService::Sepolia) => 4,
+        RpcService::EthSepolia(EthSepoliaService::Ankr) => 5,
+        RpcService::EthSepolia(EthSepoliaService::BlockPi) => 6,
+        RpcService::EthSepolia(EthSepoliaService::PublicNode) => 7,
+        RpcService::EthMainnet(EthMainnetService::Alchemy) => 8,
+        RpcService::EthSepolia(EthSepoliaService::Alchemy) => 9,
+        RpcService::ArbitrumOne(L2MainnetService::Ankr) => 10,
+        RpcService::ArbitrumOne(L2MainnetService::Alchemy) => 11,
+        RpcService::ArbitrumOne(L2MainnetService::BlockPi) => 12,
+        RpcService::ArbitrumOne(L2MainnetService::PublicNode) => 13,
+        RpcService::BaseMainnet(L2MainnetService::Ankr) => 14,
+        RpcService::BaseMainnet(L2MainnetService::Alchemy) => 15,
+        RpcService::BaseMainnet(L2MainnetService::BlockPi) => 16,
+        RpcService::BaseMainnet(L2MainnetService::PublicNode) => 17,
+        RpcService::OptimismMainnet(L2MainnetService::Ankr) => 18,
+        RpcService::OptimismMainnet(L2MainnetService::Alchemy) => 19,
+        RpcService::OptimismMainnet(L2MainnetService::BlockPi) => 20,
+        RpcService::OptimismMainnet(L2MainnetService::PublicNode) => 21,
+        RpcService::EthMainnet(EthMainnetService::Llama) => 22,
+        RpcService::ArbitrumOne(L2MainnetService::Llama) => 23,
+        RpcService::BaseMainnet(L2MainnetService::Llama) => 24,
+        RpcService::OptimismMainnet(L2MainnetService::Llama) => 25,
+    };
 }
 
 pub fn find_provider(f: impl Fn(&Provider) -> bool) -> Option<Provider> {
-    PROVIDERS.with_borrow(|providers| {
-        Some(
-            providers
-                .iter()
-                .find(|(_, p)| p.primary && f(p))
-                .or_else(|| providers.iter().find(|(_, p)| f(p)))?
-                .1,
-        )
+    PROVIDERS.with(|providers| {
+        for provider in providers {
+            if f(provider) {
+                return Some(provider.clone());
+            }
+        }
+        None
     })
 }
 
 fn lookup_provider_for_service(service: &RpcService) -> Result<Provider, ProviderError> {
     let provider_id = SERVICE_PROVIDER_MAP.with(|map| {
-        map.borrow()
-            .get(&StorableRpcService::new(service))
+        map.get(service)
+            .copied()
             .ok_or(ProviderError::MissingRequiredProvider)
     })?;
-    PROVIDERS
-        .with(|providers| providers.borrow().get(&provider_id))
+    PROVIDER_MAP
+        .with(|map| map.get(&provider_id).cloned())
         .ok_or(ProviderError::ProviderNotFound)
 }
 
@@ -336,135 +268,16 @@ pub fn get_known_chain_id(service: &RpcService) -> Option<u64> {
     }
 }
 
-pub fn register_provider(caller: Principal, args: RegisterProviderArgs) -> ProviderId {
-    validate_url_pattern(&args.url_pattern).unwrap();
-    let provider_id = METADATA.with_borrow_mut(|m| {
-        let mut metadata = m.get().clone();
-        let id = metadata.next_provider_id;
-        metadata.next_provider_id = metadata.next_provider_id.next_id();
-        m.set(metadata).unwrap();
-        id
-    });
-    log!(INFO, "[{}] Registering provider: {:?}", caller, provider_id);
-    PROVIDERS.with_borrow_mut(|providers| {
-        providers.insert(
-            provider_id,
-            Provider {
-                provider_id,
-                chain_id: args.chain_id,
-                url_pattern: args.url_pattern,
-                header_patterns: args.header_patterns,
-                primary: false,
-            },
-        )
-    });
-    provider_id
-}
-
-pub fn unregister_provider(caller: Principal, provider_id: ProviderId) -> bool {
-    PROVIDERS.with_borrow_mut(|providers| {
-        if providers.contains_key(&provider_id) {
-            log!(
-                INFO,
-                "[{}] Unregistering provider: {:?}",
-                caller,
-                provider_id
-            );
-            providers.remove(&provider_id).is_some()
-        } else {
-            false
-        }
-    })
-}
-
-/// Changes provider details.
-pub fn update_provider(caller: Principal, args: UpdateProviderArgs) {
-    PROVIDERS.with_borrow_mut(|providers| match providers.get(&args.provider_id) {
-        Some(mut provider) => {
-            log!(INFO, "[{}] Updating provider: {}", caller, args.provider_id);
-            if let Some(url_pattern) = args.url_pattern {
-                validate_url_pattern(&url_pattern).unwrap();
-                provider.url_pattern = url_pattern;
-            }
-            if let Some(header_patterns) = args.header_patterns {
-                validate_header_patterns(&header_patterns).unwrap();
-                provider.header_patterns = header_patterns;
-            }
-            providers.insert(args.provider_id, provider);
-        }
-        None => ic_cdk::trap("Provider not found"),
-    });
-}
-
-/// Changes administrative details for a provider.
-pub fn manage_provider(args: ManageProviderArgs) {
-    PROVIDERS.with_borrow_mut(|providers| match providers.get(&args.provider_id) {
-        Some(mut provider) => {
-            if let Some(chain_id) = args.chain_id {
-                log!(
-                    INFO,
-                    "Updating provider {:?} to use chain id: {} (original value: {})",
-                    provider.provider_id,
-                    chain_id,
-                    provider.chain_id,
-                );
-                provider.chain_id = chain_id;
-            }
-            if let Some(primary) = args.primary {
-                log!(
-                    INFO,
-                    "Updating provider {:?} to use primary status: {} (original value: {})",
-                    provider.provider_id,
-                    primary,
-                    provider.primary,
-                );
-                provider.primary = primary;
-            }
-            if let Some(service) = args.service {
-                set_service_provider(&service, &provider);
-            }
-            providers.insert(args.provider_id, provider);
-        }
-        None => ic_cdk::trap("Provider not found"),
-    })
-}
-
-pub fn set_service_provider(service: &RpcService, provider: &Provider) {
-    log!(
-        INFO,
-        "Updating service {:?} to use provider: {}",
-        service,
-        provider.provider_id
-    );
-    if let Some(chain_id) = get_known_chain_id(service) {
-        if chain_id != provider.chain_id {
-            ic_cdk::trap(&format!(
-                "Mismatch between service and provider chain ids ({} != {})",
-                chain_id, provider.chain_id
-            ))
-        }
-    }
-    SERVICE_PROVIDER_MAP.with_borrow_mut(|mappings| {
-        mappings.insert(StorableRpcService::new(service), provider.provider_id);
-    });
-}
-
 pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, ProviderError> {
     Ok(match service {
-        RpcService::Chain(id) => ResolvedRpcService::Provider(PROVIDERS.with(|providers| {
-            let providers = providers.borrow();
-            Ok(providers
-                .iter()
-                .find(|(_, p)| p.primary && p.chain_id == id)
-                .or_else(|| providers.iter().find(|(_, p)| p.chain_id == id))
-                .ok_or(ProviderError::ProviderNotFound)?
-                .1)
-        })?),
+        RpcService::Chain(id) => ResolvedRpcService::Provider(
+            find_provider(|p| p.chain_id == id).ok_or(ProviderError::ProviderNotFound)?,
+        ),
         RpcService::Provider(id) => ResolvedRpcService::Provider({
-            PROVIDERS.with(|providers| {
-                providers
-                    .borrow()
-                    .get(&id.into())
+            PROVIDER_MAP.with(|provider_map| {
+                provider_map
+                    .get(&id)
+                    .cloned()
                     .ok_or(ProviderError::ProviderNotFound)
             })?
         }),
@@ -487,4 +300,43 @@ pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, Pr
             lookup_provider_for_service(&RpcService::OptimismMainnet(service))?,
         ),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::{HashMap, HashSet};
+
+    use super::{PROVIDERS, SERVICE_PROVIDER_MAP};
+
+    #[test]
+    fn test_no_duplicate_service_providers() {
+        SERVICE_PROVIDER_MAP.with(|map| {
+            assert_eq!(
+                map.len(),
+                map.keys().collect::<HashSet<_>>().len(),
+                "Duplicate service in mapping"
+            );
+            assert_eq!(
+                map.len(),
+                map.values().collect::<HashSet<_>>().len(),
+                "Duplicate provider in mapping"
+            );
+        })
+    }
+
+    #[test]
+    fn test_service_provider_coverage() {
+        PROVIDERS.with(|providers| {
+            SERVICE_PROVIDER_MAP.with(|map| {
+                let inverse_map: HashMap<_, _> = map.iter().map(|(k, v)| (v, k)).collect();
+                for provider in providers {
+                    assert!(
+                        inverse_map.contains_key(&provider.provider_id),
+                        "Missing service mapping for provider: {}",
+                        provider.provider_id
+                    );
+                }
+            })
+        })
+    }
 }

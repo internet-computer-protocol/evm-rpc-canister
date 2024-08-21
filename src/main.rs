@@ -4,7 +4,7 @@ use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError};
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
 use cketh_common::logs::INFO;
-use evm_rpc::accounting::{get_cost_with_collateral, get_rpc_cost};
+use evm_rpc::accounting::{get_cost_with_collateral, get_http_request_cost};
 use evm_rpc::auth::{authorize, require_manage_or_controller};
 use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::http::get_http_response_body;
@@ -12,12 +12,8 @@ use evm_rpc::memory::{
     clear_permissions, get_nodes_in_subnet, insert_api_key, set_nodes_in_subnet,
 };
 use evm_rpc::metrics::encode_metrics;
-use evm_rpc::providers::{
-    find_provider, get_default_providers, get_default_service_provider_hostnames,
-    get_known_chain_id, resolve_rpc_service, set_service_provider,
-};
+use evm_rpc::providers::{resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
 use evm_rpc::types::{ApiKey, Provider, ProviderId};
-use evm_rpc::util::hostname_from_url;
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -28,8 +24,7 @@ use ic_nervous_system_common::serve_metrics;
 
 use evm_rpc::{
     http::{json_rpc_request, transform_http_request},
-    memory::{METADATA, PROVIDERS, SERVICE_PROVIDER_MAP, UNSTABLE_METRICS},
-    providers::register_provider,
+    memory::{METADATA, UNSTABLE_METRICS},
     types::{candid_types, InitArgs, MetricRpcMethod, Metrics, MultiRpcResult, RpcServices},
 };
 
@@ -136,12 +131,11 @@ async fn request(
 #[query(name = "requestCost")]
 #[candid_method(query, rename = "requestCost")]
 fn request_cost(
-    service: RpcService,
+    _service: RpcService,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<u128, RpcError> {
-    Ok(get_cost_with_collateral(get_rpc_cost(
-        &resolve_rpc_service(service)?,
+    Ok(get_cost_with_collateral(get_http_request_cost(
         json_rpc_payload.len() as u64,
         max_response_bytes,
     )))
@@ -150,21 +144,15 @@ fn request_cost(
 #[query(name = "getProviders")]
 #[candid_method(query, rename = "getProviders")]
 fn get_providers() -> Vec<Provider> {
-    PROVIDERS.with(|p| {
-        p.borrow()
-            .iter()
-            .map(|(_, provider)| provider.into())
-            .collect::<Vec<Provider>>()
-    })
+    PROVIDERS.with(|providers| providers.clone())
 }
 
-#[query(name = "getServiceProviderMap", guard = "require_manage_or_controller")]
+#[query(name = "getServiceProviderMap")]
 #[candid_method(query, rename = "getServiceProviderMap")]
 fn get_service_provider_map() -> Vec<(RpcService, ProviderId)> {
     SERVICE_PROVIDER_MAP.with(|map| {
-        map.borrow()
-            .iter()
-            .filter_map(|(k, v)| Some((k.try_into().ok()?, v)))
+        map.iter()
+            .filter_map(|(k, v)| Some((k.clone(), *v)))
             .collect()
     })
 }
@@ -190,33 +178,12 @@ fn transform(args: TransformArgs) -> HttpResponse {
 
 #[ic_cdk::init]
 fn init(args: InitArgs) {
-    for provider in get_default_providers() {
-        register_provider(ic_cdk::caller(), provider);
-    }
-    for (service, hostname) in get_default_service_provider_hostnames() {
-        let provider = find_provider(|p| {
-            Some(p.chain_id) == get_known_chain_id(&service)
-                && hostname_from_url(&p.url_pattern).as_deref() == Some(hostname)
-        })
-        .unwrap_or_else(|| {
-            panic!(
-                "Missing default provider for service {:?} with hostname {:?}",
-                service, hostname
-            )
-        });
-        set_service_provider(&service, &provider);
-    }
     post_upgrade(args);
 }
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade(args: InitArgs) {
     set_nodes_in_subnet(args.nodes_in_subnet);
-    if let Some(actions) = args.actions {
-        for action in actions {
-            action.run(ic_cdk::caller());
-        }
-    }
     if let Some(permissions) = args.permissions {
         clear_permissions();
         for (principal, auth) in permissions {

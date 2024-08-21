@@ -20,7 +20,7 @@ pub const CANISTER_OVERHEAD: u128 = 1_000_000;
 pub const COLLATERAL_CYCLES_PER_NODE: u128 = 10_000_000;
 
 // Minimum number of bytes charged for a URL; improves consistency of costs between providers
-pub const RPC_URL_MIN_COST_BYTES: u32 = 256;
+pub const RPC_URL_COST_BYTES: u32 = 256;
 
 pub const MINIMUM_WITHDRAWAL_CYCLES: u128 = 1_000_000_000;
 

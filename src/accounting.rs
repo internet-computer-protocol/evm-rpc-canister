@@ -1,42 +1,18 @@
-use cketh_common::eth_rpc_client::providers::RpcApi;
-
 use crate::{
     constants::{
         CANISTER_OVERHEAD, COLLATERAL_CYCLES_PER_NODE, HTTP_OUTCALL_REQUEST_BASE_COST,
         HTTP_OUTCALL_REQUEST_COST_PER_BYTE, HTTP_OUTCALL_REQUEST_PER_NODE_COST,
         HTTP_OUTCALL_RESPONSE_COST_PER_BYTE, INGRESS_MESSAGE_BYTE_RECEIVED_COST,
-        INGRESS_MESSAGE_RECEIVED_COST, INGRESS_OVERHEAD_BYTES, RPC_URL_MIN_COST_BYTES,
+        INGRESS_MESSAGE_RECEIVED_COST, INGRESS_OVERHEAD_BYTES, RPC_URL_COST_BYTES,
     },
     memory::get_nodes_in_subnet,
-    types::ResolvedRpcService,
 };
 
-/// Returns the cycles cost of an RPC request.
-pub fn get_rpc_cost(
-    service: &ResolvedRpcService,
-    payload_size_bytes: u64,
-    max_response_bytes: u64,
-) -> u128 {
-    match service {
-        ResolvedRpcService::Api(api) => {
-            get_http_request_cost(api, payload_size_bytes, max_response_bytes)
-        }
-        ResolvedRpcService::Provider(provider) => {
-            get_http_request_cost(&provider.api(), payload_size_bytes, max_response_bytes)
-        }
-    }
-}
-
-/// Calculates the baseline cost of sending a JSON-RPC request using HTTP outcalls.
-pub fn get_http_request_cost(
-    api: &RpcApi,
-    payload_size_bytes: u64,
-    max_response_bytes: u64,
-) -> u128 {
+/// Calculates the cost of sending a JSON-RPC request using HTTP outcalls.
+pub fn get_http_request_cost(payload_size_bytes: u64, max_response_bytes: u64) -> u128 {
     let nodes_in_subnet = get_nodes_in_subnet();
-    let ingress_bytes = payload_size_bytes as u128
-        + u32::max(RPC_URL_MIN_COST_BYTES, api.url.len() as u32) as u128
-        + INGRESS_OVERHEAD_BYTES;
+    let ingress_bytes =
+        payload_size_bytes as u128 + RPC_URL_COST_BYTES as u128 + INGRESS_OVERHEAD_BYTES;
     let cost_per_node = INGRESS_MESSAGE_RECEIVED_COST
         + INGRESS_MESSAGE_BYTE_RECEIVED_COST * ingress_bytes
         + HTTP_OUTCALL_REQUEST_BASE_COST
@@ -56,13 +32,10 @@ pub fn get_cost_with_collateral(cycles_cost: u128) -> u128 {
 mod test {
     use super::*;
     use crate::{
-        accounting::get_rpc_cost,
+        accounting::get_http_request_cost,
         constants::{NODES_IN_FIDUCIARY_SUBNET, NODES_IN_STANDARD_SUBNET},
-        memory::{set_nodes_in_subnet, PROVIDERS},
-        providers::register_provider,
-        types::{RegisterProviderArgs, ResolvedRpcService},
+        memory::set_nodes_in_subnet,
     };
-    use candid::Principal;
 
     #[test]
     fn test_request_cost() {
@@ -71,25 +44,10 @@ mod test {
 
             set_nodes_in_subnet(nodes_in_subnet);
 
-            let url = "https://cloudflare-eth.com";
             let payload =
                 "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
-            let base_cost = get_rpc_cost(
-                &ResolvedRpcService::Api(RpcApi {
-                    url: url.to_string(),
-                    headers: None,
-                }),
-                payload.len() as u64,
-                1000,
-            );
-            let base_cost_10_extra_bytes = get_rpc_cost(
-                &ResolvedRpcService::Api(RpcApi {
-                    url: url.to_string(),
-                    headers: None,
-                }),
-                payload.len() as u64 + 10,
-                1000,
-            );
+            let base_cost = get_http_request_cost(payload.len() as u64, 1000);
+            let base_cost_10_extra_bytes = get_http_request_cost(payload.len() as u64 + 10, 1000);
             let estimated_cost_10_extra_bytes = base_cost
                 + 10 * (INGRESS_MESSAGE_BYTE_RECEIVED_COST + HTTP_OUTCALL_REQUEST_COST_PER_BYTE)
                     * nodes_in_subnet as u128;
@@ -99,38 +57,25 @@ mod test {
 
     #[test]
     fn test_candid_rpc_cost() {
-        let provider_id = register_provider(
-            Principal::anonymous(),
-            RegisterProviderArgs {
-                chain_id: 0,
-                url_pattern: "https://rpc.example.com".to_string(),
-                header_patterns: vec![],
-            },
-        );
-        let service = ResolvedRpcService::Provider(
-            PROVIDERS.with(|providers| providers.borrow().get(&provider_id).unwrap()),
-        );
-
         // 13-node subnet
         set_nodes_in_subnet(NODES_IN_STANDARD_SUBNET);
         assert_eq!(
             [
-                get_rpc_cost(&service, 0, 0),
-                get_rpc_cost(&service, 123, 123),
-                get_rpc_cost(&service, 123, 4567890),
-                get_rpc_cost(&service, 890, 4567890),
+                get_http_request_cost(0, 0),
+                get_http_request_cost(123, 123),
+                get_http_request_cost(123, 4567890),
+                get_http_request_cost(890, 4567890),
             ],
             [86996000, 92112800, 47596889600, 47620820000]
         );
-
         // Fiduciary subnet
         set_nodes_in_subnet(NODES_IN_FIDUCIARY_SUBNET);
         assert_eq!(
             [
-                get_rpc_cost(&service, 0, 0),
-                get_rpc_cost(&service, 123, 123),
-                get_rpc_cost(&service, 123, 4567890),
-                get_rpc_cost(&service, 890, 4567890),
+                get_http_request_cost(0, 0),
+                get_http_request_cost(123, 123),
+                get_http_request_cost(123, 4567890),
+                get_http_request_cost(890, 4567890),
             ],
             [212576000, 223596800, 102541577600, 102593120000]
         );

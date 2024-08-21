@@ -82,11 +82,6 @@ type InitArgs = record {
   nodesInSubnet : nat32;
   actions : vec Action;
 };
-type Action = variant {
-  RegisterProvider : RegisterProviderArgs;
-  UpdateProvider : UpdateProviderArgs;
-  UnregisterProvider : ProviderId;
-};
 type JsonRpcError = record { code : int64; message : text };
 type LogEntry = record {
   transactionHash : opt text;
@@ -98,12 +93,6 @@ type LogEntry = record {
   address : text;
   logIndex : opt nat;
   removed : bool;
-};
-type ManageProviderArgs = record {
-  providerId : ProviderId;
-  chainId : opt ChainId;
-  "service" : opt RpcService;
-  primary : opt bool;
 };
 type Metrics = record {
   requests : vec record { record { text; text }; nat64 };
@@ -149,12 +138,6 @@ type ProviderId = nat64;
 type ChainId = nat64;
 type Provider = record {
   providerId : ProviderId;
-  chainId : ChainId;
-  urlPattern : text;
-  headerPatterns : opt vec HttpHeader;
-  primary : bool;
-};
-type RegisterProviderArgs = record {
   chainId : ChainId;
   urlPattern : text;
   headerPatterns : opt vec HttpHeader;
@@ -234,11 +217,6 @@ type TransactionReceipt = record {
   logsBloom : text;
   contractAddress : opt text;
   gasUsed : nat;
-};
-type UpdateProviderArgs = record {
-  providerId : ProviderId;
-  urlPattern : opt text;
-  headerPatterns : opt vec HttpHeader;
 };
 type ValidationError = variant {
   Custom : text;
