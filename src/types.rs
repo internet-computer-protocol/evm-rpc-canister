@@ -16,8 +16,6 @@ use crate::memory::get_api_key;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
-    #[serde(rename = "nodesInSubnet")]
-    pub nodes_in_subnet: u32,
     #[serde(rename = "apiKeyPrincipals")]
     pub api_key_principals: Option<Vec<Principal>>,
 }

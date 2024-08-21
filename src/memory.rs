@@ -7,10 +7,7 @@ use ic_stable_structures::StableBTreeMap;
 use ic_stable_structures::VectorMemory;
 use std::cell::RefCell;
 
-use crate::{
-    constants::NODES_IN_FIDUCIARY_SUBNET,
-    types::{ApiKey, Metrics, PrincipalStorable, ProviderId},
-};
+use crate::types::{ApiKey, Metrics, PrincipalStorable, ProviderId};
 
 #[cfg(not(target_arch = "wasm32"))]
 type Memory = VirtualMemory<VectorMemory>;
@@ -20,7 +17,6 @@ type Memory = VirtualMemory<DefaultMemoryImpl>;
 thread_local! {
     // Unstable static data: this is reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
-    static UNSTABLE_SUBNET_SIZE: RefCell<u32> = RefCell::new(NODES_IN_FIDUCIARY_SUBNET);
 
     // Stable static data: this is preserved when the canister is upgraded.
     #[cfg(not(target_arch = "wasm32"))]
@@ -32,14 +28,6 @@ thread_local! {
     static API_KEY_PRINCIPALS: RefCell<Vec<PrincipalStorable>> = RefCell::new(vec![]);
     static API_KEY_MAP: RefCell<StableBTreeMap<ProviderId, ApiKey, Memory>> = RefCell::new(
         StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(5)))));
-}
-
-pub fn get_nodes_in_subnet() -> u32 {
-    UNSTABLE_SUBNET_SIZE.with_borrow(|n| *n)
-}
-
-pub fn set_nodes_in_subnet(nodes_in_subnet: u32) {
-    UNSTABLE_SUBNET_SIZE.with_borrow_mut(|n| *n = nodes_in_subnet)
 }
 
 pub fn get_api_key(provider_id: ProviderId) -> ApiKey {

@@ -5,11 +5,9 @@ use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
 use evm_rpc::accounting::{get_cost_with_collateral, get_http_request_cost};
 use evm_rpc::candid_rpc::CandidRpcClient;
+use evm_rpc::constants::NODES_IN_SUBNET;
 use evm_rpc::http::get_http_response_body;
-use evm_rpc::memory::{
-    get_nodes_in_subnet, insert_api_key, is_api_key_principal, set_api_key_principals,
-    set_nodes_in_subnet,
-};
+use evm_rpc::memory::{insert_api_key, is_api_key_principal, set_api_key_principals};
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
 use evm_rpc::types::{ApiKey, Provider, ProviderId};
@@ -166,8 +164,8 @@ fn get_service_provider_map() -> Vec<(RpcService, ProviderId)> {
 
 #[query(name = "getNodesInSubnet")]
 #[candid_method(query, rename = "getNodesInSubnet")]
-async fn get_nodes_in_subnet_() -> u32 {
-    get_nodes_in_subnet()
+async fn get_nodes_in_subnet() -> u32 {
+    NODES_IN_SUBNET
 }
 
 #[update(name = "insertApiKeys")]
@@ -190,7 +188,6 @@ fn init(args: InitArgs) {
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade(args: InitArgs) {
-    set_nodes_in_subnet(args.nodes_in_subnet);
     if let Some(principals) = args.api_key_principals {
         set_api_key_principals(principals);
     }

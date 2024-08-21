@@ -78,7 +78,6 @@ type HttpOutcallError = variant {
   };
 };
 type InitArgs = record {
-  nodesInSubnet : nat32;
   apiKeyPrincipals : vec principal;
 };
 type JsonRpcError = record { code : int64; message : text };

@@ -33,9 +33,7 @@ pub const WASM_PAGE_SIZE: u64 = 65536;
 
 pub const ETH_GET_LOGS_MAX_BLOCKS: u32 = 500;
 
-pub const NODES_IN_STANDARD_SUBNET: u32 = 13;
-pub const NODES_IN_FIDUCIARY_SUBNET: u32 = 28;
-pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
+pub const NODES_IN_SUBNET: u32 = 28;
 
 pub const API_KEY_REPLACE_STRING: &str = "{API_KEY}";
 

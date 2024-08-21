@@ -32,7 +32,7 @@ use maplit::hashmap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use evm_rpc::{
-    constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, NODES_IN_FIDUCIARY_SUBNET},
+    constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE},
     providers::{
         ALCHEMY_ETH_MAINNET_HOSTNAME, ANKR_HOSTNAME, BLOCKPI_ETH_SEPOLIA_HOSTNAME,
         CLOUDFLARE_HOSTNAME, PUBLICNODE_ETH_MAINNET_HOSTNAME,
@@ -97,16 +97,17 @@ impl Default for EvmRpcSetup {
 
 impl EvmRpcSetup {
     pub fn new() -> Self {
+        Self::with_args(InitArgs {
+            api_key_principals: None,
+        })
+    }
+
+    pub fn with_args(args: InitArgs) -> Self {
         let env = Rc::new(
             StateMachineBuilder::new()
                 .with_default_canister_range()
                 .build(),
         );
-
-        let args = InitArgs {
-            nodes_in_subnet: NODES_IN_FIDUCIARY_SUBNET,
-            api_key_principals: Some(vec![]), // TODO
-        };
 
         let controller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);
         let canister_id = env.create_canister_with_cycles(

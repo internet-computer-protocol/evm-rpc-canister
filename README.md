@@ -135,7 +135,11 @@ npm install
 # Deploy to the local replica
 dfx start --background
 npm run generate
-dfx deploy evm_rpc --argument "(record {nodesInSubnet = 28})"
+dfx deploy evm_rpc
+
+# Alternatively, deploy and run test suite
+dfx start --background
+scripts/e2e
 ```
 
 Regenerate language bindings with the `generate` [npm script](https://docs.npmjs.com/cli/v10/using-npm/scripts):
