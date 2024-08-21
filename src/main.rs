@@ -3,30 +3,38 @@ use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError};
 
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
-use cketh_common::logs::INFO;
 use evm_rpc::accounting::{get_cost_with_collateral, get_http_request_cost};
-use evm_rpc::auth::{authorize, require_manage_or_controller};
 use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::http::get_http_response_body;
 use evm_rpc::memory::{
-    clear_permissions, get_nodes_in_subnet, insert_api_key, set_nodes_in_subnet,
+    get_nodes_in_subnet, insert_api_key, is_api_key_principal, set_api_key_principals,
+    set_nodes_in_subnet,
 };
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
 use evm_rpc::types::{ApiKey, Provider, ProviderId};
-use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
+use ic_cdk::api::is_controller;
 use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
 use ic_nervous_system_common::serve_metrics;
 
 use evm_rpc::{
     http::{json_rpc_request, transform_http_request},
-    memory::{METADATA, UNSTABLE_METRICS},
+    memory::UNSTABLE_METRICS,
     types::{candid_types, InitArgs, MetricRpcMethod, Metrics, MultiRpcResult, RpcServices},
 };
+
+pub fn require_api_key_principal_or_controller() -> Result<(), String> {
+    let caller = ic_cdk::caller();
+    if is_api_key_principal(&caller) || is_controller(&caller) {
+        Ok(())
+    } else {
+        Err("You are not authorized".to_string())
+    }
+}
 
 #[update(name = "eth_getLogs")]
 #[candid_method(rename = "eth_getLogs")]
@@ -118,7 +126,6 @@ async fn request(
     max_response_bytes: u64,
 ) -> Result<String, RpcError> {
     let response = json_rpc_request(
-        ic_cdk::caller(),
         resolve_rpc_service(service)?,
         MetricRpcMethod("request".to_string()),
         &json_rpc_payload,
@@ -184,11 +191,8 @@ fn init(args: InitArgs) {
 #[ic_cdk::post_upgrade]
 fn post_upgrade(args: InitArgs) {
     set_nodes_in_subnet(args.nodes_in_subnet);
-    if let Some(permissions) = args.permissions {
-        clear_permissions();
-        for (principal, auth) in permissions {
-            authorize(principal, auth);
-        }
+    if let Some(principals) = args.api_key_principals {
+        set_api_key_principals(principals);
     }
 }
 
@@ -270,28 +274,6 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
 #[candid_method(query, rename = "getMetrics")]
 fn get_metrics() -> Metrics {
     UNSTABLE_METRICS.with(|metrics| (*metrics.borrow()).clone())
-}
-
-#[query(name = "getOpenRpcAccess", guard = "require_manage_or_controller")]
-#[candid_method(query, rename = "getOpenRpcAccess")]
-fn get_open_rpc_access() -> bool {
-    METADATA.with(|m| m.borrow().get().open_rpc_access)
-}
-
-#[update(name = "setOpenRpcAccess", guard = "require_manage_or_controller")]
-#[candid_method(rename = "setOpenRpcAccess")]
-fn set_open_rpc_access(open_rpc_access: bool) {
-    log!(
-        INFO,
-        "[{}] Setting open RPC access to `{}`",
-        ic_cdk::caller(),
-        open_rpc_access
-    );
-    METADATA.with_borrow_mut(|m| {
-        let mut metadata = m.get().clone();
-        metadata.open_rpc_access = open_rpc_access;
-        m.set(metadata).unwrap();
-    });
 }
 
 #[cfg(not(any(target_arch = "wasm32", test)))]

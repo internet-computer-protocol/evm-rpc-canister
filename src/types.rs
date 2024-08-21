@@ -1,4 +1,4 @@
-use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+use candid::{CandidType, Principal};
 use cketh_common::eth_rpc::RpcError;
 use cketh_common::eth_rpc_client::providers::{
     EthMainnetService, EthSepoliaService, L2MainnetService, RpcApi, RpcService,
@@ -6,22 +6,20 @@ use cketh_common::eth_rpc_client::providers::{
 
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_stable_structures::{BoundedStorable, Storable};
+use serde::Deserialize;
 
-use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-use crate::constants::{
-    API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, AUTH_SET_STORABLE_MAX_SIZE, DEFAULT_OPEN_RPC_ACCESS,
-    PROVIDER_MAX_SIZE, RPC_SERVICE_MAX_SIZE, STRING_STORABLE_MAX_SIZE,
-};
+use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, STRING_STORABLE_MAX_SIZE};
 use crate::memory::get_api_key;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
     #[serde(rename = "nodesInSubnet")]
     pub nodes_in_subnet: u32,
-    pub permissions: Option<Vec<(Principal, Auth)>>,
+    #[serde(rename = "apiKeyPrincipals")]
+    pub api_key_principals: Option<Vec<Principal>>,
 }
 
 pub enum ResolvedRpcService {
@@ -167,84 +165,6 @@ impl RpcMethod {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, CandidType, Serialize, Deserialize)]
-pub enum Auth {
-    // TODO: remove distinction between individual `Auth` capabilities for simplicity?
-    Manage,
-    PriorityRpc,
-}
-
-#[derive(Clone, Debug, PartialEq, CandidType, Serialize, Deserialize, Default)]
-pub struct AuthSet(Vec<Auth>);
-
-impl AuthSet {
-    pub fn new(auths: Vec<Auth>) -> Self {
-        let mut auth_set = Self(Vec::with_capacity(auths.len()));
-        for auth in auths {
-            // Deduplicate
-            auth_set.authorize(auth);
-        }
-        auth_set
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    pub fn is_authorized(&self, auth: Auth) -> bool {
-        self.0.contains(&auth)
-    }
-
-    pub fn authorize(&mut self, auth: Auth) -> bool {
-        if !self.is_authorized(auth) {
-            self.0.push(auth);
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn deauthorize(&mut self, auth: Auth) -> bool {
-        if let Some(index) = self.0.iter().position(|a| *a == auth) {
-            self.0.remove(index);
-            true
-        } else {
-            false
-        }
-    }
-}
-
-// Using explicit JSON representation in place of enum indices for security
-impl Storable for AuthSet {
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        serde_json::from_slice(&bytes).expect("Unable to deserialize AuthSet")
-    }
-
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Owned(serde_json::to_vec(self).expect("Unable to serialize AuthSet"))
-    }
-}
-
-impl BoundedStorable for AuthSet {
-    const MAX_SIZE: u32 = AUTH_SET_STORABLE_MAX_SIZE;
-    const IS_FIXED_SIZE: bool = false;
-}
-
-#[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct Metadata {
-    pub next_provider_id: ProviderId,
-    pub open_rpc_access: bool,
-}
-
-impl Default for Metadata {
-    fn default() -> Self {
-        Self {
-            next_provider_id: 0,
-            open_rpc_access: DEFAULT_OPEN_RPC_ACCESS,
-        }
-    }
-}
-
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct StringStorable(pub String);
 
@@ -330,65 +250,6 @@ impl Provider {
             ),
         }
     }
-}
-
-impl Storable for Metadata {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Decode!(&bytes, Self).unwrap()
-    }
-}
-
-impl Storable for Provider {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Decode!(&bytes, Self).unwrap()
-    }
-}
-
-impl BoundedStorable for Provider {
-    const MAX_SIZE: u32 = PROVIDER_MAX_SIZE;
-    const IS_FIXED_SIZE: bool = false;
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-pub struct StorableRpcService(Vec<u8>);
-
-impl TryFrom<StorableRpcService> for RpcService {
-    type Error = serde_json::Error;
-    fn try_from(value: StorableRpcService) -> Result<Self, Self::Error> {
-        serde_json::from_slice(&value.0)
-    }
-}
-
-impl StorableRpcService {
-    pub fn new(service: &RpcService) -> Self {
-        // Store as JSON string to remove the possibility of RPC services getting mixed up
-        // if we make changes to `RpcService`, `EthMainnetService`, etc.
-        Self(
-            serde_json::to_vec(service)
-                .expect("BUG: unexpected error while serializing RpcService"),
-        )
-    }
-}
-
-impl Storable for StorableRpcService {
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        StorableRpcService(bytes.to_vec())
-    }
-
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Owned(self.0.to_owned())
-    }
-}
-
-impl BoundedStorable for StorableRpcService {
-    const MAX_SIZE: u32 = RPC_SERVICE_MAX_SIZE;
-    const IS_FIXED_SIZE: bool = false;
 }
 
 pub type RpcResult<T> = Result<T, RpcError>;

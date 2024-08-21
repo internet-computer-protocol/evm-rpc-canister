@@ -18,8 +18,7 @@ use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument
 
 use crate::{
     accounting::get_http_request_cost,
-    add_metric, add_metric_entry,
-    auth::is_rpc_allowed,
+    add_metric_entry,
     constants::{
         DEFAULT_ETH_MAINNET_SERVICES, DEFAULT_ETH_SEPOLIA_SERVICES, DEFAULT_L2_MAINNET_SERVICES,
         ETH_GET_LOGS_MAX_BLOCKS,
@@ -75,10 +74,6 @@ fn get_rpc_client(
     source: RpcServices,
     config: RpcConfig,
 ) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
-    if !is_rpc_allowed(&ic_cdk::caller()) {
-        add_metric!(err_no_permission, 1);
-        return Err(ProviderError::NoPermission.into());
-    }
     Ok(match source {
         RpcServices::Custom { chain_id, services } => CkEthRpcClient::new(
             EthereumNetwork(chain_id),

@@ -1,4 +1,3 @@
-use candid::Principal;
 use cketh_common::eth_rpc::{HttpOutcallError, ProviderError, RpcError, ValidationError};
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs,
@@ -8,24 +7,18 @@ use num_traits::ToPrimitive;
 
 use crate::{
     accounting::{get_cost_with_collateral, get_http_request_cost},
-    add_metric, add_metric_entry,
-    auth::is_rpc_allowed,
+    add_metric_entry,
     constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST},
     types::{MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcResult},
     util::canonicalize_json,
 };
 
 pub async fn json_rpc_request(
-    caller: Principal,
     service: ResolvedRpcService,
     rpc_method: MetricRpcMethod,
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> RpcResult<HttpResponse> {
-    if !is_rpc_allowed(&caller) {
-        add_metric!(err_no_permission, 1);
-        return Err(ProviderError::NoPermission.into());
-    }
     let cycles_cost = get_http_request_cost(json_rpc_payload.len() as u64, max_response_bytes);
     let api = service.api();
     let mut request_headers = vec![HttpHeader {

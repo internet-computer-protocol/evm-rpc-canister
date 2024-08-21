@@ -1,4 +1,3 @@
-type Auth = variant { PriorityRpc; Manage };
 type Block = record {
   miner : text;
   totalDifficulty : opt nat;
@@ -80,7 +79,7 @@ type HttpOutcallError = variant {
 };
 type InitArgs = record {
   nodesInSubnet : nat32;
-  actions : vec Action;
+  apiKeyPrincipals : vec principal;
 };
 type JsonRpcError = record { code : int64; message : text };
 type LogEntry = record {
@@ -237,11 +236,9 @@ service : (InitArgs) -> {
   eth_sendRawTransaction : (RpcServices, opt RpcConfig, rawSignedTransactionHex : text) -> (MultiSendRawTransactionResult);
   getMetrics : () -> (Metrics) query;
   getNodesInSubnet : () -> (numberOfNodes : nat32) query;
-  getOpenRpcAccess : () -> (active : bool) query;
   getProviders : () -> (vec Provider) query;
   getServiceProviderMap : () -> (vec record { RpcService; ProviderId }) query;
   insertApiKeys : (vec record { ProviderId; text });
   request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
   requestCost : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestCostResult) query;
-  setOpenRpcAccess : (active : bool) -> ();
 };
