@@ -1,4 +1,3 @@
-use cketh_common::eth_rpc::ValidationError;
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 
 use crate::{
@@ -6,34 +5,32 @@ use crate::{
     util::hostname_from_url,
 };
 
-pub fn validate_hostname(hostname: &str) -> Result<(), ValidationError> {
+pub fn validate_hostname(hostname: &str) -> Result<(), &'static str> {
     if SERVICE_HOSTS_BLOCKLIST.contains(&hostname) {
-        Err(ValidationError::HostNotAllowed(hostname.to_string()))
+        Err("Hostname not allowed")
     } else {
         Ok(())
     }
 }
 
-pub fn validate_url_pattern(url_pattern: &str) -> Result<(), ValidationError> {
-    validate_hostname(
-        &hostname_from_url(url_pattern).ok_or(ValidationError::CredentialPathNotAllowed)?,
-    )
+pub fn validate_url_pattern(url_pattern: &str) -> Result<(), &'static str> {
+    validate_hostname(&hostname_from_url(url_pattern).ok_or("Invalid hostname in URL")?)
 }
 
-pub fn validate_header_patterns(header_patterns: &[HttpHeader]) -> Result<(), ValidationError> {
+pub fn validate_header_patterns(header_patterns: &[HttpHeader]) -> Result<(), &'static str> {
     if header_patterns
         .iter()
         .any(|HttpHeader { name, .. }| name == CONTENT_TYPE_HEADER)
     {
-        Err(ValidationError::CredentialHeaderNotAllowed) // TODO: rename to `HeaderNotAllowed`
+        Err("Invalid header name")
     } else {
         Ok(())
     }
 }
 
-pub fn validate_api_key(api_key: &str) -> Result<(), ValidationError> {
+pub fn validate_api_key(api_key: &str) -> Result<(), &'static str> {
     if api_key.contains(['.', '/', '?', '&']) {
-        Err(ValidationError::CredentialPathNotAllowed) // TODO: rename to `ApiKeyNotAllowed`
+        Err("Invalid character in API key")
     } else {
         Ok(())
     }
@@ -53,15 +50,15 @@ mod test {
         );
         assert_eq!(
             validate_url_pattern("https://{API_KEY}"),
-            Err(ValidationError::CredentialPathNotAllowed)
+            Err("Invalid hostname in URL")
         );
         assert_eq!(
             validate_url_pattern("https://{API_KEY}/v1/rpc"),
-            Err(ValidationError::CredentialPathNotAllowed)
+            Err("Invalid hostname in URL")
         );
         assert_eq!(
             validate_url_pattern("https://{API_KEY}/{API_KEY}"),
-            Err(ValidationError::CredentialPathNotAllowed)
+            Err("Invalid hostname in URL")
         );
     }
 
@@ -79,32 +76,29 @@ mod test {
                 name: CONTENT_TYPE_HEADER.to_string(),
                 value: "text/xml".to_string(),
             }]),
-            Err(ValidationError::CredentialHeaderNotAllowed)
+            Err("Invalid header name")
         );
     }
 
     #[test]
     pub fn test_validate_api_key() {
         assert_eq!(validate_api_key("abc"), Ok(()));
-        assert_eq!(
-            validate_api_key(".."),
-            Err(ValidationError::CredentialPathNotAllowed)
-        );
+        assert_eq!(validate_api_key(".."), Err("Invalid character in API key"));
         assert_eq!(
             validate_api_key("abc/def"),
-            Err(ValidationError::CredentialPathNotAllowed)
+            Err("Invalid character in API key")
         );
         assert_eq!(
             validate_api_key("../def"),
-            Err(ValidationError::CredentialPathNotAllowed)
+            Err("Invalid character in API key")
         );
         assert_eq!(
             validate_api_key("abc/.."),
-            Err(ValidationError::CredentialPathNotAllowed)
+            Err("Invalid character in API key")
         );
         assert_eq!(
             validate_api_key("../.."),
-            Err(ValidationError::CredentialPathNotAllowed)
+            Err("Invalid character in API key")
         );
     }
 }
