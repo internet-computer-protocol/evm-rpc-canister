@@ -306,7 +306,19 @@ pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, Pr
 mod tests {
     use std::collections::{HashMap, HashSet};
 
+    use crate::validate::{validate_header_patterns, validate_url_pattern};
+
     use super::{PROVIDERS, SERVICE_PROVIDER_MAP};
+
+    #[test]
+    fn test_valid_rpc_providers() {
+        PROVIDERS.with(|providers| {
+            for provider in providers {
+                assert_eq!(validate_url_pattern(&provider.url_pattern), Ok(()));
+                assert_eq!(validate_header_patterns(&provider.header_patterns), Ok(()));
+            }
+        })
+    }
 
     #[test]
     fn test_no_duplicate_service_providers() {

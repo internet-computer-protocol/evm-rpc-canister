@@ -11,6 +11,7 @@ use evm_rpc::memory::{insert_api_key, is_api_key_principal, set_api_key_principa
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
 use evm_rpc::types::{ApiKey, Provider, ProviderId};
+use evm_rpc::validate::validate_api_key;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
@@ -164,10 +165,14 @@ async fn get_nodes_in_subnet() -> u32 {
     NODES_IN_SUBNET
 }
 
-#[update(name = "insertApiKeys")]
+#[update(
+    name = "insertApiKeys",
+    guard = "require_api_key_principal_or_controller"
+)]
 #[candid_method(rename = "insertApiKeys")]
 async fn insert_api_keys(api_keys: Vec<(ProviderId, String)>) {
     for (provider_id, api_key) in api_keys {
+        validate_api_key(&api_key).unwrap();
         insert_api_key(provider_id, ApiKey(api_key));
     }
 }

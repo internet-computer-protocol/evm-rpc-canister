@@ -231,11 +231,11 @@ service : (InitArgs) -> {
   eth_getTransactionCount : (RpcServices, opt RpcConfig, GetTransactionCountArgs) -> (MultiGetTransactionCountResult);
   eth_getTransactionReceipt : (RpcServices, opt RpcConfig, hash : text) -> (MultiGetTransactionReceiptResult);
   eth_sendRawTransaction : (RpcServices, opt RpcConfig, rawSignedTransactionHex : text) -> (MultiSendRawTransactionResult);
+  request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
+  requestCost : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestCostResult) query;
   getMetrics : () -> (Metrics) query;
   getNodesInSubnet : () -> (numberOfNodes : nat32) query;
   getProviders : () -> (vec Provider) query;
   getServiceProviderMap : () -> (vec record { RpcService; ProviderId }) query;
   insertApiKeys : (vec record { ProviderId; text }) -> ();
-  request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
-  requestCost : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestCostResult) query;
 };
