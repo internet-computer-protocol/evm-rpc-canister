@@ -332,7 +332,7 @@ mod tests {
                 for provider in providers {
                     assert!(
                         inverse_map.contains_key(&provider.provider_id),
-                        "Missing service mapping for provider: {}",
+                        "Missing service mapping for provider with ID: {}",
                         provider.provider_id
                     );
                 }
