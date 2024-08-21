@@ -32,15 +32,13 @@ use maplit::hashmap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use evm_rpc::{
-    constants::{
-        CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, ETH_MAINNET_CHAIN_ID, NODES_IN_STANDARD_SUBNET,
-    },
+    constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, NODES_IN_STANDARD_SUBNET},
     providers::{
         ALCHEMY_ETH_MAINNET_HOSTNAME, ANKR_HOSTNAME, BLOCKPI_ETH_SEPOLIA_HOSTNAME,
         CLOUDFLARE_HOSTNAME, PUBLICNODE_ETH_MAINNET_HOSTNAME,
     },
     types::{
-        candid_types, Auth, InitArgs, Metrics, MultiRpcResult, Provider, ProviderId, RpcMethod,
+        candid_types, InitArgs, Metrics, MultiRpcResult, Provider, ProviderId, RpcMethod,
         RpcResult, RpcServices,
     },
 };
@@ -194,11 +192,6 @@ impl EvmRpcSetup {
 
     pub fn get_service_provider_map(&self) -> Vec<(RpcService, ProviderId)> {
         self.call_query("getServiceProviderMap", Encode!().unwrap())
-    }
-
-    pub fn set_open_rpc_access(&self, open_rpc_access: bool) {
-        self.call_update("setOpenRpcAccess", Encode!(&open_rpc_access).unwrap())
-            .wait()
     }
 
     pub fn request_cost(
@@ -443,7 +436,7 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
 }
 
 fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     assert_matches!(
         setup
             .request(
@@ -541,7 +534,7 @@ fn mock_request_should_fail_with_request_body() {
 
 #[test]
 fn should_canonicalize_json_response() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     let responses = [
         r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#,
         r#"{"result":"0x00112233","id":1,"jsonrpc":"2.0"}"#,
@@ -616,7 +609,7 @@ fn should_decode_transaction_receipt() {
 #[test]
 fn eth_get_logs_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new();
         let response = setup
         .eth_get_logs(
             source.clone(),
@@ -672,7 +665,7 @@ fn eth_get_logs_should_succeed() {
 #[test]
 fn eth_get_block_by_number_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new();
         let response = setup
             .eth_get_block_by_number(
                 source.clone(),
@@ -715,7 +708,7 @@ fn eth_get_block_by_number_should_succeed() {
 #[test]
 fn eth_get_block_by_number_pre_london_fork_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new();
         let response = setup
             .eth_get_block_by_number(
                 source.clone(),
@@ -758,7 +751,7 @@ fn eth_get_block_by_number_pre_london_fork_should_succeed() {
 #[test]
 fn eth_get_transaction_receipt_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new();
         let response = setup
         .eth_get_transaction_receipt(
             source.clone(),
@@ -793,7 +786,7 @@ fn eth_get_transaction_receipt_should_succeed() {
 #[test]
 fn eth_get_transaction_count_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new();
         let response = setup
             .eth_get_transaction_count(
                 source.clone(),
@@ -817,7 +810,7 @@ fn eth_get_transaction_count_should_succeed() {
 #[test]
 fn eth_fee_history_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new();
         let response = setup
         .eth_fee_history(
             source.clone(),
@@ -853,7 +846,7 @@ fn eth_fee_history_should_succeed() {
 #[test]
 fn eth_send_raw_transaction_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new();
         let response = setup
             .eth_send_raw_transaction(source.clone(), None, MOCK_TRANSACTION)
             .mock_http(MockOutcallBuilder::new(
@@ -874,7 +867,7 @@ fn eth_send_raw_transaction_should_succeed() {
 
 #[test]
 fn candid_rpc_should_allow_unexpected_response_fields() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     let response = setup
         .eth_get_transaction_receipt(
             RpcServices::EthMainnet(None),
@@ -913,36 +906,8 @@ fn candid_rpc_should_err_without_cycles() {
 }
 
 #[test]
-fn candid_rpc_should_err_during_restricted_access() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-    setup.clone().as_controller().set_open_rpc_access(false);
-    let result = setup
-        .eth_get_transaction_receipt(
-            RpcServices::EthMainnet(Some(vec![
-                EthMainnetService::Cloudflare,
-                EthMainnetService::BlockPi,
-            ])),
-            None,
-            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
-        )
-        .wait()
-        .expect_consistent();
-    assert_eq!(
-        result,
-        Err(RpcError::ProviderError(ProviderError::NoPermission))
-    );
-    assert_eq!(
-        setup.get_metrics(),
-        Metrics {
-            err_no_permission: 1,
-            ..Default::default()
-        }
-    );
-}
-
-#[test]
 fn candid_rpc_should_err_when_service_unavailable() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     let result = setup
         .eth_get_transaction_receipt(
             RpcServices::EthMainnet(None),
@@ -983,7 +948,7 @@ fn candid_rpc_should_err_when_service_unavailable() {
 
 #[test]
 fn candid_rpc_should_recognize_json_error() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     let result = setup
         .eth_get_transaction_receipt(
             RpcServices::EthSepolia(Some(vec![
@@ -1025,7 +990,7 @@ fn candid_rpc_should_recognize_json_error() {
 
 #[test]
 fn candid_rpc_should_reject_empty_service_list() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     let result = setup
         .eth_get_transaction_receipt(
             RpcServices::EthMainnet(Some(vec![])),
@@ -1042,7 +1007,7 @@ fn candid_rpc_should_reject_empty_service_list() {
 
 #[test]
 fn candid_rpc_should_return_inconsistent_results() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     let results = setup
         .eth_send_raw_transaction(
             RpcServices::EthMainnet(Some(vec![
@@ -1100,7 +1065,7 @@ fn candid_rpc_should_return_inconsistent_results() {
 
 #[test]
 fn candid_rpc_should_return_inconsistent_results_with_error() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     let result = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![
@@ -1162,7 +1127,7 @@ fn candid_rpc_should_return_inconsistent_results_with_error() {
 
 #[test]
 fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     let result = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![
@@ -1225,7 +1190,7 @@ fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
 
 #[test]
 fn candid_rpc_should_handle_already_known() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     let result = setup
         .eth_send_raw_transaction(
             RpcServices::EthMainnet(Some(vec![
@@ -1270,7 +1235,7 @@ fn candid_rpc_should_handle_already_known() {
 
 #[test]
 fn candid_rpc_should_recognize_rate_limit() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     let result = setup
         .eth_send_raw_transaction(
             RpcServices::EthMainnet(Some(vec![
@@ -1311,68 +1276,8 @@ fn candid_rpc_should_recognize_rate_limit() {
 }
 
 #[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_panic_if_unauthorized_set_rpc_access() {
-    // Only `Manage` can restrict RPC access
-    let setup = EvmRpcSetup::new();
-    setup.set_open_rpc_access(false);
-}
-
-#[test]
-fn should_restrict_rpc_access() {
-    let mut setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-    setup.clone().as_controller().set_open_rpc_access(false);
-    let result = setup
-        .eth_get_transaction_count(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
-            None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
-            },
-        )
-        .wait()
-        .expect_consistent();
-    assert_eq!(
-        result,
-        Err(RpcError::ProviderError(ProviderError::NoPermission))
-    );
-    setup = setup.authorize_caller(Auth::PriorityRpc);
-    let result = setup
-        .eth_get_transaction_count(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
-            None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
-            },
-        )
-        .mock_http(MockOutcallBuilder::new(
-            200,
-            r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
-        ))
-        .wait()
-        .expect_consistent();
-    assert_eq!(result, Ok(1.into()));
-    let rpc_method = || RpcMethod::EthGetTransactionCount.into();
-    assert_eq!(
-        setup.get_metrics(),
-        Metrics {
-            requests: hashmap! {
-                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
-            },
-            responses: hashmap! {
-                (rpc_method(), ANKR_HOSTNAME.into(), 200.into()) => 1,
-            },
-            err_no_permission: 1,
-            ..Default::default()
-        }
-    );
-}
-
-#[test]
 fn should_use_custom_response_size_estimate() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     let max_response_bytes = 1234;
     let expected_response = r#"{"id":0,"jsonrpc":"2.0","result":[{"address":"0xdac17f958d2ee523a2206206994597c13d831ec7","topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef","0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43","0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"],"data":"0x000000000000000000000000000000000000000000000000000000003b9c6433","blockNumber":"0x11dc77e","transactionHash":"0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678","transactionIndex":"0x65","blockHash":"0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629","logIndex":"0xe8","removed":false}]}"#;
     let response = setup
