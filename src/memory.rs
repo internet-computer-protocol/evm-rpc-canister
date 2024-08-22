@@ -31,10 +31,7 @@ thread_local! {
 }
 
 pub fn get_api_key(provider_id: ProviderId) -> ApiKey {
-    API_KEY_MAP.with_borrow_mut(|map| {
-        map.get(&provider_id)
-            .unwrap_or_else(|| ApiKey("".to_string()))
-    })
+    API_KEY_MAP.with_borrow_mut(|map| map.get(&provider_id).unwrap_or_else(ApiKey::empty))
 }
 
 pub fn insert_api_key(provider_id: ProviderId, api_key: ApiKey) {

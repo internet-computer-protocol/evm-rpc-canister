@@ -13,6 +13,7 @@ use std::collections::HashMap;
 
 use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, STRING_STORABLE_MAX_SIZE};
 use crate::memory::get_api_key;
+use crate::validate::validate_api_key;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
@@ -183,7 +184,26 @@ impl BoundedStorable for StringStorable {
 }
 
 #[derive(Clone)]
-pub struct ApiKey(pub String);
+pub struct ApiKey(String);
+
+impl ApiKey {
+    pub fn empty() -> ApiKey {
+        ApiKey("".to_string())
+    }
+
+    /// Explicitly read API key (use sparingly)
+    pub fn read(self) -> String {
+        self.0
+    }
+}
+
+impl TryFrom<String> for ApiKey {
+    type Error = String;
+    fn try_from(key: String) -> Result<ApiKey, Self::Error> {
+        validate_api_key(&key)?;
+        Ok(ApiKey(key))
+    }
+}
 
 impl Storable for ApiKey {
     fn to_bytes(&self) -> Cow<[u8]> {
