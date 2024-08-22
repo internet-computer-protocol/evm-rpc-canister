@@ -1615,6 +1615,10 @@ dependencies = [
 [[package]]
 name = "evm_rpc_types"
 version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
+]
 
 [[package]]
 name = "fallible-iterator"

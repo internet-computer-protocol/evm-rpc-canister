@@ -7,3 +7,5 @@ readme = "README.md"
 edition = "2021"
 
 [dependencies]
+candid = { workspace = true }
+serde = { workspace = true }
