@@ -33,10 +33,6 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE},
-    providers::{
-        ALCHEMY_ETH_MAINNET_HOSTNAME, ANKR_HOSTNAME, BLOCKPI_ETH_SEPOLIA_HOSTNAME,
-        CLOUDFLARE_HOSTNAME, PUBLICNODE_ETH_MAINNET_HOSTNAME,
-    },
     types::{
         candid_types, InitArgs, Metrics, MultiRpcResult, Provider, ProviderId, RpcMethod,
         RpcResult, RpcServices,

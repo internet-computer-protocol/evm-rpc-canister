@@ -149,7 +149,7 @@ fn request_cost(
 #[query(name = "getProviders")]
 #[candid_method(query, rename = "getProviders")]
 fn get_providers() -> Vec<Provider> {
-    PROVIDERS.with(|providers| providers.clone())
+    PROVIDERS.to_vec()
 }
 
 #[query(name = "getServiceProviderMap")]
