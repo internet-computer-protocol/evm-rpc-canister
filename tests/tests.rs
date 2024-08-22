@@ -34,7 +34,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE},
     types::{
-        candid_types, InitArgs, Metrics, MultiRpcResult, Provider, ProviderId, RpcMethod,
+        candid_types, InitArgs, Metrics, MultiRpcResult, ProviderId, ProviderView, RpcMethod,
         RpcResult, RpcServices,
     },
 };
@@ -63,6 +63,12 @@ const RPC_SERVICES: &[RpcServices] = &[
     RpcServices::BaseMainnet(None),
     RpcServices::OptimismMainnet(None),
 ];
+
+const ANKR_HOSTNAME: &str = "rpc.ankr.com";
+const ALCHEMY_ETH_MAINNET_HOSTNAME: &str = "eth-mainnet.g.alchemy.com";
+const CLOUDFLARE_HOSTNAME: &str = "cloudflare-eth.com";
+const BLOCKPI_ETH_SEPOLIA_HOSTNAME: &str = "ethereum-sepolia.blockpi.network";
+const PUBLICNODE_ETH_MAINNET_HOSTNAME: &str = "ethereum-rpc.publicnode.com";
 
 fn evm_rpc_wasm() -> Vec<u8> {
     load_wasm(std::env::var("CARGO_MANIFEST_DIR").unwrap(), "evm_rpc", &[])
@@ -183,7 +189,7 @@ impl EvmRpcSetup {
         self.call_query("getMetrics", Encode!().unwrap())
     }
 
-    pub fn get_providers(&self) -> Vec<Provider> {
+    pub fn get_providers(&self) -> Vec<ProviderView> {
         self.call_query("getProviders", Encode!().unwrap())
     }
 

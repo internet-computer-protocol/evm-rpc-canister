@@ -6,7 +6,7 @@ use cketh_common::eth_rpc_client::providers::{
 
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_stable_structures::{BoundedStorable, Storable};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -222,16 +222,27 @@ impl BoundedStorable for ApiKey {
 
 pub type ProviderId = u64;
 
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+/// Internal RPC provider representation.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Provider {
+    pub provider_id: ProviderId,
+    pub chain_id: u64,
+    pub url_pattern: &'static str,
+    pub header_patterns: &'static [HttpHeader],
+    pub service: Option<RpcService>,
+}
+
+/// Serializable RPC provider for `getProviders()` canister method.
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
+pub struct ProviderView {
     #[serde(rename = "providerId")]
     pub provider_id: ProviderId,
     #[serde(rename = "chainId")]
     pub chain_id: u64,
     #[serde(rename = "urlPattern")]
-    pub url_pattern: &'static str,
+    pub url_pattern: String,
     #[serde(rename = "headerPatterns")]
-    pub header_patterns: &'static [HttpHeader],
+    pub header_patterns: Vec<HttpHeader>,
     pub service: Option<RpcService>,
 }
 
