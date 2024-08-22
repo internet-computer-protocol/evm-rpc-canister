@@ -63,4 +63,4 @@ ic-cdk-bindgen = "0.1"
 wasm-bindgen = { git = "https://github.com/dfinity/wasm-bindgen", rev = "9cde9c9a88c1fad13a8663277650e01b5671843e" }
 
 [workspace]
-members = ["e2e/rust"]
+members = ["e2e/rust", "evm_rpc_types"]

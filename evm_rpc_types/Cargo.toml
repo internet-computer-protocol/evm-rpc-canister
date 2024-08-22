@@ -1,0 +1,9 @@
+[package]
+name = "evm_rpc_types"
+version = "0.1.0"
+description = "Candid types for interacting with the EVM RPC canister"
+authors = ["DFINITY Foundation"]
+readme = "README.md"
+edition = "2021"
+
+[dependencies]

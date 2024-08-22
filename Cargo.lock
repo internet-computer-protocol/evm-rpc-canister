@@ -1613,6 +1613,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "evm_rpc_types"
+version = "0.1.0"
+
+[[package]]
 name = "fallible-iterator"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
