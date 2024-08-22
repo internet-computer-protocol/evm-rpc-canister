@@ -149,16 +149,7 @@ fn request_cost(
 #[query(name = "getProviders")]
 #[candid_method(query, rename = "getProviders")]
 fn get_providers() -> Vec<ProviderView> {
-    PROVIDERS
-        .iter()
-        .map(|provider| ProviderView {
-            provider_id: provider.provider_id,
-            chain_id: provider.chain_id,
-            url_pattern: provider.url_pattern.to_string(),
-            header_patterns: provider.header_patterns.to_vec(),
-            service: provider.service.clone(),
-        })
-        .collect()
+    PROVIDERS.iter().cloned().map(ProviderView::from).collect()
 }
 
 #[query(name = "getServiceProviderMap")]

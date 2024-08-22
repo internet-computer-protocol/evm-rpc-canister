@@ -232,20 +232,6 @@ pub struct Provider {
     pub service: Option<RpcService>,
 }
 
-/// Serializable RPC provider for `getProviders()` canister method.
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
-pub struct ProviderView {
-    #[serde(rename = "providerId")]
-    pub provider_id: ProviderId,
-    #[serde(rename = "chainId")]
-    pub chain_id: u64,
-    #[serde(rename = "urlPattern")]
-    pub url_pattern: String,
-    #[serde(rename = "headerPatterns")]
-    pub header_patterns: Vec<HttpHeader>,
-    pub service: Option<RpcService>,
-}
-
 impl Provider {
     pub fn api(&self) -> RpcApi {
         let api_key = get_api_key(self.provider_id).0;
@@ -260,6 +246,32 @@ impl Provider {
                     })
                     .collect(),
             ),
+        }
+    }
+}
+
+/// Serializable RPC provider for `getProviders()` canister method.
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
+pub struct ProviderView {
+    #[serde(rename = "providerId")]
+    pub provider_id: ProviderId,
+    #[serde(rename = "chainId")]
+    pub chain_id: u64,
+    #[serde(rename = "urlPattern")]
+    pub url_pattern: String,
+    #[serde(rename = "headerPatterns")]
+    pub header_patterns: Vec<HttpHeader>,
+    pub service: Option<RpcService>,
+}
+
+impl From<Provider> for ProviderView {
+    fn from(provider: Provider) -> Self {
+        ProviderView {
+            provider_id: provider.provider_id,
+            chain_id: provider.chain_id,
+            url_pattern: provider.url_pattern.to_string(),
+            header_patterns: provider.header_patterns.to_vec(),
+            service: provider.service.clone(),
         }
     }
 }
