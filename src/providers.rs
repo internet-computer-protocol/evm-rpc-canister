@@ -212,12 +212,7 @@ thread_local! {
 }
 
 pub fn find_provider(f: impl Fn(&Provider) -> bool) -> Option<&'static Provider> {
-    for provider in PROVIDERS {
-        if f(&provider) {
-            return Some(provider);
-        }
-    }
-    None
+    PROVIDERS.iter().find(|&provider| f(provider))
 }
 
 fn lookup_provider_for_service(service: &RpcService) -> Result<Provider, ProviderError> {
@@ -291,8 +286,8 @@ mod tests {
     #[test]
     fn test_valid_rpc_providers() {
         for provider in PROVIDERS {
-            assert_eq!(validate_url_pattern(&provider.url_pattern), Ok(()));
-            assert_eq!(validate_header_patterns(&provider.header_patterns), Ok(()));
+            assert_eq!(validate_url_pattern(provider.url_pattern), Ok(()));
+            assert_eq!(validate_header_patterns(provider.header_patterns), Ok(()));
         }
     }
 

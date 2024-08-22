@@ -67,15 +67,15 @@ mod test {
         assert!(!is_api_key_principal(&principal1));
         assert!(!is_api_key_principal(&principal2));
 
-        set_api_key_principals(vec![principal1.clone()]);
+        set_api_key_principals(vec![principal1]);
         assert!(is_api_key_principal(&principal1));
         assert!(!is_api_key_principal(&principal2));
 
-        set_api_key_principals(vec![principal2.clone()]);
+        set_api_key_principals(vec![principal2]);
         assert!(!is_api_key_principal(&principal1));
         assert!(is_api_key_principal(&principal2));
 
-        set_api_key_principals(vec![principal1.clone(), principal2.clone()]);
+        set_api_key_principals(vec![principal1, principal2]);
         assert!(is_api_key_principal(&principal1));
         assert!(is_api_key_principal(&principal2));
 

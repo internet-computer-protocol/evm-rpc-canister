@@ -153,7 +153,7 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
                             (
                                 method.into(),
                                 MetricRpcHost(
-                                    hostname_from_url(&provider.url_pattern)
+                                    hostname_from_url(provider.url_pattern)
                                         .unwrap_or_else(|| "(unknown)".to_string())
                                 )
                             ),
