@@ -15,10 +15,10 @@ type Memory = VirtualMemory<VectorMemory>;
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
-    // Unstable static data: this is reset when the canister is upgraded.
+    // Unstable static data: these are reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
 
-    // Stable static data: this is preserved when the canister is upgraded.
+    // Stable static data: these are preserved when the canister is upgraded.
     #[cfg(not(target_arch = "wasm32"))]
     static MEMORY_MANAGER: RefCell<MemoryManager<VectorMemory>> =
         RefCell::new(MemoryManager::init(VectorMemory::new(RefCell::new(vec![]))));
