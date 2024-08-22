@@ -44,13 +44,13 @@ thread_local! {
         Provider {
             provider_id: 0,
             chain_id: ETH_MAINNET_CHAIN_ID,
-            url_pattern: format!("https://{CLOUDFLARE_HOSTNAME}/v1/mainnet"),
+            url_pattern: format!("https://{CLOUDFLARE_HOSTNAME}/v1/mainnet/{{API_KEY}}"),
             header_patterns: vec![],
         },
         Provider {
             provider_id: 1,
             chain_id: ETH_MAINNET_CHAIN_ID,
-            url_pattern: format!("https://{ANKR_HOSTNAME}/eth"),
+            url_pattern: format!("https://{ANKR_HOSTNAME}/eth/{{API_KEY}}"),
             header_patterns: vec![],
         },
         Provider {
@@ -74,7 +74,7 @@ thread_local! {
         Provider {
             provider_id: 5,
             chain_id: ETH_SEPOLIA_CHAIN_ID,
-            url_pattern: format!("https://{ANKR_HOSTNAME}/eth_sepolia"),
+            url_pattern: format!("https://{ANKR_HOSTNAME}/eth_sepolia/{{API_KEY}}"),
             header_patterns: vec![],
         },
         Provider {
@@ -104,13 +104,13 @@ thread_local! {
         Provider {
             provider_id: 10,
             chain_id: ARBITRUM_ONE_CHAIN_ID,
-            url_pattern: format!("https://{ANKR_HOSTNAME}/arbitrum"),
+            url_pattern: format!("https://{ANKR_HOSTNAME}/arbitrum/{{API_KEY}}"),
             header_patterns: vec![],
         },
         Provider {
             provider_id: 11,
             chain_id: ARBITRUM_ONE_CHAIN_ID,
-            url_pattern: format!("https://{ALCHEMY_ARBITRUM_ONE_HOSTNAME}/v2"),
+            url_pattern: format!("https://{ALCHEMY_ARBITRUM_ONE_HOSTNAME}/v2/{{API_KEY}}"),
             header_patterns: vec![],
         },
         Provider {
@@ -128,13 +128,13 @@ thread_local! {
         Provider {
             provider_id: 14,
             chain_id: BASE_MAINNET_CHAIN_ID,
-            url_pattern: format!("https://{ANKR_HOSTNAME}/base"),
+            url_pattern: format!("https://{ANKR_HOSTNAME}/base/{{API_KEY}}"),
             header_patterns: vec![],
         },
         Provider {
             provider_id: 15,
             chain_id: BASE_MAINNET_CHAIN_ID,
-            url_pattern: format!("https://{ALCHEMY_BASE_MAINNET_HOSTNAME}/v2"),
+            url_pattern: format!("https://{ALCHEMY_BASE_MAINNET_HOSTNAME}/v2/{{API_KEY}}"),
             header_patterns: vec![],
         },
         Provider {
@@ -152,7 +152,7 @@ thread_local! {
         Provider {
             provider_id: 18,
             chain_id: OPTIMISM_MAINNET_CHAIN_ID,
-            url_pattern: format!("https://{ANKR_HOSTNAME}/optimism"),
+            url_pattern: format!("https://{ANKR_HOSTNAME}/optimism/{{API_KEY}}"),
             header_patterns: vec![],
         },
         Provider {
