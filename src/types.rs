@@ -166,9 +166,6 @@ impl RpcMethod {
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct StringStorable(pub String);
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
-pub struct PrincipalStorable(pub Principal);
-
 impl Storable for StringStorable {
     fn to_bytes(&self) -> Cow<[u8]> {
         // String already implements `Storable`.
@@ -182,21 +179,6 @@ impl Storable for StringStorable {
 
 impl BoundedStorable for StringStorable {
     const MAX_SIZE: u32 = STRING_STORABLE_MAX_SIZE;
-    const IS_FIXED_SIZE: bool = false;
-}
-
-impl Storable for PrincipalStorable {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::from(self.0.as_slice())
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Self(Principal::from_slice(&bytes))
-    }
-}
-
-impl BoundedStorable for PrincipalStorable {
-    const MAX_SIZE: u32 = 29;
     const IS_FIXED_SIZE: bool = false;
 }
 

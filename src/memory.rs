@@ -7,7 +7,7 @@ use ic_stable_structures::StableBTreeMap;
 use ic_stable_structures::VectorMemory;
 use std::cell::RefCell;
 
-use crate::types::{ApiKey, Metrics, PrincipalStorable, ProviderId};
+use crate::types::{ApiKey, Metrics, ProviderId};
 
 #[cfg(not(target_arch = "wasm32"))]
 type Memory = VirtualMemory<VectorMemory>;
@@ -25,7 +25,7 @@ thread_local! {
     #[cfg(target_arch = "wasm32")]
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-    static API_KEY_PRINCIPALS: RefCell<Vec<PrincipalStorable>> = RefCell::new(vec![]);
+    static API_KEY_PRINCIPALS: RefCell<Vec<Principal>> = RefCell::new(vec![]);
     static API_KEY_MAP: RefCell<StableBTreeMap<ProviderId, ApiKey, Memory>> = RefCell::new(
         StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(5)))));
 }
@@ -46,17 +46,11 @@ pub fn remove_api_key(provider_id: ProviderId) {
 }
 
 pub fn is_api_key_principal(principal: &Principal) -> bool {
-    API_KEY_PRINCIPALS.with_borrow_mut(|principals| {
-        principals
-            .iter()
-            .any(|PrincipalStorable(other)| other == principal)
-    })
+    API_KEY_PRINCIPALS.with_borrow_mut(|principals| principals.contains(principal))
 }
 
 pub fn set_api_key_principals(new_principals: Vec<Principal>) {
-    API_KEY_PRINCIPALS.with_borrow_mut(|principals| {
-        *principals = new_principals.into_iter().map(PrincipalStorable).collect()
-    });
+    API_KEY_PRINCIPALS.with_borrow_mut(|principals| *principals = new_principals);
 }
 
 #[cfg(test)]
