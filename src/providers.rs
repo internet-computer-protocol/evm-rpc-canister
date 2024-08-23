@@ -276,7 +276,7 @@ pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, Pr
 }
 
 #[cfg(test)]
-mod tests {
+mod test {
     use std::collections::{HashMap, HashSet};
 
     use crate::validate::{validate_header_patterns, validate_url_pattern};

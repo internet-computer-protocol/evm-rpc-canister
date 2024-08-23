@@ -281,52 +281,57 @@ fn main() {
 #[cfg(any(target_arch = "wasm32", test))]
 fn main() {}
 
-#[test]
-fn test_candid_interface() {
-    fn source_to_str(source: &candid::utils::CandidSource) -> String {
-        match source {
-            candid::utils::CandidSource::File(f) => {
-                std::fs::read_to_string(f).unwrap_or_else(|_| "".to_string())
-            }
-            candid::utils::CandidSource::Text(t) => t.to_string(),
-        }
-    }
+#[cfg(test)]
+mod test {
+    use super::*;
 
-    fn check_service_compatible(
-        new_name: &str,
-        new: candid::utils::CandidSource,
-        old_name: &str,
-        old: candid::utils::CandidSource,
-    ) {
-        let new_str = source_to_str(&new);
-        let old_str = source_to_str(&old);
-        match candid::utils::service_compatible(new, old) {
-            Ok(_) => {}
-            Err(e) => {
-                eprintln!(
-                    "{} is not compatible with {}!\n\n\
+    #[test]
+    fn test_candid_interface() {
+        fn source_to_str(source: &candid::utils::CandidSource) -> String {
+            match source {
+                candid::utils::CandidSource::File(f) => {
+                    std::fs::read_to_string(f).unwrap_or_else(|_| "".to_string())
+                }
+                candid::utils::CandidSource::Text(t) => t.to_string(),
+            }
+        }
+
+        fn check_service_compatible(
+            new_name: &str,
+            new: candid::utils::CandidSource,
+            old_name: &str,
+            old: candid::utils::CandidSource,
+        ) {
+            let new_str = source_to_str(&new);
+            let old_str = source_to_str(&old);
+            match candid::utils::service_compatible(new, old) {
+                Ok(_) => {}
+                Err(e) => {
+                    eprintln!(
+                        "{} is not compatible with {}!\n\n\
             {}:\n\
             {}\n\n\
             {}:\n\
             {}\n",
-                    new_name, old_name, new_name, new_str, old_name, old_str
-                );
-                panic!("{:?}", e);
+                        new_name, old_name, new_name, new_str, old_name, old_str
+                    );
+                    panic!("{:?}", e);
+                }
             }
         }
+
+        candid::export_service!();
+        let new_interface = __export_service();
+
+        // check the public interface against the actual one
+        let old_interface = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
+            .join("candid/evm_rpc.did");
+
+        check_service_compatible(
+            "actual ledger candid interface",
+            candid::utils::CandidSource::Text(&new_interface),
+            "declared candid interface in evm_rpc.did file",
+            candid::utils::CandidSource::File(old_interface.as_path()),
+        );
     }
-
-    candid::export_service!();
-    let new_interface = __export_service();
-
-    // check the public interface against the actual one
-    let old_interface = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
-        .join("candid/evm_rpc.did");
-
-    check_service_compatible(
-        "actual ledger candid interface",
-        candid::utils::CandidSource::Text(&new_interface),
-        "declared candid interface in evm_rpc.did file",
-        candid::utils::CandidSource::File(old_interface.as_path()),
-    );
 }
