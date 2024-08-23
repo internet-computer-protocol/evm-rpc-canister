@@ -3,12 +3,14 @@ mod tests;
 
 use candid::types::{Serializer, Type};
 use candid::{CandidType, Nat};
+use num_bigint::BigUint;
 use serde::{Deserialize, Serialize};
 
 mod request;
 mod response;
 
 pub use request::FeeHistoryArgs;
+pub use response::FeeHistory;
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
 pub enum BlockTag {
@@ -37,6 +39,11 @@ impl Nat256 {
         );
         value_u256[32 - value_bytes.len()..].copy_from_slice(&value_bytes);
         value_u256
+    }
+
+    pub fn from_be_bytes(value: [u8; 32]) -> Self {
+        Self::try_from(Nat::from(BigUint::from_bytes_be(&value)))
+            .expect("BUG: Nat should fit in a U256")
     }
 }
 
