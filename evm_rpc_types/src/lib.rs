@@ -24,6 +24,20 @@ pub enum BlockTag {
 #[serde(try_from = "candid::Nat")]
 pub struct Nat256(Nat);
 
+impl Nat256 {
+    pub fn into_be_bytes(self) -> [u8; 32] {
+        let value_bytes = self.0 .0.to_bytes_be();
+        let mut value_u256 = [0u8; 32];
+        assert!(
+            value_bytes.len() <= 32,
+            "BUG: Nat does not fit in a U256: {:?}",
+            self.0
+        );
+        value_u256[32 - value_bytes.len()..].copy_from_slice(&value_bytes);
+        value_u256
+    }
+}
+
 impl AsRef<Nat> for Nat256 {
     fn as_ref(&self) -> &Nat {
         &self.0
