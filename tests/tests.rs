@@ -1261,7 +1261,7 @@ fn eth_fee_history_should_succeed() {
             source.clone(),
             None,
             evm_rpc_types::FeeHistoryArgs {
-                block_count: 3.into(),
+                block_count: 3_u8.into(),
                 newest_block: evm_rpc_types::BlockTag::Latest,
                 reward_percentiles: None,
             },
