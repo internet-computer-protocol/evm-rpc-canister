@@ -1,7 +1,8 @@
 use crate::Nat256;
 use candid::CandidType;
+use serde::Serialize;
 
-#[derive(Debug, Clone, PartialEq, CandidType)]
+#[derive(Debug, Clone, PartialEq, Serialize, CandidType)]
 pub struct FeeHistory {
     /// Lowest number block of the returned range.
     #[serde(rename = "oldestBlock")]

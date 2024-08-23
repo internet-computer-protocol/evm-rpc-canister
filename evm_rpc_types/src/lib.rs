@@ -25,7 +25,7 @@ pub enum BlockTag {
 
 /// A `Nat` that is guaranteed to fit in 256 bits.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(try_from = "candid::Nat")]
+#[serde(try_from = "candid::Nat", into = "candid::Nat")]
 pub struct Nat256(Nat);
 
 impl Nat256 {
@@ -75,6 +75,12 @@ impl TryFrom<Nat> for Nat256 {
         } else {
             Ok(Nat256(value))
         }
+    }
+}
+
+impl From<Nat256> for Nat {
+    fn from(value: Nat256) -> Self {
+        value.0
     }
 }
 
