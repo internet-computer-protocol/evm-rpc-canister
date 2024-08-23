@@ -7,7 +7,7 @@ use ic_stable_structures::StableBTreeMap;
 use ic_stable_structures::VectorMemory;
 use std::cell::RefCell;
 
-use crate::types::{ApiKey, Metrics, ProviderId};
+use crate::types::{ApiKey, Metrics, PrincipalStorable, ProviderId};
 
 #[cfg(not(target_arch = "wasm32"))]
 type Memory = VirtualMemory<VectorMemory>;
@@ -25,9 +25,10 @@ thread_local! {
     #[cfg(target_arch = "wasm32")]
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-    static API_KEY_PRINCIPALS: RefCell<Vec<Principal>> = RefCell::new(vec![]);
-    static API_KEY_MAP: RefCell<StableBTreeMap<ProviderId, ApiKey, Memory>> = RefCell::new(
-        StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(5)))));
+    static API_KEY_MAP: RefCell<StableBTreeMap<ProviderId, ApiKey, Memory>> =
+        RefCell::new(StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(MemoryId::new(5)))));
+    static MANAGE_API_KEYS: RefCell<ic_stable_structures::Vec<PrincipalStorable, Memory>> =
+        RefCell::new(ic_stable_structures::Vec::init(MEMORY_MANAGER.with_borrow(|m|m.get(MemoryId::new(6)))).expect("Unable to read API key principals from stable memory"));
 }
 
 pub fn get_api_key(provider_id: ProviderId) -> ApiKey {
@@ -43,11 +44,24 @@ pub fn remove_api_key(provider_id: ProviderId) {
 }
 
 pub fn is_api_key_principal(principal: &Principal) -> bool {
-    API_KEY_PRINCIPALS.with_borrow_mut(|principals| principals.contains(principal))
+    MANAGE_API_KEYS.with_borrow_mut(|principals| {
+        principals
+            .iter()
+            .any(|PrincipalStorable(other)| &other == principal)
+    })
 }
 
 pub fn set_api_key_principals(new_principals: Vec<Principal>) {
-    API_KEY_PRINCIPALS.with_borrow_mut(|principals| *principals = new_principals);
+    MANAGE_API_KEYS.with_borrow_mut(|principals| {
+        while !principals.is_empty() {
+            principals.pop();
+        }
+        for principal in new_principals {
+            principals
+                .push(&PrincipalStorable(principal))
+                .expect("Error while adding API key principal");
+        }
+    });
 }
 
 #[cfg(test)]

@@ -183,6 +183,24 @@ impl BoundedStorable for StringStorable {
     const IS_FIXED_SIZE: bool = false;
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub struct PrincipalStorable(pub Principal);
+
+impl Storable for PrincipalStorable {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::from(self.0.as_slice())
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        Self(Principal::from_slice(&bytes))
+    }
+}
+
+impl BoundedStorable for PrincipalStorable {
+    const MAX_SIZE: u32 = 29;
+    const IS_FIXED_SIZE: bool = false;
+}
+
 #[derive(Clone)]
 pub struct ApiKey(String);
 
