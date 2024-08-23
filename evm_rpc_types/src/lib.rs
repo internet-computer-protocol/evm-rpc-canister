@@ -3,7 +3,7 @@ mod tests;
 
 use candid::types::{Serializer, Type};
 use candid::{CandidType, Nat};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 mod request;
 mod response;
@@ -22,7 +22,7 @@ pub enum BlockTag {
 }
 
 /// A `Nat` that is guaranteed to fit in 256 bits.
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "candid::Nat")]
 pub struct Nat256(Nat);
 
