@@ -252,17 +252,12 @@ impl CandidRpcClient {
         &self,
         args: evm_rpc_types::FeeHistoryArgs,
     ) -> MultiRpcResult<evm_rpc_types::FeeHistory> {
-        use crate::candid_rpc::cketh_conversion::{
-            from_fee_history, into_block_spec, into_quantity,
-        };
-        let args = cketh_common::eth_rpc::FeeHistoryParams {
-            block_count: into_quantity(args.block_count),
-            highest_block: into_block_spec(args.newest_block),
-            reward_percentiles: args.reward_percentiles.unwrap_or_default(),
-        };
+        use crate::candid_rpc::cketh_conversion::{from_fee_history, into_fee_history_params};
         process_result(
             RpcMethod::EthFeeHistory,
-            self.client.eth_fee_history(args).await,
+            self.client
+                .eth_fee_history(into_fee_history_params(args))
+                .await,
         )
         .map(from_fee_history)
     }

@@ -6,18 +6,6 @@ use cketh_common::checked_amount::CheckedAmountOf;
 use cketh_common::eth_rpc::Quantity;
 use evm_rpc_types::{BlockTag, Nat256};
 
-fn into_checked_amount_of<Unit>(value: Nat256) -> CheckedAmountOf<Unit> {
-    CheckedAmountOf::from_be_bytes(value.into_be_bytes())
-}
-
-fn from_checked_amount_of<Unit>(value: CheckedAmountOf<Unit>) -> Nat256 {
-    Nat256::from_be_bytes(value.to_be_bytes())
-}
-
-pub(super) fn into_quantity(value: Nat256) -> Quantity {
-    Quantity::from_be_bytes(value.into_be_bytes())
-}
-
 pub(super) fn into_block_spec(value: BlockTag) -> cketh_common::eth_rpc::BlockSpec {
     use cketh_common::eth_rpc::{self, BlockSpec};
     match value {
@@ -27,6 +15,16 @@ pub(super) fn into_block_spec(value: BlockTag) -> cketh_common::eth_rpc::BlockSp
         BlockTag::Finalized => BlockSpec::Tag(eth_rpc::BlockTag::Finalized),
         BlockTag::Earliest => BlockSpec::Tag(eth_rpc::BlockTag::Earliest),
         BlockTag::Pending => BlockSpec::Tag(eth_rpc::BlockTag::Pending),
+    }
+}
+
+pub(super) fn into_fee_history_params(
+    value: evm_rpc_types::FeeHistoryArgs,
+) -> cketh_common::eth_rpc::FeeHistoryParams {
+    cketh_common::eth_rpc::FeeHistoryParams {
+        block_count: into_quantity(value.block_count),
+        highest_block: into_block_spec(value.newest_block),
+        reward_percentiles: value.reward_percentiles.unwrap_or_default(),
     }
 }
 
@@ -47,4 +45,16 @@ pub(super) fn from_fee_history(
             .map(|x| x.into_iter().map(from_checked_amount_of).collect())
             .collect(),
     }
+}
+
+fn into_checked_amount_of<Unit>(value: Nat256) -> CheckedAmountOf<Unit> {
+    CheckedAmountOf::from_be_bytes(value.into_be_bytes())
+}
+
+fn from_checked_amount_of<Unit>(value: CheckedAmountOf<Unit>) -> Nat256 {
+    Nat256::from_be_bytes(value.to_be_bytes())
+}
+
+fn into_quantity(value: Nat256) -> Quantity {
+    Quantity::from_be_bytes(value.into_be_bytes())
 }
