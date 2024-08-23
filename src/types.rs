@@ -637,26 +637,6 @@ pub mod candid_types {
     }
 
     #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
-    pub struct FeeHistoryArgs {
-        #[serde(rename = "blockCount")]
-        pub block_count: u128,
-        #[serde(rename = "newestBlock")]
-        pub newest_block: BlockTag,
-        #[serde(rename = "rewardPercentiles")]
-        pub reward_percentiles: Option<Vec<u8>>,
-    }
-
-    impl From<FeeHistoryArgs> for cketh_common::eth_rpc::FeeHistoryParams {
-        fn from(value: FeeHistoryArgs) -> Self {
-            cketh_common::eth_rpc::FeeHistoryParams {
-                block_count: value.block_count.into(),
-                highest_block: value.newest_block.into(),
-                reward_percentiles: value.reward_percentiles.unwrap_or_default(),
-            }
-        }
-    }
-
-    #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
     pub struct GetTransactionCountArgs {
         pub address: String,
         pub block: BlockTag,

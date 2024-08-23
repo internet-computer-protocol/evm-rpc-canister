@@ -1,4 +1,4 @@
-use crate::BlockTag;
+use crate::{BlockTag, Nat256};
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -6,7 +6,7 @@ use serde::Deserialize;
 pub struct FeeHistoryArgs {
     /// Number of blocks in the requested range.
     /// Typically, providers request this to be between 1 and 1024.
-    pub block_count: u128,
+    pub block_count: Nat256,
 
     /// Highest block of the requested range.
     /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.

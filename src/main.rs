@@ -94,7 +94,7 @@ pub async fn eth_get_transaction_count(
 pub async fn eth_fee_history(
     source: RpcServices,
     config: Option<RpcConfig>,
-    args: candid_types::FeeHistoryArgs,
+    args: evm_rpc_types::FeeHistoryArgs,
 ) -> MultiRpcResult<FeeHistory> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_fee_history(args).await,

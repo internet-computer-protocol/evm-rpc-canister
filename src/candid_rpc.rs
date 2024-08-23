@@ -1,3 +1,5 @@
+mod cketh_conversion;
+
 use std::str::FromStr;
 
 use async_trait::async_trait;
@@ -248,11 +250,17 @@ impl CandidRpcClient {
 
     pub async fn eth_fee_history(
         &self,
-        args: candid_types::FeeHistoryArgs,
+        args: evm_rpc_types::FeeHistoryArgs,
     ) -> MultiRpcResult<FeeHistory> {
+        use crate::candid_rpc::cketh_conversion::{into_block_spec, into_quantity};
+        let args = cketh_common::eth_rpc::FeeHistoryParams {
+            block_count: into_quantity(args.block_count),
+            highest_block: into_block_spec(args.newest_block),
+            reward_percentiles: args.reward_percentiles.unwrap_or_default(),
+        };
         process_result(
             RpcMethod::EthFeeHistory,
-            self.client.eth_fee_history(args.into()).await,
+            self.client.eth_fee_history(args).await,
         )
         .map(|history| history)
     }

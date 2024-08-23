@@ -5,8 +5,10 @@ use candid::types::{Serializer, Type};
 use candid::{CandidType, Nat};
 use serde::Deserialize;
 
-pub mod request;
-pub mod response;
+mod request;
+mod response;
+
+pub use request::FeeHistoryArgs;
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
 pub enum BlockTag {

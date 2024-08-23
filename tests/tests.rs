@@ -317,7 +317,7 @@ impl EvmRpcSetup {
         &self,
         source: RpcServices,
         config: Option<RpcConfig>,
-        args: candid_types::FeeHistoryArgs,
+        args: evm_rpc_types::FeeHistoryArgs,
     ) -> CallFlow<MultiRpcResult<Option<FeeHistory>>> {
         self.call_update("eth_feeHistory", Encode!(&source, &config, &args).unwrap())
     }
@@ -1260,9 +1260,9 @@ fn eth_fee_history_should_succeed() {
         .eth_fee_history(
             source.clone(),
             None,
-            candid_types::FeeHistoryArgs {
-                block_count: 3,
-                newest_block: candid_types::BlockTag::Latest,
+            evm_rpc_types::FeeHistoryArgs {
+                block_count: 3.into(),
+                newest_block: evm_rpc_types::BlockTag::Latest,
                 reward_percentiles: None,
             },
         )
