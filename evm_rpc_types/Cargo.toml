@@ -9,3 +9,7 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 serde = { workspace = true }
+
+[dev-dependencies]
+num-bigint = { workspace = true }
+proptest = { workspace = true }

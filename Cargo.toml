@@ -18,6 +18,7 @@ inherits = "release"
 
 [dependencies]
 candid = { workspace = true }
+evm_rpc_types = { path = "evm_rpc_types" }
 getrandom = { workspace = true }
 ic-canisters-http-types = { workspace = true }
 ic-nervous-system-common = { workspace = true }
@@ -58,8 +59,11 @@ ic-certified-map = "0.4"
 ic-cdk = "0.10"
 ic-cdk-macros = "0.7"
 ic-cdk-bindgen = "0.1"
+num-bigint = "0.4.6"
+proptest = "1.5.0"
 serde = "1.0"
 serde_json = "1.0"
+
 
 [patch.crates-io]
 wasm-bindgen = { git = "https://github.com/dfinity/wasm-bindgen", rev = "9cde9c9a88c1fad13a8663277650e01b5671843e" }

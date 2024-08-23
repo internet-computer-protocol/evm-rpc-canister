@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use candid::types::{Serializer, Type};
 use candid::{CandidType, Nat};
 use serde::Deserialize;
