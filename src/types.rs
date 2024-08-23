@@ -17,8 +17,8 @@ use crate::validate::validate_api_key;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
-    #[serde(rename = "apiKeyPrincipals")]
-    pub api_key_principals: Option<Vec<Principal>>,
+    #[serde(rename = "manageApiKeys")]
+    pub manage_api_keys: Option<Vec<Principal>>,
 }
 
 pub enum ResolvedRpcService {

@@ -187,7 +187,7 @@ fn init(args: InitArgs) {
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade(args: InitArgs) {
-    if let Some(principals) = args.api_key_principals {
+    if let Some(principals) = args.manage_api_keys {
         set_api_key_principals(principals);
     }
 }

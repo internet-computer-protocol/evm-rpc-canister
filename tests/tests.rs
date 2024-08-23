@@ -100,7 +100,7 @@ impl Default for EvmRpcSetup {
 impl EvmRpcSetup {
     pub fn new() -> Self {
         Self::with_args(InitArgs {
-            api_key_principals: None,
+            manage_api_keys: None,
         })
     }
 
