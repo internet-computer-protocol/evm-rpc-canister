@@ -68,3 +68,14 @@ impl TryFrom<Nat> for Nat256 {
         }
     }
 }
+
+macro_rules! impl_from_unchecked {
+    ($f: ty, $($t: ty)*) => ($(
+        impl From<$t> for $f {
+            #[inline]
+            fn from(v: $t) -> Self { Self::try_from(Nat::from(v)).unwrap() }
+        }
+    )*)
+}
+// all the types below are guaranteed to fit in 256 bits
+impl_from_unchecked!( Nat256, usize u8 u16 u32 u64 u128 );
