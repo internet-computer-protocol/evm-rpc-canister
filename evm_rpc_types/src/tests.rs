@@ -32,9 +32,9 @@ mod nat256 {
         #[test]
         fn should_convert_to_bytes_and_back(u256 in arb_u256()) {
             let value = Nat256::try_from(Nat::from(u256)).unwrap();
-
             let bytes = value.clone().into_be_bytes();
-            let value_from_bytes = Nat256::try_from(Nat::from(BigUint::from_bytes_be(&bytes))).unwrap();
+
+            let value_from_bytes = Nat256::from_be_bytes(bytes);
 
             assert_eq!(value, value_from_bytes);
         }
