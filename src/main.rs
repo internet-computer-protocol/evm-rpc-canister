@@ -1,5 +1,5 @@
 use candid::{candid_method, Principal};
-use cketh_common::eth_rpc::{Block, FeeHistory, LogEntry, RpcError};
+use cketh_common::eth_rpc::{Block, LogEntry, RpcError};
 
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
@@ -94,8 +94,8 @@ pub async fn eth_get_transaction_count(
 pub async fn eth_fee_history(
     source: RpcServices,
     config: Option<RpcConfig>,
-    args: candid_types::FeeHistoryArgs,
-) -> MultiRpcResult<FeeHistory> {
+    args: evm_rpc_types::FeeHistoryArgs,
+) -> MultiRpcResult<evm_rpc_types::FeeHistory> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_fee_history(args).await,
         Err(err) => Err(err).into(),

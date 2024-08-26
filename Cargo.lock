@@ -567,7 +567,7 @@ dependencies = [
  "build-info-common",
  "chrono",
  "format-buf",
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "num-traits",
  "proc-macro-error",
  "proc-macro-hack",
@@ -683,7 +683,7 @@ dependencies = [
  "lalrpop-util",
  "leb128",
  "logos",
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "num-traits",
  "num_enum 0.6.1",
  "paste",
@@ -1216,7 +1216,7 @@ dependencies = [
  "asn1-rs",
  "displaydoc",
  "nom",
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "num-traits",
  "rusticata-macros",
 ]
@@ -1451,7 +1451,7 @@ version = "3.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1bf1fa3f06bbff1ea5b1a9c7b14aa992a39657db60a2759457328d7e058f49ee"
 dependencies = [
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "num-traits",
  "proc-macro2",
  "quote",
@@ -1587,6 +1587,7 @@ dependencies = [
  "async-trait",
  "candid",
  "ethers-core",
+ "evm_rpc_types",
  "getrandom 0.2.14",
  "hex",
  "ic-base-types 0.8.0",
@@ -1610,6 +1611,16 @@ dependencies = [
  "serde",
  "serde_json",
  "url",
+]
+
+[[package]]
+name = "evm_rpc_types"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "num-bigint 0.4.6",
+ "proptest",
+ "serde",
 ]
 
 [[package]]
@@ -2564,7 +2575,7 @@ dependencies = [
  "icrc-ledger-types 0.1.4",
  "minicbor",
  "minicbor-derive",
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "num-traits",
  "phantom_newtype 0.9.0",
  "rlp",
@@ -2665,7 +2676,7 @@ source = "git+https://github.com/dfinity/ic?rev=release-2023-09-27_23-01#ca5e505
 dependencies = [
  "k256",
  "lazy_static",
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "pem 1.1.1",
  "rand",
  "simple_asn1",
@@ -2679,7 +2690,7 @@ source = "git+https://github.com/dfinity/ic?rev=5991b07d0e396b7885d5b4d4c917f729
 dependencies = [
  "k256",
  "lazy_static",
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "pem 1.1.1",
  "rand",
  "simple_asn1",
@@ -2693,7 +2704,7 @@ source = "git+https://github.com/dfinity/ic?rev=release-2023-09-27_23-01#ca5e505
 dependencies = [
  "ic-crypto-getrandom-for-wasm",
  "lazy_static",
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "p256",
  "pem 1.1.1",
  "rand",
@@ -2845,7 +2856,7 @@ dependencies = [
  "ic-crypto-internal-basic-sig-der-utils",
  "ic-crypto-sha2 0.8.0",
  "ic-types",
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "num-traits",
  "pkcs8",
  "rsa",
@@ -3499,7 +3510,7 @@ dependencies = [
  "ic-ledger-core",
  "ic-ledger-hash-of",
  "icrc-ledger-types 0.1.2",
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "num-traits",
  "serde",
  "serde_bytes",
@@ -4361,7 +4372,7 @@ dependencies = [
  "candid",
  "crc32fast",
  "hex",
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "num-traits",
  "serde",
  "serde_bytes",
@@ -4933,7 +4944,7 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35bd024e8b2ff75562e5f34e7f4905839deb4b22955ef5e73d2fea1b9813cb23"
 dependencies = [
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "num-complex",
  "num-integer",
  "num-iter",
@@ -4954,9 +4965,9 @@ dependencies = [
 
 [[package]]
 name = "num-bigint"
-version = "0.4.5"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c165a9ab64cf766f73521c0dd2cfdff64f488b8f0b3e621face3462d3db536d7"
+checksum = "a5e44f723f1133c9deac646763579fdb3ac745e418f2a7af9cd0c431da1f20b9"
 dependencies = [
  "num-integer",
  "num-traits",
@@ -5045,7 +5056,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f83d14da390562dca69fc84082e73e548e1ad308d24accdedd2720017cb37824"
 dependencies = [
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
 ]
@@ -5705,10 +5716,12 @@ dependencies = [
 
 [[package]]
 name = "proptest"
-version = "1.4.0"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31b476131c3c86cb68032fdc5cb6d5a1045e3e42d96b69fa599fd77701e1f5bf"
+checksum = "b4c2511913b88df1637da85cc8d96ec8e43a3f8bb8ccb71ee1ac240d6f3df58d"
 dependencies = [
+ "bit-set",
+ "bit-vec 0.6.3",
  "bitflags 2.5.0",
  "lazy_static",
  "num-traits",
@@ -5716,6 +5729,8 @@ dependencies = [
  "rand_chacha",
  "rand_xorshift",
  "regex-syntax 0.8.3",
+ "rusty-fork",
+ "tempfile",
  "unarray",
 ]
 
@@ -5830,6 +5845,12 @@ dependencies = [
  "quote",
  "syn 1.0.109",
 ]
+
+[[package]]
+name = "quick-error"
+version = "1.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
@@ -6251,6 +6272,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80af6f9131f277a45a3fba6ce8e2258037bb0477a67e610d3c1fe046ab31de47"
 
 [[package]]
+name = "rusty-fork"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb3dcc6e454c328bb824492db107ab7c0ae8fcffe4ad210136ef014458c1bc4f"
+dependencies = [
+ "fnv",
+ "quick-error",
+ "tempfile",
+ "wait-timeout",
+]
+
+[[package]]
 name = "ryu"
 version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6510,7 +6543,7 @@ version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adc4e5204eb1910f40f9cfa375f6f05b68c3abac4b6fd879c8ff5e7ae8a0a085"
 dependencies = [
- "num-bigint 0.4.5",
+ "num-bigint 0.4.6",
  "num-traits",
  "thiserror",
  "time",
@@ -7471,6 +7504,15 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+
+[[package]]
+name = "wait-timeout"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f200f5b12eb75f8c1ed65abd4b2db8a6e1b138a20de009dacee265a2498f3f6"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "walkdir"

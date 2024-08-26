@@ -8,8 +8,8 @@ use cketh_common::{
     address::Address,
     checked_amount::CheckedAmountOf,
     eth_rpc::{
-        Block, Data, FeeHistory, FixedSizeData, Hash, HttpOutcallError, JsonRpcError, LogEntry,
-        ProviderError, RpcError,
+        Block, Data, FixedSizeData, Hash, HttpOutcallError, JsonRpcError, LogEntry, ProviderError,
+        RpcError,
     },
     eth_rpc_client::{
         providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
@@ -44,6 +44,7 @@ use evm_rpc::{
         RegisterProviderArgs, RpcMethod, RpcResult, RpcServices, UpdateProviderArgs,
     },
 };
+use evm_rpc_types::Nat256;
 use mock::{MockOutcall, MockOutcallBuilder};
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
@@ -317,8 +318,8 @@ impl EvmRpcSetup {
         &self,
         source: RpcServices,
         config: Option<RpcConfig>,
-        args: candid_types::FeeHistoryArgs,
-    ) -> CallFlow<MultiRpcResult<Option<FeeHistory>>> {
+        args: evm_rpc_types::FeeHistoryArgs,
+    ) -> CallFlow<MultiRpcResult<Option<evm_rpc_types::FeeHistory>>> {
         self.call_update("eth_feeHistory", Encode!(&source, &config, &args).unwrap())
     }
 
@@ -1260,9 +1261,9 @@ fn eth_fee_history_should_succeed() {
         .eth_fee_history(
             source.clone(),
             None,
-            candid_types::FeeHistoryArgs {
-                block_count: 3,
-                newest_block: candid_types::BlockTag::Latest,
+            evm_rpc_types::FeeHistoryArgs {
+                block_count: 3_u8.into(),
+                newest_block: evm_rpc_types::BlockTag::Latest,
                 reward_percentiles: None,
             },
         )
@@ -1275,14 +1276,14 @@ fn eth_fee_history_should_succeed() {
         .unwrap();
         assert_eq!(
             response,
-            Some(FeeHistory {
-                oldest_block: CheckedAmountOf::new(0x11e57f5),
-                base_fee_per_gas: vec!["0x9cf6c61b9", "0x97d853982", "0x9ba55a0b0", "0x9543bf98d"]
+            Some(evm_rpc_types::FeeHistory {
+                oldest_block: Nat256::from(0x11e57f5_u64),
+                base_fee_per_gas: vec![0x9cf6c61b9_u64, 0x97d853982, 0x9ba55a0b0, 0x9543bf98d]
                     .into_iter()
-                    .map(|hex| CheckedAmountOf::from_str_hex(hex).unwrap())
+                    .map(Nat256::from)
                     .collect(),
                 gas_used_ratio: vec![],
-                reward: vec![vec![CheckedAmountOf::new(0x0123)]],
+                reward: vec![vec![Nat256::from(0x0123_u32)]],
             })
         );
     }
