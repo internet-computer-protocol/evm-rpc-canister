@@ -129,7 +129,7 @@ Run the following commands to set up a local development environment:
 ```bash
 # Clone the repository and install dependencies
 git clone https://github.com/internet-computer-protocol/evm-rpc-canister
-cd ic-eth-rpc
+cd evm-rpc-canister
 npm install
 
 # Deploy to the local replica
