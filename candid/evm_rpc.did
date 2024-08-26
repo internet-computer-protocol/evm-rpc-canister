@@ -141,7 +141,7 @@ type Provider = record {
   urlPattern : text;
   headerPatterns : opt vec HttpHeader;
   publicUrl : opt text;
-  "service" : opt RpcService;
+  alias : opt RpcService;
 };
 type RejectionCode = variant {
   NoError;

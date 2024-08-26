@@ -267,7 +267,7 @@ pub struct Provider {
     pub public_url: Option<&'static str>,
     pub url_pattern: &'static str,
     pub header_patterns: &'static [ConstHeader],
-    pub service: Option<RpcService>,
+    pub alias: Option<RpcService>,
 }
 
 impl Provider {
@@ -310,7 +310,7 @@ pub struct ProviderView {
     pub header_patterns: Vec<HttpHeader>,
     #[serde(rename = "publicUrl")]
     pub public_url: Option<String>,
-    pub service: Option<RpcService>,
+    pub alias: Option<RpcService>,
 }
 
 impl From<Provider> for ProviderView {
@@ -325,7 +325,7 @@ impl From<Provider> for ProviderView {
                 .map(HttpHeader::from)
                 .collect(),
             public_url: provider.public_url.map(str::to_string),
-            service: provider.service.clone(),
+            alias: provider.alias.clone(),
         }
     }
 }
