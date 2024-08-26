@@ -9,6 +9,7 @@ use crate::{
     accounting::{get_cost_with_collateral, get_http_request_cost},
     add_metric_entry,
     constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST},
+    memory::get_demo_status,
     types::{MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcResult},
     util::canonicalize_json,
 };
@@ -74,16 +75,18 @@ pub async fn http_request(
         ))
         .into());
     }
-    let cycles_available = ic_cdk::api::call::msg_cycles_available128();
-    let cycles_cost_with_collateral = get_cost_with_collateral(cycles_cost);
-    if cycles_available < cycles_cost_with_collateral {
-        return Err(ProviderError::TooFewCycles {
-            expected: cycles_cost_with_collateral,
-            received: cycles_available,
+    if !get_demo_status() {
+        let cycles_available = ic_cdk::api::call::msg_cycles_available128();
+        let cycles_cost_with_collateral = get_cost_with_collateral(cycles_cost);
+        if cycles_available < cycles_cost_with_collateral {
+            return Err(ProviderError::TooFewCycles {
+                expected: cycles_cost_with_collateral,
+                received: cycles_available,
+            }
+            .into());
         }
-        .into());
+        ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
     }
-    ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
     add_metric_entry!(
         cycles_charged,
         (rpc_method.clone(), rpc_host.clone()),
