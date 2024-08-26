@@ -1,6 +1,6 @@
 //! Conversion between ckETH types and EVM RPC types.
 //! This module is meant to be temporary and should be removed once the dependency on ckETH is removed,
-//! see https://github.com/internet-computer-protocol/evm-rpc-canister/issues/243
+//! see <https://github.com/internet-computer-protocol/evm-rpc-canister/issues/243>
 
 use cketh_common::checked_amount::CheckedAmountOf;
 use cketh_common::eth_rpc::Quantity;
