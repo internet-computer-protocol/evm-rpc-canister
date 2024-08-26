@@ -12,4 +12,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - v1.0 `Nat256`: transparent wrapper around a `Nat` to guarantee that it fits in 256 bits.
 - v1.0 Move `BlockTag` to this crate.
 - v1.0 Move `FeeHistoryArgs` and `FeeHistory` to this crate.
-- v1.0 Move `GetLogsArgs` to this crate.
+- v1.0 Move `GetLogsArgs` and `LogEntry` to this crate.

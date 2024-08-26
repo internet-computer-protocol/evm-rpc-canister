@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use candid::Nat;
 use cketh_common::{
     eth_rpc::{
-        into_nat, Block, Hash, LogEntry, ProviderError, RpcError, SendRawTransactionResult,
+        into_nat, Block, Hash, ProviderError, RpcError, SendRawTransactionResult,
         ValidationError,
     },
     eth_rpc_client::{
@@ -184,8 +184,8 @@ impl CandidRpcClient {
     pub async fn eth_get_logs(
         &self,
         args: evm_rpc_types::GetLogsArgs,
-    ) -> MultiRpcResult<Vec<LogEntry>> {
-        use crate::candid_rpc::cketh_conversion::into_get_logs_param;
+    ) -> MultiRpcResult<Vec<evm_rpc_types::LogEntry>> {
+        use crate::candid_rpc::cketh_conversion::{from_log_entries, into_get_logs_param};
 
         if let (
             Some(evm_rpc_types::BlockTag::Number(from)),
@@ -207,6 +207,7 @@ impl CandidRpcClient {
             RpcMethod::EthGetLogs,
             self.client.eth_get_logs(into_get_logs_param(args)).await,
         )
+        .map(from_log_entries)
     }
 
     pub async fn eth_get_block_by_number(

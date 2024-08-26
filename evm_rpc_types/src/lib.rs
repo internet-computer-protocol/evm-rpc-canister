@@ -12,7 +12,7 @@ mod request;
 mod response;
 
 pub use request::{FeeHistoryArgs, GetLogsArgs};
-pub use response::FeeHistory;
+pub use response::{FeeHistory, LogEntry};
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
 pub enum BlockTag {

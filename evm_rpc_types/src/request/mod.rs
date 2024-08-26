@@ -1,4 +1,4 @@
-use crate::{Address, BlockTag, FixedSizeData, Nat256};
+use crate::{BlockTag, Hex20, Hex32, Nat256};
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -33,10 +33,10 @@ pub struct GetLogsArgs {
     pub to_block: Option<BlockTag>,
 
     /// Contract address or a list of addresses from which logs should originate.
-    pub addresses: Vec<Address>,
+    pub addresses: Vec<Hex20>,
 
     /// Array of 32 Bytes DATA topics.
     /// Topics are order-dependent.
     /// Each topic can also be an array of DATA with "or" options.
-    pub topics: Option<Vec<Vec<FixedSizeData>>>,
+    pub topics: Option<Vec<Vec<Hex32>>>,
 }

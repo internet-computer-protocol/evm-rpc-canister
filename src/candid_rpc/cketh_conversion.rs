@@ -43,6 +43,26 @@ pub(super) fn into_get_logs_param(
     }
 }
 
+pub(super) fn from_log_entries(
+    value: Vec<cketh_common::eth_rpc::LogEntry>,
+) -> Vec<evm_rpc_types::LogEntry> {
+    value.into_iter().map(from_log_entry).collect()
+}
+
+fn from_log_entry(value: cketh_common::eth_rpc::LogEntry) -> evm_rpc_types::LogEntry {
+    evm_rpc_types::LogEntry {
+        address: from_address(value.address),
+        topics: value.topics.into_iter().map(|t| t.0.into()).collect(),
+        data: value.data.0.into(),
+        block_hash: value.block_hash.map(|x| x.0.into()),
+        block_number: value.block_number.map(from_checked_amount_of),
+        transaction_hash: value.transaction_hash.map(|x| x.0.into()),
+        transaction_index: value.transaction_index.map(from_checked_amount_of),
+        log_index: value.log_index.map(from_checked_amount_of),
+        removed: value.removed,
+    }
+}
+
 pub(super) fn into_fee_history_params(
     value: evm_rpc_types::FeeHistoryArgs,
 ) -> cketh_common::eth_rpc::FeeHistoryParams {
@@ -82,4 +102,13 @@ fn from_checked_amount_of<Unit>(value: CheckedAmountOf<Unit>) -> Nat256 {
 
 fn into_quantity(value: Nat256) -> Quantity {
     Quantity::from_be_bytes(value.into_be_bytes())
+}
+
+fn from_address(value: cketh_common::address::Address) -> evm_rpc_types::Hex20 {
+    // TODO 243: cketh_common::address::Address should expose the underlying [u8; 20]
+    // so that there is no artificial error handling here.
+    value
+        .to_string()
+        .parse()
+        .expect("BUG: Ethereum address cannot be parsed")
 }
