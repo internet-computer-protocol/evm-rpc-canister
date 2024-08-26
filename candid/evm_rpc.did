@@ -239,5 +239,5 @@ service : (InitArgs) -> {
   getNodesInSubnet : () -> (numberOfNodes : nat32) query;
   getProviders : () -> (vec Provider) query;
   getServiceProviderMap : () -> (vec record { RpcService; ProviderId }) query;
-  insertApiKeys : (vec record { ProviderId; text }) -> ();
+  updateApiKeys : (vec record { ProviderId; opt text }) -> ();
 };

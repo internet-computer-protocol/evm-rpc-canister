@@ -31,8 +31,8 @@ thread_local! {
         RefCell::new(ic_stable_structures::Vec::init(MEMORY_MANAGER.with_borrow(|m|m.get(MemoryId::new(6)))).expect("Unable to read API key principals from stable memory"));
 }
 
-pub fn get_api_key(provider_id: ProviderId) -> ApiKey {
-    API_KEY_MAP.with_borrow_mut(|map| map.get(&provider_id).unwrap_or_else(ApiKey::empty))
+pub fn get_api_key(provider_id: ProviderId) -> Option<ApiKey> {
+    API_KEY_MAP.with_borrow_mut(|map| map.get(&provider_id))
 }
 
 pub fn insert_api_key(provider_id: ProviderId, api_key: ApiKey) {

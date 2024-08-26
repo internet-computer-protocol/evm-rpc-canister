@@ -7,7 +7,9 @@ use evm_rpc::accounting::{get_cost_with_collateral, get_http_request_cost};
 use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::constants::NODES_IN_SUBNET;
 use evm_rpc::http::get_http_response_body;
-use evm_rpc::memory::{insert_api_key, is_api_key_principal, set_api_key_principals};
+use evm_rpc::memory::{
+    insert_api_key, is_api_key_principal, remove_api_key, set_api_key_principals,
+};
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
 use evm_rpc::types::{ProviderId, ProviderView};
@@ -165,13 +167,16 @@ async fn get_nodes_in_subnet() -> u32 {
 }
 
 #[update(
-    name = "insertApiKeys",
+    name = "updateApiKeys",
     guard = "require_api_key_principal_or_controller"
 )]
-#[candid_method(rename = "insertApiKeys")]
-async fn insert_api_keys(api_keys: Vec<(ProviderId, String)>) {
+#[candid_method(rename = "updateApiKeys")]
+async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
     for (provider_id, api_key) in api_keys {
-        insert_api_key(provider_id, api_key.try_into().expect("Invalid API key"));
+        match api_key {
+            Some(key) => insert_api_key(provider_id, key.try_into().expect("Invalid API key")),
+            None => remove_api_key(provider_id),
+        }
     }
 }
 

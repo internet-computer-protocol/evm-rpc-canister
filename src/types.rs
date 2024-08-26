@@ -206,10 +206,6 @@ impl BoundedStorable for PrincipalStorable {
 pub struct ApiKey(String);
 
 impl ApiKey {
-    pub fn empty() -> ApiKey {
-        ApiKey("".to_string())
-    }
-
     /// Explicitly read API key (use sparingly)
     pub fn read(self) -> String {
         self.0
@@ -249,9 +245,18 @@ impl BoundedStorable for ApiKey {
 pub type ProviderId = u64;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct HeaderPattern {
+pub struct ConstHeader {
     pub name: &'static str,
     pub value: &'static str,
+}
+
+impl From<ConstHeader> for HttpHeader {
+    fn from(header: ConstHeader) -> Self {
+        HttpHeader {
+            name: header.name.to_string(),
+            value: header.value.to_string(),
+        }
+    }
 }
 
 /// Internal RPC provider representation.
@@ -260,24 +265,39 @@ pub struct Provider {
     pub provider_id: ProviderId,
     pub chain_id: u64,
     pub url_pattern: &'static str,
-    pub header_patterns: &'static [HeaderPattern],
+    pub header_patterns: &'static [ConstHeader],
+    pub public_url: &'static str,
+    pub public_headers: &'static [ConstHeader],
     pub service: Option<RpcService>,
 }
 
 impl Provider {
     pub fn api(&self) -> RpcApi {
-        let api_key = get_api_key(self.provider_id).0;
-        RpcApi {
-            url: self.url_pattern.replace(API_KEY_REPLACE_STRING, &api_key),
-            headers: Some(
-                self.header_patterns
-                    .iter()
-                    .map(|header| HttpHeader {
-                        name: header.name.to_string(),
-                        value: header.value.replace(API_KEY_REPLACE_STRING, &api_key),
-                    })
-                    .collect(),
-            ),
+        match get_api_key(self.provider_id) {
+            Some(api_key) => RpcApi {
+                url: self.url_pattern.replace(API_KEY_REPLACE_STRING, &api_key.0),
+                headers: Some(
+                    self.header_patterns
+                        .iter()
+                        .map(|header| HttpHeader {
+                            name: header.name.to_string(),
+                            value: header.value.replace(API_KEY_REPLACE_STRING, &api_key.0),
+                        })
+                        .collect(),
+                ),
+            },
+            None => RpcApi {
+                url: self.public_url.to_string(),
+                headers: Some(
+                    self.public_headers
+                        .iter()
+                        .map(|header| HttpHeader {
+                            name: header.name.to_string(),
+                            value: header.value.to_string(),
+                        })
+                        .collect(),
+                ),
+            },
         }
     }
 }
