@@ -1,5 +1,5 @@
 use crate::{
-    constants::{CONTENT_TYPE_HEADER, SERVICE_HOSTS_BLOCKLIST},
+    constants::{CONTENT_TYPE_HEADER, SERVICE_HOSTS_BLOCKLIST, VALID_API_KEY_CHARS},
     types::ConstHeader,
     util::hostname_from_url,
 };
@@ -28,7 +28,14 @@ pub fn validate_header_patterns(header_patterns: &[ConstHeader]) -> Result<(), &
 }
 
 pub fn validate_api_key(api_key: &str) -> Result<(), &'static str> {
-    if api_key.contains(['.', '/', '?', '&']) {
+    if api_key.is_empty() {
+        Err("API key must not be an empty string")
+    } else if api_key.len() > 200 {
+        Err("API key must be <= 200 characters")
+    } else if api_key
+        .chars()
+        .any(|char| !VALID_API_KEY_CHARS.contains(char))
+    {
         Err("Invalid character in API key")
     } else {
         Ok(())
