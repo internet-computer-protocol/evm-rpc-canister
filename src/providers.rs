@@ -12,10 +12,10 @@ use crate::{
         ARBITRUM_ONE_CHAIN_ID, BASE_MAINNET_CHAIN_ID, ETH_MAINNET_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID,
         OPTIMISM_MAINNET_CHAIN_ID,
     },
-    types::{HeaderPattern, Provider, ProviderId, ResolvedRpcService},
+    types::{ConstHeader, Provider, ProviderId, ResolvedRpcService},
 };
 
-const ALCHEMY_HEADERS: &[HeaderPattern] = &[HeaderPattern {
+const ALCHEMY_HEADERS: &[ConstHeader] = &[ConstHeader {
     name: "Authorization",
     value: "Bearer {API_KEY}",
 }];
