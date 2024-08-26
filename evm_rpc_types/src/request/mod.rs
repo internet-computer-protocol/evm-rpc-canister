@@ -1,4 +1,4 @@
-use crate::{BlockTag, Nat256};
+use crate::{Address, BlockTag, FixedSizeData, Nat256};
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -20,4 +20,23 @@ pub struct FeeHistoryArgs {
     /// will be determined, accounting for gas consumed.
     #[serde(rename = "rewardPercentiles")]
     pub reward_percentiles: Option<Vec<u8>>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
+pub struct GetLogsArgs {
+    /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
+    #[serde(rename = "fromBlock")]
+    pub from_block: Option<BlockTag>,
+
+    /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
+    #[serde(rename = "toBlock")]
+    pub to_block: Option<BlockTag>,
+
+    /// Contract address or a list of addresses from which logs should originate.
+    pub addresses: Vec<Address>,
+
+    /// Array of 32 Bytes DATA topics.
+    /// Topics are order-dependent.
+    /// Each topic can also be an array of DATA with "or" options.
+    pub topics: Option<Vec<Vec<FixedSizeData>>>,
 }

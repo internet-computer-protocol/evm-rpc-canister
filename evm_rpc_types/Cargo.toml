@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
+hex = { workspace = true }
 num-bigint = { workspace = true }
 serde = { workspace = true }
 

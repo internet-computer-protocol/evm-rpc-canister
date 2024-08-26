@@ -1618,6 +1618,7 @@ name = "evm_rpc_types"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "hex",
  "num-bigint 0.4.6",
  "proptest",
  "serde",
