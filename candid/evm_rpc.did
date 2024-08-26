@@ -42,6 +42,7 @@ type EthSepoliaService = variant {
   Ankr;
   BlockPi;
   PublicNode;
+  Sepolia;
 };
 type L2MainnetService = variant {
   Alchemy;
