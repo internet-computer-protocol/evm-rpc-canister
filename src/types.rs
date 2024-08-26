@@ -18,6 +18,7 @@ use crate::validate::validate_api_key;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArgs {
+    pub demo: Option<bool>,
     #[serde(rename = "manageApiKeys")]
     pub manage_api_keys: Option<Vec<Principal>>,
 }

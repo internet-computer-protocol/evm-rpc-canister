@@ -8,7 +8,7 @@ use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::constants::NODES_IN_SUBNET;
 use evm_rpc::http::get_http_response_body;
 use evm_rpc::memory::{
-    insert_api_key, is_api_key_principal, remove_api_key, set_api_key_principals,
+    insert_api_key, is_api_key_principal, remove_api_key, set_api_key_principals, set_demo_status,
 };
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
@@ -192,6 +192,7 @@ fn init(args: InitArgs) {
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade(args: InitArgs) {
+    set_demo_status(args.demo.unwrap_or(false));
     if let Some(principals) = args.manage_api_keys {
         set_api_key_principals(principals);
     }

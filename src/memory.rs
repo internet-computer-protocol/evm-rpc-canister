@@ -17,6 +17,7 @@ type Memory = VirtualMemory<DefaultMemoryImpl>;
 thread_local! {
     // Unstable static data: these are reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
+    static UNSTABLE_DEMO_STATUS: RefCell<bool> = RefCell::new(false);
 
     // Stable static data: these are preserved when the canister is upgraded.
     #[cfg(not(target_arch = "wasm32"))]
@@ -62,6 +63,14 @@ pub fn set_api_key_principals(new_principals: Vec<Principal>) {
                 .expect("Error while adding API key principal");
         }
     });
+}
+
+pub fn get_demo_status() -> bool {
+    UNSTABLE_DEMO_STATUS.with_borrow(|status| *status)
+}
+
+pub fn set_demo_status(new_status: bool) {
+    UNSTABLE_DEMO_STATUS.with_borrow_mut(|status| *status = new_status)
 }
 
 #[cfg(test)]

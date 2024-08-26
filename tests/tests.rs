@@ -102,6 +102,7 @@ impl EvmRpcSetup {
     pub fn new() -> Self {
         Self::with_args(InitArgs {
             manage_api_keys: None,
+            demo: Some(true),
         })
     }
 

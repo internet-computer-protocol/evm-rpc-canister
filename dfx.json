@@ -16,6 +16,13 @@
       },
       "gzip": true
     },
+    "evm_rpc_demo": {
+      "candid": "candid/evm_rpc.did",
+      "type": "rust",
+      "package": "evm_rpc",
+      "gzip": true,
+      "init_arg": "(record {demo = opt true})"
+    },
     "evm_rpc_staging_13_node": {
       "candid": "candid/evm_rpc.did",
       "type": "rust",

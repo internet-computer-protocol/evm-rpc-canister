@@ -79,6 +79,7 @@ type HttpOutcallError = variant {
   };
 };
 type InitArgs = record {
+  demo : opt bool;
   manageApiKeys : opt vec principal;
 };
 type JsonRpcError = record { code : int64; message : text };
