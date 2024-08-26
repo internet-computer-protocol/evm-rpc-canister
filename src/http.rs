@@ -51,16 +51,28 @@ pub async fn http_request(
     let api = service.api();
     let parsed_url = match url::Url::parse(&api.url) {
         Ok(url) => url,
-        Err(_) => return Err(ValidationError::UrlParseError(api.url).into()),
+        Err(_) => {
+            return Err(ValidationError::Custom(format!("Error parsing URL: {}", api.url)).into())
+        }
     };
     let host = match parsed_url.host_str() {
         Some(host) => host,
-        None => return Err(ValidationError::UrlParseError(api.url).into()),
+        None => {
+            return Err(ValidationError::Custom(format!(
+                "Error parsing hostname from URL: {}",
+                api.url
+            ))
+            .into())
+        }
     };
     let rpc_host = MetricRpcHost(host.to_string());
     if SERVICE_HOSTS_BLOCKLIST.contains(&rpc_host.0.as_str()) {
         add_metric_entry!(err_host_not_allowed, rpc_host.clone(), 1);
-        return Err(ValidationError::HostNotAllowed(rpc_host.0).into());
+        return Err(ValidationError::Custom(format!(
+            "Disallowed RPC service host: {}",
+            rpc_host.0
+        ))
+        .into());
     }
     let cycles_available = ic_cdk::api::call::msg_cycles_available128();
     let cycles_cost_with_collateral = get_cost_with_collateral(cycles_cost);

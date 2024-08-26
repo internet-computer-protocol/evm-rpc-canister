@@ -54,7 +54,7 @@ pub const PROVIDERS: &[Provider] = &[
         chain_id: ETH_SEPOLIA_CHAIN_ID,
         url_pattern: "https://rpc.sepolia.org",
         header_patterns: &[],
-        service: None,
+        service: Some(RpcService::EthSepolia(EthSepoliaService::Sepolia)),
     },
     Provider {
         provider_id: 5,
