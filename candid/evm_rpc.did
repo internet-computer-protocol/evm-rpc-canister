@@ -140,6 +140,8 @@ type Provider = record {
   chainId : ChainId;
   urlPattern : text;
   headerPatterns : opt vec HttpHeader;
+  publicUrl : text;
+  publicHeaders : opt vec HttpHeader;
   "service" : opt RpcService;
 };
 type RejectionCode = variant {

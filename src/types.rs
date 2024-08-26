@@ -313,6 +313,10 @@ pub struct ProviderView {
     pub url_pattern: String,
     #[serde(rename = "headerPatterns")]
     pub header_patterns: Vec<HttpHeader>,
+    #[serde(rename = "publicUrl")]
+    pub public_url: String,
+    #[serde(rename = "publicHeaders")]
+    pub public_headers: Vec<HttpHeader>,
     pub service: Option<RpcService>,
 }
 
