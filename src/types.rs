@@ -321,7 +321,7 @@ impl From<Provider> for ProviderView {
             url_pattern: provider.url_pattern.to_string(),
             header_patterns: provider
                 .header_patterns
-                .into_iter()
+                .iter()
                 .map(HttpHeader::from)
                 .collect(),
             public_url: provider.public_url.map(str::to_string),
