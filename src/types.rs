@@ -10,6 +10,7 @@ use serde::Deserialize;
 
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::fmt;
 
 use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, STRING_STORABLE_MAX_SIZE};
 use crate::memory::get_api_key;
@@ -212,6 +213,13 @@ impl ApiKey {
     /// Explicitly read API key (use sparingly)
     pub fn read(self) -> String {
         self.0
+    }
+}
+
+// Enable printing data structures which include an API key
+impl fmt::Debug for ApiKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{API_KEY_REPLACE_STRING}")
     }
 }
 
