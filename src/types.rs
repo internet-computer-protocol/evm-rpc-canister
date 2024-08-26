@@ -250,8 +250,8 @@ pub struct ConstHeader {
     pub value: &'static str,
 }
 
-impl From<ConstHeader> for HttpHeader {
-    fn from(header: ConstHeader) -> Self {
+impl<'a> From<&'a ConstHeader> for HttpHeader {
+    fn from(header: &'a ConstHeader) -> Self {
         HttpHeader {
             name: header.name.to_string(),
             value: header.value.to_string(),
@@ -264,17 +264,16 @@ impl From<ConstHeader> for HttpHeader {
 pub struct Provider {
     pub provider_id: ProviderId,
     pub chain_id: u64,
+    pub public_url: Option<&'static str>,
     pub url_pattern: &'static str,
     pub header_patterns: &'static [ConstHeader],
-    pub public_url: &'static str,
-    pub public_headers: &'static [ConstHeader],
     pub service: Option<RpcService>,
 }
 
 impl Provider {
     pub fn api(&self) -> RpcApi {
-        match get_api_key(self.provider_id) {
-            Some(api_key) => RpcApi {
+        match (get_api_key(self.provider_id), self.public_url) {
+            (Some(api_key), _) => RpcApi {
                 url: self.url_pattern.replace(API_KEY_REPLACE_STRING, &api_key.0),
                 headers: Some(
                     self.header_patterns
@@ -286,18 +285,14 @@ impl Provider {
                         .collect(),
                 ),
             },
-            None => RpcApi {
-                url: self.public_url.to_string(),
-                headers: Some(
-                    self.public_headers
-                        .iter()
-                        .map(|header| HttpHeader {
-                            name: header.name.to_string(),
-                            value: header.value.to_string(),
-                        })
-                        .collect(),
-                ),
+            (None, Some(public_url)) => RpcApi {
+                url: public_url.to_string(),
+                headers: None,
             },
+            (None, None) => panic!(
+                "API key not yet initialized for provider: {}",
+                self.provider_id
+            ),
         }
     }
 }
@@ -314,9 +309,7 @@ pub struct ProviderView {
     #[serde(rename = "headerPatterns")]
     pub header_patterns: Vec<HttpHeader>,
     #[serde(rename = "publicUrl")]
-    pub public_url: String,
-    #[serde(rename = "publicHeaders")]
-    pub public_headers: Vec<HttpHeader>,
+    pub public_url: Option<String>,
     pub service: Option<RpcService>,
 }
 
@@ -329,11 +322,9 @@ impl From<Provider> for ProviderView {
             header_patterns: provider
                 .header_patterns
                 .into_iter()
-                .map(|pattern| HttpHeader {
-                    name: pattern.name.to_string(),
-                    value: pattern.value.to_string(),
-                })
+                .map(HttpHeader::from)
                 .collect(),
+            public_url: provider.public_url.map(str::to_string),
             service: provider.service.clone(),
         }
     }

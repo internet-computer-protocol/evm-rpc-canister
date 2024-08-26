@@ -24,6 +24,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 0,
         chain_id: ETH_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://cloudflare-eth.com/v1/mainnet/{API_KEY}",
         header_patterns: &[],
         service: Some(RpcService::EthMainnet(EthMainnetService::Cloudflare)),
@@ -31,6 +32,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 1,
         chain_id: ETH_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://rpc.ankr.com/eth/{API_KEY}",
         header_patterns: &[],
         service: Some(RpcService::EthMainnet(EthMainnetService::Ankr)),
@@ -38,6 +40,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 2,
         chain_id: ETH_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://ethereum-rpc.publicnode.com",
         header_patterns: &[],
         service: Some(RpcService::EthMainnet(EthMainnetService::PublicNode)),
@@ -45,6 +48,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 3,
         chain_id: ETH_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://ethereum.blockpi.network/v1/rpc/{API_KEY}",
         header_patterns: &[],
         service: Some(RpcService::EthMainnet(EthMainnetService::BlockPi)),
@@ -52,6 +56,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 4,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://rpc.sepolia.org",
         header_patterns: &[],
         service: Some(RpcService::EthSepolia(EthSepoliaService::Sepolia)),
@@ -59,6 +64,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 5,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://rpc.ankr.com/eth_sepolia/{API_KEY}",
         header_patterns: &[],
         service: Some(RpcService::EthSepolia(EthSepoliaService::Ankr)),
@@ -66,6 +72,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 6,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://ethereum-sepolia.blockpi.network/v1/rpc/{API_KEY}",
         header_patterns: &[],
         service: Some(RpcService::EthSepolia(EthSepoliaService::BlockPi)),
@@ -73,6 +80,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 7,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://ethereum-sepolia-rpc.publicnode.com",
         header_patterns: &[],
         service: Some(RpcService::EthSepolia(EthSepoliaService::PublicNode)),
@@ -80,6 +88,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 8,
         chain_id: ETH_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://eth-mainnet.g.alchemy.com/v2",
         header_patterns: ALCHEMY_HEADERS,
         service: Some(RpcService::EthMainnet(EthMainnetService::Alchemy)),
@@ -87,6 +96,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 9,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://eth-sepolia.g.alchemy.com/v2",
         header_patterns: ALCHEMY_HEADERS,
         service: Some(RpcService::EthSepolia(EthSepoliaService::Alchemy)),
@@ -94,6 +104,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 10,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://rpc.ankr.com/arbitrum/{API_KEY}",
         header_patterns: &[],
         service: Some(RpcService::ArbitrumOne(L2MainnetService::Ankr)),
@@ -101,6 +112,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 11,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://arb-mainnet.g.alchemy.com/v2",
         header_patterns: ALCHEMY_HEADERS,
         service: Some(RpcService::ArbitrumOne(L2MainnetService::Alchemy)),
@@ -108,6 +120,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 12,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://arbitrum.blockpi.network/v1/rpc/{API_KEY}",
         header_patterns: &[],
         service: Some(RpcService::ArbitrumOne(L2MainnetService::BlockPi)),
@@ -115,6 +128,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 13,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://arbitrum-one-rpc.publicnode.com",
         header_patterns: &[],
         service: Some(RpcService::ArbitrumOne(L2MainnetService::PublicNode)),
@@ -122,6 +136,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 14,
         chain_id: BASE_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://rpc.ankr.com/base/{API_KEY}",
         header_patterns: &[],
         service: Some(RpcService::BaseMainnet(L2MainnetService::Ankr)),
@@ -129,6 +144,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 15,
         chain_id: BASE_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://base-mainnet.g.alchemy.com/v2",
         header_patterns: ALCHEMY_HEADERS,
         service: Some(RpcService::BaseMainnet(L2MainnetService::Alchemy)),
@@ -136,6 +152,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 16,
         chain_id: BASE_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://base.blockpi.network/v1/rpc/{API_KEY}",
         header_patterns: &[],
         service: Some(RpcService::BaseMainnet(L2MainnetService::BlockPi)),
@@ -143,6 +160,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 17,
         chain_id: BASE_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://base-rpc.publicnode.com",
         header_patterns: &[],
         service: Some(RpcService::BaseMainnet(L2MainnetService::PublicNode)),
@@ -150,6 +168,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 18,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://rpc.ankr.com/optimism/{API_KEY}",
         header_patterns: &[],
         service: Some(RpcService::OptimismMainnet(L2MainnetService::Ankr)),
@@ -157,6 +176,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 19,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://opt-mainnet.g.alchemy.com/v2",
         header_patterns: ALCHEMY_HEADERS,
         service: Some(RpcService::OptimismMainnet(L2MainnetService::Alchemy)),
@@ -164,6 +184,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 20,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://optimism.blockpi.network/v1/rpc/{API_KEY}",
         header_patterns: &[],
         service: Some(RpcService::OptimismMainnet(L2MainnetService::BlockPi)),
@@ -171,6 +192,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 21,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://optimism-rpc.publicnode.com",
         header_patterns: &[],
         service: Some(RpcService::OptimismMainnet(L2MainnetService::PublicNode)),
@@ -178,6 +200,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 22,
         chain_id: ETH_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://eth.llamarpc.com",
         header_patterns: &[],
         service: Some(RpcService::EthMainnet(EthMainnetService::Llama)),
@@ -185,6 +208,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 23,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://arbitrum.llamarpc.com",
         header_patterns: &[],
         service: Some(RpcService::ArbitrumOne(L2MainnetService::Llama)),
@@ -192,6 +216,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 24,
         chain_id: BASE_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://base.llamarpc.com",
         header_patterns: &[],
         service: Some(RpcService::BaseMainnet(L2MainnetService::Llama)),
@@ -199,6 +224,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 25,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
+        public_url: None,
         url_pattern: "https://optimism.llamarpc.com",
         header_patterns: &[],
         service: Some(RpcService::OptimismMainnet(L2MainnetService::Llama)),
