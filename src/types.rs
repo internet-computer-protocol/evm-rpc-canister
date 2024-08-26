@@ -520,7 +520,7 @@ pub mod candid_types {
     use candid::CandidType;
     use cketh_common::{
         address::Address,
-        eth_rpc::{into_nat, FixedSizeData, ValidationError},
+        eth_rpc::{into_nat, ValidationError},
         numeric::BlockNumber,
     };
     use serde::Deserialize;
@@ -549,45 +549,6 @@ pub mod candid_types {
                 BlockTag::Earliest => BlockSpec::Tag(eth_rpc::BlockTag::Earliest),
                 BlockTag::Pending => BlockSpec::Tag(eth_rpc::BlockTag::Pending),
             }
-        }
-    }
-
-    #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
-    pub struct GetLogsArgs {
-        #[serde(rename = "fromBlock")]
-        pub from_block: Option<BlockTag>,
-        #[serde(rename = "toBlock")]
-        pub to_block: Option<BlockTag>,
-        pub addresses: Vec<String>,
-        pub topics: Option<Vec<Vec<String>>>,
-    }
-
-    impl TryFrom<GetLogsArgs> for cketh_common::eth_rpc::GetLogsParam {
-        type Error = ValidationError;
-        fn try_from(value: GetLogsArgs) -> Result<Self, Self::Error> {
-            Ok(cketh_common::eth_rpc::GetLogsParam {
-                from_block: value.from_block.map(|x| x.into()).unwrap_or_default(),
-                to_block: value.to_block.map(|x| x.into()).unwrap_or_default(),
-                address: value
-                    .addresses
-                    .into_iter()
-                    .map(|s| Address::from_str(&s).map_err(|_| ValidationError::InvalidHex(s)))
-                    .collect::<Result<_, _>>()?,
-                topics: value
-                    .topics
-                    .unwrap_or_default()
-                    .into_iter()
-                    .map(|topic| {
-                        topic
-                            .into_iter()
-                            .map(|s| {
-                                FixedSizeData::from_str(&s)
-                                    .map_err(|_| ValidationError::InvalidHex(s))
-                            })
-                            .collect::<Result<_, _>>()
-                    })
-                    .collect::<Result<_, _>>()?,
-            })
         }
     }
 

@@ -273,7 +273,7 @@ impl EvmRpcSetup {
         &self,
         source: RpcServices,
         config: Option<RpcConfig>,
-        args: candid_types::GetLogsArgs,
+        args: evm_rpc_types::GetLogsArgs,
     ) -> CallFlow<MultiRpcResult<Vec<LogEntry>>> {
         self.call_update("eth_getLogs", Encode!(&source, &config, &args).unwrap())
     }
@@ -1060,8 +1060,8 @@ fn eth_get_logs_should_succeed() {
         .eth_get_logs(
             source.clone(),
             None,
-            candid_types::GetLogsArgs {
-                addresses: vec!["0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string()],
+            evm_rpc_types::GetLogsArgs {
+                addresses: vec!["0xdAC17F958D2ee523a2206206994597C13D831ec7".parse().unwrap()],
                 from_block: None,
                 to_block: None,
                 topics: None,
@@ -1820,8 +1820,8 @@ fn should_use_custom_response_size_estimate() {
             Some(RpcConfig {
                 response_size_estimate: Some(max_response_bytes),
             }),
-            candid_types::GetLogsArgs {
-                addresses: vec!["0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string()],
+            evm_rpc_types::GetLogsArgs {
+                addresses: vec!["0xdAC17F958D2ee523a2206206994597C13D831ec7".parse().unwrap()],
                 from_block: None,
                 to_block: None,
                 topics: None,

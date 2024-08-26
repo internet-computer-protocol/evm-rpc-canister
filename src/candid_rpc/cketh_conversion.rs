@@ -18,6 +18,31 @@ pub(super) fn into_block_spec(value: BlockTag) -> cketh_common::eth_rpc::BlockSp
     }
 }
 
+pub(super) fn into_get_logs_param(
+    value: evm_rpc_types::GetLogsArgs,
+) -> cketh_common::eth_rpc::GetLogsParam {
+    cketh_common::eth_rpc::GetLogsParam {
+        from_block: value.from_block.map(into_block_spec).unwrap_or_default(),
+        to_block: value.to_block.map(into_block_spec).unwrap_or_default(),
+        address: value
+            .addresses
+            .into_iter()
+            .map(|address| cketh_common::address::Address::new(address.into()))
+            .collect(),
+        topics: value
+            .topics
+            .unwrap_or_default()
+            .into_iter()
+            .map(|topic| {
+                topic
+                    .into_iter()
+                    .map(|t| cketh_common::eth_rpc::FixedSizeData(t.into()))
+                    .collect()
+            })
+            .collect(),
+    }
+}
+
 pub(super) fn into_fee_history_params(
     value: evm_rpc_types::FeeHistoryArgs,
 ) -> cketh_common::eth_rpc::FeeHistoryParams {

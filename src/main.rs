@@ -42,7 +42,7 @@ use evm_rpc::{
 pub async fn eth_get_logs(
     source: RpcServices,
     config: Option<RpcConfig>,
-    args: candid_types::GetLogsArgs,
+    args: evm_rpc_types::GetLogsArgs,
 ) -> MultiRpcResult<Vec<LogEntry>> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_get_logs(args).await,

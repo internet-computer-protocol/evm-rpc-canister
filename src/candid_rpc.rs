@@ -3,10 +3,11 @@ mod cketh_conversion;
 use std::str::FromStr;
 
 use async_trait::async_trait;
+use candid::Nat;
 use cketh_common::{
     eth_rpc::{
-        into_nat, Block, GetLogsParam, Hash, LogEntry, ProviderError, RpcError,
-        SendRawTransactionResult, ValidationError,
+        into_nat, Block, Hash, LogEntry, ProviderError, RpcError, SendRawTransactionResult,
+        ValidationError,
     },
     eth_rpc_client::{
         providers::{RpcApi, RpcService},
@@ -182,14 +183,17 @@ impl CandidRpcClient {
 
     pub async fn eth_get_logs(
         &self,
-        args: candid_types::GetLogsArgs,
+        args: evm_rpc_types::GetLogsArgs,
     ) -> MultiRpcResult<Vec<LogEntry>> {
+        use crate::candid_rpc::cketh_conversion::into_get_logs_param;
+
         if let (
-            Some(candid_types::BlockTag::Number(from)),
-            Some(candid_types::BlockTag::Number(to)),
+            Some(evm_rpc_types::BlockTag::Number(from)),
+            Some(evm_rpc_types::BlockTag::Number(to)),
         ) = (&args.from_block, &args.to_block)
         {
-            let (from, to) = (candid::Nat::from(*from), candid::Nat::from(*to));
+            let from = Nat::from(from.clone());
+            let to = Nat::from(to.clone());
             let block_count = if to > from { to - from } else { from - to };
             if block_count > ETH_GET_LOGS_MAX_BLOCKS {
                 return MultiRpcResult::Consistent(Err(ValidationError::Custom(format!(
@@ -199,11 +203,10 @@ impl CandidRpcClient {
                 .into()));
             }
         }
-        let args: GetLogsParam = match args.try_into() {
-            Ok(args) => args,
-            Err(err) => return MultiRpcResult::Consistent(Err(RpcError::from(err))),
-        };
-        process_result(RpcMethod::EthGetLogs, self.client.eth_get_logs(args).await)
+        process_result(
+            RpcMethod::EthGetLogs,
+            self.client.eth_get_logs(into_get_logs_param(args)).await,
+        )
     }
 
     pub async fn eth_get_block_by_number(
