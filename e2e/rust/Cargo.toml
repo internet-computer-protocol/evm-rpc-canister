@@ -13,7 +13,7 @@ candid = { workspace = true }
 ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
-serde = "1"
+serde = { workspace = true }
 serde_bytes = "0.11"
 
 [build-dependencies]

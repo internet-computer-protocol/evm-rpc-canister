@@ -2,6 +2,7 @@ node_modules/
 target/
 .dfx/
 .mops/
+.idea/
 
 *.generated.did
 *.wasm

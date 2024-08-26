@@ -1,9 +1,11 @@
+mod cketh_conversion;
+
 use std::str::FromStr;
 
 use async_trait::async_trait;
 use cketh_common::{
     eth_rpc::{
-        into_nat, Block, FeeHistory, GetLogsParam, Hash, LogEntry, ProviderError, RpcError,
+        into_nat, Block, GetLogsParam, Hash, LogEntry, ProviderError, RpcError,
         SendRawTransactionResult, ValidationError,
     },
     eth_rpc_client::{
@@ -248,13 +250,16 @@ impl CandidRpcClient {
 
     pub async fn eth_fee_history(
         &self,
-        args: candid_types::FeeHistoryArgs,
-    ) -> MultiRpcResult<FeeHistory> {
+        args: evm_rpc_types::FeeHistoryArgs,
+    ) -> MultiRpcResult<evm_rpc_types::FeeHistory> {
+        use crate::candid_rpc::cketh_conversion::{from_fee_history, into_fee_history_params};
         process_result(
             RpcMethod::EthFeeHistory,
-            self.client.eth_fee_history(args.into()).await,
+            self.client
+                .eth_fee_history(into_fee_history_params(args))
+                .await,
         )
-        .map(|history| history)
+        .map(from_fee_history)
     }
 
     pub async fn eth_send_raw_transaction(
