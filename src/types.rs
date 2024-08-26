@@ -240,13 +240,19 @@ impl BoundedStorable for ApiKey {
 
 pub type ProviderId = u64;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HeaderPattern {
+    pub name: &'static str,
+    pub value: &'static str,
+}
+
 /// Internal RPC provider representation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Provider {
     pub provider_id: ProviderId,
     pub chain_id: u64,
     pub url_pattern: &'static str,
-    pub header_patterns: &'static [HttpHeader],
+    pub header_patterns: &'static [HeaderPattern],
     pub service: Option<RpcService>,
 }
 
@@ -259,7 +265,7 @@ impl Provider {
                 self.header_patterns
                     .iter()
                     .map(|header| HttpHeader {
-                        name: header.name.clone(),
+                        name: header.name.to_string(),
                         value: header.value.replace(API_KEY_REPLACE_STRING, &api_key),
                     })
                     .collect(),
@@ -288,7 +294,14 @@ impl From<Provider> for ProviderView {
             provider_id: provider.provider_id,
             chain_id: provider.chain_id,
             url_pattern: provider.url_pattern.to_string(),
-            header_patterns: provider.header_patterns.to_vec(),
+            header_patterns: provider
+                .header_patterns
+                .into_iter()
+                .map(|pattern| HttpHeader {
+                    name: pattern.name.to_string(),
+                    value: pattern.value.to_string(),
+                })
+                .collect(),
             service: provider.service.clone(),
         }
     }

@@ -12,8 +12,13 @@ use crate::{
         ARBITRUM_ONE_CHAIN_ID, BASE_MAINNET_CHAIN_ID, ETH_MAINNET_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID,
         OPTIMISM_MAINNET_CHAIN_ID,
     },
-    types::{Provider, ProviderId, ResolvedRpcService},
+    types::{HeaderPattern, Provider, ProviderId, ResolvedRpcService},
 };
+
+const ALCHEMY_HEADERS: &[HeaderPattern] = &[HeaderPattern {
+    name: "Authorization",
+    value: "Bearer {API_KEY}",
+}];
 
 pub const PROVIDERS: &[Provider] = &[
     Provider {
@@ -75,15 +80,15 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 8,
         chain_id: ETH_MAINNET_CHAIN_ID,
-        url_pattern: "https://eth-mainnet.g.alchemy.com/v2/{API_KEY}",
-        header_patterns: &[],
+        url_pattern: "https://eth-mainnet.g.alchemy.com/v2",
+        header_patterns: ALCHEMY_HEADERS,
         service: Some(RpcService::EthMainnet(EthMainnetService::Alchemy)),
     },
     Provider {
         provider_id: 9,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
-        url_pattern: "https://eth-sepolia.g.alchemy.com/v2/{API_KEY}",
-        header_patterns: &[],
+        url_pattern: "https://eth-sepolia.g.alchemy.com/v2",
+        header_patterns: ALCHEMY_HEADERS,
         service: Some(RpcService::EthSepolia(EthSepoliaService::Alchemy)),
     },
     Provider {
@@ -96,8 +101,8 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 11,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
-        url_pattern: "https://arb-mainnet.g.alchemy.com/v2/{API_KEY}",
-        header_patterns: &[],
+        url_pattern: "https://arb-mainnet.g.alchemy.com/v2",
+        header_patterns: ALCHEMY_HEADERS,
         service: Some(RpcService::ArbitrumOne(L2MainnetService::Alchemy)),
     },
     Provider {
@@ -124,8 +129,8 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 15,
         chain_id: BASE_MAINNET_CHAIN_ID,
-        url_pattern: "https://base-mainnet.g.alchemy.com/v2/{API_KEY}",
-        header_patterns: &[],
+        url_pattern: "https://base-mainnet.g.alchemy.com/v2",
+        header_patterns: ALCHEMY_HEADERS,
         service: Some(RpcService::BaseMainnet(L2MainnetService::Alchemy)),
     },
     Provider {
@@ -153,7 +158,7 @@ pub const PROVIDERS: &[Provider] = &[
         provider_id: 19,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
         url_pattern: "https://opt-mainnet.g.alchemy.com/v2",
-        header_patterns: &[],
+        header_patterns: ALCHEMY_HEADERS,
         service: Some(RpcService::OptimismMainnet(L2MainnetService::Alchemy)),
     },
     Provider {

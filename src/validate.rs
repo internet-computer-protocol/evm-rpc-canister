@@ -1,7 +1,6 @@
-use ic_cdk::api::management_canister::http_request::HttpHeader;
-
 use crate::{
     constants::{CONTENT_TYPE_HEADER, SERVICE_HOSTS_BLOCKLIST},
+    types::HeaderPattern,
     util::hostname_from_url,
 };
 
@@ -17,10 +16,10 @@ pub fn validate_url_pattern(url_pattern: &str) -> Result<(), &'static str> {
     validate_hostname(&hostname_from_url(url_pattern).ok_or("Invalid hostname in URL")?)
 }
 
-pub fn validate_header_patterns(header_patterns: &[HttpHeader]) -> Result<(), &'static str> {
+pub fn validate_header_patterns(header_patterns: &[HeaderPattern]) -> Result<(), &'static str> {
     if header_patterns
         .iter()
-        .any(|HttpHeader { name, .. }| name == CONTENT_TYPE_HEADER)
+        .any(|HeaderPattern { name, .. }| *name == CONTENT_TYPE_HEADER)
     {
         Err("Invalid header name")
     } else {
@@ -65,16 +64,16 @@ mod test {
     #[test]
     pub fn test_validate_header_patterns() {
         assert_eq!(
-            validate_header_patterns(&[HttpHeader {
-                name: "abc".to_string(),
-                value: "123".to_string(),
+            validate_header_patterns(&[HeaderPattern {
+                name: "abc",
+                value: "123",
             }]),
             Ok(())
         );
         assert_eq!(
-            validate_header_patterns(&[HttpHeader {
-                name: CONTENT_TYPE_HEADER.to_string(),
-                value: "text/xml".to_string(),
+            validate_header_patterns(&[HeaderPattern {
+                name: CONTENT_TYPE_HEADER,
+                value: "text/xml",
             }]),
             Err("Invalid header name")
         );
