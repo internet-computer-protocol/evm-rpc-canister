@@ -1,4 +1,4 @@
-use candid::{candid_method, Principal};
+use candid::candid_method;
 use cketh_common::eth_rpc::{Block, LogEntry, RpcError};
 
 use cketh_common::eth_rpc_client::providers::RpcService;
