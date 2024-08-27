@@ -562,7 +562,7 @@ mod test {
         eth_rpc_client::providers::{EthMainnetService, RpcService},
     };
 
-    use crate::types::MultiRpcResult;
+    use crate::types::{ApiKey, MultiRpcResult};
 
     #[test]
     fn test_multi_rpc_result_map() {
@@ -622,5 +622,11 @@ mod test {
                 )
             ])
         );
+    }
+
+    #[test]
+    fn test_api_key_debug_output() {
+let api_key = ApiKey("55555".to_string());
+        assert!(format!("{api_key:?}") == "{API_KEY}");
     }
 }
