@@ -14,7 +14,8 @@
         "wasm_url": "https://github.com/internet-computer-protocol/evm-rpc-canister/releases/latest/download/evm_rpc.wasm.gz",
         "init_guide": "Documentation: https://internetcomputer.org/docs/current/developer-docs/multi-chain/ethereum/evm-rpc/evm-rpc-canister"
       },
-      "gzip": true
+      "gzip": true,
+      "init_arg": "(record {})"
     },
     "evm_rpc_demo": {
       "candid": "candid/evm_rpc.did",
@@ -23,20 +24,15 @@
       "gzip": true,
       "init_arg": "(record {demo = opt true})"
     },
-    "evm_rpc_staging_13_node": {
+    "evm_rpc_staging": {
       "candid": "candid/evm_rpc.did",
       "type": "rust",
       "package": "evm_rpc",
-      "gzip": true
-    },
-    "evm_rpc_staging_fiduciary": {
-      "candid": "candid/evm_rpc.did",
-      "type": "rust",
-      "package": "evm_rpc",
-      "gzip": true
+      "gzip": true,
+      "init_arg": "(record {})"
     },
     "e2e_rust": {
-      "dependencies": ["evm_rpc_staging_fiduciary"],
+      "dependencies": ["evm_rpc_staging"],
       "candid": "e2e/rust/e2e_rust.did",
       "type": "rust",
       "package": "e2e"
@@ -44,8 +40,8 @@
     "e2e_motoko": {
       "dependencies": [
         "evm_rpc",
-        "evm_rpc_staging_13_node",
-        "evm_rpc_staging_fiduciary"
+        "evm_rpc_demo",
+        "evm_rpc_staging"
       ],
       "type": "motoko",
       "main": "e2e/motoko/main.mo"

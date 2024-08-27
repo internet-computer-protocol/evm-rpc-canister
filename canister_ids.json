@@ -8,10 +8,7 @@
   "evm_rpc": {
     "ic": "7hfb6-caaaa-aaaar-qadga-cai"
   },
-  "evm_rpc_staging_13_node": {
-    "ic": "a6d44-nyaaa-aaaap-abp7q-cai"
-  },
-  "evm_rpc_staging_fiduciary": {
+  "evm_rpc_staging": {
     "ic": "xhcuo-6yaaa-aaaar-qacqq-cai"
   }
 }
