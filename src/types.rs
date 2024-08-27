@@ -7,6 +7,7 @@ use cketh_common::eth_rpc_client::providers::{
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_stable_structures::{BoundedStorable, Storable};
 use serde::Deserialize;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -203,13 +204,13 @@ impl BoundedStorable for PrincipalStorable {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(Clone)]
+#[derive(Zeroize, ZeroizeOnDrop)]
 pub struct ApiKey(String);
 
 impl ApiKey {
     /// Explicitly read API key (use sparingly)
-    pub fn read(self) -> String {
-        self.0
+    pub fn read(&self) -> &str {
+        &self.0
     }
 }
 
@@ -626,7 +627,7 @@ mod test {
 
     #[test]
     fn test_api_key_debug_output() {
-let api_key = ApiKey("55555".to_string());
+        let api_key = ApiKey("55555".to_string());
         assert!(format!("{api_key:?}") == "{API_KEY}");
     }
 }
