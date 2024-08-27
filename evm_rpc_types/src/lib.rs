@@ -145,7 +145,7 @@ macro_rules! impl_hex_string {
                 }
                 hex::FromHex::from_hex(&s[2..])
                     .map(Self)
-                    .map_err(|e| e.to_string())
+                    .map_err(|e| format!("Invalid Ethereum hex string: {}", e))
             }
         }
 
