@@ -32,7 +32,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 1,
         chain_id: ETH_MAINNET_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://rpc.ankr.com/eth"),
         url_pattern: "https://rpc.ankr.com/eth/{API_KEY}",
         header_patterns: &[],
         alias: Some(RpcService::EthMainnet(EthMainnetService::Ankr)),
@@ -48,7 +48,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 3,
         chain_id: ETH_MAINNET_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://ethereum.blockpi.network/v1/rpc"),
         url_pattern: "https://ethereum.blockpi.network/v1/rpc/{API_KEY}",
         header_patterns: &[],
         alias: Some(RpcService::EthMainnet(EthMainnetService::BlockPi)),
@@ -64,7 +64,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 5,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://rpc.ankr.com/eth_sepolia"),
         url_pattern: "https://rpc.ankr.com/eth_sepolia/{API_KEY}",
         header_patterns: &[],
         alias: Some(RpcService::EthSepolia(EthSepoliaService::Ankr)),
@@ -72,7 +72,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 6,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://ethereum-sepolia.blockpi.network/v1/rpc"),
         url_pattern: "https://ethereum-sepolia.blockpi.network/v1/rpc/{API_KEY}",
         header_patterns: &[],
         alias: Some(RpcService::EthSepolia(EthSepoliaService::BlockPi)),
@@ -88,7 +88,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 8,
         chain_id: ETH_MAINNET_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://eth-mainnet.g.alchemy.com/v2"),
         url_pattern: "https://eth-mainnet.g.alchemy.com/v2",
         header_patterns: ALCHEMY_HEADERS,
         alias: Some(RpcService::EthMainnet(EthMainnetService::Alchemy)),
@@ -96,7 +96,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 9,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://eth-sepolia.g.alchemy.com/v2"),
         url_pattern: "https://eth-sepolia.g.alchemy.com/v2",
         header_patterns: ALCHEMY_HEADERS,
         alias: Some(RpcService::EthSepolia(EthSepoliaService::Alchemy)),
@@ -104,7 +104,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 10,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://rpc.ankr.com/arbitrum"),
         url_pattern: "https://rpc.ankr.com/arbitrum/{API_KEY}",
         header_patterns: &[],
         alias: Some(RpcService::ArbitrumOne(L2MainnetService::Ankr)),
@@ -112,7 +112,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 11,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://arb-mainnet.g.alchemy.com/v2"),
         url_pattern: "https://arb-mainnet.g.alchemy.com/v2",
         header_patterns: ALCHEMY_HEADERS,
         alias: Some(RpcService::ArbitrumOne(L2MainnetService::Alchemy)),
@@ -120,7 +120,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 12,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://arbitrum.blockpi.network/v1/rpc"),
         url_pattern: "https://arbitrum.blockpi.network/v1/rpc/{API_KEY}",
         header_patterns: &[],
         alias: Some(RpcService::ArbitrumOne(L2MainnetService::BlockPi)),
@@ -136,7 +136,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 14,
         chain_id: BASE_MAINNET_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://rpc.ankr.com/base"),
         url_pattern: "https://rpc.ankr.com/base/{API_KEY}",
         header_patterns: &[],
         alias: Some(RpcService::BaseMainnet(L2MainnetService::Ankr)),
@@ -144,7 +144,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 15,
         chain_id: BASE_MAINNET_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://base-mainnet.g.alchemy.com/v2"),
         url_pattern: "https://base-mainnet.g.alchemy.com/v2",
         header_patterns: ALCHEMY_HEADERS,
         alias: Some(RpcService::BaseMainnet(L2MainnetService::Alchemy)),
@@ -152,7 +152,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 16,
         chain_id: BASE_MAINNET_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://base.blockpi.network/v1/rpc"),
         url_pattern: "https://base.blockpi.network/v1/rpc/{API_KEY}",
         header_patterns: &[],
         alias: Some(RpcService::BaseMainnet(L2MainnetService::BlockPi)),
@@ -168,7 +168,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 18,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://rpc.ankr.com/optimism"),
         url_pattern: "https://rpc.ankr.com/optimism/{API_KEY}",
         header_patterns: &[],
         alias: Some(RpcService::OptimismMainnet(L2MainnetService::Ankr)),
@@ -176,7 +176,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 19,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://opt-mainnet.g.alchemy.com/v2"),
         url_pattern: "https://opt-mainnet.g.alchemy.com/v2",
         header_patterns: ALCHEMY_HEADERS,
         alias: Some(RpcService::OptimismMainnet(L2MainnetService::Alchemy)),
@@ -184,7 +184,7 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 20,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
-        public_url: None,
+        public_url: Some("https://optimism.blockpi.network/v1/rpc"),
         url_pattern: "https://optimism.blockpi.network/v1/rpc/{API_KEY}",
         header_patterns: &[],
         alias: Some(RpcService::OptimismMainnet(L2MainnetService::BlockPi)),
