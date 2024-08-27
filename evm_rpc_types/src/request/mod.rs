@@ -35,7 +35,7 @@ pub struct GetLogsArgs {
     /// Contract address or a list of addresses from which logs should originate.
     pub addresses: Vec<Hex20>,
 
-    /// Array of 32 Bytes DATA topics.
+    /// Array of 32-byte DATA topics.
     /// Topics are order-dependent.
     /// Each topic can also be an array of DATA with "or" options.
     pub topics: Option<Vec<Vec<Hex32>>>,
