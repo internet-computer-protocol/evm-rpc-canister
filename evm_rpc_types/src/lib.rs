@@ -165,7 +165,6 @@ macro_rules! impl_hex_string {
     };
 }
 
-// TODO 243: add unit tests
 impl_hex_string!(Hex20([u8; 20]));
 impl_hex_string!(Hex32([u8; 32]));
 impl_hex_string!(Hex(Vec<u8>));
