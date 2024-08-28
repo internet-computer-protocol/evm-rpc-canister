@@ -22,12 +22,15 @@ pub async fn json_rpc_request(
 ) -> RpcResult<HttpResponse> {
     let cycles_cost = get_http_request_cost(json_rpc_payload.len() as u64, max_response_bytes);
     let api = service.api();
-    let mut request_headers = vec![HttpHeader {
-        name: CONTENT_TYPE_HEADER.to_string(),
-        value: CONTENT_TYPE_VALUE.to_string(),
-    }];
-    if let Some(headers) = api.headers {
-        request_headers.extend(headers);
+    let mut request_headers = api.headers.unwrap_or_default();
+    if !request_headers
+        .iter()
+        .any(|header| header.name.to_lowercase() == CONTENT_TYPE_HEADER.to_lowercase())
+    {
+        request_headers.push(HttpHeader {
+            name: CONTENT_TYPE_HEADER.to_string(),
+            value: CONTENT_TYPE_VALUE.to_string(),
+        });
     }
     let request = CanisterHttpRequestArgument {
         url: api.url,
