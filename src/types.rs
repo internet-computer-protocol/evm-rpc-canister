@@ -15,6 +15,7 @@ use std::fmt;
 
 use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, STRING_STORABLE_MAX_SIZE};
 use crate::memory::get_api_key;
+use crate::util::hostname_from_url;
 use crate::validate::validate_api_key;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -266,37 +267,83 @@ impl<'a> From<&'a ConstHeader> for HttpHeader {
 pub struct Provider {
     pub provider_id: ProviderId,
     pub chain_id: u64,
-    pub public_url: Option<&'static str>,
-    pub url_pattern: &'static str,
-    pub header_patterns: &'static [ConstHeader],
+    pub access: RpcAccess,
     pub alias: Option<RpcService>,
 }
 
 impl Provider {
     pub fn api(&self) -> RpcApi {
-        match (get_api_key(self.provider_id), self.public_url) {
-            (Some(api_key), _) => RpcApi {
-                url: self.url_pattern.replace(API_KEY_REPLACE_STRING, &api_key.0),
-                headers: Some(
-                    self.header_patterns
-                        .iter()
-                        .map(|header| HttpHeader {
-                            name: header.name.to_string(),
-                            value: header.value.replace(API_KEY_REPLACE_STRING, &api_key.0),
-                        })
-                        .collect(),
-                ),
-            },
-            (None, Some(public_url)) => RpcApi {
+        match self.access {
+            RpcAccess::Authenticated { auth, .. } => {
+                let api_key = get_api_key(self.provider_id).unwrap_or_else(|| {
+                    panic!(
+                        "API key not yet initialized for provider: {}",
+                        self.provider_id
+                    )
+                });
+                match auth {
+                    RpcAuth::BearerToken { url } => RpcApi {
+                        url: url.to_string(),
+                        headers: Some(vec![HttpHeader {
+                            name: "Authorization".to_string(),
+                            value: "Bearer {API_KEY}".to_string(),
+                        }]),
+                    },
+                    RpcAuth::UrlParameter { url_pattern } => RpcApi {
+                        url: url_pattern.replace(API_KEY_REPLACE_STRING, &api_key.0),
+                        headers: None,
+                    },
+                }
+            }
+            RpcAccess::Unauthenticated { public_url } => RpcApi {
                 url: public_url.to_string(),
                 headers: None,
             },
-            (None, None) => panic!(
-                "API key not yet initialized for provider: {}",
-                self.provider_id
-            ),
         }
     }
+
+    pub fn hostname(&self) -> Option<String> {
+        hostname_from_url(match self.access {
+            RpcAccess::Authenticated { auth, public_url } => match auth {
+                RpcAuth::BearerToken { url } => url,
+                RpcAuth::UrlParameter { url_pattern } => url_pattern,
+            },
+            RpcAccess::Unauthenticated { public_url } => public_url,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RpcAccess {
+    Authenticated {
+        auth: RpcAuth,
+        /// Public URL to use when the API key is not available.
+        public_url: Option<&'static str>,
+    },
+    Unauthenticated {
+        public_url: &'static str,
+    },
+}
+
+impl RpcAccess {
+    pub fn public_url(&self) -> Option<&'static str> {
+        match self {
+            RpcAccess::Authenticated { public_url, .. } => public_url.as_deref(),
+            RpcAccess::Unauthenticated { public_url } => Some(public_url),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RpcAuth {
+    /// API key will be used in an Authorization header as Bearer token, e.g.,
+    /// `Authorization: Bearer API_KEY`
+    BearerToken {
+        url: &'static str,
+    },
+    UrlParameter {
+        url_pattern: &'static str,
+    },
 }
 
 /// Serializable RPC provider for `getProviders()` canister method.
@@ -306,12 +353,7 @@ pub struct ProviderView {
     pub provider_id: ProviderId,
     #[serde(rename = "chainId")]
     pub chain_id: u64,
-    #[serde(rename = "urlPattern")]
-    pub url_pattern: String,
-    #[serde(rename = "headerPatterns")]
-    pub header_patterns: Vec<HttpHeader>,
-    #[serde(rename = "publicUrl")]
-    pub public_url: Option<String>,
+    pub access: RpcAccessView,
     pub alias: Option<RpcService>,
 }
 
@@ -320,14 +362,59 @@ impl From<Provider> for ProviderView {
         ProviderView {
             provider_id: provider.provider_id,
             chain_id: provider.chain_id,
-            url_pattern: provider.url_pattern.to_string(),
-            header_patterns: provider
-                .header_patterns
-                .iter()
-                .map(HttpHeader::from)
-                .collect(),
-            public_url: provider.public_url.map(str::to_string),
+            access: provider.access.into(),
             alias: provider.alias.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
+pub enum RpcAccessView {
+    Authenticated {
+        auth: RpcAuthView,
+        #[serde(rename = "publicUrl")]
+        public_url: Option<String>,
+    },
+    Unauthenticated {
+        #[serde(rename = "publicUrl")]
+        public_url: String,
+    },
+}
+
+impl From<RpcAccess> for RpcAccessView {
+    fn from(access: RpcAccess) -> Self {
+        match access {
+            RpcAccess::Authenticated { auth, public_url } => RpcAccessView::Authenticated {
+                auth: auth.into(),
+                public_url: public_url.map(str::to_string),
+            },
+            RpcAccess::Unauthenticated { public_url } => RpcAccessView::Unauthenticated {
+                public_url: public_url.to_string(),
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
+pub enum RpcAuthView {
+    BearerToken {
+        url: String,
+    },
+    UrlParameter {
+        #[serde(rename = "urlPattern")]
+        url_pattern: String,
+    },
+}
+
+impl From<RpcAuth> for RpcAuthView {
+    fn from(access: RpcAuth) -> Self {
+        match access {
+            RpcAuth::BearerToken { url } => RpcAuthView::BearerToken {
+                url: url.to_string(),
+            },
+            RpcAuth::UrlParameter { url_pattern } => RpcAuthView::UrlParameter {
+                url_pattern: url_pattern.to_string(),
+            },
         }
     }
 }

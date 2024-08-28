@@ -32,7 +32,7 @@ use crate::{
         MetricRpcHost, MetricRpcMethod, MultiRpcResult, ResolvedRpcService, RpcMethod, RpcResult,
         RpcServices,
     },
-    util::{hex_to_bytes, hostname_from_url},
+    util::hex_to_bytes,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -155,7 +155,8 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
                             (
                                 method.into(),
                                 MetricRpcHost(
-                                    hostname_from_url(provider.url_pattern)
+                                    provider
+                                        .hostname()
                                         .unwrap_or_else(|| "(unknown)".to_string())
                                 )
                             ),

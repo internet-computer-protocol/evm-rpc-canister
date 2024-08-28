@@ -12,7 +12,7 @@ use crate::{
         ARBITRUM_ONE_CHAIN_ID, BASE_MAINNET_CHAIN_ID, ETH_MAINNET_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID,
         OPTIMISM_MAINNET_CHAIN_ID,
     },
-    types::{ConstHeader, Provider, ProviderId, ResolvedRpcService},
+    types::{ConstHeader, Provider, ProviderId, ResolvedRpcService, RpcAccess, RpcAuth},
 };
 
 const ALCHEMY_HEADERS: &[ConstHeader] = &[ConstHeader {
@@ -24,209 +24,257 @@ pub const PROVIDERS: &[Provider] = &[
     Provider {
         provider_id: 0,
         chain_id: ETH_MAINNET_CHAIN_ID,
-        public_url: Some("https://cloudflare-eth.com/v1/mainnet"),
-        url_pattern: "https://cloudflare-eth.com/v1/mainnet/{API_KEY}",
-        header_patterns: &[],
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://cloudflare-eth.com/v1/mainnet/{API_KEY}",
+            },
+            public_url: Some("https://cloudflare-eth.com/v1/mainnet"),
+        },
         alias: Some(RpcService::EthMainnet(EthMainnetService::Cloudflare)),
     },
     Provider {
         provider_id: 1,
         chain_id: ETH_MAINNET_CHAIN_ID,
-        public_url: Some("https://rpc.ankr.com/eth"),
-        url_pattern: "https://rpc.ankr.com/eth/{API_KEY}",
-        header_patterns: &[],
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://rpc.ankr.com/eth/{API_KEY}",
+            },
+            public_url: Some("https://rpc.ankr.com/eth"),
+        },
         alias: Some(RpcService::EthMainnet(EthMainnetService::Ankr)),
     },
     Provider {
         provider_id: 2,
         chain_id: ETH_MAINNET_CHAIN_ID,
-        public_url: Some("https://ethereum-rpc.publicnode.com"),
-        url_pattern: "https://ethereum-rpc.publicnode.com",
-        header_patterns: &[],
+        access: RpcAccess::Unauthenticated {
+            public_url: "https://ethereum-rpc.publicnode.com",
+        },
         alias: Some(RpcService::EthMainnet(EthMainnetService::PublicNode)),
     },
     Provider {
         provider_id: 3,
         chain_id: ETH_MAINNET_CHAIN_ID,
-        public_url: None,
-        url_pattern: "https://ethereum.blockpi.network/v1/rpc/{API_KEY}",
-        header_patterns: &[],
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://ethereum.blockpi.network/v1/rpc/{API_KEY}",
+            },
+            public_url: None,
+        },
         alias: Some(RpcService::EthMainnet(EthMainnetService::BlockPi)),
     },
     Provider {
         provider_id: 4,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
-        public_url: Some("https://rpc.sepolia.org"),
-        url_pattern: "https://rpc.sepolia.org",
-        header_patterns: &[],
+        access: RpcAccess::Unauthenticated {
+            public_url: "https://rpc.sepolia.org",
+        },
         alias: Some(RpcService::EthSepolia(EthSepoliaService::Sepolia)),
     },
     Provider {
         provider_id: 5,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
-        public_url: Some("https://rpc.ankr.com/eth_sepolia"),
-        url_pattern: "https://rpc.ankr.com/eth_sepolia/{API_KEY}",
-        header_patterns: &[],
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://rpc.ankr.com/eth_sepolia/{API_KEY}",
+            },
+            public_url: Some("https://rpc.ankr.com/eth_sepolia"),
+        },
         alias: Some(RpcService::EthSepolia(EthSepoliaService::Ankr)),
     },
     Provider {
         provider_id: 6,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
-        public_url: None,
-        url_pattern: "https://ethereum-sepolia.blockpi.network/v1/rpc/{API_KEY}",
-        header_patterns: &[],
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://ethereum-sepolia.blockpi.network/v1/rpc/{API_KEY}",
+            },
+            public_url: None,
+        },
         alias: Some(RpcService::EthSepolia(EthSepoliaService::BlockPi)),
     },
     Provider {
         provider_id: 7,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
-        public_url: Some("https://ethereum-sepolia-rpc.publicnode.com"),
-        url_pattern: "https://ethereum-sepolia-rpc.publicnode.com",
-        header_patterns: &[],
+        access: RpcAccess::Unauthenticated {
+            public_url: "https://ethereum-sepolia-rpc.publicnode.com",
+        },
         alias: Some(RpcService::EthSepolia(EthSepoliaService::PublicNode)),
     },
     Provider {
         provider_id: 8,
         chain_id: ETH_MAINNET_CHAIN_ID,
-        public_url: None,
-        url_pattern: "https://eth-mainnet.g.alchemy.com/v2",
-        header_patterns: ALCHEMY_HEADERS,
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::BearerToken {
+                url: "https://eth-mainnet.g.alchemy.com/v2",
+            },
+            public_url: None,
+        },
         alias: Some(RpcService::EthMainnet(EthMainnetService::Alchemy)),
     },
     Provider {
         provider_id: 9,
         chain_id: ETH_SEPOLIA_CHAIN_ID,
-        public_url: None,
-        url_pattern: "https://eth-sepolia.g.alchemy.com/v2",
-        header_patterns: ALCHEMY_HEADERS,
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::BearerToken {
+                url: "https://eth-sepolia.g.alchemy.com/v2",
+            },
+            public_url: None,
+        },
         alias: Some(RpcService::EthSepolia(EthSepoliaService::Alchemy)),
     },
     Provider {
         provider_id: 10,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
-        public_url: Some("https://rpc.ankr.com/arbitrum"),
-        url_pattern: "https://rpc.ankr.com/arbitrum/{API_KEY}",
-        header_patterns: &[],
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://rpc.ankr.com/arbitrum/{API_KEY}",
+            },
+            public_url: Some("https://rpc.ankr.com/arbitrum"),
+        },
         alias: Some(RpcService::ArbitrumOne(L2MainnetService::Ankr)),
     },
     Provider {
         provider_id: 11,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
-        public_url: None,
-        url_pattern: "https://arb-mainnet.g.alchemy.com/v2",
-        header_patterns: ALCHEMY_HEADERS,
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::BearerToken {
+                url: "https://arb-mainnet.g.alchemy.com/v2",
+            },
+            public_url: None,
+        },
         alias: Some(RpcService::ArbitrumOne(L2MainnetService::Alchemy)),
     },
     Provider {
         provider_id: 12,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
-        public_url: None,
-        url_pattern: "https://arbitrum.blockpi.network/v1/rpc/{API_KEY}",
-        header_patterns: &[],
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://arbitrum.blockpi.network/v1/rpc/{API_KEY}",
+            },
+            public_url: None,
+        },
         alias: Some(RpcService::ArbitrumOne(L2MainnetService::BlockPi)),
     },
     Provider {
         provider_id: 13,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
-        public_url: Some("https://arbitrum-one-rpc.publicnode.com"),
-        url_pattern: "https://arbitrum-one-rpc.publicnode.com",
-        header_patterns: &[],
+        access: RpcAccess::Unauthenticated {
+            public_url: "https://arbitrum-one-rpc.publicnode.com",
+        },
         alias: Some(RpcService::ArbitrumOne(L2MainnetService::PublicNode)),
     },
     Provider {
         provider_id: 14,
         chain_id: BASE_MAINNET_CHAIN_ID,
-        public_url: Some("https://rpc.ankr.com/base"),
-        url_pattern: "https://rpc.ankr.com/base/{API_KEY}",
-        header_patterns: &[],
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://rpc.ankr.com/base/{API_KEY}",
+            },
+            public_url: Some("https://rpc.ankr.com/base"),
+        },
         alias: Some(RpcService::BaseMainnet(L2MainnetService::Ankr)),
     },
     Provider {
         provider_id: 15,
         chain_id: BASE_MAINNET_CHAIN_ID,
-        public_url: None,
-        url_pattern: "https://base-mainnet.g.alchemy.com/v2",
-        header_patterns: ALCHEMY_HEADERS,
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::BearerToken {
+                url: "https://base-mainnet.g.alchemy.com/v2",
+            },
+            public_url: None,
+        },
         alias: Some(RpcService::BaseMainnet(L2MainnetService::Alchemy)),
     },
     Provider {
         provider_id: 16,
         chain_id: BASE_MAINNET_CHAIN_ID,
-        public_url: None,
-        url_pattern: "https://base.blockpi.network/v1/rpc/{API_KEY}",
-        header_patterns: &[],
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://base.blockpi.network/v1/rpc/{API_KEY}",
+            },
+            public_url: None,
+        },
         alias: Some(RpcService::BaseMainnet(L2MainnetService::BlockPi)),
     },
     Provider {
         provider_id: 17,
         chain_id: BASE_MAINNET_CHAIN_ID,
-        public_url: Some("https://base-rpc.publicnode.com"),
-        url_pattern: "https://base-rpc.publicnode.com",
-        header_patterns: &[],
+        access: RpcAccess::Unauthenticated {
+            public_url: "https://base-rpc.publicnode.com",
+        },
         alias: Some(RpcService::BaseMainnet(L2MainnetService::PublicNode)),
     },
     Provider {
         provider_id: 18,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
-        public_url: None,
-        url_pattern: "https://rpc.ankr.com/optimism/{API_KEY}",
-        header_patterns: &[],
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://rpc.ankr.com/optimism/{API_KEY}",
+            },
+            public_url: None,
+        },
         alias: Some(RpcService::OptimismMainnet(L2MainnetService::Ankr)),
     },
     Provider {
         provider_id: 19,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
-        public_url: None,
-        url_pattern: "https://opt-mainnet.g.alchemy.com/v2",
-        header_patterns: ALCHEMY_HEADERS,
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::BearerToken {
+                url: "https://opt-mainnet.g.alchemy.com/v2",
+            },
+            public_url: None,
+        },
         alias: Some(RpcService::OptimismMainnet(L2MainnetService::Alchemy)),
     },
     Provider {
         provider_id: 20,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
-        public_url: None,
-        url_pattern: "https://optimism.blockpi.network/v1/rpc/{API_KEY}",
-        header_patterns: &[],
+        access: RpcAccess::Authenticated {
+            auth: RpcAuth::UrlParameter {
+                url_pattern: "https://optimism.blockpi.network/v1/rpc/{API_KEY}",
+            },
+            public_url: None,
+        },
         alias: Some(RpcService::OptimismMainnet(L2MainnetService::BlockPi)),
     },
     Provider {
         provider_id: 21,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
-        public_url: Some("https://optimism-rpc.publicnode.com"),
-        url_pattern: "https://optimism-rpc.publicnode.com",
-        header_patterns: &[],
+        access: RpcAccess::Unauthenticated {
+            public_url: "https://optimism-rpc.publicnode.com",
+        },
         alias: Some(RpcService::OptimismMainnet(L2MainnetService::PublicNode)),
     },
     Provider {
         provider_id: 22,
         chain_id: ETH_MAINNET_CHAIN_ID,
-        public_url: Some("https://eth.llamarpc.com"),
-        url_pattern: "https://eth.llamarpc.com",
-        header_patterns: &[],
+        access: RpcAccess::Unauthenticated {
+            public_url: "https://eth.llamarpc.com",
+        },
         alias: Some(RpcService::EthMainnet(EthMainnetService::Llama)),
     },
     Provider {
         provider_id: 23,
         chain_id: ARBITRUM_ONE_CHAIN_ID,
-        public_url: Some("https://arbitrum.llamarpc.com"),
-        url_pattern: "https://arbitrum.llamarpc.com",
-        header_patterns: &[],
+        access: RpcAccess::Unauthenticated {
+            public_url: "https://arbitrum.llamarpc.com",
+        },
         alias: Some(RpcService::ArbitrumOne(L2MainnetService::Llama)),
     },
     Provider {
         provider_id: 24,
         chain_id: BASE_MAINNET_CHAIN_ID,
-        public_url: Some("https://base.llamarpc.com"),
-        url_pattern: "https://base.llamarpc.com",
-        header_patterns: &[],
+        access: RpcAccess::Unauthenticated {
+            public_url: "https://base.llamarpc.com",
+        },
         alias: Some(RpcService::BaseMainnet(L2MainnetService::Llama)),
     },
     Provider {
         provider_id: 25,
         chain_id: OPTIMISM_MAINNET_CHAIN_ID,
-        public_url: Some("https://optimism.llamarpc.com"),
-        url_pattern: "https://optimism.llamarpc.com",
-        header_patterns: &[],
+        access: RpcAccess::Unauthenticated {
+            public_url: "https://optimism.llamarpc.com",
+        },
         alias: Some(RpcService::OptimismMainnet(L2MainnetService::Llama)),
     },
 ];
@@ -310,23 +358,47 @@ pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, Pr
 mod test {
     use std::collections::{HashMap, HashSet};
 
-    use crate::{constants::CONTENT_TYPE_HEADER_LOWERCASE, validate::validate_url_pattern};
+    use crate::{
+        constants::API_KEY_REPLACE_STRING,
+        types::{Provider, RpcAccess, RpcAuth},
+    };
 
     use super::{PROVIDERS, SERVICE_PROVIDER_MAP};
 
     #[test]
-    fn test_valid_rpc_providers() {
+    fn test_rpc_provider_url_patterns() {
         for provider in PROVIDERS {
-            assert_eq!(validate_url_pattern(provider.url_pattern), Ok(()));
+            fn assert_not_url_pattern(url: &str, provider: &Provider) {
+                assert!(
+                    !url.contains(API_KEY_REPLACE_STRING),
+                    "Unexpected API key in URL for provider: {}",
+                    provider.provider_id
+                )
+            }
+            fn assert_url_pattern(url: &str, provider: &Provider) {
+                assert!(
+                    url.contains(API_KEY_REPLACE_STRING),
+                    "Missing API key in URL pattern for provider: {}",
+                    provider.provider_id
+                )
+            }
+            match &provider.access {
+                RpcAccess::Authenticated { auth, public_url } => {
+                    match auth {
+                        RpcAuth::BearerToken { url } => assert_not_url_pattern(url, provider),
+                        RpcAuth::UrlParameter { url_pattern } => {
+                            assert_url_pattern(url_pattern, provider)
+                        }
+                    }
+                    if let Some(public_url) = public_url {
+                        assert_not_url_pattern(public_url, provider);
+                    }
+                }
+                RpcAccess::Unauthenticated { public_url } => {
+                    assert_not_url_pattern(public_url, provider);
+                }
+            }
         }
-    }
-
-    #[test]
-    pub fn test_no_content_type_in_rpc_provider_headers() {
-        assert!(PROVIDERS.iter().all(|provider| provider
-            .header_patterns
-            .iter()
-            .all(|header| header.name.to_lowercase() != CONTENT_TYPE_HEADER_LOWERCASE)));
     }
 
     #[test]
