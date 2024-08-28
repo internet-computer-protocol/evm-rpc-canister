@@ -139,10 +139,21 @@ type ChainId = nat64;
 type Provider = record {
   providerId : ProviderId;
   chainId : ChainId;
-  urlPattern : text;
-  headerPatterns : opt vec HttpHeader;
-  publicUrl : opt text;
+  access : RpcAccess;
   alias : opt RpcService;
+};
+type RpcAccess = variant {
+  Authenticated : record {
+    auth : RpcAuth;
+    publicUrl : opt Text;
+  };
+  Unauthenticated : record {
+    publicUrl : Text;
+  };
+};
+type RpcAuth = variant {
+  BearerToken : record { url : Text };
+  UrlParameter : record { url_pattern : Text };
 };
 type RejectionCode = variant {
   NoError;
