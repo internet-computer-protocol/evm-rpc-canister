@@ -6,7 +6,7 @@ use cketh_common::eth_rpc_client::providers::{
 
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_stable_structures::{BoundedStorable, Storable};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use std::borrow::Cow;
@@ -263,9 +263,11 @@ impl<'a> From<&'a ConstHeader> for HttpHeader {
 }
 
 /// Internal RPC provider representation.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
 pub struct Provider {
+    #[serde(rename = "providerId")]
     pub provider_id: ProviderId,
+    #[serde(rename = "chainId")]
     pub chain_id: u64,
     pub access: RpcAccess,
     pub alias: Option<RpcService>,
@@ -313,14 +315,16 @@ impl Provider {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
 pub enum RpcAccess {
     Authenticated {
         auth: RpcAuth,
         /// Public URL to use when the API key is not available.
+        #[serde(rename = "publicUrl")]
         public_url: Option<&'static str>,
     },
     Unauthenticated {
+        #[serde(rename = "publicUrl")]
         public_url: &'static str,
     },
 }
@@ -334,89 +338,15 @@ impl RpcAccess {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
 pub enum RpcAuth {
     /// API key will be used in an Authorization header as Bearer token, e.g.,
     /// `Authorization: Bearer API_KEY`
-    BearerToken {
-        url: &'static str,
-    },
-    UrlParameter {
-        url_pattern: &'static str,
-    },
-}
-
-/// Serializable RPC provider for `getProviders()` canister method.
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
-pub struct ProviderView {
-    #[serde(rename = "providerId")]
-    pub provider_id: ProviderId,
-    #[serde(rename = "chainId")]
-    pub chain_id: u64,
-    pub access: RpcAccessView,
-    pub alias: Option<RpcService>,
-}
-
-impl From<Provider> for ProviderView {
-    fn from(provider: Provider) -> Self {
-        ProviderView {
-            provider_id: provider.provider_id,
-            chain_id: provider.chain_id,
-            access: provider.access.into(),
-            alias: provider.alias.clone(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
-pub enum RpcAccessView {
-    Authenticated {
-        auth: RpcAuthView,
-        #[serde(rename = "publicUrl")]
-        public_url: Option<String>,
-    },
-    Unauthenticated {
-        #[serde(rename = "publicUrl")]
-        public_url: String,
-    },
-}
-
-impl From<RpcAccess> for RpcAccessView {
-    fn from(access: RpcAccess) -> Self {
-        match access {
-            RpcAccess::Authenticated { auth, public_url } => RpcAccessView::Authenticated {
-                auth: auth.into(),
-                public_url: public_url.map(str::to_string),
-            },
-            RpcAccess::Unauthenticated { public_url } => RpcAccessView::Unauthenticated {
-                public_url: public_url.to_string(),
-            },
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
-pub enum RpcAuthView {
-    BearerToken {
-        url: String,
-    },
+    BearerToken { url: &'static str },
     UrlParameter {
         #[serde(rename = "urlPattern")]
-        url_pattern: String,
+        url_pattern: &'static str,
     },
-}
-
-impl From<RpcAuth> for RpcAuthView {
-    fn from(access: RpcAuth) -> Self {
-        match access {
-            RpcAuth::BearerToken { url } => RpcAuthView::BearerToken {
-                url: url.to_string(),
-            },
-            RpcAuth::UrlParameter { url_pattern } => RpcAuthView::UrlParameter {
-                url_pattern: url_pattern.to_string(),
-            },
-        }
-    }
 }
 
 pub type RpcResult<T> = Result<T, RpcError>;

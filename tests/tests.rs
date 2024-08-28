@@ -31,8 +31,8 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
     types::{
-        candid_types, InitArgs, Metrics, MultiRpcResult, ProviderId, ProviderView, RpcMethod,
-        RpcResult, RpcServices,
+        candid_types, InitArgs, Metrics, MultiRpcResult, ProviderId, RpcMethod, RpcResult,
+        RpcServices,
     },
 };
 use evm_rpc_types::Nat256;
@@ -186,10 +186,6 @@ impl EvmRpcSetup {
 
     pub fn get_metrics(&self) -> Metrics {
         self.call_query("getMetrics", Encode!().unwrap())
-    }
-
-    pub fn get_providers(&self) -> Vec<ProviderView> {
-        self.call_query("getProviders", Encode!().unwrap())
     }
 
     pub fn get_service_provider_map(&self) -> Vec<(RpcService, ProviderId)> {

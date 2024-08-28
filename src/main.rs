@@ -12,7 +12,7 @@ use evm_rpc::memory::{
 };
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
-use evm_rpc::types::{ProviderId, ProviderView};
+use evm_rpc::types::{Provider, ProviderId};
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
@@ -150,8 +150,8 @@ fn request_cost(
 
 #[query(name = "getProviders")]
 #[candid_method(query, rename = "getProviders")]
-fn get_providers() -> Vec<ProviderView> {
-    PROVIDERS.iter().cloned().map(ProviderView::from).collect()
+fn get_providers() -> Vec<Provider> {
+    PROVIDERS.to_vec()
 }
 
 #[query(name = "getServiceProviderMap")]
