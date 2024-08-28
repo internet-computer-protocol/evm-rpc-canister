@@ -229,7 +229,7 @@ impl CandidRpcClient {
                 .eth_get_transaction_receipt(into_hash(hash))
                 .await,
         )
-        .map(|option| option.map(|r| from_transaction_receipt(r)))
+        .map(|option| option.map(from_transaction_receipt))
     }
 
     pub async fn eth_get_transaction_count(
