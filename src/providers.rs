@@ -12,13 +12,8 @@ use crate::{
         ARBITRUM_ONE_CHAIN_ID, BASE_MAINNET_CHAIN_ID, ETH_MAINNET_CHAIN_ID, ETH_SEPOLIA_CHAIN_ID,
         OPTIMISM_MAINNET_CHAIN_ID,
     },
-    types::{ConstHeader, Provider, ProviderId, ResolvedRpcService, RpcAccess, RpcAuth},
+    types::{Provider, ProviderId, ResolvedRpcService, RpcAccess, RpcAuth},
 };
-
-const ALCHEMY_HEADERS: &[ConstHeader] = &[ConstHeader {
-    name: "Authorization",
-    value: "Bearer {API_KEY}",
-}];
 
 pub const PROVIDERS: &[Provider] = &[
     Provider {

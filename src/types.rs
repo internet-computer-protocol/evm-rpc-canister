@@ -273,7 +273,7 @@ pub struct Provider {
 
 impl Provider {
     pub fn api(&self) -> RpcApi {
-        match self.access {
+        match &self.access {
             RpcAccess::Authenticated { auth, .. } => {
                 let api_key = get_api_key(self.provider_id).unwrap_or_else(|| {
                     panic!(
@@ -303,8 +303,8 @@ impl Provider {
     }
 
     pub fn hostname(&self) -> Option<String> {
-        hostname_from_url(match self.access {
-            RpcAccess::Authenticated { auth, public_url } => match auth {
+        hostname_from_url(match &self.access {
+            RpcAccess::Authenticated { auth, .. } => match auth {
                 RpcAuth::BearerToken { url } => url,
                 RpcAuth::UrlParameter { url_pattern } => url_pattern,
             },
@@ -328,7 +328,7 @@ pub enum RpcAccess {
 impl RpcAccess {
     pub fn public_url(&self) -> Option<&'static str> {
         match self {
-            RpcAccess::Authenticated { public_url, .. } => public_url.as_deref(),
+            RpcAccess::Authenticated { public_url, .. } => *public_url,
             RpcAccess::Unauthenticated { public_url } => Some(public_url),
         }
     }
