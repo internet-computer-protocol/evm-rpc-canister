@@ -106,6 +106,22 @@ mod hex_string {
         }
     }
 
+    #[test]
+    fn should_decode_single_hex_char_into_hex_byte() {
+        for single_hex in "0123456789abcdefABCDEF".chars() {
+            let expected_value =
+                HexByte::from(u8::from_str_radix(&single_hex.to_string(), 16).unwrap());
+
+            let single_digit_hex = format!("0x{}", single_hex);
+            let single_digit_hex_parsed: HexByte = single_digit_hex.parse().unwrap();
+            assert_eq!(single_digit_hex_parsed, expected_value);
+
+            let double_digit_hex = format!("0x0{}", single_hex);
+            let double_digit_hex_parsed: HexByte = double_digit_hex.parse().unwrap();
+            assert_eq!(double_digit_hex_parsed, expected_value);
+        }
+    }
+
     fn encode_decode_roundtrip<T>(value: &str) -> Result<(), TestCaseError>
     where
         T: FromStr + CandidType + DeserializeOwned + PartialEq + std::fmt::Debug,
