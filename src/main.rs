@@ -1,5 +1,5 @@
-use candid::{candid_method, Principal};
-use cketh_common::eth_rpc::{Block, LogEntry, RpcError};
+use candid::candid_method;
+use cketh_common::eth_rpc::{Block, RpcError};
 
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
