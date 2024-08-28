@@ -1,6 +1,6 @@
 //! Conversion between ckETH types and EVM RPC types.
 //! This module is meant to be temporary and should be removed once the dependency on ckETH is removed,
-//! see https://github.com/internet-computer-protocol/evm-rpc-canister/issues/243
+//! see <https://github.com/internet-computer-protocol/evm-rpc-canister/issues/243>
 
 use cketh_common::checked_amount::CheckedAmountOf;
 use cketh_common::eth_rpc::Quantity;
@@ -15,6 +15,51 @@ pub(super) fn into_block_spec(value: BlockTag) -> cketh_common::eth_rpc::BlockSp
         BlockTag::Finalized => BlockSpec::Tag(eth_rpc::BlockTag::Finalized),
         BlockTag::Earliest => BlockSpec::Tag(eth_rpc::BlockTag::Earliest),
         BlockTag::Pending => BlockSpec::Tag(eth_rpc::BlockTag::Pending),
+    }
+}
+
+pub(super) fn into_get_logs_param(
+    value: evm_rpc_types::GetLogsArgs,
+) -> cketh_common::eth_rpc::GetLogsParam {
+    cketh_common::eth_rpc::GetLogsParam {
+        from_block: value.from_block.map(into_block_spec).unwrap_or_default(),
+        to_block: value.to_block.map(into_block_spec).unwrap_or_default(),
+        address: value
+            .addresses
+            .into_iter()
+            .map(|address| cketh_common::address::Address::new(address.into()))
+            .collect(),
+        topics: value
+            .topics
+            .unwrap_or_default()
+            .into_iter()
+            .map(|topic| {
+                topic
+                    .into_iter()
+                    .map(|t| cketh_common::eth_rpc::FixedSizeData(t.into()))
+                    .collect()
+            })
+            .collect(),
+    }
+}
+
+pub(super) fn from_log_entries(
+    value: Vec<cketh_common::eth_rpc::LogEntry>,
+) -> Vec<evm_rpc_types::LogEntry> {
+    value.into_iter().map(from_log_entry).collect()
+}
+
+fn from_log_entry(value: cketh_common::eth_rpc::LogEntry) -> evm_rpc_types::LogEntry {
+    evm_rpc_types::LogEntry {
+        address: from_address(value.address),
+        topics: value.topics.into_iter().map(|t| t.0.into()).collect(),
+        data: value.data.0.into(),
+        block_hash: value.block_hash.map(|x| x.0.into()),
+        block_number: value.block_number.map(from_checked_amount_of),
+        transaction_hash: value.transaction_hash.map(|x| x.0.into()),
+        transaction_index: value.transaction_index.map(from_checked_amount_of),
+        log_index: value.log_index.map(from_checked_amount_of),
+        removed: value.removed,
     }
 }
 
@@ -57,4 +102,13 @@ fn from_checked_amount_of<Unit>(value: CheckedAmountOf<Unit>) -> Nat256 {
 
 fn into_quantity(value: Nat256) -> Quantity {
     Quantity::from_be_bytes(value.into_be_bytes())
+}
+
+fn from_address(value: cketh_common::address::Address) -> evm_rpc_types::Hex20 {
+    // TODO 243: cketh_common::address::Address should expose the underlying [u8; 20]
+    // so that there is no artificial error handling here.
+    value
+        .to_string()
+        .parse()
+        .expect("BUG: Ethereum address cannot be parsed")
 }

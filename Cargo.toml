@@ -52,6 +52,7 @@ assert_matches = "1.5"
 [workspace.dependencies]
 candid = { version = "0.9" }
 getrandom = { version = "0.2", features = ["custom"] }
+hex = "0.4.3"
 ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-cdk = "0.10"
 ic-cdk-bindgen = "0.1"

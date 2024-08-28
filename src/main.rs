@@ -1,4 +1,4 @@
-use candid::candid_method;
+use candid::{candid_method, Principal};
 use cketh_common::eth_rpc::{Block, LogEntry, RpcError};
 
 use cketh_common::eth_rpc_client::providers::RpcService;
@@ -41,8 +41,8 @@ pub fn require_api_key_principal_or_controller() -> Result<(), String> {
 pub async fn eth_get_logs(
     source: RpcServices,
     config: Option<RpcConfig>,
-    args: candid_types::GetLogsArgs,
-) -> MultiRpcResult<Vec<LogEntry>> {
+    args: evm_rpc_types::GetLogsArgs,
+) -> MultiRpcResult<Vec<evm_rpc_types::LogEntry>> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_get_logs(args).await,
         Err(err) => Err(err).into(),
