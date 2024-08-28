@@ -145,15 +145,15 @@ type Provider = record {
 type RpcAccess = variant {
   Authenticated : record {
     auth : RpcAuth;
-    publicUrl : opt Text;
+    publicUrl : opt text;
   };
   Unauthenticated : record {
-    publicUrl : Text;
+    publicUrl : text;
   };
 };
 type RpcAuth = variant {
-  BearerToken : record { url : Text };
-  UrlParameter : record { url_pattern : Text };
+  BearerToken : record { url : text };
+  UrlParameter : record { urlPattern : text };
 };
 type RejectionCode = variant {
   NoError;
