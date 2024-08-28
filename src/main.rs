@@ -69,10 +69,10 @@ pub async fn eth_get_block_by_number(
 pub async fn eth_get_transaction_receipt(
     source: RpcServices,
     config: Option<RpcConfig>,
-    hash: Hex32,
+    tx_hash: Hex32,
 ) -> MultiRpcResult<Option<evm_rpc_types::TransactionReceipt>> {
     match CandidRpcClient::new(source, config) {
-        Ok(source) => source.eth_get_transaction_receipt(hash).await,
+        Ok(source) => source.eth_get_transaction_receipt(tx_hash).await,
         Err(err) => Err(err).into(),
     }
 }
