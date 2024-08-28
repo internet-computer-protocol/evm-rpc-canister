@@ -191,7 +191,7 @@ impl hex::FromHex for Byte {
     fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error> {
         let hex = hex.as_ref();
         match hex {
-            &[a] => hex::FromHex::from_hex(&[b'0', a]).map(Self),
+            &[a] => hex::FromHex::from_hex([b'0', a]).map(Self),
             h => hex::FromHex::from_hex(h).map(Self),
         }
     }
