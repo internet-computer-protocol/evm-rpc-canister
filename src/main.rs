@@ -36,6 +36,7 @@ use evm_rpc::{
         ProviderView, RegisterProviderArgs, RpcServices, UpdateProviderArgs,
     },
 };
+use evm_rpc_types::Hex32;
 
 #[update(name = "eth_getLogs")]
 #[candid_method(rename = "eth_getLogs")]
@@ -68,8 +69,8 @@ pub async fn eth_get_block_by_number(
 pub async fn eth_get_transaction_receipt(
     source: RpcServices,
     config: Option<RpcConfig>,
-    hash: String,
-) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
+    hash: Hex32,
+) -> MultiRpcResult<Option<evm_rpc_types::TransactionReceipt>> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_get_transaction_receipt(hash).await,
         Err(err) => Err(err).into(),
