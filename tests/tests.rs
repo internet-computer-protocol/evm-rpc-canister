@@ -29,7 +29,7 @@ use maplit::hashmap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use evm_rpc::{
-    constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE},
+    constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
     types::{
         candid_types, InitArgs, Metrics, MultiRpcResult, ProviderId, ProviderView, RpcMethod,
         RpcResult, RpcServices,
@@ -480,7 +480,7 @@ fn mock_request_should_succeed_with_method() {
 fn mock_request_should_succeed_with_request_headers() {
     mock_request(|builder| {
         builder.with_request_headers(vec![
-            (CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE),
+            (CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE),
             ("Custom", "Value"),
         ])
     })
@@ -503,7 +503,7 @@ fn mock_request_should_succeed_with_all() {
             .with_url(MOCK_REQUEST_URL)
             .with_method(HttpMethod::POST)
             .with_request_headers(vec![
-                (CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE),
+                (CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE),
                 ("Custom", "Value"),
             ])
             .with_request_body(MOCK_REQUEST_PAYLOAD)

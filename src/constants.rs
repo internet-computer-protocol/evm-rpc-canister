@@ -55,7 +55,7 @@ pub const DEFAULT_L2_MAINNET_SERVICES: &[L2MainnetService] = &[
     L2MainnetService::PublicNode,
 ];
 
-pub const CONTENT_TYPE_HEADER: &str = "Content-Type";
+pub const CONTENT_TYPE_HEADER_LOWERCASE: &str = "content-type";
 pub const CONTENT_TYPE_VALUE: &str = "application/json";
 
 pub const ETH_MAINNET_CHAIN_ID: u64 = 1;

@@ -310,7 +310,7 @@ pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, Pr
 mod test {
     use std::collections::{HashMap, HashSet};
 
-    use crate::{constants::CONTENT_TYPE_HEADER, validate::validate_url_pattern};
+    use crate::{constants::CONTENT_TYPE_HEADER_LOWERCASE, validate::validate_url_pattern};
 
     use super::{PROVIDERS, SERVICE_PROVIDER_MAP};
 
@@ -326,7 +326,7 @@ mod test {
         assert!(PROVIDERS.iter().all(|provider| provider
             .header_patterns
             .iter()
-            .all(|header| header.name.to_lowercase() != CONTENT_TYPE_HEADER.to_lowercase())));
+            .all(|header| header.name.to_lowercase() != CONTENT_TYPE_HEADER_LOWERCASE)));
     }
 
     #[test]

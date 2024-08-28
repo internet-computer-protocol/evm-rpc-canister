@@ -8,7 +8,7 @@ use num_traits::ToPrimitive;
 use crate::{
     accounting::{get_cost_with_collateral, get_http_request_cost},
     add_metric_entry,
-    constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST},
+    constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST},
     memory::get_demo_status,
     types::{MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcResult},
     util::canonicalize_json,
@@ -25,10 +25,10 @@ pub async fn json_rpc_request(
     let mut request_headers = api.headers.unwrap_or_default();
     if !request_headers
         .iter()
-        .any(|header| header.name.to_lowercase() == CONTENT_TYPE_HEADER.to_lowercase())
+        .any(|header| header.name.to_lowercase() == CONTENT_TYPE_HEADER_LOWERCASE)
     {
         request_headers.push(HttpHeader {
-            name: CONTENT_TYPE_HEADER.to_string(),
+            name: CONTENT_TYPE_HEADER_LOWERCASE.to_string(),
             value: CONTENT_TYPE_VALUE.to_string(),
         });
     }
