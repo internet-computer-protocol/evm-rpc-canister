@@ -636,13 +636,13 @@ fn should_decode_transaction_receipt() {
 }
 
 #[test]
-fn should_insert_api_keys() {
+fn should_use_fallback_public_url() {
     let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
     let setup = EvmRpcSetup::with_args(InitArgs {
         demo: Some(true),
         manage_api_keys: Some(vec![authorized_caller.0]),
     });
-    let no_api_key_response = setup
+    let response = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
@@ -658,7 +658,16 @@ fn should_insert_api_keys() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(no_api_key_response, 1);
+    assert_eq!(response, 1);
+}
+
+#[test]
+fn should_insert_api_keys() {
+    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: Some(true),
+        manage_api_keys: Some(vec![authorized_caller.0]),
+    });
     let provider_id = 1;
     setup
         .clone()
@@ -684,9 +693,10 @@ fn should_insert_api_keys() {
 }
 
 #[test]
-fn should_require_api_key() {
+#[should_panic(expected = "API key not yet initialized for provider: 8")]
+fn should_err_on_uninitialized_api_key() {
     let setup = EvmRpcSetup::new();
-    let response = setup
+    setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Alchemy])),
             None,
@@ -695,14 +705,11 @@ fn should_require_api_key() {
                 block: candid_types::BlockTag::Latest,
             },
         )
-        .wait()
-        .expect_consistent()
-        .unwrap();
-    assert_eq!(response, 1);
+        .wait();
 }
 
 #[test]
-#[should_panic(expected = "TODO")]
+#[should_panic(expected = "You are not authorized")]
 fn should_prevent_unauthorized_update_api_keys() {
     let setup = EvmRpcSetup::new();
     setup.update_api_keys(&[(0, Some("unauthorized-api-key".to_string()))]);
