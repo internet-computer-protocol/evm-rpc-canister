@@ -35,7 +35,7 @@
       "dependencies": ["evm_rpc_staging"],
       "candid": "e2e/rust/e2e_rust.did",
       "type": "rust",
-      "package": "e2e"
+      "package": "e2e_rust"
     },
     "e2e_motoko": {
       "dependencies": [
