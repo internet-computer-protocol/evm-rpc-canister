@@ -276,27 +276,32 @@ pub struct Provider {
 impl Provider {
     pub fn api(&self) -> RpcApi {
         match &self.access {
-            RpcAccess::Authenticated { auth, .. } => {
-                let api_key = get_api_key(self.provider_id).unwrap_or_else(|| {
-                    panic!(
-                        "API key not yet initialized for provider: {}",
-                        self.provider_id
-                    )
-                });
-                match auth {
+            RpcAccess::Authenticated { auth, public_url } => match get_api_key(self.provider_id) {
+                Some(api_key) => match auth {
                     RpcAuth::BearerToken { url } => RpcApi {
                         url: url.to_string(),
                         headers: Some(vec![HttpHeader {
                             name: "Authorization".to_string(),
-                            value: "Bearer {API_KEY}".to_string(),
+                            value: format!("Bearer {}", api_key.read()),
                         }]),
                     },
                     RpcAuth::UrlParameter { url_pattern } => RpcApi {
-                        url: url_pattern.replace(API_KEY_REPLACE_STRING, &api_key.0),
+                        url: url_pattern.replace(API_KEY_REPLACE_STRING, &api_key.read()),
                         headers: None,
                     },
-                }
-            }
+                },
+                None => RpcApi {
+                    url: public_url
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "API key not yet initialized for provider: {}",
+                                self.provider_id
+                            )
+                        })
+                        .to_string(),
+                    headers: None,
+                },
+            },
             RpcAccess::Unauthenticated { public_url } => RpcApi {
                 url: public_url.to_string(),
                 headers: None,
