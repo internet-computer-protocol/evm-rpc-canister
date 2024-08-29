@@ -102,7 +102,7 @@ pub const PROVIDERS: &[Provider] = &[
             auth: RpcAuth::BearerToken {
                 url: "https://eth-mainnet.g.alchemy.com/v2",
             },
-            public_url: None,
+            public_url: Some("https://eth-mainnet.g.alchemy.com/v2/demo"),
         },
         alias: Some(RpcService::EthMainnet(EthMainnetService::Alchemy)),
     },
@@ -113,7 +113,7 @@ pub const PROVIDERS: &[Provider] = &[
             auth: RpcAuth::BearerToken {
                 url: "https://eth-sepolia.g.alchemy.com/v2",
             },
-            public_url: None,
+            public_url: Some("https://eth-sepolia.g.alchemy.com/v2/demo"),
         },
         alias: Some(RpcService::EthSepolia(EthSepoliaService::Alchemy)),
     },
@@ -135,7 +135,7 @@ pub const PROVIDERS: &[Provider] = &[
             auth: RpcAuth::BearerToken {
                 url: "https://arb-mainnet.g.alchemy.com/v2",
             },
-            public_url: None,
+            public_url: Some("https://arb-mainnet.g.alchemy.com/v2/demo"),
         },
         alias: Some(RpcService::ArbitrumOne(L2MainnetService::Alchemy)),
     },
@@ -176,7 +176,7 @@ pub const PROVIDERS: &[Provider] = &[
             auth: RpcAuth::BearerToken {
                 url: "https://base-mainnet.g.alchemy.com/v2",
             },
-            public_url: None,
+            public_url: Some("https://base-mainnet.g.alchemy.com/v2/demo"),
         },
         alias: Some(RpcService::BaseMainnet(L2MainnetService::Alchemy)),
     },
@@ -217,7 +217,7 @@ pub const PROVIDERS: &[Provider] = &[
             auth: RpcAuth::BearerToken {
                 url: "https://opt-mainnet.g.alchemy.com/v2",
             },
-            public_url: None,
+            public_url: Some("https://opt-mainnet.g.alchemy.com/v2/demo"),
         },
         alias: Some(RpcService::OptimismMainnet(L2MainnetService::Alchemy)),
     },
