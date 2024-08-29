@@ -53,7 +53,7 @@ pub const PROVIDERS: &[Provider] = &[
             auth: RpcAuth::UrlParameter {
                 url_pattern: "https://ethereum.blockpi.network/v1/rpc/{API_KEY}",
             },
-            public_url: None,
+            public_url: Some("https://ethereum.blockpi.network/v1/rpc/public"),
         },
         alias: Some(RpcService::EthMainnet(EthMainnetService::BlockPi)),
     },
@@ -83,7 +83,7 @@ pub const PROVIDERS: &[Provider] = &[
             auth: RpcAuth::UrlParameter {
                 url_pattern: "https://ethereum-sepolia.blockpi.network/v1/rpc/{API_KEY}",
             },
-            public_url: None,
+            public_url: Some("https://ethereum-sepolia.blockpi.network/v1/rpc/public"),
         },
         alias: Some(RpcService::EthSepolia(EthSepoliaService::BlockPi)),
     },
@@ -146,7 +146,7 @@ pub const PROVIDERS: &[Provider] = &[
             auth: RpcAuth::UrlParameter {
                 url_pattern: "https://arbitrum.blockpi.network/v1/rpc/{API_KEY}",
             },
-            public_url: None,
+            public_url: Some("https://arbitrum.blockpi.network/v1/rpc/public"),
         },
         alias: Some(RpcService::ArbitrumOne(L2MainnetService::BlockPi)),
     },
@@ -187,7 +187,7 @@ pub const PROVIDERS: &[Provider] = &[
             auth: RpcAuth::UrlParameter {
                 url_pattern: "https://base.blockpi.network/v1/rpc/{API_KEY}",
             },
-            public_url: None,
+            public_url: Some("https://base.blockpi.network/v1/rpc/public"),
         },
         alias: Some(RpcService::BaseMainnet(L2MainnetService::BlockPi)),
     },
@@ -228,7 +228,7 @@ pub const PROVIDERS: &[Provider] = &[
             auth: RpcAuth::UrlParameter {
                 url_pattern: "https://optimism.blockpi.network/v1/rpc/{API_KEY}",
             },
-            public_url: None,
+            public_url: Some("https://optimism.blockpi.network/v1/rpc/public"),
         },
         alias: Some(RpcService::OptimismMainnet(L2MainnetService::BlockPi)),
     },

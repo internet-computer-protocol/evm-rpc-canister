@@ -65,6 +65,7 @@ pub async fn test() {
         (
             RpcServices::EthMainnet(Some(vec![
                 EthMainnetService::Ankr,
+                EthMainnetService::BlockPi,
                 EthMainnetService::Llama,
                 EthMainnetService::PublicNode,
             ])),
