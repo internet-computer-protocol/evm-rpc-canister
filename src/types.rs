@@ -286,7 +286,7 @@ impl Provider {
                         }]),
                     },
                     RpcAuth::UrlParameter { url_pattern } => RpcApi {
-                        url: url_pattern.replace(API_KEY_REPLACE_STRING, &api_key.read()),
+                        url: url_pattern.replace(API_KEY_REPLACE_STRING, api_key.read()),
                         headers: None,
                     },
                 },
