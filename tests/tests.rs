@@ -990,7 +990,11 @@ fn candid_rpc_should_allow_unexpected_response_fields() {
 
 #[test]
 fn candid_rpc_should_err_without_cycles() {
-    let setup = EvmRpcSetup::new().prepare_api_keys();
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: None,
+        manage_api_keys: None,
+    })
+    .prepare_api_keys();
     let result = setup
         .eth_get_transaction_receipt(
             RpcServices::EthMainnet(None),
