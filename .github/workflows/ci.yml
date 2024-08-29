@@ -51,7 +51,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
-      # - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2
 
       - name: Install dfx
         uses: dfinity/setup-dfx@main
