@@ -291,11 +291,11 @@ impl EvmRpcSetup {
         &self,
         source: RpcServices,
         config: Option<RpcConfig>,
-        address: &str,
-    ) -> CallFlow<MultiRpcResult<Option<candid_types::TransactionReceipt>>> {
+        tx_hash: &str,
+    ) -> CallFlow<MultiRpcResult<Option<evm_rpc_types::TransactionReceipt>>> {
         self.call_update(
             "eth_getTransactionReceipt",
-            Encode!(&source, &config, &address).unwrap(),
+            Encode!(&source, &config, &tx_hash).unwrap(),
         )
     }
 
@@ -1026,25 +1026,31 @@ fn should_decode_address() {
 
 #[test]
 fn should_decode_transaction_receipt() {
-    let value = candid_types::TransactionReceipt {
-        status: 0x1.into(),
+    let value = evm_rpc_types::TransactionReceipt {
+        status: 0x1_u8.into(),
         transaction_hash: "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f"
-            .to_string(),
+            .parse()
+            .unwrap(),
         contract_address: None,
         block_number: 18_515_371_u64.into(),
         block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be"
-            .to_string(),
+            .parse()
+            .unwrap(),
         effective_gas_price: 26_776_497_782_u64.into(),
-        gas_used: 32_137.into(),
-        from: "0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667".to_string(),
+        gas_used: 32_137_u32.into(),
+        from: "0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667"
+            .parse()
+            .unwrap(),
         logs: vec![],
-        logs_bloom: "0x0".to_string(),
-        to: "0x356cfd6e6d0000400000003900b415f80669009e".to_string(),
-        transaction_index: 0xd9.into(),
-        r#type: "0x2".to_string(),
+        logs_bloom: "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".parse().unwrap(),
+        to: "0x356cfd6e6d0000400000003900b415f80669009e"
+            .parse()
+            .unwrap(),
+        transaction_index: 0xd9_u16.into(),
+        tx_type: "0x2".parse().unwrap(),
     };
     assert_eq!(
-        Decode!(&Encode!(&value).unwrap(), candid_types::TransactionReceipt).unwrap(),
+        Decode!(&Encode!(&value).unwrap(), evm_rpc_types::TransactionReceipt).unwrap(),
         value
     );
 }
@@ -1206,20 +1212,20 @@ fn eth_get_transaction_receipt_should_succeed() {
         .unwrap();
         assert_eq!(
         response,
-        Some(candid_types::TransactionReceipt {
-            status: 0x1.into(),
-            transaction_hash: "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f".to_string(),
+        Some(evm_rpc_types::TransactionReceipt {
+            status: 0x1_u8.into(),
+            transaction_hash: "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f".parse().unwrap(),
             contract_address: None,
             block_number: 0x11a85ab_u64.into(),
-            block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be".to_string(),
+            block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be".parse().unwrap(),
             effective_gas_price: 0x63c00ee76_u64.into(),
-            gas_used: 0x7d89.into(),
-            from: "0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667".to_string(),
+            gas_used: 0x7d89_u32.into(),
+            from: "0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667".parse().unwrap(),
             logs: vec![],
-            logs_bloom: "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string(),
-            to: "0x356cfd6e6d0000400000003900b415f80669009e".to_string(),
-            transaction_index: 0xd9.into(),
-            r#type: "0x2".to_string(),
+            logs_bloom: "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".parse().unwrap(),
+            to: "0x356cfd6e6d0000400000003900b415f80669009e".parse().unwrap(),
+            transaction_index: 0xd9_u16.into(),
+            tx_type: "0x2".parse().unwrap(),
         })
     );
     }
@@ -1316,14 +1322,16 @@ fn candid_rpc_should_allow_unexpected_response_fields() {
             None,
             "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
         )
-        .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":{"unexpectedKey":"unexpectedValue","blockHash":"0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35","blockNumber":"0x5bad55","contractAddress":null,"cumulativeGasUsed":"0xb90b0","effectiveGasPrice":"0x746a528800","from":"0x398137383b3d25c92898c656696e41950e47316b","gasUsed":"0x1383f","logs":[],"logsBloom":"0x0","status":"0x1","to":"0x06012c8cf97bead5deae237070f9587f8e7a266d","transactionHash":"0xbb3a336e3f823ec18197f1e13ee875700f08f03e2cab75f0d0b118dabb44cba0","transactionIndex":"0x11","type":"0x0"}}"#))
+        .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":{"unexpectedKey":"unexpectedValue","blockHash":"0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35","blockNumber":"0x5bad55","contractAddress":null,"cumulativeGasUsed":"0xb90b0","effectiveGasPrice":"0x746a528800","from":"0x398137383b3d25c92898c656696e41950e47316b","gasUsed":"0x1383f","logs":[],"logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","status":"0x1","to":"0x06012c8cf97bead5deae237070f9587f8e7a266d","transactionHash":"0xbb3a336e3f823ec18197f1e13ee875700f08f03e2cab75f0d0b118dabb44cba0","transactionIndex":"0x11","type":"0x0"}}"#))
         .wait()
         .expect_consistent()
         .unwrap()
         .expect("receipt was None");
     assert_eq!(
         response.block_hash,
-        "0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35".to_string()
+        "0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35"
+            .parse()
+            .unwrap()
     );
 }
 

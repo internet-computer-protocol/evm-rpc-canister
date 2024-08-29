@@ -3,8 +3,8 @@
 //! see <https://github.com/internet-computer-protocol/evm-rpc-canister/issues/243>
 
 use cketh_common::checked_amount::CheckedAmountOf;
-use cketh_common::eth_rpc::Quantity;
-use evm_rpc_types::{BlockTag, Nat256};
+use cketh_common::eth_rpc::{Hash, Quantity};
+use evm_rpc_types::{BlockTag, Hex20, Hex256, Hex32, HexByte, Nat256};
 
 pub(super) fn into_block_spec(value: BlockTag) -> cketh_common::eth_rpc::BlockSpec {
     use cketh_common::eth_rpc::{self, BlockSpec};
@@ -90,6 +90,41 @@ pub(super) fn from_fee_history(
             .map(|x| x.into_iter().map(from_checked_amount_of).collect())
             .collect(),
     }
+}
+
+pub(super) fn from_transaction_receipt(
+    value: cketh_common::eth_rpc_client::responses::TransactionReceipt,
+) -> evm_rpc_types::TransactionReceipt {
+    evm_rpc_types::TransactionReceipt {
+        block_hash: Hex32::from(value.block_hash.0),
+        block_number: from_checked_amount_of(value.block_number),
+        effective_gas_price: from_checked_amount_of(value.effective_gas_price),
+        gas_used: from_checked_amount_of(value.gas_used),
+        status: match value.status {
+            cketh_common::eth_rpc_client::responses::TransactionStatus::Success => {
+                Nat256::from(1_u8)
+            }
+            cketh_common::eth_rpc_client::responses::TransactionStatus::Failure => {
+                Nat256::from(0_u8)
+            }
+        },
+        transaction_hash: Hex32::from(value.transaction_hash.0),
+        // TODO 243: responses types from querying JSON-RPC providers should be strongly typed
+        // for all the following fields: contract_address, from, logs_bloom, to, transaction_index, tx_type
+        contract_address: value
+            .contract_address
+            .map(|address| Hex20::try_from(address).unwrap()),
+        from: Hex20::try_from(value.from).unwrap(),
+        logs: from_log_entries(value.logs),
+        logs_bloom: Hex256::try_from(value.logs_bloom).unwrap(),
+        to: Hex20::try_from(value.to).unwrap(),
+        transaction_index: from_checked_amount_of(value.transaction_index),
+        tx_type: HexByte::try_from(value.r#type).unwrap(),
+    }
+}
+
+pub(super) fn into_hash(value: Hex32) -> Hash {
+    Hash(value.into())
 }
 
 fn into_checked_amount_of<Unit>(value: Nat256) -> CheckedAmountOf<Unit> {

@@ -1,7 +1,5 @@
 mod cketh_conversion;
 
-use std::str::FromStr;
-
 use async_trait::async_trait;
 use candid::Nat;
 use cketh_common::{
@@ -16,6 +14,7 @@ use cketh_common::{
     lifecycle::EthereumNetwork,
 };
 use ethers_core::{types::Transaction, utils::rlp};
+use evm_rpc_types::Hex32;
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 
 use crate::{
@@ -221,16 +220,16 @@ impl CandidRpcClient {
 
     pub async fn eth_get_transaction_receipt(
         &self,
-        hash: String,
-    ) -> MultiRpcResult<Option<candid_types::TransactionReceipt>> {
-        match Hash::from_str(&hash) {
-            Ok(hash) => process_result(
-                RpcMethod::EthGetTransactionReceipt,
-                self.client.eth_get_transaction_receipt(hash).await,
-            )
-            .map(|option| option.map(|r| r.into())),
-            Err(_) => MultiRpcResult::Consistent(Err(ValidationError::InvalidHex(hash).into())),
-        }
+        hash: Hex32,
+    ) -> MultiRpcResult<Option<evm_rpc_types::TransactionReceipt>> {
+        use crate::candid_rpc::cketh_conversion::{from_transaction_receipt, into_hash};
+        process_result(
+            RpcMethod::EthGetTransactionReceipt,
+            self.client
+                .eth_get_transaction_receipt(into_hash(hash))
+                .await,
+        )
+        .map(|option| option.map(from_transaction_receipt))
     }
 
     pub async fn eth_get_transaction_count(

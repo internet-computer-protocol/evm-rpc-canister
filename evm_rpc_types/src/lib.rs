@@ -3,6 +3,7 @@ mod tests;
 
 use candid::types::{Serializer, Type};
 use candid::{CandidType, Nat};
+use hex::FromHexError;
 use num_bigint::BigUint;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
@@ -12,7 +13,7 @@ mod request;
 mod response;
 
 pub use request::{FeeHistoryArgs, GetLogsArgs};
-pub use response::{FeeHistory, LogEntry};
+pub use response::{FeeHistory, LogEntry, TransactionReceipt};
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
 pub enum BlockTag {
@@ -165,6 +166,45 @@ macro_rules! impl_hex_string {
     };
 }
 
+impl_hex_string!(HexByte(Byte));
 impl_hex_string!(Hex20([u8; 20]));
 impl_hex_string!(Hex32([u8; 32]));
+impl_hex_string!(Hex256([u8; 256]));
 impl_hex_string!(Hex(Vec<u8>));
+
+/// A wrapper to be able to decode single character hex string
+/// such as `0x0` or `0x1` into a byte. By default,
+/// `FromHex::from_hex` will return `Err(FromHexError::OddLength)`
+/// when trying to decode such strings.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Byte([u8; 1]);
+
+impl AsRef<[u8]> for Byte {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_slice()
+    }
+}
+
+impl hex::FromHex for Byte {
+    type Error = FromHexError;
+
+    fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error> {
+        let hex = hex.as_ref();
+        match hex {
+            &[a] => hex::FromHex::from_hex([b'0', a]).map(Self),
+            h => hex::FromHex::from_hex(h).map(Self),
+        }
+    }
+}
+
+impl From<u8> for Byte {
+    fn from(value: u8) -> Self {
+        Self([value])
+    }
+}
+
+impl From<u8> for HexByte {
+    fn from(value: u8) -> Self {
+        Self(Byte::from(value))
+    }
+}
