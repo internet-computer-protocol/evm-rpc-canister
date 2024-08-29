@@ -152,8 +152,8 @@ shared ({ caller = installer }) actor class Main() {
             };
 
             // All RPC services suitable for E2E testing
-            let mainnetServices = [#Alchemy, #Ankr, #BlockPi, #PublicNode, #Llama];
-            let l2Services = [#Ankr, #BlockPi, #PublicNode, #Llama];
+            let mainnetServices = [#Ankr, #PublicNode, #Llama];
+            let l2Services = [#Ankr, #PublicNode, #Llama];
             let allServices : [(Text, EvmRpc.RpcServices)] = [
                 (
                     "Ethereum",

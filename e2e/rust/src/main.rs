@@ -1,9 +1,9 @@
 use candid::candid_method;
 use ic_cdk_macros::update;
 
-use e2e::declarations::EVM_RPC_STAGING_FIDUCIARY::{
+use e2e::declarations::EVM_RPC_STAGING::{
     BlockTag, EthMainnetService, GetBlockByNumberResult, MultiGetBlockByNumberResult,
-    ProviderError, RpcError, RpcService, RpcServices, EVM_RPC_STAGING_FIDUCIARY as evm_rpc,
+    ProviderError, RpcError, RpcService, RpcServices, EVM_RPC_STAGING as evm_rpc,
 };
 
 fn main() {}
@@ -65,7 +65,6 @@ pub async fn test() {
         (
             RpcServices::EthMainnet(Some(vec![
                 EthMainnetService::Ankr,
-                EthMainnetService::BlockPi,
                 EthMainnetService::Llama,
                 EthMainnetService::PublicNode,
             ])),

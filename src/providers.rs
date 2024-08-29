@@ -206,7 +206,7 @@ pub const PROVIDERS: &[Provider] = &[
             auth: RpcAuth::UrlParameter {
                 url_pattern: "https://rpc.ankr.com/optimism/{API_KEY}",
             },
-            public_url: None,
+            public_url: Some("https://rpc.ankr.com/optimism"),
         },
         alias: Some(RpcService::OptimismMainnet(L2MainnetService::Ankr)),
     },
