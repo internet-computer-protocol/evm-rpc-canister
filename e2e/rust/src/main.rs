@@ -1,7 +1,9 @@
 use candid::candid_method;
 use ic_cdk_macros::update;
 
-use e2e::declarations::EVM_RPC_STAGING::{
+mod declarations;
+
+use declarations::EVM_RPC_STAGING::{
     BlockTag, EthMainnetService, GetBlockByNumberResult, MultiGetBlockByNumberResult,
     ProviderError, RpcError, RpcService, RpcServices, EVM_RPC_STAGING as evm_rpc,
 };
