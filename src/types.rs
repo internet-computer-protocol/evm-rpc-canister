@@ -425,11 +425,7 @@ pub mod candid_types {
     use std::str::FromStr;
 
     use candid::CandidType;
-    use cketh_common::{
-        address::Address,
-        eth_rpc::{into_nat, ValidationError},
-        numeric::BlockNumber,
-    };
+    use cketh_common::{address::Address, eth_rpc::ValidationError, numeric::BlockNumber};
     use serde::Deserialize;
 
     pub use cketh_common::eth_rpc::Hash;
@@ -455,51 +451,6 @@ pub mod candid_types {
                 BlockTag::Finalized => BlockSpec::Tag(eth_rpc::BlockTag::Finalized),
                 BlockTag::Earliest => BlockSpec::Tag(eth_rpc::BlockTag::Earliest),
                 BlockTag::Pending => BlockSpec::Tag(eth_rpc::BlockTag::Pending),
-            }
-        }
-    }
-
-    #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
-    pub struct TransactionReceipt {
-        #[serde(rename = "blockHash")]
-        pub block_hash: String,
-        #[serde(rename = "blockNumber")]
-        pub block_number: BlockNumber,
-        #[serde(rename = "effectiveGasPrice")]
-        pub effective_gas_price: candid::Nat,
-        #[serde(rename = "gasUsed")]
-        pub gas_used: candid::Nat,
-        pub status: candid::Nat,
-        #[serde(rename = "transactionHash")]
-        pub transaction_hash: String,
-        #[serde(rename = "contractAddress")]
-        pub contract_address: Option<String>,
-        pub from: String,
-        pub logs: Vec<cketh_common::eth_rpc::LogEntry>,
-        #[serde(rename = "logsBloom")]
-        pub logs_bloom: String,
-        pub to: String,
-        #[serde(rename = "transactionIndex")]
-        pub transaction_index: candid::Nat,
-        pub r#type: String,
-    }
-
-    impl From<cketh_common::eth_rpc_client::responses::TransactionReceipt> for TransactionReceipt {
-        fn from(value: cketh_common::eth_rpc_client::responses::TransactionReceipt) -> Self {
-            TransactionReceipt {
-                block_hash: format!("{:#x}", value.block_hash),
-                block_number: value.block_number,
-                effective_gas_price: into_nat(value.effective_gas_price.into_inner()),
-                gas_used: into_nat(value.gas_used.into_inner()),
-                status: into_nat(value.status.into()),
-                transaction_hash: format!("{:#x}", value.transaction_hash),
-                contract_address: value.contract_address,
-                from: value.from,
-                logs: value.logs,
-                logs_bloom: value.logs_bloom,
-                to: value.to,
-                transaction_index: into_nat(value.transaction_index.into_inner()),
-                r#type: value.r#type,
             }
         }
     }

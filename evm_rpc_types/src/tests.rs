@@ -60,7 +60,7 @@ mod nat256 {
 }
 
 mod hex_string {
-    use crate::{Hex, Hex20, Hex32};
+    use crate::{Hex, Hex20, Hex256, Hex32, HexByte};
     use candid::{CandidType, Decode, Encode};
     use proptest::prelude::{Strategy, TestCaseError};
     use proptest::{prop_assert, prop_assert_eq, proptest};
@@ -71,41 +71,54 @@ mod hex_string {
     proptest! {
         #[test]
         fn should_encode_decode(
+            hex1 in arb_var_len_hex_string(1..=1_usize),
             hex20 in arb_var_len_hex_string(20..=20_usize),
             hex32 in arb_var_len_hex_string(32..=32_usize),
+            hex256 in arb_var_len_hex_string(256..=256_usize),
             hex in arb_var_len_hex_string(0..=100_usize)
         ) {
+            encode_decode_roundtrip::<HexByte>(&hex1)?;
             encode_decode_roundtrip::<Hex20>(&hex20)?;
             encode_decode_roundtrip::<Hex32>(&hex32)?;
+            encode_decode_roundtrip::<Hex256>(&hex256)?;
             encode_decode_roundtrip::<Hex>(&hex)?;
         }
 
         #[test]
         fn should_fail_to_decode_strings_with_wrong_length(
+            short_hex1 in arb_var_len_hex_string(0..=0_usize),
+            long_hex1 in arb_var_len_hex_string(2..=100_usize),
             short_hex20 in arb_var_len_hex_string(0..=19_usize),
             long_hex20 in arb_var_len_hex_string(21..=100_usize),
             short_hex32 in arb_var_len_hex_string(0..=31_usize),
             long_hex32 in arb_var_len_hex_string(33..=100_usize),
+            short_hex256 in arb_var_len_hex_string(0..=255_usize),
+            long_hex256 in arb_var_len_hex_string(257..=500_usize),
         ) {
-            let decoded_short_hex20 = Decode!(&Encode!(&short_hex20).unwrap(), Hex20);
-            let decoded_long_hex20 = Decode!(&Encode!(&long_hex20).unwrap(), Hex20);
-            for result in [decoded_short_hex20, decoded_long_hex20] {
-                prop_assert!(
-                    result.is_err(),
-                    "Expected error decoding hex20 with wrong length, got: {:?}",
-                    result
-                );
-            }
+            expect_decoding_error::<HexByte>(&short_hex1)?;
+            expect_decoding_error::<HexByte>(&long_hex1)?;
+            expect_decoding_error::<Hex20>(&short_hex20)?;
+            expect_decoding_error::<Hex20>(&long_hex20)?;
+            expect_decoding_error::<Hex32>(&short_hex32)?;
+            expect_decoding_error::<Hex32>(&long_hex32)?;
+            expect_decoding_error::<Hex256>(&short_hex256)?;
+            expect_decoding_error::<Hex256>(&long_hex256)?;
+        }
+    }
 
-            let decoded_short_hex32 = Decode!(&Encode!(&short_hex32).unwrap(), Hex32);
-            let decoded_long_hex32 = Decode!(&Encode!(&long_hex32).unwrap(), Hex32);
-            for result in [decoded_short_hex32, decoded_long_hex32] {
-                prop_assert!(
-                    result.is_err(),
-                    "Expected error decoding hex32 with wrong length, got: {:?}",
-                    result
-                );
-            }
+    #[test]
+    fn should_decode_single_hex_char_into_hex_byte() {
+        for single_hex in "0123456789abcdefABCDEF".chars() {
+            let expected_value =
+                HexByte::from(u8::from_str_radix(&single_hex.to_string(), 16).unwrap());
+
+            let single_digit_hex = format!("0x{}", single_hex);
+            let single_digit_hex_parsed: HexByte = single_digit_hex.parse().unwrap();
+            assert_eq!(single_digit_hex_parsed, expected_value);
+
+            let double_digit_hex = format!("0x0{}", single_hex);
+            let double_digit_hex_parsed: HexByte = double_digit_hex.parse().unwrap();
+            assert_eq!(double_digit_hex_parsed, expected_value);
         }
     }
 
@@ -127,6 +140,21 @@ mod hex_string {
 
         let decoded_hex = Decode!(&encoded_text_value, T).unwrap();
         prop_assert_eq!(&decoded_hex, &hex, "Decode value differ for {}", value);
+        Ok(())
+    }
+
+    fn expect_decoding_error<T>(wrong_hex: &str) -> Result<(), TestCaseError>
+    where
+        T: FromStr + CandidType + DeserializeOwned + PartialEq + std::fmt::Debug,
+        <T as FromStr>::Err: std::fmt::Debug,
+    {
+        let result = Decode!(&Encode!(&wrong_hex).unwrap(), T);
+        prop_assert!(
+            result.is_err(),
+            "Expected error decoding {}, got: {:?}",
+            wrong_hex,
+            result
+        );
         Ok(())
     }
 
