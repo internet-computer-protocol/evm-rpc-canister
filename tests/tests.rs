@@ -30,6 +30,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
+    providers::PROVIDERS,
     types::{
         candid_types, InitArgs, Metrics, MultiRpcResult, ProviderId, RpcMethod, RpcResult,
         RpcServices,
@@ -40,6 +41,7 @@ use mock::{MockOutcall, MockOutcallBuilder};
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
 const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
+const ADDITIONAL_TEST_ID: u64 = 10352387;
 
 const INITIAL_CYCLES: u128 = 100_000_000_000_000_000;
 
@@ -280,6 +282,11 @@ impl EvmRpcSetup {
             "eth_sendRawTransaction",
             Encode!(&source, &config, &signed_raw_transaction_hex).unwrap(),
         )
+    }
+
+    pub fn update_api_keys(&self, api_keys: &[(ProviderId, Option<String>)]) {
+        self.call_update("updateApiKeys", Encode!(&api_keys).unwrap())
+            .wait()
     }
 }
 
@@ -602,6 +609,80 @@ fn should_decode_transaction_receipt() {
         Decode!(&Encode!(&value).unwrap(), candid_types::TransactionReceipt).unwrap(),
         value
     );
+}
+
+#[test]
+fn should_insert_api_keys() {
+    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: Some(true),
+        manage_api_keys: Some(vec![authorized_caller.0]),
+    });
+    let no_api_key_response = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://rpc.ankr.com/eth"),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(no_api_key_response, 1);
+    setup.clone().as_caller(authorized_caller).update_api_keys(
+        &PROVIDERS
+            .iter()
+            .map(|provider| (provider.provider_id, Some("test-api-key".to_string())))
+            .collect::<Vec<_>>(),
+    );
+    let api_key_response = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://rpc.ankr.com/eth/test-api-key"),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(api_key_response, 1);
+}
+
+#[test]
+fn should_require_api_key() {
+    let setup = EvmRpcSetup::new();
+    let response = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Alchemy])),
+            None,
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response, 1);
+}
+
+#[test]
+#[should_panic(expected = "TODO")]
+fn should_prevent_unauthorized_update_api_keys() {
+    let setup = EvmRpcSetup::new();
+    setup.update_api_keys(&[(0, Some("unauthorized-api-key".to_string()))]);
 }
 
 #[test]
