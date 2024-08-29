@@ -11,8 +11,8 @@ use evm_rpc::memory::{
     insert_api_key, is_api_key_principal, remove_api_key, set_api_key_principals, set_demo_status,
 };
 use evm_rpc::metrics::encode_metrics;
-use evm_rpc::providers::{resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
-use evm_rpc::types::{Provider, ProviderId};
+use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
+use evm_rpc::types::{Provider, ProviderId, RpcAccess};
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
@@ -173,6 +173,17 @@ async fn get_nodes_in_subnet() -> u32 {
 #[candid_method(rename = "updateApiKeys")]
 async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
     for (provider_id, api_key) in api_keys {
+        let provider = find_provider(|provider| provider.provider_id == provider_id)
+            .unwrap_or_else(|| panic!("Provider not found: {}", provider_id));
+        match provider.access {
+            RpcAccess::Authenticated { .. } => {}
+            RpcAccess::Unauthenticated { .. } => {
+                panic!(
+                    "Trying to set API key for unauthenticated provider: {}",
+                    provider_id
+                )
+            }
+        };
         match api_key {
             Some(key) => insert_api_key(provider_id, key.try_into().expect("Invalid API key")),
             None => remove_api_key(provider_id),

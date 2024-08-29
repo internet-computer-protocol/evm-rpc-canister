@@ -89,12 +89,12 @@ pub async fn http_request(
             .into());
         }
         ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
+        add_metric_entry!(
+            cycles_charged,
+            (rpc_method.clone(), rpc_host.clone()),
+            cycles_cost
+        );
     }
-    add_metric_entry!(
-        cycles_charged,
-        (rpc_method.clone(), rpc_host.clone()),
-        cycles_cost
-    );
     add_metric_entry!(requests, (rpc_method.clone(), rpc_host.clone()), 1);
     match ic_cdk::api::management_canister::http_request::http_request(request, cycles_cost).await {
         Ok((response,)) => {

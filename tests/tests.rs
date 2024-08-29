@@ -32,8 +32,8 @@ use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
     providers::PROVIDERS,
     types::{
-        candid_types, InitArgs, Metrics, MultiRpcResult, ProviderId, RpcMethod, RpcResult,
-        RpcServices,
+        candid_types, InitArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod,
+        RpcResult, RpcServices,
     },
 };
 use evm_rpc_types::Nat256;
@@ -287,6 +287,24 @@ impl EvmRpcSetup {
     pub fn update_api_keys(&self, api_keys: &[(ProviderId, Option<String>)]) {
         self.call_update("updateApiKeys", Encode!(&api_keys).unwrap())
             .wait()
+    }
+
+    pub fn prepare_api_keys(self) -> Self {
+        self.clone().as_controller().update_api_keys(
+            &PROVIDERS
+                .iter()
+                .filter_map(|provider| {
+                    Some((
+                        provider.provider_id,
+                        match provider.access {
+                            RpcAccess::Authenticated { .. } => Some("test-api-key".to_string()),
+                            RpcAccess::Unauthenticated { .. } => None?,
+                        },
+                    ))
+                })
+                .collect::<Vec<_>>(),
+        );
+        self
     }
 }
 
@@ -635,12 +653,11 @@ fn should_insert_api_keys() {
         .expect_consistent()
         .unwrap();
     assert_eq!(no_api_key_response, 1);
-    setup.clone().as_caller(authorized_caller).update_api_keys(
-        &PROVIDERS
-            .iter()
-            .map(|provider| (provider.provider_id, Some("test-api-key".to_string())))
-            .collect::<Vec<_>>(),
-    );
+    let provider_id = 1;
+    setup
+        .clone()
+        .as_caller(authorized_caller)
+        .update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
     let api_key_response = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
@@ -688,7 +705,7 @@ fn should_prevent_unauthorized_update_api_keys() {
 #[test]
 fn eth_get_logs_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new();
+        let setup = EvmRpcSetup::new().prepare_api_keys();
         let response = setup
         .eth_get_logs(
             source.clone(),
@@ -743,7 +760,7 @@ fn eth_get_logs_should_succeed() {
 #[test]
 fn eth_get_block_by_number_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new();
+        let setup = EvmRpcSetup::new().prepare_api_keys();
         let response = setup
             .eth_get_block_by_number(
                 source.clone(),
@@ -786,7 +803,7 @@ fn eth_get_block_by_number_should_succeed() {
 #[test]
 fn eth_get_block_by_number_pre_london_fork_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new();
+        let setup = EvmRpcSetup::new().prepare_api_keys();
         let response = setup
             .eth_get_block_by_number(
                 source.clone(),
@@ -829,7 +846,7 @@ fn eth_get_block_by_number_pre_london_fork_should_succeed() {
 #[test]
 fn eth_get_transaction_receipt_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new();
+        let setup = EvmRpcSetup::new().prepare_api_keys();
         let response = setup
         .eth_get_transaction_receipt(
             source.clone(),
@@ -864,7 +881,7 @@ fn eth_get_transaction_receipt_should_succeed() {
 #[test]
 fn eth_get_transaction_count_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new();
+        let setup = EvmRpcSetup::new().prepare_api_keys();
         let response = setup
             .eth_get_transaction_count(
                 source.clone(),
@@ -888,7 +905,7 @@ fn eth_get_transaction_count_should_succeed() {
 #[test]
 fn eth_fee_history_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new();
+        let setup = EvmRpcSetup::new().prepare_api_keys();
         let response = setup
         .eth_fee_history(
             source.clone(),
@@ -924,7 +941,7 @@ fn eth_fee_history_should_succeed() {
 #[test]
 fn eth_send_raw_transaction_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new();
+        let setup = EvmRpcSetup::new().prepare_api_keys();
         let response = setup
             .eth_send_raw_transaction(source.clone(), None, MOCK_TRANSACTION)
             .mock_http(MockOutcallBuilder::new(
@@ -945,7 +962,7 @@ fn eth_send_raw_transaction_should_succeed() {
 
 #[test]
 fn candid_rpc_should_allow_unexpected_response_fields() {
-    let setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new().prepare_api_keys();
     let response = setup
         .eth_get_transaction_receipt(
             RpcServices::EthMainnet(None),
@@ -965,7 +982,7 @@ fn candid_rpc_should_allow_unexpected_response_fields() {
 
 #[test]
 fn candid_rpc_should_err_without_cycles() {
-    let setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new().prepare_api_keys();
     let result = setup
         .eth_get_transaction_receipt(
             RpcServices::EthMainnet(None),
@@ -985,7 +1002,7 @@ fn candid_rpc_should_err_without_cycles() {
 
 #[test]
 fn candid_rpc_should_err_when_service_unavailable() {
-    let setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new().prepare_api_keys();
     let result = setup
         .eth_get_transaction_receipt(
             RpcServices::EthMainnet(None),
@@ -1026,7 +1043,7 @@ fn candid_rpc_should_err_when_service_unavailable() {
 
 #[test]
 fn candid_rpc_should_recognize_json_error() {
-    let setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new().prepare_api_keys();
     let result = setup
         .eth_get_transaction_receipt(
             RpcServices::EthSepolia(Some(vec![
@@ -1068,7 +1085,7 @@ fn candid_rpc_should_recognize_json_error() {
 
 #[test]
 fn candid_rpc_should_reject_empty_service_list() {
-    let setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new().prepare_api_keys();
     let result = setup
         .eth_get_transaction_receipt(
             RpcServices::EthMainnet(Some(vec![])),
@@ -1085,7 +1102,7 @@ fn candid_rpc_should_reject_empty_service_list() {
 
 #[test]
 fn candid_rpc_should_return_inconsistent_results() {
-    let setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new().prepare_api_keys();
     let results = setup
         .eth_send_raw_transaction(
             RpcServices::EthMainnet(Some(vec![
@@ -1143,7 +1160,7 @@ fn candid_rpc_should_return_inconsistent_results() {
 
 #[test]
 fn candid_rpc_should_return_inconsistent_results_with_error() {
-    let setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new().prepare_api_keys();
     let result = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![
@@ -1205,7 +1222,7 @@ fn candid_rpc_should_return_inconsistent_results_with_error() {
 
 #[test]
 fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
-    let setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new().prepare_api_keys();
     let result = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![
@@ -1268,7 +1285,7 @@ fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
 
 #[test]
 fn candid_rpc_should_handle_already_known() {
-    let setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new().prepare_api_keys();
     let result = setup
         .eth_send_raw_transaction(
             RpcServices::EthMainnet(Some(vec![
@@ -1313,7 +1330,7 @@ fn candid_rpc_should_handle_already_known() {
 
 #[test]
 fn candid_rpc_should_recognize_rate_limit() {
-    let setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new().prepare_api_keys();
     let result = setup
         .eth_send_raw_transaction(
             RpcServices::EthMainnet(Some(vec![
@@ -1355,7 +1372,7 @@ fn candid_rpc_should_recognize_rate_limit() {
 
 #[test]
 fn should_use_custom_response_size_estimate() {
-    let setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::new().prepare_api_keys();
     let max_response_bytes = 1234;
     let expected_response = r#"{"id":0,"jsonrpc":"2.0","result":[{"address":"0xdac17f958d2ee523a2206206994597c13d831ec7","topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef","0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43","0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"],"data":"0x000000000000000000000000000000000000000000000000000000003b9c6433","blockNumber":"0x11dc77e","transactionHash":"0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678","transactionIndex":"0x65","blockHash":"0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629","logIndex":"0xe8","removed":false}]}"#;
     let response = setup
