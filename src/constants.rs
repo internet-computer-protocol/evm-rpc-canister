@@ -36,7 +36,8 @@ pub const ETH_GET_LOGS_MAX_BLOCKS: u32 = 500;
 pub const NODES_IN_SUBNET: u32 = 28;
 
 pub const API_KEY_REPLACE_STRING: &str = "{API_KEY}";
-pub const VALID_API_KEY_CHARS: &str = "0123456789ABCDEFGHIJKLMNOPQRTSUVWXYZabcdefghijklmnopqrstuvwxyz$-_.+!*";
+pub const VALID_API_KEY_CHARS: &str =
+    "0123456789ABCDEFGHIJKLMNOPQRTSUVWXYZabcdefghijklmnopqrstuvwxyz$-_.+!*";
 
 // Providers used by default (when passing `null` with `RpcServices`)
 pub const DEFAULT_ETH_MAINNET_SERVICES: &[EthMainnetService] = &[
