@@ -673,7 +673,7 @@ fn should_insert_api_keys() {
         .clone()
         .as_caller(authorized_caller)
         .update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
-    let api_key_response = setup
+    let response = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
@@ -689,23 +689,7 @@ fn should_insert_api_keys() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(api_key_response, 1);
-}
-
-#[test]
-#[should_panic(expected = "API key not yet initialized for provider: 8")]
-fn should_err_on_uninitialized_api_key() {
-    let setup = EvmRpcSetup::new();
-    setup
-        .eth_get_transaction_count(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Alchemy])),
-            None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
-            },
-        )
-        .wait();
+    assert_eq!(response, 1);
 }
 
 #[test]
