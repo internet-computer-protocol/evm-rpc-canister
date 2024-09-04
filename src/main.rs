@@ -163,7 +163,7 @@ fn get_service_provider_map() -> Vec<(RpcService, ProviderId)> {
 
 #[query(name = "getNodesInSubnet")]
 #[candid_method(query, rename = "getNodesInSubnet")]
-async fn get_nodes_in_subnet() -> u32 {
+fn get_nodes_in_subnet() -> u32 {
     NODES_IN_SUBNET
 }
 
