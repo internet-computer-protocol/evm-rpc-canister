@@ -3,6 +3,7 @@ use cketh_common::eth_rpc::{Block, RpcError};
 
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
+use cketh_common::logs::INFO;
 use evm_rpc::accounting::{get_cost_with_collateral, get_http_request_cost};
 use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::constants::NODES_IN_SUBNET;
@@ -13,6 +14,7 @@ use evm_rpc::memory::{
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
 use evm_rpc::types::{Provider, ProviderId, RpcAccess};
+use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
@@ -173,6 +175,16 @@ async fn get_nodes_in_subnet() -> u32 {
 )]
 #[candid_method(rename = "updateApiKeys")]
 async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
+    log!(
+        INFO,
+        "[{}] Updating API keys for providers: {}",
+        ic_cdk::caller(),
+        api_keys
+            .iter()
+            .map(|(id, _)| id.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
     for (provider_id, api_key) in api_keys {
         let provider = find_provider(|provider| provider.provider_id == provider_id)
             .unwrap_or_else(|| panic!("Provider not found: {}", provider_id));
