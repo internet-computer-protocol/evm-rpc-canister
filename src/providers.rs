@@ -361,6 +361,13 @@ mod test {
     use super::{PROVIDERS, SERVICE_PROVIDER_MAP};
 
     #[test]
+    fn test_provider_id_sequence() {
+        for (i, provider) in PROVIDERS.iter().enumerate() {
+            assert_eq!(provider.provider_id, i as u64);
+        }
+    }
+
+    #[test]
     fn test_rpc_provider_url_patterns() {
         for provider in PROVIDERS {
             fn assert_not_url_pattern(url: &str, provider: &Provider) {
