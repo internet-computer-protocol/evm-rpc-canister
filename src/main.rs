@@ -174,6 +174,12 @@ async fn get_nodes_in_subnet() -> u32 {
     guard = "require_api_key_principal_or_controller"
 )]
 #[candid_method(rename = "updateApiKeys")]
+/// Inserts or removes RPC provider API keys.
+/// 
+/// For each element of `api_keys`, passing `(id, Some(key))` corresponds to inserting or updating
+/// an API key, while passing `(id, None)` indicates that the key should be removed from the canister.
+/// 
+/// Panics if the list of provider IDs includes a nonexistent or "unauthenticated" (fully public) provider.
 async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
     log!(
         INFO,
