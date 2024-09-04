@@ -14,6 +14,9 @@ type Memory = VirtualMemory<VectorMemory>;
 #[cfg(target_arch = "wasm32")]
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
+const API_KEY_MAP_MEMORY_ID: MemoryId = MemoryId::new(4);
+const MANAGE_API_KEYS_MEMORY_ID: MemoryId = MemoryId::new(5);
+
 thread_local! {
     // Unstable static data: these are reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
@@ -27,9 +30,9 @@ thread_local! {
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
     static API_KEY_MAP: RefCell<StableBTreeMap<ProviderId, ApiKey, Memory>> =
-        RefCell::new(StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(MemoryId::new(5)))));
+        RefCell::new(StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(API_KEY_MAP_MEMORY_ID))));
     static MANAGE_API_KEYS: RefCell<ic_stable_structures::Vec<PrincipalStorable, Memory>> =
-        RefCell::new(ic_stable_structures::Vec::init(MEMORY_MANAGER.with_borrow(|m|m.get(MemoryId::new(6)))).expect("Unable to read API key principals from stable memory"));
+        RefCell::new(ic_stable_structures::Vec::init(MEMORY_MANAGER.with_borrow(|m| m.get(MANAGE_API_KEYS_MEMORY_ID))).expect("Unable to read API key principals from stable memory"));
 }
 
 pub fn get_api_key(provider_id: ProviderId) -> Option<ApiKey> {
