@@ -20,8 +20,8 @@ pub const PROVIDERS: &[Provider] = &[
         provider_id: 0,
         chain_id: ETH_MAINNET_CHAIN_ID,
         access: RpcAccess::Authenticated {
-            auth: RpcAuth::UrlParameter {
-                url_pattern: "https://cloudflare-eth.com/v1/mainnet/{API_KEY}",
+            auth: RpcAuth::BearerToken {
+                url: "https://cloudflare-eth.com/v1/mainnet",
             },
             public_url: Some("https://cloudflare-eth.com/v1/mainnet"),
         },
