@@ -1,21 +1,18 @@
 use candid::Principal;
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
-#[cfg(target_arch = "wasm32")]
-use ic_stable_structures::DefaultMemoryImpl;
+use ic_stable_structures::memory_manager::VirtualMemory;
 use ic_stable_structures::StableBTreeMap;
-#[cfg(not(target_arch = "wasm32"))]
-use ic_stable_structures::VectorMemory;
+use ic_stable_structures::{
+    memory_manager::{MemoryId, MemoryManager},
+    DefaultMemoryImpl,
+};
 use std::cell::RefCell;
 
 use crate::types::{ApiKey, Metrics, PrincipalStorable, ProviderId};
 
-#[cfg(not(target_arch = "wasm32"))]
-type Memory = VirtualMemory<VectorMemory>;
-#[cfg(target_arch = "wasm32")]
-type Memory = VirtualMemory<DefaultMemoryImpl>;
-
 const API_KEY_MAP_MEMORY_ID: MemoryId = MemoryId::new(4);
 const MANAGE_API_KEYS_MEMORY_ID: MemoryId = MemoryId::new(5);
+
+type StableMemory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
     // Unstable static data: these are reset when the canister is upgraded.
@@ -23,15 +20,11 @@ thread_local! {
     static UNSTABLE_DEMO_STATUS: RefCell<bool> = RefCell::new(false);
 
     // Stable static data: these are preserved when the canister is upgraded.
-    #[cfg(not(target_arch = "wasm32"))]
-    static MEMORY_MANAGER: RefCell<MemoryManager<VectorMemory>> =
-        RefCell::new(MemoryManager::init(VectorMemory::new(RefCell::new(vec![]))));
-    #[cfg(target_arch = "wasm32")]
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-    static API_KEY_MAP: RefCell<StableBTreeMap<ProviderId, ApiKey, Memory>> =
+    static API_KEY_MAP: RefCell<StableBTreeMap<ProviderId, ApiKey, StableMemory>> =
         RefCell::new(StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(API_KEY_MAP_MEMORY_ID))));
-    static MANAGE_API_KEYS: RefCell<ic_stable_structures::Vec<PrincipalStorable, Memory>> =
+    static MANAGE_API_KEYS: RefCell<ic_stable_structures::Vec<PrincipalStorable, StableMemory>> =
         RefCell::new(ic_stable_structures::Vec::init(MEMORY_MANAGER.with_borrow(|m| m.get(MANAGE_API_KEYS_MEMORY_ID))).expect("Unable to read API key principals from stable memory"));
 }
 
