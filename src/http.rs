@@ -9,7 +9,7 @@ use crate::{
     accounting::{get_cost_with_collateral, get_http_request_cost},
     add_metric_entry,
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST},
-    memory::get_demo_status,
+    memory::is_demo_active,
     types::{MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcResult},
     util::canonicalize_json,
 };
@@ -78,7 +78,7 @@ pub async fn http_request(
         ))
         .into());
     }
-    if !get_demo_status() {
+    if !is_demo_active() {
         let cycles_available = ic_cdk::api::call::msg_cycles_available128();
         let cycles_cost_with_collateral = get_cost_with_collateral(cycles_cost);
         if cycles_available < cycles_cost_with_collateral {

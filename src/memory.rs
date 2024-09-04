@@ -61,11 +61,11 @@ pub fn set_api_key_principals(new_principals: Vec<Principal>) {
     });
 }
 
-pub fn get_demo_status() -> bool {
+pub fn is_demo_active() -> bool {
     UNSTABLE_DEMO_STATUS.with_borrow(|status| *status)
 }
 
-pub fn set_demo_status(new_status: bool) {
+pub fn set_demo_active(new_status: bool) {
     UNSTABLE_DEMO_STATUS.with_borrow_mut(|status| *status = new_status)
 }
 
