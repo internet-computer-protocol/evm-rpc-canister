@@ -3,7 +3,7 @@ mod mock;
 use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
 
 use assert_matches::assert_matches;
-use candid::{CandidType, Decode, Encode, Nat, Principal};
+use candid::{CandidType, Decode, Encode, Nat};
 use cketh_common::{
     address::Address,
     checked_amount::CheckedAmountOf,
@@ -29,16 +29,11 @@ use maplit::hashmap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use evm_rpc::{
-    constants::{
-        CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, ETH_MAINNET_CHAIN_ID, NODES_IN_STANDARD_SUBNET,
-    },
-    providers::{
-        get_default_providers, ALCHEMY_ETH_MAINNET_HOSTNAME, ANKR_HOSTNAME,
-        BLOCKPI_ETH_SEPOLIA_HOSTNAME, CLOUDFLARE_HOSTNAME, PUBLICNODE_ETH_MAINNET_HOSTNAME,
-    },
+    constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
+    providers::PROVIDERS,
     types::{
-        candid_types, Auth, InitArgs, ManageProviderArgs, Metrics, MultiRpcResult, ProviderView,
-        RegisterProviderArgs, RpcMethod, RpcResult, RpcServices, UpdateProviderArgs,
+        candid_types, InitArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod,
+        RpcResult, RpcServices,
     },
 };
 use evm_rpc_types::Nat256;
@@ -46,6 +41,7 @@ use mock::{MockOutcall, MockOutcallBuilder};
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
 const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
+const ADDITIONAL_TEST_ID: u64 = 10352387;
 
 const INITIAL_CYCLES: u128 = 100_000_000_000_000_000;
 
@@ -67,6 +63,12 @@ const RPC_SERVICES: &[RpcServices] = &[
     RpcServices::BaseMainnet(None),
     RpcServices::OptimismMainnet(None),
 ];
+
+const ANKR_HOSTNAME: &str = "rpc.ankr.com";
+const ALCHEMY_ETH_MAINNET_HOSTNAME: &str = "eth-mainnet.g.alchemy.com";
+const CLOUDFLARE_HOSTNAME: &str = "cloudflare-eth.com";
+const BLOCKPI_ETH_SEPOLIA_HOSTNAME: &str = "ethereum-sepolia.blockpi.network";
+const PUBLICNODE_ETH_MAINNET_HOSTNAME: &str = "ethereum-rpc.publicnode.com";
 
 fn evm_rpc_wasm() -> Vec<u8> {
     load_wasm(std::env::var("CARGO_MANIFEST_DIR").unwrap(), "evm_rpc", &[])
@@ -97,15 +99,18 @@ impl Default for EvmRpcSetup {
 
 impl EvmRpcSetup {
     pub fn new() -> Self {
+        Self::with_args(InitArgs {
+            manage_api_keys: None,
+            demo: Some(true),
+        })
+    }
+
+    pub fn with_args(args: InitArgs) -> Self {
         let env = Rc::new(
             StateMachineBuilder::new()
                 .with_default_canister_range()
                 .build(),
         );
-
-        let args = InitArgs {
-            nodes_in_subnet: NODES_IN_STANDARD_SUBNET,
-        };
 
         let controller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);
         let canister_id = env.create_canister_with_cycles(
@@ -181,65 +186,12 @@ impl EvmRpcSetup {
         }
     }
 
-    pub fn authorize(&self, principal: &PrincipalId, auth: Auth) -> bool {
-        self.call_update("authorize", Encode!(&principal.0, &auth).unwrap())
-            .wait()
-    }
-
-    pub fn deauthorize(&self, principal: &PrincipalId, auth: Auth) -> bool {
-        self.call_update("deauthorize", Encode!(&principal.0, &auth).unwrap())
-            .wait()
-    }
-
-    pub fn get_authorized(&self, auth: Auth) -> Vec<Principal> {
-        self.call_query("getAuthorized", Encode!(&auth).unwrap())
-    }
-
     pub fn get_metrics(&self) -> Metrics {
         self.call_query("getMetrics", Encode!().unwrap())
     }
 
-    pub fn get_providers(&self) -> Vec<ProviderView> {
-        self.call_query("getProviders", Encode!().unwrap())
-    }
-
-    pub fn get_service_provider_map(&self) -> Vec<(RpcService, u64)> {
+    pub fn get_service_provider_map(&self) -> Vec<(RpcService, ProviderId)> {
         self.call_query("getServiceProviderMap", Encode!().unwrap())
-    }
-
-    pub fn register_provider(&self, args: RegisterProviderArgs) -> u64 {
-        self.call_update("registerProvider", Encode!(&args).unwrap())
-            .wait()
-    }
-
-    pub fn unregister_provider(&self, provider_id: u64) -> bool {
-        self.call_update("unregisterProvider", Encode!(&provider_id).unwrap())
-            .wait()
-    }
-
-    pub fn update_provider(&self, args: UpdateProviderArgs) {
-        self.call_update("updateProvider", Encode!(&args).unwrap())
-            .wait()
-    }
-
-    pub fn manage_provider(&self, args: ManageProviderArgs) {
-        self.call_update("manageProvider", Encode!(&args).unwrap())
-            .wait()
-    }
-
-    pub fn authorize_caller(self, auth: Auth) -> Self {
-        self.clone().as_controller().authorize(&self.caller, auth);
-        self
-    }
-
-    pub fn deauthorize_caller(self, auth: Auth) -> Self {
-        self.clone().as_controller().deauthorize(&self.caller, auth);
-        self
-    }
-
-    pub fn set_open_rpc_access(&self, open_rpc_access: bool) {
-        self.call_update("setOpenRpcAccess", Encode!(&open_rpc_access).unwrap())
-            .wait()
     }
 
     pub fn request_cost(
@@ -330,6 +282,29 @@ impl EvmRpcSetup {
             "eth_sendRawTransaction",
             Encode!(&source, &config, &signed_raw_transaction_hex).unwrap(),
         )
+    }
+
+    pub fn update_api_keys(&self, api_keys: &[(ProviderId, Option<String>)]) {
+        self.call_update("updateApiKeys", Encode!(&api_keys).unwrap())
+            .wait()
+    }
+
+    pub fn mock_api_keys(self) -> Self {
+        self.clone().as_controller().update_api_keys(
+            &PROVIDERS
+                .iter()
+                .filter_map(|provider| {
+                    Some((
+                        provider.provider_id,
+                        match provider.access {
+                            RpcAccess::Authenticated { .. } => Some("mock-api-key".to_string()),
+                            RpcAccess::Unauthenticated { .. } => None?,
+                        },
+                    ))
+                })
+                .collect::<Vec<_>>(),
+        );
+        self
     }
 }
 
@@ -484,7 +459,7 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
 }
 
 fn mock_request(builder_fn: impl Fn(MockOutcallBuilder) -> MockOutcallBuilder) {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     assert_matches!(
         setup
             .request(
@@ -526,7 +501,7 @@ fn mock_request_should_succeed_with_method() {
 fn mock_request_should_succeed_with_request_headers() {
     mock_request(|builder| {
         builder.with_request_headers(vec![
-            (CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE),
+            (CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE),
             ("Custom", "Value"),
         ])
     })
@@ -549,7 +524,7 @@ fn mock_request_should_succeed_with_all() {
             .with_url(MOCK_REQUEST_URL)
             .with_method(HttpMethod::POST)
             .with_request_headers(vec![
-                (CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE),
+                (CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE),
                 ("Custom", "Value"),
             ])
             .with_request_body(MOCK_REQUEST_PAYLOAD)
@@ -581,403 +556,8 @@ fn mock_request_should_fail_with_request_body() {
 }
 
 #[test]
-fn should_register_provider() {
-    let mut setup = EvmRpcSetup::new();
-    assert_eq!(
-        setup
-            .get_providers()
-            .into_iter()
-            .map(|p| (p.chain_id, p.hostname))
-            .collect::<Vec<_>>(),
-        get_default_providers()
-            .into_iter()
-            .map(|p| (p.chain_id, p.hostname))
-            .collect::<Vec<_>>()
-    );
-    let n_providers = 2;
-    setup = setup.authorize_caller(Auth::RegisterProvider);
-    assert_eq!(
-        setup
-            .clone()
-            .as_controller()
-            .get_authorized(Auth::RegisterProvider),
-        vec![setup.caller.0]
-    );
-    let a_id = setup.register_provider(RegisterProviderArgs {
-        chain_id: 1,
-        hostname: ANKR_HOSTNAME.to_string(),
-        credential_path: "".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
-    // Permission removed after registering
-    assert!(setup
-        .clone()
-        .as_controller()
-        .get_authorized(Auth::RegisterProvider)
-        .into_iter()
-        .all(|p| p != setup.caller.0));
-    // Permission must be granted for each additional provider
-    setup = setup.authorize_caller(Auth::RegisterProvider);
-    let b_id = setup.register_provider(RegisterProviderArgs {
-        chain_id: 5,
-        hostname: CLOUDFLARE_HOSTNAME.to_string(),
-        credential_path: "/test-path".to_string(),
-        credential_headers: Some(vec![HttpHeader {
-            name: "Test-Authorization".to_string(),
-            value: "---".to_string(),
-        }]),
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
-    assert_eq!(a_id + 1, b_id);
-    let providers = setup.get_providers();
-    assert_eq!(providers.len(), get_default_providers().len() + n_providers);
-    let first_new_id = (providers.len() - n_providers) as u64;
-    assert_eq!(
-        providers[providers.len() - n_providers..],
-        vec![
-            ProviderView {
-                provider_id: first_new_id,
-                owner: setup.caller.0,
-                chain_id: 1,
-                hostname: ANKR_HOSTNAME.to_string(),
-                cycles_per_call: 0,
-                cycles_per_message_byte: 0,
-                primary: false,
-            },
-            ProviderView {
-                provider_id: first_new_id + 1,
-                owner: setup.caller.0,
-                chain_id: 5,
-                hostname: CLOUDFLARE_HOSTNAME.to_string(),
-                cycles_per_call: 0,
-                cycles_per_message_byte: 0,
-                primary: false,
-            }
-        ]
-    );
-    setup.unregister_provider(a_id);
-    setup.unregister_provider(b_id);
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_panic_if_anonymous_register_provider() {
-    let setup = EvmRpcSetup::new().as_anonymous();
-    setup.register_provider(RegisterProviderArgs {
-        chain_id: 1,
-        hostname: ANKR_HOSTNAME.to_string(),
-        credential_path: "".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_panic_if_anonymous_update_provider() {
-    let setup = EvmRpcSetup::new().as_anonymous();
-    setup.update_provider(UpdateProviderArgs {
-        provider_id: 3,
-        credential_path: None,
-        credential_headers: None,
-        cycles_per_call: None,
-        cycles_per_message_byte: None,
-    });
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_panic_if_unauthorized_register_provider() {
-    let setup = EvmRpcSetup::new();
-    setup.register_provider(RegisterProviderArgs {
-        chain_id: 1,
-        hostname: ANKR_HOSTNAME.to_string(),
-        credential_path: "".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_panic_if_unauthorized_manage_provider() {
-    let setup = EvmRpcSetup::new();
-    setup.manage_provider(ManageProviderArgs {
-        provider_id: 2,
-        chain_id: None,
-        primary: Some(true),
-        service: None,
-    });
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_panic_if_anonymous_manage_provider() {
-    let setup = EvmRpcSetup::new().as_anonymous();
-    setup.manage_provider(ManageProviderArgs {
-        provider_id: 3,
-        chain_id: None,
-        primary: Some(true),
-        service: None,
-    });
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized: check provider owner")]
-fn should_panic_if_unauthorized_update_provider() {
-    // Providers can only be updated by the original owner or canister controller
-    let setup = EvmRpcSetup::new();
-    setup.update_provider(UpdateProviderArgs {
-        provider_id: 0,
-        credential_path: None,
-        credential_headers: None,
-        cycles_per_call: None,
-        cycles_per_message_byte: None,
-    });
-}
-
-#[test]
-fn should_allow_controller_update_provider() {
-    let setup = EvmRpcSetup::new().as_controller();
-    setup.update_provider(UpdateProviderArgs {
-        provider_id: 0,
-        credential_path: None,
-        credential_headers: None,
-        cycles_per_call: None,
-        cycles_per_message_byte: None,
-    });
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized: check provider owner")]
-fn should_panic_if_manage_auth_update_non_owned_provider() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::Manage);
-    let provider_id = setup
-        .clone()
-        .as_controller()
-        .authorize_caller(Auth::RegisterProvider)
-        .register_provider(RegisterProviderArgs {
-            chain_id: 123,
-            hostname: "example.com".to_string(),
-            credential_path: "".to_string(),
-            credential_headers: None,
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
-        });
-    setup.update_provider(UpdateProviderArgs {
-        provider_id,
-        credential_path: None,
-        credential_headers: None,
-        cycles_per_call: None,
-        cycles_per_message_byte: None,
-    });
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized: check provider owner")]
-fn should_panic_if_unauthorized_unregister_provider() {
-    // Only the `Manage` authorization may unregister a provider
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::RegisterProvider);
-    setup.unregister_provider(0);
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized: check provider owner")]
-fn should_panic_if_manage_auth_unregister_provider() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::Manage);
-    setup.unregister_provider(3);
-}
-
-#[test]
-fn should_replace_service_provider() {
-    let setup = EvmRpcSetup::new()
-        .authorize_caller(Auth::RegisterProvider)
-        .authorize_caller(Auth::FreeRpc);
-    let provider_id = setup.register_provider(RegisterProviderArgs {
-        chain_id: ETH_MAINNET_CHAIN_ID,
-        hostname: "ankr2.com".to_string(),
-        credential_path: "/v2/mainnet".to_string(),
-        credential_headers: None,
-        cycles_per_call: 0,
-        cycles_per_message_byte: 0,
-    });
-    setup
-        .clone()
-        .as_controller()
-        .manage_provider(ManageProviderArgs {
-            provider_id,
-            chain_id: None,
-            primary: Some(true),
-            service: Some(RpcService::EthMainnet(EthMainnetService::Ankr)),
-        });
-    let result = setup
-        .eth_get_transaction_count(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
-            None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
-            },
-        )
-        .mock_http(
-            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
-                .with_url("https://ankr2.com/v2/mainnet"),
-        )
-        .wait()
-        .expect_consistent();
-    assert_eq!(result, Ok(1.into()));
-}
-
-#[test]
-fn should_set_primary_provider() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-    let new_chain_id = 12345;
-    let before_credential = "/before";
-    let after_credential = "/after";
-    setup
-        .clone()
-        .authorize_caller(Auth::RegisterProvider)
-        .register_provider(RegisterProviderArgs {
-            chain_id: new_chain_id,
-            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-            credential_path: before_credential.to_string(),
-            credential_headers: None,
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
-        });
-    let provider_id = setup
-        .clone()
-        .authorize_caller(Auth::RegisterProvider)
-        .register_provider(RegisterProviderArgs {
-            chain_id: new_chain_id,
-            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-            credential_path: after_credential.to_string(),
-            credential_headers: None,
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
-        });
-    assert_matches!(
-        setup
-            .request(
-                RpcService::Chain(new_chain_id),
-                MOCK_REQUEST_PAYLOAD,
-                MOCK_REQUEST_RESPONSE_BYTES,
-            )
-            .mock_http(
-                MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
-                    "https://{}{}",
-                    ALCHEMY_ETH_MAINNET_HOSTNAME, before_credential
-                ))
-            )
-            .wait(),
-        Ok(_)
-    );
-    setup
-        .clone()
-        .as_controller()
-        .manage_provider(ManageProviderArgs {
-            provider_id,
-            chain_id: None,
-            primary: Some(true),
-            service: None,
-        });
-    assert_matches!(
-        setup
-            .request(
-                RpcService::Chain(new_chain_id),
-                MOCK_REQUEST_PAYLOAD,
-                MOCK_REQUEST_RESPONSE_BYTES,
-            )
-            .mock_http(
-                MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
-                    "https://{}{}",
-                    ALCHEMY_ETH_MAINNET_HOSTNAME, after_credential
-                ))
-            )
-            .wait(),
-        Ok(_)
-    );
-}
-
-#[test]
-fn should_set_provider_chain_id() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-    let before_chain_id = 12345;
-    let after_chain_id = 56789;
-    let credential = "/credential";
-    setup
-        .clone()
-        .authorize_caller(Auth::RegisterProvider)
-        .register_provider(RegisterProviderArgs {
-            chain_id: before_chain_id,
-            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-            credential_path: credential.to_string(),
-            credential_headers: None,
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
-        });
-    let provider_id = setup
-        .clone()
-        .authorize_caller(Auth::RegisterProvider)
-        .register_provider(RegisterProviderArgs {
-            chain_id: before_chain_id,
-            hostname: ALCHEMY_ETH_MAINNET_HOSTNAME.to_string(),
-            credential_path: credential.to_string(),
-            credential_headers: None,
-            cycles_per_call: 0,
-            cycles_per_message_byte: 0,
-        });
-    assert_matches!(
-        setup
-            .request(
-                RpcService::Chain(before_chain_id),
-                MOCK_REQUEST_PAYLOAD,
-                MOCK_REQUEST_RESPONSE_BYTES,
-            )
-            .mock_http(
-                MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
-                    "https://{}{}",
-                    ALCHEMY_ETH_MAINNET_HOSTNAME, credential
-                ))
-            )
-            .wait(),
-        Ok(_)
-    );
-    setup
-        .clone()
-        .as_controller()
-        .manage_provider(ManageProviderArgs {
-            provider_id,
-            chain_id: Some(after_chain_id),
-            primary: None,
-            service: None,
-        });
-    assert_matches!(
-        setup
-            .request(
-                RpcService::Chain(after_chain_id),
-                MOCK_REQUEST_PAYLOAD,
-                MOCK_REQUEST_RESPONSE_BYTES,
-            )
-            .mock_http(
-                MockOutcallBuilder::new(200, MOCK_REQUEST_RESPONSE).with_url(format!(
-                    "https://{}{}",
-                    ALCHEMY_ETH_MAINNET_HOSTNAME, credential
-                ))
-            )
-            .wait(),
-        Ok(_)
-    );
-}
-
-#[test]
 fn should_canonicalize_json_response() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new();
     let responses = [
         r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#,
         r#"{"result":"0x00112233","id":1,"jsonrpc":"2.0"}"#,
@@ -1056,9 +636,73 @@ fn should_decode_transaction_receipt() {
 }
 
 #[test]
+fn should_use_fallback_public_url() {
+    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: Some(true),
+        manage_api_keys: Some(vec![authorized_caller.0]),
+    });
+    let response = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://rpc.ankr.com/eth"),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response, 1);
+}
+
+#[test]
+fn should_insert_api_keys() {
+    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: Some(true),
+        manage_api_keys: Some(vec![authorized_caller.0]),
+    });
+    let provider_id = 1;
+    setup
+        .clone()
+        .as_caller(authorized_caller)
+        .update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
+    let response = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://rpc.ankr.com/eth/test-api-key"),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response, 1);
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_prevent_unauthorized_update_api_keys() {
+    let setup = EvmRpcSetup::new();
+    setup.update_api_keys(&[(0, Some("unauthorized-api-key".to_string()))]);
+}
+
+#[test]
 fn eth_get_logs_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new().mock_api_keys();
         let response = setup
         .eth_get_logs(
             source.clone(),
@@ -1113,7 +757,7 @@ fn eth_get_logs_should_succeed() {
 #[test]
 fn eth_get_block_by_number_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new().mock_api_keys();
         let response = setup
             .eth_get_block_by_number(
                 source.clone(),
@@ -1156,7 +800,7 @@ fn eth_get_block_by_number_should_succeed() {
 #[test]
 fn eth_get_block_by_number_pre_london_fork_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new().mock_api_keys();
         let response = setup
             .eth_get_block_by_number(
                 source.clone(),
@@ -1199,7 +843,7 @@ fn eth_get_block_by_number_pre_london_fork_should_succeed() {
 #[test]
 fn eth_get_transaction_receipt_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new().mock_api_keys();
         let response = setup
         .eth_get_transaction_receipt(
             source.clone(),
@@ -1234,7 +878,7 @@ fn eth_get_transaction_receipt_should_succeed() {
 #[test]
 fn eth_get_transaction_count_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new().mock_api_keys();
         let response = setup
             .eth_get_transaction_count(
                 source.clone(),
@@ -1258,7 +902,7 @@ fn eth_get_transaction_count_should_succeed() {
 #[test]
 fn eth_fee_history_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new().mock_api_keys();
         let response = setup
         .eth_fee_history(
             source.clone(),
@@ -1294,7 +938,7 @@ fn eth_fee_history_should_succeed() {
 #[test]
 fn eth_send_raw_transaction_should_succeed() {
     for source in RPC_SERVICES {
-        let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+        let setup = EvmRpcSetup::new().mock_api_keys();
         let response = setup
             .eth_send_raw_transaction(source.clone(), None, MOCK_TRANSACTION)
             .mock_http(MockOutcallBuilder::new(
@@ -1315,7 +959,7 @@ fn eth_send_raw_transaction_should_succeed() {
 
 #[test]
 fn candid_rpc_should_allow_unexpected_response_fields() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new().mock_api_keys();
     let response = setup
         .eth_get_transaction_receipt(
             RpcServices::EthMainnet(None),
@@ -1337,7 +981,11 @@ fn candid_rpc_should_allow_unexpected_response_fields() {
 
 #[test]
 fn candid_rpc_should_err_without_cycles() {
-    let setup = EvmRpcSetup::new();
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: None,
+        manage_api_keys: None,
+    })
+    .mock_api_keys();
     let result = setup
         .eth_get_transaction_receipt(
             RpcServices::EthMainnet(None),
@@ -1356,36 +1004,8 @@ fn candid_rpc_should_err_without_cycles() {
 }
 
 #[test]
-fn candid_rpc_should_err_during_restricted_access() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-    setup.clone().as_controller().set_open_rpc_access(false);
-    let result = setup
-        .eth_get_transaction_receipt(
-            RpcServices::EthMainnet(Some(vec![
-                EthMainnetService::Cloudflare,
-                EthMainnetService::BlockPi,
-            ])),
-            None,
-            "0xdd5d4b18923d7aae953c7996d791118102e889bea37b48a651157a4890e4746f",
-        )
-        .wait()
-        .expect_consistent();
-    assert_eq!(
-        result,
-        Err(RpcError::ProviderError(ProviderError::NoPermission))
-    );
-    assert_eq!(
-        setup.get_metrics(),
-        Metrics {
-            err_no_permission: 1,
-            ..Default::default()
-        }
-    );
-}
-
-#[test]
 fn candid_rpc_should_err_when_service_unavailable() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new().mock_api_keys();
     let result = setup
         .eth_get_transaction_receipt(
             RpcServices::EthMainnet(None),
@@ -1426,7 +1046,7 @@ fn candid_rpc_should_err_when_service_unavailable() {
 
 #[test]
 fn candid_rpc_should_recognize_json_error() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new().mock_api_keys();
     let result = setup
         .eth_get_transaction_receipt(
             RpcServices::EthSepolia(Some(vec![
@@ -1468,7 +1088,7 @@ fn candid_rpc_should_recognize_json_error() {
 
 #[test]
 fn candid_rpc_should_reject_empty_service_list() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new().mock_api_keys();
     let result = setup
         .eth_get_transaction_receipt(
             RpcServices::EthMainnet(Some(vec![])),
@@ -1485,7 +1105,7 @@ fn candid_rpc_should_reject_empty_service_list() {
 
 #[test]
 fn candid_rpc_should_return_inconsistent_results() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new().mock_api_keys();
     let results = setup
         .eth_send_raw_transaction(
             RpcServices::EthMainnet(Some(vec![
@@ -1543,7 +1163,7 @@ fn candid_rpc_should_return_inconsistent_results() {
 
 #[test]
 fn candid_rpc_should_return_inconsistent_results_with_error() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new().mock_api_keys();
     let result = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![
@@ -1605,7 +1225,7 @@ fn candid_rpc_should_return_inconsistent_results_with_error() {
 
 #[test]
 fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new().mock_api_keys();
     let result = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![
@@ -1668,7 +1288,7 @@ fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
 
 #[test]
 fn candid_rpc_should_handle_already_known() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new().mock_api_keys();
     let result = setup
         .eth_send_raw_transaction(
             RpcServices::EthMainnet(Some(vec![
@@ -1713,7 +1333,7 @@ fn candid_rpc_should_handle_already_known() {
 
 #[test]
 fn candid_rpc_should_recognize_rate_limit() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new().mock_api_keys();
     let result = setup
         .eth_send_raw_transaction(
             RpcServices::EthMainnet(Some(vec![
@@ -1754,68 +1374,8 @@ fn candid_rpc_should_recognize_rate_limit() {
 }
 
 #[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_panic_if_unauthorized_set_rpc_access() {
-    // Only `Manage` can restrict RPC access
-    let setup = EvmRpcSetup::new();
-    setup.set_open_rpc_access(false);
-}
-
-#[test]
-fn should_restrict_rpc_access() {
-    let mut setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
-    setup.clone().as_controller().set_open_rpc_access(false);
-    let result = setup
-        .eth_get_transaction_count(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
-            None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
-            },
-        )
-        .wait()
-        .expect_consistent();
-    assert_eq!(
-        result,
-        Err(RpcError::ProviderError(ProviderError::NoPermission))
-    );
-    setup = setup.authorize_caller(Auth::PriorityRpc);
-    let result = setup
-        .eth_get_transaction_count(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
-            None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
-            },
-        )
-        .mock_http(MockOutcallBuilder::new(
-            200,
-            r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
-        ))
-        .wait()
-        .expect_consistent();
-    assert_eq!(result, Ok(1.into()));
-    let rpc_method = || RpcMethod::EthGetTransactionCount.into();
-    assert_eq!(
-        setup.get_metrics(),
-        Metrics {
-            requests: hashmap! {
-                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
-            },
-            responses: hashmap! {
-                (rpc_method(), ANKR_HOSTNAME.into(), 200.into()) => 1,
-            },
-            err_no_permission: 1,
-            ..Default::default()
-        }
-    );
-}
-
-#[test]
 fn should_use_custom_response_size_estimate() {
-    let setup = EvmRpcSetup::new().authorize_caller(Auth::FreeRpc);
+    let setup = EvmRpcSetup::new().mock_api_keys();
     let max_response_bytes = 1234;
     let expected_response = r#"{"id":0,"jsonrpc":"2.0","result":[{"address":"0xdac17f958d2ee523a2206206994597c13d831ec7","topics":["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef","0x000000000000000000000000a9d1e08c7793af67e9d92fe308d5697fb81d3e43","0x00000000000000000000000078cccfb3d517cd4ed6d045e263e134712288ace2"],"data":"0x000000000000000000000000000000000000000000000000000000003b9c6433","blockNumber":"0x11dc77e","transactionHash":"0xf3ed91a03ddf964281ac7a24351573efd535b80fc460a5c2ad2b9d23153ec678","transactionIndex":"0x65","blockHash":"0xd5c72ad752b2f0144a878594faf8bd9f570f2f72af8e7f0940d3545a6388f629","logIndex":"0xe8","removed":false}]}"#;
     let response = setup

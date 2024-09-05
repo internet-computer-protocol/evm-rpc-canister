@@ -1,6 +1,5 @@
 import EvmRpc "canister:evm_rpc";
-import EvmRpcStaging13Node "canister:evm_rpc_staging_13_node";
-import EvmRpcStagingFidicuary "canister:evm_rpc_staging_fiduciary";
+import EvmRpcStaging "canister:evm_rpc_staging";
 
 import Buffer "mo:base/Buffer";
 import Cycles "mo:base/ExperimentalCycles";
@@ -16,14 +15,12 @@ shared ({ caller = installer }) actor class Main() {
     // (`subnet name`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
     type SubnetTarget = (Text, Nat32, Nat);
     let collateralCycles = 10_000_000;
-    let defaultSubnet : SubnetTarget = ("13-node", 13, 99_330_400);
     let fiduciarySubnet : SubnetTarget = ("fiduciary", 28, 239_142_400);
 
     let testTargets = [
         // (`canister module`, `canister type`, `subnet`)
         (EvmRpc, #production, fiduciarySubnet),
-        (EvmRpcStaging13Node, #staging, defaultSubnet),
-        (EvmRpcStagingFidicuary, #staging, fiduciarySubnet),
+        (EvmRpcStaging, #staging, fiduciarySubnet),
     ];
 
     // (`RPC service`, `method`)
@@ -155,7 +152,7 @@ shared ({ caller = installer }) actor class Main() {
             };
 
             // All RPC services suitable for E2E testing
-            let mainnetServices = [#Alchemy, #Ankr, #BlockPi, #PublicNode, #Llama];
+            let mainnetServices = [#Ankr, #BlockPi, #PublicNode, #Llama];
             let l2Services = [#Ankr, #BlockPi, #PublicNode, #Llama];
             let allServices : [(Text, EvmRpc.RpcServices)] = [
                 (

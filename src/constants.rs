@@ -20,11 +20,12 @@ pub const CANISTER_OVERHEAD: u128 = 1_000_000;
 pub const COLLATERAL_CYCLES_PER_NODE: u128 = 10_000_000;
 
 // Minimum number of bytes charged for a URL; improves consistency of costs between providers
-pub const RPC_URL_MIN_COST_BYTES: u32 = 256;
+pub const RPC_URL_COST_BYTES: u32 = 256;
 
 pub const MINIMUM_WITHDRAWAL_CYCLES: u128 = 1_000_000_000;
 
 pub const STRING_STORABLE_MAX_SIZE: u32 = 100;
+pub const API_KEY_MAX_SIZE: u32 = 512;
 pub const PROVIDER_MAX_SIZE: u32 = 256;
 pub const RPC_SERVICE_MAX_SIZE: u32 = 256;
 pub const AUTH_SET_STORABLE_MAX_SIZE: u32 = 1000;
@@ -32,9 +33,11 @@ pub const WASM_PAGE_SIZE: u64 = 65536;
 
 pub const ETH_GET_LOGS_MAX_BLOCKS: u32 = 500;
 
-pub const NODES_IN_STANDARD_SUBNET: u32 = 13;
-pub const NODES_IN_FIDUCIARY_SUBNET: u32 = 28;
-pub const DEFAULT_OPEN_RPC_ACCESS: bool = true;
+pub const NODES_IN_SUBNET: u32 = 28;
+
+pub const API_KEY_REPLACE_STRING: &str = "{API_KEY}";
+pub const VALID_API_KEY_CHARS: &str =
+    "0123456789ABCDEFGHIJKLMNOPQRTSUVWXYZabcdefghijklmnopqrstuvwxyz$-_.+!*";
 
 // Providers used by default (when passing `null` with `RpcServices`)
 pub const DEFAULT_ETH_MAINNET_SERVICES: &[EthMainnetService] = &[
@@ -53,7 +56,7 @@ pub const DEFAULT_L2_MAINNET_SERVICES: &[L2MainnetService] = &[
     L2MainnetService::PublicNode,
 ];
 
-pub const CONTENT_TYPE_HEADER: &str = "Content-Type";
+pub const CONTENT_TYPE_HEADER_LOWERCASE: &str = "content-type";
 pub const CONTENT_TYPE_VALUE: &str = "application/json";
 
 pub const ETH_MAINNET_CHAIN_ID: u64 = 1;

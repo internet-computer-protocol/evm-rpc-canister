@@ -18,14 +18,13 @@ use evm_rpc_types::Hex32;
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 
 use crate::{
-    accounting::get_rpc_cost,
-    add_metric, add_metric_entry,
-    auth::is_rpc_allowed,
+    accounting::get_http_request_cost,
+    add_metric_entry,
     constants::{
         DEFAULT_ETH_MAINNET_SERVICES, DEFAULT_ETH_SEPOLIA_SERVICES, DEFAULT_L2_MAINNET_SERVICES,
         ETH_GET_LOGS_MAX_BLOCKS,
     },
-    http::do_http_request,
+    http::http_request,
     providers::resolve_rpc_service,
     types::{
         candid_types::{self, SendRawTransactionStatus},
@@ -52,8 +51,7 @@ impl RpcTransport for CanisterTransport {
         effective_response_size_estimate: u64,
     ) -> RpcResult<HttpResponse> {
         let service = resolve_rpc_service(service.clone())?;
-        let cycles_cost = get_rpc_cost(
-            &service,
+        let cycles_cost = get_http_request_cost(
             request
                 .body
                 .as_ref()
@@ -62,7 +60,7 @@ impl RpcTransport for CanisterTransport {
             effective_response_size_estimate,
         );
         let rpc_method = MetricRpcMethod(method.to_string());
-        do_http_request(ic_cdk::caller(), rpc_method, service, request, cycles_cost).await
+        http_request(rpc_method, service, request, cycles_cost).await
     }
 }
 
@@ -77,10 +75,6 @@ fn get_rpc_client(
     source: RpcServices,
     config: RpcConfig,
 ) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
-    if !is_rpc_allowed(&ic_cdk::caller()) {
-        add_metric!(err_no_permission, 1);
-        return Err(ProviderError::NoPermission.into());
-    }
     Ok(match source {
         RpcServices::Custom { chain_id, services } => CkEthRpcClient::new(
             EthereumNetwork(chain_id),
@@ -157,7 +151,14 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
                     {
                         add_metric_entry!(
                             inconsistent_responses,
-                            (method.into(), MetricRpcHost(provider.hostname)),
+                            (
+                                method.into(),
+                                MetricRpcHost(
+                                    provider
+                                        .hostname()
+                                        .unwrap_or_else(|| "(unknown)".to_string())
+                                )
+                            ),
                             1
                         )
                     }
@@ -292,73 +293,78 @@ fn get_transaction_hash(raw_signed_transaction_hex: &str) -> Option<Hash> {
     Some(Hash(transaction.hash.0))
 }
 
-#[test]
-fn test_process_result_mapping() {
-    use cketh_common::eth_rpc_client::{providers::EthMainnetService, MultiCallResults};
+#[cfg(test)]
+mod test {
+    use super::*;
 
-    let method = RpcMethod::EthGetTransactionCount;
+    #[test]
+    fn test_process_result_mapping() {
+        use cketh_common::eth_rpc_client::{providers::EthMainnetService, MultiCallResults};
 
-    assert_eq!(
-        process_result(method, Ok(5)),
-        MultiRpcResult::Consistent(Ok(5))
-    );
-    assert_eq!(
-        process_result(
-            method,
-            Err(MultiCallError::<()>::ConsistentError(
-                RpcError::ProviderError(ProviderError::MissingRequiredProvider)
-            ))
-        ),
-        MultiRpcResult::Consistent(Err(RpcError::ProviderError(
-            ProviderError::MissingRequiredProvider
-        )))
-    );
-    assert_eq!(
-        process_result(
-            method,
-            Err(MultiCallError::<()>::InconsistentResults(
-                MultiCallResults {
-                    results: Default::default()
-                }
-            ))
-        ),
-        MultiRpcResult::Inconsistent(vec![])
-    );
-    assert_eq!(
-        process_result(
-            method,
-            Err(MultiCallError::InconsistentResults(MultiCallResults {
-                results: vec![(RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5))]
+        let method = RpcMethod::EthGetTransactionCount;
+
+        assert_eq!(
+            process_result(method, Ok(5)),
+            MultiRpcResult::Consistent(Ok(5))
+        );
+        assert_eq!(
+            process_result(
+                method,
+                Err(MultiCallError::<()>::ConsistentError(
+                    RpcError::ProviderError(ProviderError::MissingRequiredProvider)
+                ))
+            ),
+            MultiRpcResult::Consistent(Err(RpcError::ProviderError(
+                ProviderError::MissingRequiredProvider
+            )))
+        );
+        assert_eq!(
+            process_result(
+                method,
+                Err(MultiCallError::<()>::InconsistentResults(
+                    MultiCallResults {
+                        results: Default::default()
+                    }
+                ))
+            ),
+            MultiRpcResult::Inconsistent(vec![])
+        );
+        assert_eq!(
+            process_result(
+                method,
+                Err(MultiCallError::InconsistentResults(MultiCallResults {
+                    results: vec![(RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5))]
+                        .into_iter()
+                        .collect(),
+                }))
+            ),
+            MultiRpcResult::Inconsistent(vec![(
+                RpcService::EthMainnet(EthMainnetService::Ankr),
+                Ok(5)
+            )])
+        );
+        assert_eq!(
+            process_result(
+                method,
+                Err(MultiCallError::InconsistentResults(MultiCallResults {
+                    results: vec![
+                        (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
+                        (
+                            RpcService::EthMainnet(EthMainnetService::Cloudflare),
+                            Err(RpcError::ProviderError(ProviderError::NoPermission))
+                        )
+                    ]
                     .into_iter()
                     .collect(),
-            }))
-        ),
-        MultiRpcResult::Inconsistent(vec![(
-            RpcService::EthMainnet(EthMainnetService::Ankr),
-            Ok(5)
-        )])
-    );
-    assert_eq!(
-        process_result(
-            method,
-            Err(MultiCallError::InconsistentResults(MultiCallResults {
-                results: vec![
-                    (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
-                    (
-                        RpcService::EthMainnet(EthMainnetService::Cloudflare),
-                        Err(RpcError::ProviderError(ProviderError::NoPermission))
-                    )
-                ]
-                .into_iter()
-                .collect(),
-            }))
-        ),
-        MultiRpcResult::Inconsistent(vec![
-            (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
-            (
-                RpcService::EthMainnet(EthMainnetService::Cloudflare),
-                Err(RpcError::ProviderError(ProviderError::NoPermission))
-            )
-        ])
-    );
+                }))
+            ),
+            MultiRpcResult::Inconsistent(vec![
+                (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
+                (
+                    RpcService::EthMainnet(EthMainnetService::Cloudflare),
+                    Err(RpcError::ProviderError(ProviderError::NoPermission))
+                )
+            ])
+        );
+    }
 }

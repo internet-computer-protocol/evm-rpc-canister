@@ -5,9 +5,6 @@ description = "End-to-end testing with a Rust canister."
 authors = ["DFINITY Foundation"]
 edition = "2021"
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
 [dependencies]
 candid = { workspace = true }
 ic-certified-map = { workspace = true }

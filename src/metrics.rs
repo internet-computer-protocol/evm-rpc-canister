@@ -5,18 +5,17 @@ use crate::types::{MetricLabels, MetricValue};
 #[macro_export]
 macro_rules! add_metric {
     ($metric:ident, $amount:expr) => {{
-        $crate::memory::UNSTABLE_METRICS.with(|m| m.borrow_mut().$metric += $amount);
+        $crate::memory::UNSTABLE_METRICS.with_borrow_mut(|m| m.$metric += $amount);
     }};
 }
 
 #[macro_export]
 macro_rules! add_metric_entry {
     ($metric:ident, $key:expr, $amount:expr) => {{
-        $crate::memory::UNSTABLE_METRICS.with(|m| {
+        $crate::memory::UNSTABLE_METRICS.with_borrow_mut(|m| {
             let amount = $amount;
             if amount != 0 {
-                m.borrow_mut()
-                    .$metric
+                m.$metric
                     .entry($key)
                     .and_modify(|counter| *counter += amount)
                     .or_insert(amount);

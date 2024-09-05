@@ -1,4 +1,3 @@
-use candid::Principal;
 use cketh_common::eth_rpc::{HttpOutcallError, ProviderError, RpcError, ValidationError};
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs,
@@ -7,34 +6,31 @@ use ic_cdk::api::management_canister::http_request::{
 use num_traits::ToPrimitive;
 
 use crate::{
-    accounting::{get_cost_with_collateral, get_provider_cost, get_rpc_cost},
-    add_metric, add_metric_entry,
-    auth::{is_authorized, is_rpc_allowed},
-    constants::{CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST},
-    memory::PROVIDERS,
-    types::{Auth, MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcResult},
+    accounting::{get_cost_with_collateral, get_http_request_cost},
+    add_metric_entry,
+    constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST},
+    memory::is_demo_active,
+    types::{MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcResult},
     util::canonicalize_json,
 };
 
-pub async fn do_json_rpc_request(
-    caller: Principal,
+pub async fn json_rpc_request(
     service: ResolvedRpcService,
     rpc_method: MetricRpcMethod,
     json_rpc_payload: &str,
     max_response_bytes: u64,
 ) -> RpcResult<HttpResponse> {
-    if !is_rpc_allowed(&caller) {
-        add_metric!(err_no_permission, 1);
-        return Err(ProviderError::NoPermission.into());
-    }
-    let cycles_cost = get_rpc_cost(&service, json_rpc_payload.len() as u64, max_response_bytes);
+    let cycles_cost = get_http_request_cost(json_rpc_payload.len() as u64, max_response_bytes);
     let api = service.api();
-    let mut request_headers = vec![HttpHeader {
-        name: CONTENT_TYPE_HEADER.to_string(),
-        value: CONTENT_TYPE_VALUE.to_string(),
-    }];
-    if let Some(headers) = api.headers {
-        request_headers.extend(headers);
+    let mut request_headers = api.headers.unwrap_or_default();
+    if !request_headers
+        .iter()
+        .any(|header| header.name.to_lowercase() == CONTENT_TYPE_HEADER_LOWERCASE)
+    {
+        request_headers.push(HttpHeader {
+            name: CONTENT_TYPE_HEADER_LOWERCASE.to_string(),
+            value: CONTENT_TYPE_VALUE.to_string(),
+        });
     }
     let request = CanisterHttpRequestArgument {
         url: api.url,
@@ -47,35 +43,42 @@ pub async fn do_json_rpc_request(
             vec![],
         )),
     };
-    do_http_request(caller, rpc_method, service, request, cycles_cost).await
+    http_request(rpc_method, service, request, cycles_cost).await
 }
 
-pub async fn do_http_request(
-    caller: Principal,
+pub async fn http_request(
     rpc_method: MetricRpcMethod,
     service: ResolvedRpcService,
     request: CanisterHttpRequestArgument,
     cycles_cost: u128,
 ) -> RpcResult<HttpResponse> {
     let api = service.api();
-    let provider = match service {
-        ResolvedRpcService::Api(_) => None,
-        ResolvedRpcService::Provider(provider) => Some(provider),
-    };
     let parsed_url = match url::Url::parse(&api.url) {
         Ok(url) => url,
-        Err(_) => return Err(ValidationError::UrlParseError(api.url).into()),
+        Err(_) => {
+            return Err(ValidationError::Custom(format!("Error parsing URL: {}", api.url)).into())
+        }
     };
     let host = match parsed_url.host_str() {
         Some(host) => host,
-        None => return Err(ValidationError::UrlParseError(api.url).into()),
+        None => {
+            return Err(ValidationError::Custom(format!(
+                "Error parsing hostname from URL: {}",
+                api.url
+            ))
+            .into())
+        }
     };
     let rpc_host = MetricRpcHost(host.to_string());
     if SERVICE_HOSTS_BLOCKLIST.contains(&rpc_host.0.as_str()) {
         add_metric_entry!(err_host_not_allowed, rpc_host.clone(), 1);
-        return Err(ValidationError::HostNotAllowed(rpc_host.0).into());
+        return Err(ValidationError::Custom(format!(
+            "Disallowed RPC service host: {}",
+            rpc_host.0
+        ))
+        .into());
     }
-    if !is_authorized(&caller, Auth::FreeRpc) {
+    if !is_demo_active() {
         let cycles_available = ic_cdk::api::call::msg_cycles_available128();
         let cycles_cost_with_collateral = get_cost_with_collateral(cycles_cost);
         if cycles_available < cycles_cost_with_collateral {
@@ -86,22 +89,6 @@ pub async fn do_http_request(
             .into());
         }
         ic_cdk::api::call::msg_cycles_accept128(cycles_cost);
-        if let Some(mut provider) = provider {
-            provider.cycles_owed += get_provider_cost(
-                &provider,
-                request
-                    .body
-                    .as_ref()
-                    .map(|bytes| bytes.len() as u64)
-                    .unwrap_or_default(),
-            );
-            PROVIDERS.with(|p| {
-                // Error should not happen here as it was checked before
-                p.borrow_mut()
-                    .insert(provider.provider_id, provider)
-                    .expect("unable to update Provider");
-            });
-        }
         add_metric_entry!(
             cycles_charged,
             (rpc_method.clone(), rpc_host.clone()),
@@ -122,7 +109,7 @@ pub async fn do_http_request(
     }
 }
 
-pub fn do_transform_http_request(args: TransformArgs) -> HttpResponse {
+pub fn transform_http_request(args: TransformArgs) -> HttpResponse {
     HttpResponse {
         status: args.response.status,
         body: canonicalize_json(&args.response.body).unwrap_or(args.response.body),
