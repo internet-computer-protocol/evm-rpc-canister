@@ -43,7 +43,7 @@ pub fn remove_api_key(provider_id: ProviderId) {
 }
 
 pub fn is_api_key_principal(principal: &Principal) -> bool {
-    MANAGE_API_KEYS.with_borrow_mut(|principals| {
+    MANAGE_API_KEYS.with_borrow(|principals| {
         principals
             .iter()
             .any(|PrincipalStorable(other)| &other == principal)
