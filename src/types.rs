@@ -173,7 +173,10 @@ pub struct BoolStorable(pub bool);
 
 impl Storable for BoolStorable {
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        assert!(bytes.len() == 1, "Unexpected byte length for `BoolStorable`");
+        assert!(
+            bytes.len() == 1,
+            "Unexpected byte length for `BoolStorable`"
+        );
         BoolStorable(bytes[0] == 0)
     }
 
