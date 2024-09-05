@@ -175,10 +175,10 @@ fn get_nodes_in_subnet() -> u32 {
 )]
 #[candid_method(rename = "updateApiKeys")]
 /// Inserts or removes RPC provider API keys.
-/// 
+///
 /// For each element of `api_keys`, passing `(id, Some(key))` corresponds to inserting or updating
 /// an API key, while passing `(id, None)` indicates that the key should be removed from the canister.
-/// 
+///
 /// Panics if the list of provider IDs includes a nonexistent or "unauthenticated" (fully public) provider.
 async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
     log!(
@@ -222,7 +222,9 @@ fn init(args: InitArgs) {
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade(args: InitArgs) {
-    set_demo_active(args.demo.unwrap_or(false));
+    if let Some(demo) = args.demo {
+        set_demo_active(demo);
+    }
     if let Some(principals) = args.manage_api_keys {
         set_api_key_principals(principals);
     }

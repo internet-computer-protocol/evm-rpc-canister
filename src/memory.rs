@@ -1,27 +1,29 @@
 use candid::Principal;
 use ic_stable_structures::memory_manager::VirtualMemory;
-use ic_stable_structures::StableBTreeMap;
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager},
     DefaultMemoryImpl,
 };
+use ic_stable_structures::{Cell, StableBTreeMap};
 use std::cell::RefCell;
 
-use crate::types::{ApiKey, Metrics, PrincipalStorable, ProviderId};
+use crate::types::{ApiKey, BoolStorable, Metrics, PrincipalStorable, ProviderId};
 
-const API_KEY_MAP_MEMORY_ID: MemoryId = MemoryId::new(4);
-const MANAGE_API_KEYS_MEMORY_ID: MemoryId = MemoryId::new(5);
+const IS_DEMO_ACTIVE_ID: MemoryId = MemoryId::new(4);
+const API_KEY_MAP_MEMORY_ID: MemoryId = MemoryId::new(5);
+const MANAGE_API_KEYS_MEMORY_ID: MemoryId = MemoryId::new(6);
 
 type StableMemory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
     // Unstable static data: these are reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
-    static UNSTABLE_DEMO_STATUS: RefCell<bool> = RefCell::new(false);
 
     // Stable static data: these are preserved when the canister is upgraded.
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
+    static IS_DEMO_ACTIVE: RefCell<Cell<BoolStorable, StableMemory>> =
+        RefCell::new(Cell::init(MEMORY_MANAGER.with_borrow(|m| m.get(IS_DEMO_ACTIVE_ID)), BoolStorable(false)).expect("Unable to read demo status from stable memory"));
     static API_KEY_MAP: RefCell<StableBTreeMap<ProviderId, ApiKey, StableMemory>> =
         RefCell::new(StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(API_KEY_MAP_MEMORY_ID))));
     static MANAGE_API_KEYS: RefCell<ic_stable_structures::Vec<PrincipalStorable, StableMemory>> =
@@ -62,11 +64,14 @@ pub fn set_api_key_principals(new_principals: Vec<Principal>) {
 }
 
 pub fn is_demo_active() -> bool {
-    UNSTABLE_DEMO_STATUS.with_borrow(|status| *status)
+    IS_DEMO_ACTIVE.with_borrow(|demo| demo.get().0)
 }
 
-pub fn set_demo_active(new_status: bool) {
-    UNSTABLE_DEMO_STATUS.with_borrow_mut(|status| *status = new_status)
+pub fn set_demo_active(is_active: bool) {
+    IS_DEMO_ACTIVE.with_borrow_mut(|demo| {
+        demo.set(BoolStorable(is_active))
+            .expect("Error while storing new demo status")
+    });
 }
 
 #[cfg(test)]

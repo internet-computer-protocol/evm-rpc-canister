@@ -168,7 +168,21 @@ impl RpcMethod {
     }
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Clone, PartialEq, Eq)]
+pub struct BoolStorable(pub bool);
+
+impl Storable for BoolStorable {
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        assert!(bytes.len() == 1, "Unexpected byte length for `BoolStorable`");
+        BoolStorable(bytes[0] == 0)
+    }
+
+    fn to_bytes(&self) -> Cow<[u8]> {
+        vec![self.0 as u8].into()
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StringStorable(pub String);
 
 impl Storable for StringStorable {
@@ -187,7 +201,7 @@ impl BoundedStorable for StringStorable {
     const IS_FIXED_SIZE: bool = false;
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PrincipalStorable(pub Principal);
 
 impl Storable for PrincipalStorable {
