@@ -4,7 +4,7 @@
 
 use cketh_common::checked_amount::CheckedAmountOf;
 use cketh_common::eth_rpc::{Hash, Quantity};
-use evm_rpc_types::{BlockTag, Hex20, Hex256, Hex32, HexByte, Nat256};
+use evm_rpc_types::{BlockTag, Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
 
 pub(super) fn into_block_spec(value: BlockTag) -> cketh_common::eth_rpc::BlockSpec {
     use cketh_common::eth_rpc::{self, BlockSpec};
@@ -120,6 +120,40 @@ pub(super) fn from_transaction_receipt(
         to: Hex20::try_from(value.to).unwrap(),
         transaction_index: from_checked_amount_of(value.transaction_index),
         tx_type: HexByte::try_from(value.r#type).unwrap(),
+    }
+}
+
+pub(super) fn from_block(value: cketh_common::eth_rpc::Block) -> evm_rpc_types::Block {
+    evm_rpc_types::Block {
+        base_fee_per_gas: value.base_fee_per_gas.map(from_checked_amount_of),
+        number: from_checked_amount_of(value.number),
+        difficulty: value.difficulty.map(from_checked_amount_of),
+        extra_data: Hex::try_from(value.extra_data).unwrap(),
+        gas_limit: from_checked_amount_of(value.gas_limit),
+        gas_used: from_checked_amount_of(value.gas_used),
+        hash: Hex32::try_from(value.hash).unwrap(),
+        logs_bloom: Hex256::try_from(value.logs_bloom).unwrap(),
+        miner: Hex20::try_from(value.miner).unwrap(),
+        mix_hash: Hex32::try_from(value.mix_hash).unwrap(),
+        nonce: from_checked_amount_of(value.nonce),
+        parent_hash: Hex32::try_from(value.parent_hash).unwrap(),
+        receipts_root: Hex32::try_from(value.receipts_root).unwrap(),
+        sha3_uncles: Hex32::try_from(value.sha3_uncles).unwrap(),
+        size: from_checked_amount_of(value.size),
+        state_root: Hex32::try_from(value.state_root).unwrap(),
+        timestamp: from_checked_amount_of(value.timestamp),
+        total_difficulty: value.total_difficulty.map(from_checked_amount_of),
+        transactions: value
+            .transactions
+            .into_iter()
+            .map(|tx| Hex32::try_from(tx).unwrap())
+            .collect(),
+        transactions_root: value.transactions_root.map(|x| Hex32::try_from(x).unwrap()),
+        uncles: value
+            .uncles
+            .into_iter()
+            .map(|tx| Hex32::try_from(tx).unwrap())
+            .collect(),
     }
 }
 

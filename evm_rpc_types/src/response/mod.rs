@@ -1,4 +1,4 @@
-use crate::{Hex, Hex20, Hex256, Hex32, Hex8, HexByte, Nat256};
+use crate::{Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -142,7 +142,7 @@ pub struct Block {
 
     /// Extra data
     #[serde(rename = "extraData")]
-    pub extra_data: String,
+    pub extra_data: Hex,
 
     /// Maximum gas allowed in this block
     #[serde(rename = "gasLimit")]
@@ -167,7 +167,7 @@ pub struct Block {
     pub mix_hash: Hex32,
 
     /// Nonce
-    pub nonce: Hex8,
+    pub nonce: Nat256,
 
     /// Parent block hash
     #[serde(rename = "parentHash")]

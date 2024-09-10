@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use candid::Nat;
 use cketh_common::{
     eth_rpc::{
-        into_nat, Block, Hash, ProviderError, RpcError, SendRawTransactionResult, ValidationError,
+        into_nat, Hash, ProviderError, RpcError, SendRawTransactionResult, ValidationError,
     },
     eth_rpc_client::{
         providers::{RpcApi, RpcService},
@@ -212,14 +212,15 @@ impl CandidRpcClient {
     pub async fn eth_get_block_by_number(
         &self,
         block: evm_rpc_types::BlockTag,
-    ) -> MultiRpcResult<Block> {
-        use crate::candid_rpc::cketh_conversion::into_block_spec;
+    ) -> MultiRpcResult<evm_rpc_types::Block> {
+        use crate::candid_rpc::cketh_conversion::{from_block, into_block_spec};
         process_result(
             RpcMethod::EthGetBlockByNumber,
             self.client
                 .eth_get_block_by_number(into_block_spec(block))
                 .await,
         )
+        .map(from_block)
     }
 
     pub async fn eth_get_transaction_receipt(
