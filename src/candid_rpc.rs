@@ -3,9 +3,7 @@ mod cketh_conversion;
 use async_trait::async_trait;
 use candid::Nat;
 use cketh_common::{
-    eth_rpc::{
-        into_nat, Hash, ProviderError, RpcError, SendRawTransactionResult, ValidationError,
-    },
+    eth_rpc::{into_nat, Hash, ProviderError, RpcError, SendRawTransactionResult, ValidationError},
     eth_rpc_client::{
         providers::{RpcApi, RpcService},
         requests::GetTransactionCountParams,
