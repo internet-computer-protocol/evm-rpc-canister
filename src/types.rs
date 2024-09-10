@@ -18,7 +18,7 @@ use crate::memory::get_api_key;
 use crate::util::hostname_from_url;
 use crate::validate::validate_api_key;
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct InitArgs {
     pub demo: Option<bool>,
     #[serde(rename = "manageApiKeys")]
