@@ -177,7 +177,7 @@ impl Storable for BoolStorable {
             bytes.len() == 1,
             "Unexpected byte length for `BoolStorable`"
         );
-        BoolStorable(bytes[0] == 0)
+        BoolStorable(bytes[0] != 0)
     }
 
     fn to_bytes(&self) -> Cow<[u8]> {
@@ -509,12 +509,17 @@ pub mod candid_types {
 
 #[cfg(test)]
 mod test {
+    use candid::Principal;
     use cketh_common::{
         eth_rpc::RpcError,
         eth_rpc_client::providers::{EthMainnetService, RpcService},
     };
+    use ic_stable_structures::Storable;
 
-    use crate::types::{ApiKey, MultiRpcResult};
+    use crate::{
+        constants::STRING_STORABLE_MAX_SIZE,
+        types::{ApiKey, BoolStorable, MultiRpcResult, PrincipalStorable, StringStorable},
+    };
 
     #[test]
     fn test_multi_rpc_result_map() {
@@ -580,5 +585,44 @@ mod test {
     fn test_api_key_debug_output() {
         let api_key = ApiKey("55555".to_string());
         assert!(format!("{api_key:?}") == "{API_KEY}");
+    }
+
+    #[test]
+    fn test_bool_storable() {
+        for value in [true, false] {
+            let storable = BoolStorable(value);
+            assert_eq!(storable.0, BoolStorable::from_bytes(storable.to_bytes()).0);
+        }
+    }
+
+    #[test]
+    fn test_string_storable() {
+        for value in [
+            "",
+            "abc",
+            "学中文✨",
+            &"z".repeat(STRING_STORABLE_MAX_SIZE as usize),
+        ] {
+            let storable = StringStorable(value.to_string());
+            assert_eq!(
+                storable.0,
+                StringStorable::from_bytes(storable.to_bytes()).0
+            );
+        }
+    }
+
+    #[test]
+    fn test_principal_storable() {
+        for value in [
+            Principal::anonymous(),
+            Principal::management_canister(),
+            Principal::from_text("7hfb6-caaaa-aaaar-qadga-cai").unwrap(),
+        ] {
+            let storable = PrincipalStorable(value);
+            assert_eq!(
+                storable.0,
+                PrincipalStorable::from_bytes(storable.to_bytes()).0
+            );
+        }
     }
 }
