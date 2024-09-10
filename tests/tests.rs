@@ -662,17 +662,15 @@ fn should_use_fallback_public_url() {
 }
 
 #[test]
-fn should_insert_api_keys() {
+fn should_update_api_key() {
     let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
     let setup = EvmRpcSetup::with_args(InitArgs {
         demo: Some(true),
         manage_api_keys: Some(vec![authorized_caller.0]),
-    });
-    let provider_id = 1;
-    setup
-        .clone()
-        .as_caller(authorized_caller)
-        .update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
+    })
+    .as_caller(authorized_caller);
+    let provider_id = 1; // Ankr / mainnet
+    setup.update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
     let response = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
@@ -690,6 +688,60 @@ fn should_insert_api_keys() {
         .expect_consistent()
         .unwrap();
     assert_eq!(response, 1);
+
+    setup.update_api_keys(&[(provider_id, None)]);
+    let response_public = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://rpc.ankr.com/eth"),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response_public, 1);
+}
+
+#[test]
+fn should_update_bearer_token() {
+    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: Some(true),
+        manage_api_keys: Some(vec![authorized_caller.0]),
+    });
+    let provider_id = 8; // Alchemy / mainnet
+    setup
+        .clone()
+        .as_caller(authorized_caller)
+        .update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
+    let response = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Alchemy])),
+            None,
+            candid_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
+                block: candid_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://eth-mainnet.g.alchemy.com/v2")
+                .with_request_headers(vec![
+                    ("Content-Type", "application/json"),
+                    ("Authorization", "Bearer test-api-key"),
+                ]),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response, 1);
 }
 
 #[test]
@@ -697,6 +749,25 @@ fn should_insert_api_keys() {
 fn should_prevent_unauthorized_update_api_keys() {
     let setup = EvmRpcSetup::new();
     setup.update_api_keys(&[(0, Some("unauthorized-api-key".to_string()))]);
+}
+
+#[test]
+#[should_panic(expected = "Trying to set API key for unauthenticated provider")]
+fn should_prevent_unauthenticated_update_api_keys() {
+    let setup = EvmRpcSetup::new();
+    setup.as_controller().update_api_keys(&[(
+        2, /* PublicNode / mainnet */
+        Some("invalid-api-key".to_string()),
+    )]);
+}
+
+#[test]
+#[should_panic(expected = "Provider not found")]
+fn should_prevent_unknown_provider_update_api_keys() {
+    let setup = EvmRpcSetup::new();
+    setup
+        .as_controller()
+        .update_api_keys(&[(5555, Some("unknown-provider-api-key".to_string()))]);
 }
 
 #[test]
