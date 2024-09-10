@@ -57,7 +57,7 @@ pub async fn eth_get_logs(
 pub async fn eth_get_block_by_number(
     source: RpcServices,
     config: Option<RpcConfig>,
-    block: candid_types::BlockTag,
+    block: evm_rpc_types::BlockTag,
 ) -> MultiRpcResult<Block> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_get_block_by_number(block).await,

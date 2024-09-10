@@ -211,11 +211,14 @@ impl CandidRpcClient {
 
     pub async fn eth_get_block_by_number(
         &self,
-        block: candid_types::BlockTag,
+        block: evm_rpc_types::BlockTag,
     ) -> MultiRpcResult<Block> {
+        use crate::candid_rpc::cketh_conversion::into_block_spec;
         process_result(
             RpcMethod::EthGetBlockByNumber,
-            self.client.eth_get_block_by_number(block.into()).await,
+            self.client
+                .eth_get_block_by_number(into_block_spec(block))
+                .await,
         )
     }
 
