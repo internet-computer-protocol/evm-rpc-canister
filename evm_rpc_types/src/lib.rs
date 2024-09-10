@@ -167,6 +167,7 @@ macro_rules! impl_hex_string {
 }
 
 impl_hex_string!(HexByte(Byte));
+impl_hex_string!(Hex8([u8; 8]));
 impl_hex_string!(Hex20([u8; 20]));
 impl_hex_string!(Hex32([u8; 32]));
 impl_hex_string!(Hex256([u8; 256]));
