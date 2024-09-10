@@ -205,7 +205,7 @@ impl EvmRpcSetup {
         source: RpcService,
         json_rpc_payload: &str,
         max_response_bytes: u64,
-    ) -> Nat {
+    ) -> RpcResult<Nat> {
         self.call_query(
             "requestCost",
             Encode!(&source, &json_rpc_payload, &max_response_bytes).unwrap(),
@@ -1533,20 +1533,24 @@ fn upgrade_should_keep_demo() {
         ..Default::default()
     });
     assert_eq!(
-        setup.request_cost(
-            RpcService::Provider(0),
-            r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
-            1000
-        ),
+        setup
+            .request_cost(
+                RpcService::Chain(0x1),
+                r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+                1000
+            )
+            .unwrap(),
         0
     );
     setup.upgrade_canister(InitArgs::default());
     assert_eq!(
-        setup.request_cost(
-            RpcService::Provider(0),
-            r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
-            1000
-        ),
+        setup
+            .request_cost(
+                RpcService::Chain(0x1),
+                r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+                1000
+            )
+            .unwrap(),
         0
     );
 }
@@ -1558,11 +1562,13 @@ fn upgrade_should_change_demo() {
         ..Default::default()
     });
     assert_eq!(
-        setup.request_cost(
-            RpcService::Provider(0),
-            r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
-            1000
-        ),
+        setup
+            .request_cost(
+                RpcService::Chain(0x1),
+                r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+                1000
+            )
+            .unwrap(),
         0
     );
     setup.upgrade_canister(InitArgs {
@@ -1570,11 +1576,13 @@ fn upgrade_should_change_demo() {
         ..Default::default()
     });
     assert_ne!(
-        setup.request_cost(
-            RpcService::Provider(0),
-            r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
-            1000
-        ),
+        setup
+            .request_cost(
+                RpcService::Chain(0x1),
+                r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+                1000
+            )
+            .unwrap(),
         0
     );
 }
