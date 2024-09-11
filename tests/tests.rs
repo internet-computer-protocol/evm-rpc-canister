@@ -51,6 +51,7 @@ const MOCK_REQUEST_URL: &str = "https://cloudflare-eth.com";
 const MOCK_REQUEST_PAYLOAD: &str = r#"{"id":1,"jsonrpc":"2.0","method":"eth_gasPrice"}"#;
 const MOCK_REQUEST_RESPONSE: &str = r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#;
 const MOCK_REQUEST_RESPONSE_BYTES: u64 = 1000;
+const MOCK_API_KEY: &str = "mock-api-key";
 
 const MOCK_TRANSACTION: &str="0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83";
 const MOCK_TRANSACTION_HASH: &str =
@@ -303,7 +304,7 @@ impl EvmRpcSetup {
                     Some((
                         provider.provider_id,
                         match provider.access {
-                            RpcAccess::Authenticated { .. } => Some("mock-api-key".to_string()),
+                            RpcAccess::Authenticated { .. } => Some(MOCK_API_KEY.to_string()),
                             RpcAccess::Unauthenticated { .. } => None?,
                         },
                     ))
@@ -1379,7 +1380,8 @@ fn should_update_api_key() {
     })
     .as_caller(authorized_caller);
     let provider_id = 1; // Ankr / mainnet
-    setup.update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
+    let api_key = "test-api-key";
+    setup.update_api_keys(&[(provider_id, Some(api_key.to_string()))]);
     let response = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
@@ -1391,7 +1393,7 @@ fn should_update_api_key() {
         )
         .mock_http(
             MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
-                .with_url("https://rpc.ankr.com/eth/test-api-key"),
+                .with_url(format!("https://rpc.ankr.com/eth/{api_key}")),
         )
         .wait()
         .expect_consistent()
@@ -1426,10 +1428,11 @@ fn should_update_bearer_token() {
         manage_api_keys: Some(vec![authorized_caller.0]),
     });
     let provider_id = 8; // Alchemy / mainnet
+    let api_key = "test-api-key";
     setup
         .clone()
         .as_caller(authorized_caller)
-        .update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
+        .update_api_keys(&[(provider_id, Some(api_key.to_string()))]);
     let response = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Alchemy])),
@@ -1444,7 +1447,7 @@ fn should_update_bearer_token() {
                 .with_url("https://eth-mainnet.g.alchemy.com/v2")
                 .with_request_headers(vec![
                     ("Content-Type", "application/json"),
-                    ("Authorization", "Bearer test-api-key"),
+                    ("Authorization", &format!("Bearer {api_key}")),
                 ]),
         )
         .wait()
@@ -1483,10 +1486,11 @@ fn should_prevent_unknown_provider_update_api_keys() {
 fn upgrade_should_keep_api_keys() {
     let setup = EvmRpcSetup::new();
     let provider_id = 1; // Ankr / mainnet
+    let api_key = "test-api-key";
     setup
         .clone()
         .as_controller()
-        .update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
+        .update_api_keys(&[(provider_id, Some(api_key.to_string()))]);
     let response = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
@@ -1498,7 +1502,7 @@ fn upgrade_should_keep_api_keys() {
         )
         .mock_http(
             MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
-                .with_url("https://rpc.ankr.com/eth/test-api-key"),
+                .with_url(format!("https://rpc.ankr.com/eth/{api_key}")),
         )
         .wait()
         .expect_consistent()
@@ -1518,7 +1522,7 @@ fn upgrade_should_keep_api_keys() {
         )
         .mock_http(
             MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
-                .with_url("https://rpc.ankr.com/eth/test-api-key"),
+                .with_url(format!("https://rpc.ankr.com/eth/{api_key}")),
         )
         .wait()
         .expect_consistent()
@@ -1600,7 +1604,7 @@ fn upgrade_should_keep_manage_api_key_principals() {
     });
     setup
         .as_caller(authorized_caller)
-        .update_api_keys(&[(0, Some("test-api-key".to_string()))]);
+        .update_api_keys(&[(0, Some("authorized-api-key".to_string()))]);
 }
 
 #[test]
@@ -1617,5 +1621,5 @@ fn upgrade_should_change_manage_api_key_principals() {
     });
     setup
         .as_caller(deauthorized_caller)
-        .update_api_keys(&[(0, Some("test-api-key".to_string()))]);
+        .update_api_keys(&[(0, Some("unauthorized-api-key".to_string()))]);
 }
