@@ -1610,9 +1610,10 @@ dependencies = [
  "ic-ic00-types 0.8.0",
  "ic-metrics-encoder",
  "ic-nervous-system-common",
- "ic-stable-structures",
+ "ic-stable-structures 0.6.5",
  "ic-state-machine-tests",
  "ic-test-utilities-load-wasm",
+ "ic_principal",
  "maplit",
  "num",
  "num-derive",
@@ -2271,7 +2272,7 @@ dependencies = [
  "crc32fast",
  "ic-crypto-sha2 0.8.0",
  "ic-protobuf 0.8.0",
- "ic-stable-structures",
+ "ic-stable-structures 0.5.6",
  "phantom_newtype 0.8.0",
  "prost 0.11.9",
  "serde",
@@ -2292,7 +2293,7 @@ dependencies = [
  "crc32fast",
  "ic-crypto-sha2 0.9.0",
  "ic-protobuf 0.9.0",
- "ic-stable-structures",
+ "ic-stable-structures 0.5.6",
  "phantom_newtype 0.9.0",
  "prost 0.12.6",
  "serde",
@@ -2592,7 +2593,7 @@ dependencies = [
  "ic-crypto-sha3",
  "ic-ic00-types 0.9.0",
  "ic-metrics-encoder",
- "ic-stable-structures",
+ "ic-stable-structures 0.5.6",
  "ic-utils-ensure",
  "icrc-ledger-client-cdk",
  "icrc-ledger-types 0.1.4",
@@ -3740,7 +3741,7 @@ dependencies = [
  "ic-metrics-encoder",
  "ic-nervous-system-runtime",
  "ic-nns-constants",
- "ic-stable-structures",
+ "ic-stable-structures 0.5.6",
  "icp-ledger",
  "icrc-ledger-types 0.1.2",
  "json5",
@@ -3968,6 +3969,15 @@ name = "ic-stable-structures"
 version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95dce29e3ceb0e6da3e78b305d95365530f2efd2146ca18590c0ef3aa6038568"
+
+[[package]]
+name = "ic-stable-structures"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03f3044466a69802de74e710dc0300b706a05696a0531c942ca856751a13b0db"
+dependencies = [
+ "ic_principal",
+]
 
 [[package]]
 name = "ic-state-layout"
@@ -4317,6 +4327,19 @@ dependencies = [
  "rand_core 0.6.4",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "ic_principal"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1762deb6f7c8d8c2bdee4b6c5a47b60195b74e9b5280faa5ba29692f8e17429c"
+dependencies = [
+ "crc32fast",
+ "data-encoding",
+ "serde",
+ "sha2 0.10.8",
+ "thiserror",
 ]
 
 [[package]]

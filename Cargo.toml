@@ -28,6 +28,7 @@ ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "1f551bea633543
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-certified-map = { workspace = true }
+ic_principal = "0.1"
 cketh-common = { git = "https://github.com/dfinity/ic", rev = "1f551bea63354370b6e7a5037e96d464bdab3b41", package = "ic-cketh-minter" }
 maplit = "1.0"
 num = "0.4"
@@ -60,7 +61,7 @@ ic-cdk-macros = "0.7"
 ic-certified-map = "0.4"
 ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-metrics-encoder = "1.1"
-ic-stable-structures = "0.5"
+ic-stable-structures = "0.6"
 num-bigint = "0.4.6"
 proptest = "1.5.0"
 serde = "1.0"
