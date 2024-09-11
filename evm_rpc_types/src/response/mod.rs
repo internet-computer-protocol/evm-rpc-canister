@@ -211,3 +211,11 @@ pub struct Block {
     #[serde(default)]
     pub uncles: Vec<Hex32>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, CandidType)]
+pub enum SendRawTransactionStatus {
+    Ok(Option<Hex32>),
+    InsufficientFunds,
+    NonceTooLow,
+    NonceTooHigh,
+}

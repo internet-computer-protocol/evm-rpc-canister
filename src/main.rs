@@ -26,7 +26,7 @@ use ic_nervous_system_common::serve_metrics;
 use evm_rpc::{
     http::{json_rpc_request, transform_http_request},
     memory::UNSTABLE_METRICS,
-    types::{candid_types, InitArgs, MetricRpcMethod, Metrics, MultiRpcResult, RpcServices},
+    types::{InitArgs, MetricRpcMethod, Metrics, MultiRpcResult, RpcServices},
 };
 use evm_rpc_types::Hex32;
 
@@ -109,8 +109,8 @@ pub async fn eth_fee_history(
 pub async fn eth_send_raw_transaction(
     source: RpcServices,
     config: Option<RpcConfig>,
-    raw_signed_transaction_hex: String,
-) -> MultiRpcResult<candid_types::SendRawTransactionStatus> {
+    raw_signed_transaction_hex: evm_rpc_types::Hex,
+) -> MultiRpcResult<evm_rpc_types::SendRawTransactionStatus> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => {
             source

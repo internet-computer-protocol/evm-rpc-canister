@@ -166,6 +166,26 @@ pub(super) fn from_block(value: cketh_common::eth_rpc::Block) -> evm_rpc_types::
     }
 }
 
+pub(super) fn from_send_raw_transaction_result(
+    transaction_hash: Option<Hex32>,
+    value: cketh_common::eth_rpc::SendRawTransactionResult,
+) -> evm_rpc_types::SendRawTransactionStatus {
+    match value {
+        cketh_common::eth_rpc::SendRawTransactionResult::Ok => {
+            evm_rpc_types::SendRawTransactionStatus::Ok(transaction_hash)
+        }
+        cketh_common::eth_rpc::SendRawTransactionResult::InsufficientFunds => {
+            evm_rpc_types::SendRawTransactionStatus::InsufficientFunds
+        }
+        cketh_common::eth_rpc::SendRawTransactionResult::NonceTooLow => {
+            evm_rpc_types::SendRawTransactionStatus::NonceTooLow
+        }
+        cketh_common::eth_rpc::SendRawTransactionResult::NonceTooHigh => {
+            evm_rpc_types::SendRawTransactionStatus::NonceTooHigh
+        }
+    }
+}
+
 pub(super) fn into_hash(value: Hex32) -> Hash {
     Hash(value.into())
 }

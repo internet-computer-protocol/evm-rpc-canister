@@ -443,47 +443,6 @@ pub enum RpcServices {
     OptimismMainnet(Option<Vec<L2MainnetService>>),
 }
 
-pub mod candid_types {
-    use candid::CandidType;
-    use cketh_common::numeric::BlockNumber;
-    use serde::Deserialize;
-
-    pub use cketh_common::eth_rpc::Hash;
-
-    #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
-    pub enum BlockTag {
-        #[default]
-        Latest,
-        Finalized,
-        Safe,
-        Earliest,
-        Pending,
-        Number(BlockNumber),
-    }
-
-    impl From<BlockTag> for cketh_common::eth_rpc::BlockSpec {
-        fn from(value: BlockTag) -> Self {
-            use cketh_common::eth_rpc::{self, BlockSpec};
-            match value {
-                BlockTag::Number(n) => BlockSpec::Number(n),
-                BlockTag::Latest => BlockSpec::Tag(eth_rpc::BlockTag::Latest),
-                BlockTag::Safe => BlockSpec::Tag(eth_rpc::BlockTag::Safe),
-                BlockTag::Finalized => BlockSpec::Tag(eth_rpc::BlockTag::Finalized),
-                BlockTag::Earliest => BlockSpec::Tag(eth_rpc::BlockTag::Earliest),
-                BlockTag::Pending => BlockSpec::Tag(eth_rpc::BlockTag::Pending),
-            }
-        }
-    }
-
-    #[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize)]
-    pub enum SendRawTransactionStatus {
-        Ok(Option<Hash>),
-        InsufficientFunds,
-        NonceTooLow,
-        NonceTooHigh,
-    }
-}
-
 #[cfg(test)]
 mod test {
     use cketh_common::{

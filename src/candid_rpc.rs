@@ -3,7 +3,7 @@ mod cketh_conversion;
 use async_trait::async_trait;
 use candid::Nat;
 use cketh_common::{
-    eth_rpc::{Hash, ProviderError, SendRawTransactionResult, ValidationError},
+    eth_rpc::{ProviderError, ValidationError},
     eth_rpc_client::{
         providers::{RpcApi, RpcService},
         EthRpcClient as CkEthRpcClient, MultiCallError, RpcConfig, RpcTransport,
@@ -11,7 +11,7 @@ use cketh_common::{
     lifecycle::EthereumNetwork,
 };
 use ethers_core::{types::Transaction, utils::rlp};
-use evm_rpc_types::Hex32;
+use evm_rpc_types::{Hex, Hex32};
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 
 use crate::{
@@ -24,11 +24,9 @@ use crate::{
     http::http_request,
     providers::resolve_rpc_service,
     types::{
-        candid_types::{self, SendRawTransactionStatus},
         MetricRpcHost, MetricRpcMethod, MultiRpcResult, ResolvedRpcService, RpcMethod, RpcResult,
         RpcServices,
     },
-    util::hex_to_bytes,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -267,30 +265,23 @@ impl CandidRpcClient {
 
     pub async fn eth_send_raw_transaction(
         &self,
-        raw_signed_transaction_hex: String,
-    ) -> MultiRpcResult<candid_types::SendRawTransactionStatus> {
+        raw_signed_transaction_hex: Hex,
+    ) -> MultiRpcResult<evm_rpc_types::SendRawTransactionStatus> {
+        use crate::candid_rpc::cketh_conversion::from_send_raw_transaction_result;
         let transaction_hash = get_transaction_hash(&raw_signed_transaction_hex);
         process_result(
             RpcMethod::EthSendRawTransaction,
             self.client
-                .multi_eth_send_raw_transaction(raw_signed_transaction_hex)
+                .multi_eth_send_raw_transaction(raw_signed_transaction_hex.to_string())
                 .await,
         )
-        .map(|result| match result {
-            SendRawTransactionResult::Ok => SendRawTransactionStatus::Ok(transaction_hash),
-            SendRawTransactionResult::InsufficientFunds => {
-                SendRawTransactionStatus::InsufficientFunds
-            }
-            SendRawTransactionResult::NonceTooLow => SendRawTransactionStatus::NonceTooLow,
-            SendRawTransactionResult::NonceTooHigh => SendRawTransactionStatus::NonceTooHigh,
-        })
+        .map(|result| from_send_raw_transaction_result(transaction_hash.clone(), result))
     }
 }
 
-fn get_transaction_hash(raw_signed_transaction_hex: &str) -> Option<Hash> {
-    let bytes = hex_to_bytes(raw_signed_transaction_hex)?;
-    let transaction: Transaction = rlp::decode(&bytes).ok()?;
-    Some(Hash(transaction.hash.0))
+fn get_transaction_hash(raw_signed_transaction_hex: &Hex) -> Option<Hex32> {
+    let transaction: Transaction = rlp::decode(raw_signed_transaction_hex.as_ref()).ok()?;
+    Some(Hex32::from(transaction.hash.0))
 }
 
 #[cfg(test)]

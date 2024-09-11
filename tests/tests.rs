@@ -6,7 +6,7 @@ use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
 use cketh_common::{
     address::Address,
-    eth_rpc::{Hash, HttpOutcallError, JsonRpcError, ProviderError, RpcError},
+    eth_rpc::{HttpOutcallError, JsonRpcError, ProviderError, RpcError},
     eth_rpc_client::{
         providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
         RpcConfig,
@@ -31,11 +31,10 @@ use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
     providers::PROVIDERS,
     types::{
-        candid_types, InitArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod,
-        RpcResult, RpcServices,
+        InitArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod, RpcResult, RpcServices,
     },
 };
-use evm_rpc_types::Nat256;
+use evm_rpc_types::{Hex, Hex32, Nat256};
 use mock::{MockOutcall, MockOutcallBuilder};
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
@@ -276,7 +275,8 @@ impl EvmRpcSetup {
         source: RpcServices,
         config: Option<RpcConfig>,
         signed_raw_transaction_hex: &str,
-    ) -> CallFlow<MultiRpcResult<candid_types::SendRawTransactionStatus>> {
+    ) -> CallFlow<MultiRpcResult<evm_rpc_types::SendRawTransactionStatus>> {
+        let signed_raw_transaction_hex: Hex = signed_raw_transaction_hex.parse().unwrap();
         self.call_update(
             "eth_sendRawTransaction",
             Encode!(&source, &config, &signed_raw_transaction_hex).unwrap(),
@@ -955,8 +955,8 @@ fn eth_send_raw_transaction_should_succeed() {
             .unwrap();
         assert_eq!(
             response,
-            candid_types::SendRawTransactionStatus::Ok(Some(
-                Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()
+            evm_rpc_types::SendRawTransactionStatus::Ok(Some(
+                Hex32::from_str(MOCK_TRANSACTION_HASH).unwrap()
             ))
         );
     }
@@ -1135,13 +1135,13 @@ fn candid_rpc_should_return_inconsistent_results() {
         vec![
             (
                 RpcService::EthMainnet(EthMainnetService::Ankr),
-                Ok(candid_types::SendRawTransactionStatus::Ok(Some(
-                    Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()
+                Ok(evm_rpc_types::SendRawTransactionStatus::Ok(Some(
+                    Hex32::from_str(MOCK_TRANSACTION_HASH).unwrap()
                 )))
             ),
             (
                 RpcService::EthMainnet(EthMainnetService::Cloudflare),
-                Ok(candid_types::SendRawTransactionStatus::NonceTooLow)
+                Ok(evm_rpc_types::SendRawTransactionStatus::NonceTooLow)
             )
         ]
     );
@@ -1319,8 +1319,8 @@ fn candid_rpc_should_handle_already_known() {
         .expect_consistent();
     assert_eq!(
         result,
-        Ok(candid_types::SendRawTransactionStatus::Ok(Some(
-            Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()
+        Ok(evm_rpc_types::SendRawTransactionStatus::Ok(Some(
+            Hex32::from_str(MOCK_TRANSACTION_HASH).unwrap()
         )))
     );
     let rpc_method = || RpcMethod::EthSendRawTransaction.into();
