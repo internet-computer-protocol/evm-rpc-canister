@@ -13,7 +13,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, STRING_STORABLE_MAX_SIZE};
+use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING};
 use crate::memory::get_api_key;
 use crate::util::hostname_from_url;
 use crate::validate::validate_api_key;
@@ -183,25 +183,6 @@ impl Storable for BoolStorable {
     fn to_bytes(&self) -> Cow<[u8]> {
         vec![self.0 as u8].into()
     }
-}
-
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StringStorable(pub String);
-
-impl Storable for StringStorable {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        // String already implements `Storable`.
-        self.0.to_bytes()
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Self(String::from_bytes(bytes))
-    }
-}
-
-impl BoundedStorable for StringStorable {
-    const MAX_SIZE: u32 = STRING_STORABLE_MAX_SIZE;
-    const IS_FIXED_SIZE: bool = false;
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -516,10 +497,7 @@ mod test {
     };
     use ic_stable_structures::Storable;
 
-    use crate::{
-        constants::STRING_STORABLE_MAX_SIZE,
-        types::{ApiKey, BoolStorable, MultiRpcResult, PrincipalStorable, StringStorable},
-    };
+    use crate::types::{ApiKey, BoolStorable, MultiRpcResult, PrincipalStorable};
 
     #[test]
     fn test_multi_rpc_result_map() {
@@ -592,22 +570,6 @@ mod test {
         for value in [true, false] {
             let storable = BoolStorable(value);
             assert_eq!(storable.0, BoolStorable::from_bytes(storable.to_bytes()).0);
-        }
-    }
-
-    #[test]
-    fn test_string_storable() {
-        for value in [
-            "",
-            "abc",
-            "学中文✨",
-            &"z".repeat(STRING_STORABLE_MAX_SIZE as usize),
-        ] {
-            let storable = StringStorable(value.to_string());
-            assert_eq!(
-                storable.0,
-                StringStorable::from_bytes(storable.to_bytes()).0
-            );
         }
     }
 
