@@ -13,7 +13,7 @@ mod request;
 mod response;
 
 pub use request::{FeeHistoryArgs, GetLogsArgs};
-pub use response::{FeeHistory, LogEntry, TransactionReceipt};
+pub use response::{Block, FeeHistory, LogEntry, TransactionReceipt};
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
 pub enum BlockTag {
@@ -32,6 +32,8 @@ pub enum BlockTag {
 pub struct Nat256(Nat);
 
 impl Nat256 {
+    pub const ZERO: Nat256 = Nat256(Nat(BigUint::ZERO));
+
     pub fn into_be_bytes(self) -> [u8; 32] {
         let value_bytes = self.0 .0.to_bytes_be();
         let mut value_u256 = [0u8; 32];

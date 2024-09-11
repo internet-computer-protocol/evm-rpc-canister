@@ -126,3 +126,88 @@ pub struct TransactionReceipt {
     #[serde(rename = "type")]
     pub tx_type: HexByte,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, CandidType)]
+pub struct Block {
+    /// Base fee per gas
+    /// Only included for blocks after the London Upgrade / EIP-1559.
+    #[serde(rename = "baseFeePerGas")]
+    pub base_fee_per_gas: Option<Nat256>,
+
+    /// Block number
+    pub number: Nat256,
+
+    /// Difficulty
+    pub difficulty: Option<Nat256>,
+
+    /// Extra data
+    #[serde(rename = "extraData")]
+    pub extra_data: Hex,
+
+    /// Maximum gas allowed in this block
+    #[serde(rename = "gasLimit")]
+    pub gas_limit: Nat256,
+
+    /// Gas used by all transactions in this block
+    #[serde(rename = "gasUsed")]
+    pub gas_used: Nat256,
+
+    /// Block hash
+    pub hash: Hex32,
+
+    /// Bloom filter for the logs.
+    #[serde(rename = "logsBloom")]
+    pub logs_bloom: Hex256,
+
+    /// Miner
+    pub miner: Hex20,
+
+    /// Mix hash
+    #[serde(rename = "mixHash")]
+    pub mix_hash: Hex32,
+
+    /// Nonce
+    pub nonce: Nat256,
+
+    /// Parent block hash
+    #[serde(rename = "parentHash")]
+    pub parent_hash: Hex32,
+
+    /// Receipts root
+    #[serde(rename = "receiptsRoot")]
+    pub receipts_root: Hex32,
+
+    /// Ommers hash
+    #[serde(rename = "sha3Uncles")]
+    pub sha3_uncles: Hex32,
+
+    /// Block size
+    pub size: Nat256,
+
+    /// State root
+    #[serde(rename = "stateRoot")]
+    pub state_root: Hex32,
+
+    /// Timestamp
+    #[serde(rename = "timestamp")]
+    pub timestamp: Nat256,
+
+    /// Total difficulty is the sum of all difficulty values up to and including this block.
+    ///
+    /// Note: this field was removed from the official JSON-RPC specification in
+    /// https://github.com/ethereum/execution-apis/pull/570 and may no longer be served by providers.
+    #[serde(rename = "totalDifficulty")]
+    pub total_difficulty: Option<Nat256>,
+
+    /// Transaction hashes
+    #[serde(default)]
+    pub transactions: Vec<Hex32>,
+
+    /// Transactions root
+    #[serde(rename = "transactionsRoot")]
+    pub transactions_root: Option<Hex32>,
+
+    /// Uncles
+    #[serde(default)]
+    pub uncles: Vec<Hex32>,
+}
