@@ -2,7 +2,6 @@ use candid::candid_method;
 use cketh_common::eth_rpc::RpcError;
 
 use cketh_common::eth_rpc_client::providers::RpcService;
-use cketh_common::eth_rpc_client::RpcConfig;
 use cketh_common::logs::INFO;
 use evm_rpc::accounting::{get_cost_with_collateral, get_http_request_cost};
 use evm_rpc::candid_rpc::CandidRpcClient;
@@ -43,7 +42,7 @@ pub fn require_api_key_principal_or_controller() -> Result<(), String> {
 #[candid_method(rename = "eth_getLogs")]
 pub async fn eth_get_logs(
     source: RpcServices,
-    config: Option<RpcConfig>,
+    config: Option<evm_rpc_types::RpcConfig>,
     args: evm_rpc_types::GetLogsArgs,
 ) -> MultiRpcResult<Vec<evm_rpc_types::LogEntry>> {
     match CandidRpcClient::new(source, config) {
@@ -56,7 +55,7 @@ pub async fn eth_get_logs(
 #[candid_method(rename = "eth_getBlockByNumber")]
 pub async fn eth_get_block_by_number(
     source: RpcServices,
-    config: Option<RpcConfig>,
+    config: Option<evm_rpc_types::RpcConfig>,
     block: evm_rpc_types::BlockTag,
 ) -> MultiRpcResult<evm_rpc_types::Block> {
     match CandidRpcClient::new(source, config) {
@@ -69,7 +68,7 @@ pub async fn eth_get_block_by_number(
 #[candid_method(rename = "eth_getTransactionReceipt")]
 pub async fn eth_get_transaction_receipt(
     source: RpcServices,
-    config: Option<RpcConfig>,
+    config: Option<evm_rpc_types::RpcConfig>,
     tx_hash: Hex32,
 ) -> MultiRpcResult<Option<evm_rpc_types::TransactionReceipt>> {
     match CandidRpcClient::new(source, config) {
@@ -82,7 +81,7 @@ pub async fn eth_get_transaction_receipt(
 #[candid_method(rename = "eth_getTransactionCount")]
 pub async fn eth_get_transaction_count(
     source: RpcServices,
-    config: Option<RpcConfig>,
+    config: Option<evm_rpc_types::RpcConfig>,
     args: evm_rpc_types::GetTransactionCountArgs,
 ) -> MultiRpcResult<evm_rpc_types::Nat256> {
     match CandidRpcClient::new(source, config) {
@@ -95,7 +94,7 @@ pub async fn eth_get_transaction_count(
 #[candid_method(rename = "eth_feeHistory")]
 pub async fn eth_fee_history(
     source: RpcServices,
-    config: Option<RpcConfig>,
+    config: Option<evm_rpc_types::RpcConfig>,
     args: evm_rpc_types::FeeHistoryArgs,
 ) -> MultiRpcResult<evm_rpc_types::FeeHistory> {
     match CandidRpcClient::new(source, config) {
@@ -108,7 +107,7 @@ pub async fn eth_fee_history(
 #[candid_method(rename = "eth_sendRawTransaction")]
 pub async fn eth_send_raw_transaction(
     source: RpcServices,
-    config: Option<RpcConfig>,
+    config: Option<evm_rpc_types::RpcConfig>,
     raw_signed_transaction_hex: evm_rpc_types::Hex,
 ) -> MultiRpcResult<evm_rpc_types::SendRawTransactionStatus> {
     match CandidRpcClient::new(source, config) {

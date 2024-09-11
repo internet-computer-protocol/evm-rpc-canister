@@ -6,7 +6,7 @@ use cketh_common::{
     eth_rpc::{ProviderError, ValidationError},
     eth_rpc_client::{
         providers::{RpcApi, RpcService},
-        EthRpcClient as CkEthRpcClient, MultiCallError, RpcConfig, RpcTransport,
+        EthRpcClient as CkEthRpcClient, MultiCallError, RpcTransport,
     },
     lifecycle::EthereumNetwork,
 };
@@ -68,8 +68,11 @@ fn check_services<T>(services: Vec<T>) -> RpcResult<Vec<T>> {
 
 fn get_rpc_client(
     source: RpcServices,
-    config: RpcConfig,
+    config: evm_rpc_types::RpcConfig,
 ) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
+    use crate::candid_rpc::cketh_conversion::into_rpc_config;
+
+    let config = into_rpc_config(config);
     Ok(match source {
         RpcServices::Custom { chain_id, services } => CkEthRpcClient::new(
             EthereumNetwork(chain_id),
@@ -169,7 +172,7 @@ pub struct CandidRpcClient {
 }
 
 impl CandidRpcClient {
-    pub fn new(source: RpcServices, config: Option<RpcConfig>) -> RpcResult<Self> {
+    pub fn new(source: RpcServices, config: Option<evm_rpc_types::RpcConfig>) -> RpcResult<Self> {
         Ok(Self {
             client: get_rpc_client(source, config.unwrap_or_default())?,
         })

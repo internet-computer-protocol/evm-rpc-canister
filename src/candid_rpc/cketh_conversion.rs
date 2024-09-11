@@ -186,6 +186,14 @@ pub(super) fn from_send_raw_transaction_result(
     }
 }
 
+pub(super) fn into_rpc_config(
+    value: evm_rpc_types::RpcConfig,
+) -> cketh_common::eth_rpc_client::RpcConfig {
+    cketh_common::eth_rpc_client::RpcConfig {
+        response_size_estimate: value.response_size_estimate,
+    }
+}
+
 pub(super) fn into_hash(value: Hex32) -> Hash {
     Hash(value.into())
 }
