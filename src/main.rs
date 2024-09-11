@@ -1,5 +1,5 @@
 use candid::candid_method;
-use cketh_common::eth_rpc::{Block, RpcError};
+use cketh_common::eth_rpc::RpcError;
 
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
@@ -57,8 +57,8 @@ pub async fn eth_get_logs(
 pub async fn eth_get_block_by_number(
     source: RpcServices,
     config: Option<RpcConfig>,
-    block: candid_types::BlockTag,
-) -> MultiRpcResult<Block> {
+    block: evm_rpc_types::BlockTag,
+) -> MultiRpcResult<evm_rpc_types::Block> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_get_block_by_number(block).await,
         Err(err) => Err(err).into(),
