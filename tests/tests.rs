@@ -1586,3 +1586,36 @@ fn upgrade_should_change_demo() {
         0
     );
 }
+
+#[test]
+fn upgrade_should_keep_manage_api_key_principals() {
+    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        manage_api_keys: Some(vec![authorized_caller.0]),
+        ..Default::default()
+    });
+    setup.upgrade_canister(InitArgs {
+        manage_api_keys: None,
+        ..Default::default()
+    });
+    setup
+        .as_caller(authorized_caller)
+        .update_api_keys(&[(0, Some("test-api-key".to_string()))]);
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn upgrade_should_change_manage_api_key_principals() {
+    let deauthorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        manage_api_keys: Some(vec![deauthorized_caller.0]),
+        ..Default::default()
+    });
+    setup.upgrade_canister(InitArgs {
+        manage_api_keys: Some(vec![]),
+        ..Default::default()
+    });
+    setup
+        .as_caller(deauthorized_caller)
+        .update_api_keys(&[(0, Some("test-api-key".to_string()))]);
+}
