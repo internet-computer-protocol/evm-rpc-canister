@@ -12,7 +12,7 @@ use std::str::FromStr;
 mod request;
 mod response;
 
-pub use request::{FeeHistoryArgs, GetLogsArgs};
+pub use request::{FeeHistoryArgs, GetLogsArgs, GetTransactionCountArgs};
 pub use response::{Block, FeeHistory, LogEntry, TransactionReceipt};
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]

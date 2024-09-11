@@ -83,8 +83,8 @@ pub async fn eth_get_transaction_receipt(
 pub async fn eth_get_transaction_count(
     source: RpcServices,
     config: Option<RpcConfig>,
-    args: candid_types::GetTransactionCountArgs,
-) -> MultiRpcResult<candid::Nat> {
+    args: evm_rpc_types::GetTransactionCountArgs,
+) -> MultiRpcResult<evm_rpc_types::Nat256> {
     match CandidRpcClient::new(source, config) {
         Ok(source) => source.eth_get_transaction_count(args).await,
         Err(err) => Err(err).into(),

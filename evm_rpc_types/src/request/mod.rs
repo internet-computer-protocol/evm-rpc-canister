@@ -40,3 +40,9 @@ pub struct GetLogsArgs {
     /// Each topic can also be an array of DATA with "or" options.
     pub topics: Option<Vec<Vec<Hex32>>>,
 }
+
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
+pub struct GetTransactionCountArgs {
+    pub address: Hex20,
+    pub block: BlockTag,
+}

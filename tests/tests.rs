@@ -254,8 +254,8 @@ impl EvmRpcSetup {
         &self,
         source: RpcServices,
         config: Option<RpcConfig>,
-        args: candid_types::GetTransactionCountArgs,
-    ) -> CallFlow<MultiRpcResult<Nat>> {
+        args: evm_rpc_types::GetTransactionCountArgs,
+    ) -> CallFlow<MultiRpcResult<Nat256>> {
         self.call_update(
             "eth_getTransactionCount",
             Encode!(&source, &config, &args).unwrap(),
@@ -645,9 +645,11 @@ fn should_use_fallback_public_url() {
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                    .parse()
+                    .unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http(
@@ -657,7 +659,7 @@ fn should_use_fallback_public_url() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(response, 1);
+    assert_eq!(response, 1_u8.into());
 }
 
 #[test]
@@ -676,9 +678,11 @@ fn should_insert_api_keys() {
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                    .parse()
+                    .unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http(
@@ -688,7 +692,7 @@ fn should_insert_api_keys() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(response, 1);
+    assert_eq!(response, 1_u8.into());
 }
 
 #[test]
@@ -882,9 +886,11 @@ fn eth_get_transaction_count_should_succeed() {
             .eth_get_transaction_count(
                 source.clone(),
                 None,
-                candid_types::GetTransactionCountArgs {
-                    address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                    block: candid_types::BlockTag::Latest,
+                evm_rpc_types::GetTransactionCountArgs {
+                    address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                        .parse()
+                        .unwrap(),
+                    block: evm_rpc_types::BlockTag::Latest,
                 },
             )
             .mock_http(MockOutcallBuilder::new(
@@ -894,7 +900,7 @@ fn eth_get_transaction_count_should_succeed() {
             .wait()
             .expect_consistent()
             .unwrap();
-        assert_eq!(response, 1);
+        assert_eq!(response, 1_u8.into());
     }
 }
 
@@ -1170,9 +1176,11 @@ fn candid_rpc_should_return_inconsistent_results_with_error() {
                 EthMainnetService::Ankr,
             ])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                    .parse()
+                    .unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http_once(MockOutcallBuilder::new(
@@ -1190,7 +1198,7 @@ fn candid_rpc_should_return_inconsistent_results_with_error() {
         vec![
             (
                 RpcService::EthMainnet(EthMainnetService::Alchemy),
-                Ok(1.into())
+                Ok(1_u8.into())
             ),
             (
                 RpcService::EthMainnet(EthMainnetService::Ankr),
@@ -1232,9 +1240,11 @@ fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
                 EthMainnetService::Ankr,
             ])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                    .parse()
+                    .unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http_once(MockOutcallBuilder::new(
@@ -1252,7 +1262,7 @@ fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
         vec![
             (
                 RpcService::EthMainnet(EthMainnetService::Alchemy),
-                Ok(1.into())
+                Ok(1_u8.into())
             ),
             (
                 RpcService::EthMainnet(EthMainnetService::Ankr),

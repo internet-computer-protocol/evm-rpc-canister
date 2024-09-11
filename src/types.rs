@@ -444,10 +444,8 @@ pub enum RpcServices {
 }
 
 pub mod candid_types {
-    use std::str::FromStr;
-
     use candid::CandidType;
-    use cketh_common::{address::Address, eth_rpc::ValidationError, numeric::BlockNumber};
+    use cketh_common::numeric::BlockNumber;
     use serde::Deserialize;
 
     pub use cketh_common::eth_rpc::Hash;
@@ -474,27 +472,6 @@ pub mod candid_types {
                 BlockTag::Earliest => BlockSpec::Tag(eth_rpc::BlockTag::Earliest),
                 BlockTag::Pending => BlockSpec::Tag(eth_rpc::BlockTag::Pending),
             }
-        }
-    }
-
-    #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
-    pub struct GetTransactionCountArgs {
-        pub address: String,
-        pub block: BlockTag,
-    }
-
-    impl TryFrom<GetTransactionCountArgs>
-        for cketh_common::eth_rpc_client::requests::GetTransactionCountParams
-    {
-        type Error = ValidationError;
-        fn try_from(value: GetTransactionCountArgs) -> Result<Self, Self::Error> {
-            Ok(
-                cketh_common::eth_rpc_client::requests::GetTransactionCountParams {
-                    address: Address::from_str(&value.address)
-                        .map_err(|_| ValidationError::InvalidHex(value.address))?,
-                    block: value.block.into(),
-                },
-            )
         }
     }
 

@@ -92,6 +92,15 @@ pub(super) fn from_fee_history(
     }
 }
 
+pub(super) fn into_get_transaction_count_params(
+    value: evm_rpc_types::GetTransactionCountArgs,
+) -> cketh_common::eth_rpc_client::requests::GetTransactionCountParams {
+    cketh_common::eth_rpc_client::requests::GetTransactionCountParams {
+        address: cketh_common::address::Address::new(value.address.into()),
+        block: into_block_spec(value.block),
+    }
+}
+
 pub(super) fn from_transaction_receipt(
     value: cketh_common::eth_rpc_client::responses::TransactionReceipt,
 ) -> evm_rpc_types::TransactionReceipt {
@@ -165,7 +174,7 @@ fn into_checked_amount_of<Unit>(value: Nat256) -> CheckedAmountOf<Unit> {
     CheckedAmountOf::from_be_bytes(value.into_be_bytes())
 }
 
-fn from_checked_amount_of<Unit>(value: CheckedAmountOf<Unit>) -> Nat256 {
+pub(super) fn from_checked_amount_of<Unit>(value: CheckedAmountOf<Unit>) -> Nat256 {
     Nat256::from_be_bytes(value.to_be_bytes())
 }
 

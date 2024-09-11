@@ -3,10 +3,9 @@ mod cketh_conversion;
 use async_trait::async_trait;
 use candid::Nat;
 use cketh_common::{
-    eth_rpc::{into_nat, Hash, ProviderError, RpcError, SendRawTransactionResult, ValidationError},
+    eth_rpc::{Hash, ProviderError, SendRawTransactionResult, ValidationError},
     eth_rpc_client::{
         providers::{RpcApi, RpcService},
-        requests::GetTransactionCountParams,
         EthRpcClient as CkEthRpcClient, MultiCallError, RpcConfig, RpcTransport,
     },
     lifecycle::EthereumNetwork,
@@ -237,20 +236,19 @@ impl CandidRpcClient {
 
     pub async fn eth_get_transaction_count(
         &self,
-        args: candid_types::GetTransactionCountArgs,
-    ) -> MultiRpcResult<candid::Nat> {
-        let args: GetTransactionCountParams = match args.try_into() {
-            Ok(args) => args,
-            Err(err) => return MultiRpcResult::Consistent(Err(RpcError::from(err))),
+        args: evm_rpc_types::GetTransactionCountArgs,
+    ) -> MultiRpcResult<evm_rpc_types::Nat256> {
+        use crate::candid_rpc::cketh_conversion::{
+            from_checked_amount_of, into_get_transaction_count_params,
         };
         process_result(
             RpcMethod::EthGetTransactionCount,
             self.client
-                .eth_get_transaction_count(args)
+                .eth_get_transaction_count(into_get_transaction_count_params(args))
                 .await
                 .reduce_with_equality(),
         )
-        .map(|count| into_nat(count.into_inner()))
+        .map(from_checked_amount_of)
     }
 
     pub async fn eth_fee_history(
@@ -298,6 +296,7 @@ fn get_transaction_hash(raw_signed_transaction_hex: &str) -> Option<Hash> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use cketh_common::eth_rpc::RpcError;
 
     #[test]
     fn test_process_result_mapping() {
