@@ -427,10 +427,7 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
 
 #[cfg(test)]
 mod test {
-    use cketh_common::{
-        eth_rpc::RpcError,
-        eth_rpc_client::providers::{EthMainnetService, RpcService},
-    };
+    use cketh_common::eth_rpc::RpcError;
 
     use crate::types::{ApiKey, MultiRpcResult};
 

@@ -26,7 +26,7 @@ use evm_rpc::{
     memory::UNSTABLE_METRICS,
     types::{InitArgs, MetricRpcMethod, Metrics, MultiRpcResult},
 };
-use evm_rpc_types::{Hex32, RpcService};
+use evm_rpc_types::Hex32;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
     let caller = ic_cdk::caller();
@@ -157,7 +157,7 @@ fn get_providers() -> Vec<Provider> {
 
 #[query(name = "getServiceProviderMap")]
 #[candid_method(query, rename = "getServiceProviderMap")]
-fn get_service_provider_map() -> Vec<(RpcService, ProviderId)> {
+fn get_service_provider_map() -> Vec<(evm_rpc_types::RpcService, ProviderId)> {
     SERVICE_PROVIDER_MAP.with(|map| map.iter().map(|(k, v)| (k.clone(), *v)).collect())
 }
 

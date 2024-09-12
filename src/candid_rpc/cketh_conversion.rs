@@ -219,6 +219,7 @@ pub(super) fn into_ethereum_network(
     }
 }
 
+#[cfg(test)]
 pub(super) fn into_rpc_service(
     source: evm_rpc_types::RpcService,
 ) -> cketh_common::eth_rpc_client::providers::RpcService {

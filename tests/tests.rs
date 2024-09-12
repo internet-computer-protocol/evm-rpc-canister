@@ -5,9 +5,7 @@ use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
 use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
 use cketh_common::{
-    address::Address,
     eth_rpc::{HttpOutcallError, JsonRpcError, ProviderError, RpcError},
-    eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
     numeric::Wei,
 };
 use ic_base_types::{CanisterId, PrincipalId};
@@ -27,11 +25,12 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
     providers::PROVIDERS,
-    types::{
-        InitArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod, RpcResult, RpcServices,
-    },
+    types::{InitArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod, RpcResult},
 };
-use evm_rpc_types::{Hex, Hex32, Nat256};
+use evm_rpc_types::{
+    EthMainnetService, EthSepoliaService, Hex, Hex20, Hex32, Nat256, RpcApi, RpcService,
+    RpcServices,
+};
 use mock::{MockOutcall, MockOutcallBuilder};
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
@@ -596,8 +595,8 @@ fn should_decode_checked_amount() {
 
 #[test]
 fn should_decode_address() {
-    let value = Address::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap();
-    assert_eq!(Decode!(&Encode!(&value).unwrap(), Address).unwrap(), value);
+    let value = Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap();
+    assert_eq!(Decode!(&Encode!(&value).unwrap(), Hex20).unwrap(), value);
 }
 
 #[test]
