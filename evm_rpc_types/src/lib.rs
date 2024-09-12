@@ -12,8 +12,8 @@ use std::str::FromStr;
 mod request;
 mod response;
 
-pub use request::{FeeHistoryArgs, GetLogsArgs};
-pub use response::{Block, FeeHistory, LogEntry, TransactionReceipt};
+pub use request::{FeeHistoryArgs, GetLogsArgs, GetTransactionCountArgs};
+pub use response::{Block, FeeHistory, LogEntry, SendRawTransactionStatus, TransactionReceipt};
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
 pub enum BlockTag {
@@ -123,6 +123,12 @@ macro_rules! impl_hex_string {
         impl From<$name> for $data {
             fn from(value: $name) -> Self {
                 value.0
+            }
+        }
+
+        impl AsRef<[u8]> for $name {
+            fn as_ref(&self) -> &[u8] {
+                self.0.as_ref()
             }
         }
 

@@ -6,7 +6,7 @@ use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
 use cketh_common::{
     address::Address,
-    eth_rpc::{Hash, HttpOutcallError, JsonRpcError, ProviderError, RpcError},
+    eth_rpc::{HttpOutcallError, JsonRpcError, ProviderError, RpcError},
     eth_rpc_client::{
         providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
         RpcConfig,
@@ -31,11 +31,10 @@ use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
     providers::PROVIDERS,
     types::{
-        candid_types, InitArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod,
-        RpcResult, RpcServices,
+        InitArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod, RpcResult, RpcServices,
     },
 };
-use evm_rpc_types::Nat256;
+use evm_rpc_types::{Hex, Hex32, Nat256};
 use mock::{MockOutcall, MockOutcallBuilder};
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
@@ -254,8 +253,8 @@ impl EvmRpcSetup {
         &self,
         source: RpcServices,
         config: Option<RpcConfig>,
-        args: candid_types::GetTransactionCountArgs,
-    ) -> CallFlow<MultiRpcResult<Nat>> {
+        args: evm_rpc_types::GetTransactionCountArgs,
+    ) -> CallFlow<MultiRpcResult<Nat256>> {
         self.call_update(
             "eth_getTransactionCount",
             Encode!(&source, &config, &args).unwrap(),
@@ -276,7 +275,8 @@ impl EvmRpcSetup {
         source: RpcServices,
         config: Option<RpcConfig>,
         signed_raw_transaction_hex: &str,
-    ) -> CallFlow<MultiRpcResult<candid_types::SendRawTransactionStatus>> {
+    ) -> CallFlow<MultiRpcResult<evm_rpc_types::SendRawTransactionStatus>> {
+        let signed_raw_transaction_hex: Hex = signed_raw_transaction_hex.parse().unwrap();
         self.call_update(
             "eth_sendRawTransaction",
             Encode!(&source, &config, &signed_raw_transaction_hex).unwrap(),
@@ -645,9 +645,11 @@ fn should_use_fallback_public_url() {
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                    .parse()
+                    .unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http(
@@ -657,7 +659,7 @@ fn should_use_fallback_public_url() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(response, 1);
+    assert_eq!(response, 1_u8.into());
 }
 
 #[test]
@@ -676,9 +678,11 @@ fn should_insert_api_keys() {
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                    .parse()
+                    .unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http(
@@ -688,7 +692,7 @@ fn should_insert_api_keys() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(response, 1);
+    assert_eq!(response, 1_u8.into());
 }
 
 #[test]
@@ -882,9 +886,11 @@ fn eth_get_transaction_count_should_succeed() {
             .eth_get_transaction_count(
                 source.clone(),
                 None,
-                candid_types::GetTransactionCountArgs {
-                    address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                    block: candid_types::BlockTag::Latest,
+                evm_rpc_types::GetTransactionCountArgs {
+                    address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                        .parse()
+                        .unwrap(),
+                    block: evm_rpc_types::BlockTag::Latest,
                 },
             )
             .mock_http(MockOutcallBuilder::new(
@@ -894,7 +900,7 @@ fn eth_get_transaction_count_should_succeed() {
             .wait()
             .expect_consistent()
             .unwrap();
-        assert_eq!(response, 1);
+        assert_eq!(response, 1_u8.into());
     }
 }
 
@@ -949,8 +955,8 @@ fn eth_send_raw_transaction_should_succeed() {
             .unwrap();
         assert_eq!(
             response,
-            candid_types::SendRawTransactionStatus::Ok(Some(
-                Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()
+            evm_rpc_types::SendRawTransactionStatus::Ok(Some(
+                Hex32::from_str(MOCK_TRANSACTION_HASH).unwrap()
             ))
         );
     }
@@ -1129,13 +1135,13 @@ fn candid_rpc_should_return_inconsistent_results() {
         vec![
             (
                 RpcService::EthMainnet(EthMainnetService::Ankr),
-                Ok(candid_types::SendRawTransactionStatus::Ok(Some(
-                    Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()
+                Ok(evm_rpc_types::SendRawTransactionStatus::Ok(Some(
+                    Hex32::from_str(MOCK_TRANSACTION_HASH).unwrap()
                 )))
             ),
             (
                 RpcService::EthMainnet(EthMainnetService::Cloudflare),
-                Ok(candid_types::SendRawTransactionStatus::NonceTooLow)
+                Ok(evm_rpc_types::SendRawTransactionStatus::NonceTooLow)
             )
         ]
     );
@@ -1170,9 +1176,11 @@ fn candid_rpc_should_return_inconsistent_results_with_error() {
                 EthMainnetService::Ankr,
             ])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                    .parse()
+                    .unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http_once(MockOutcallBuilder::new(
@@ -1190,7 +1198,7 @@ fn candid_rpc_should_return_inconsistent_results_with_error() {
         vec![
             (
                 RpcService::EthMainnet(EthMainnetService::Alchemy),
-                Ok(1.into())
+                Ok(1_u8.into())
             ),
             (
                 RpcService::EthMainnet(EthMainnetService::Ankr),
@@ -1232,9 +1240,11 @@ fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
                 EthMainnetService::Ankr,
             ])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                    .parse()
+                    .unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http_once(MockOutcallBuilder::new(
@@ -1252,7 +1262,7 @@ fn candid_rpc_should_return_inconsistent_results_with_unexpected_http_status() {
         vec![
             (
                 RpcService::EthMainnet(EthMainnetService::Alchemy),
-                Ok(1.into())
+                Ok(1_u8.into())
             ),
             (
                 RpcService::EthMainnet(EthMainnetService::Ankr),
@@ -1309,8 +1319,8 @@ fn candid_rpc_should_handle_already_known() {
         .expect_consistent();
     assert_eq!(
         result,
-        Ok(candid_types::SendRawTransactionStatus::Ok(Some(
-            Hash::from_str(MOCK_TRANSACTION_HASH).unwrap()
+        Ok(evm_rpc_types::SendRawTransactionStatus::Ok(Some(
+            Hex32::from_str(MOCK_TRANSACTION_HASH).unwrap()
         )))
     );
     let rpc_method = || RpcMethod::EthSendRawTransaction.into();
