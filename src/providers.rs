@@ -302,7 +302,6 @@ fn lookup_provider_for_service(service: &RpcService) -> Result<Provider, Provide
 
 pub fn get_known_chain_id(service: &RpcService) -> Option<u64> {
     match service {
-        RpcService::Chain(chain_id) => Some(*chain_id),
         RpcService::Provider(_) => None,
         RpcService::Custom(_) => None,
         RpcService::EthMainnet(_) => Some(ETH_MAINNET_CHAIN_ID),
@@ -315,11 +314,6 @@ pub fn get_known_chain_id(service: &RpcService) -> Option<u64> {
 
 pub fn resolve_rpc_service(service: RpcService) -> Result<ResolvedRpcService, ProviderError> {
     Ok(match service {
-        RpcService::Chain(id) => ResolvedRpcService::Provider(
-            find_provider(|p| p.chain_id == id)
-                .ok_or(ProviderError::ProviderNotFound)?
-                .clone(),
-        ),
         RpcService::Provider(id) => ResolvedRpcService::Provider({
             PROVIDER_MAP.with(|provider_map| {
                 provider_map
