@@ -31,7 +31,8 @@ use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
     providers::PROVIDERS,
     types::{
-        InstallArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod, RpcResult, RpcServices,
+        InstallArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod, RpcResult,
+        RpcServices,
     },
 };
 use evm_rpc_types::{Hex, Hex20, Hex32, Nat256};
