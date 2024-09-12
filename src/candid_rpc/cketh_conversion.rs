@@ -92,6 +92,15 @@ pub(super) fn from_fee_history(
     }
 }
 
+pub(super) fn into_get_transaction_count_params(
+    value: evm_rpc_types::GetTransactionCountArgs,
+) -> cketh_common::eth_rpc_client::requests::GetTransactionCountParams {
+    cketh_common::eth_rpc_client::requests::GetTransactionCountParams {
+        address: cketh_common::address::Address::new(value.address.into()),
+        block: into_block_spec(value.block),
+    }
+}
+
 pub(super) fn from_transaction_receipt(
     value: cketh_common::eth_rpc_client::responses::TransactionReceipt,
 ) -> evm_rpc_types::TransactionReceipt {
@@ -157,6 +166,26 @@ pub(super) fn from_block(value: cketh_common::eth_rpc::Block) -> evm_rpc_types::
     }
 }
 
+pub(super) fn from_send_raw_transaction_result(
+    transaction_hash: Option<Hex32>,
+    value: cketh_common::eth_rpc::SendRawTransactionResult,
+) -> evm_rpc_types::SendRawTransactionStatus {
+    match value {
+        cketh_common::eth_rpc::SendRawTransactionResult::Ok => {
+            evm_rpc_types::SendRawTransactionStatus::Ok(transaction_hash)
+        }
+        cketh_common::eth_rpc::SendRawTransactionResult::InsufficientFunds => {
+            evm_rpc_types::SendRawTransactionStatus::InsufficientFunds
+        }
+        cketh_common::eth_rpc::SendRawTransactionResult::NonceTooLow => {
+            evm_rpc_types::SendRawTransactionStatus::NonceTooLow
+        }
+        cketh_common::eth_rpc::SendRawTransactionResult::NonceTooHigh => {
+            evm_rpc_types::SendRawTransactionStatus::NonceTooHigh
+        }
+    }
+}
+
 pub(super) fn into_hash(value: Hex32) -> Hash {
     Hash(value.into())
 }
@@ -165,7 +194,7 @@ fn into_checked_amount_of<Unit>(value: Nat256) -> CheckedAmountOf<Unit> {
     CheckedAmountOf::from_be_bytes(value.into_be_bytes())
 }
 
-fn from_checked_amount_of<Unit>(value: CheckedAmountOf<Unit>) -> Nat256 {
+pub(super) fn from_checked_amount_of<Unit>(value: CheckedAmountOf<Unit>) -> Nat256 {
     Nat256::from_be_bytes(value.to_be_bytes())
 }
 

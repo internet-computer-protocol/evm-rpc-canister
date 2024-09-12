@@ -15,4 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - v1.0 Move `BlockTag` to this crate.
 - v1.0 Move `FeeHistoryArgs` and `FeeHistory` to this crate.
 - v1.0 Move `GetLogsArgs` and `LogEntry` to this crate.
+- v1.0 Move `GetTransactionCountArgs` to this crate.
+- v1.0 Move `SendRawTransactionStatus` to this crate.
 - v1.0 Move `TransactionReceipt` to this crate.
