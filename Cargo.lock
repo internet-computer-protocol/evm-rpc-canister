@@ -1629,6 +1629,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "hex",
+ "ic-cdk",
  "num-bigint 0.4.6",
  "proptest",
  "serde",

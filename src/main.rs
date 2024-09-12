@@ -1,7 +1,6 @@
 use candid::candid_method;
 use cketh_common::eth_rpc::RpcError;
 
-use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::logs::INFO;
 use evm_rpc::accounting::{get_cost_with_collateral, get_http_request_cost};
 use evm_rpc::candid_rpc::CandidRpcClient;
@@ -25,9 +24,9 @@ use ic_nervous_system_common::serve_metrics;
 use evm_rpc::{
     http::{json_rpc_request, transform_http_request},
     memory::UNSTABLE_METRICS,
-    types::{InitArgs, MetricRpcMethod, Metrics, MultiRpcResult, RpcServices},
+    types::{InitArgs, MetricRpcMethod, Metrics, MultiRpcResult},
 };
-use evm_rpc_types::Hex32;
+use evm_rpc_types::{Hex32, RpcService};
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
     let caller = ic_cdk::caller();
@@ -41,7 +40,7 @@ pub fn require_api_key_principal_or_controller() -> Result<(), String> {
 #[update(name = "eth_getLogs")]
 #[candid_method(rename = "eth_getLogs")]
 pub async fn eth_get_logs(
-    source: RpcServices,
+    source: evm_rpc_types::RpcServices,
     config: Option<evm_rpc_types::RpcConfig>,
     args: evm_rpc_types::GetLogsArgs,
 ) -> MultiRpcResult<Vec<evm_rpc_types::LogEntry>> {
@@ -54,7 +53,7 @@ pub async fn eth_get_logs(
 #[update(name = "eth_getBlockByNumber")]
 #[candid_method(rename = "eth_getBlockByNumber")]
 pub async fn eth_get_block_by_number(
-    source: RpcServices,
+    source: evm_rpc_types::RpcServices,
     config: Option<evm_rpc_types::RpcConfig>,
     block: evm_rpc_types::BlockTag,
 ) -> MultiRpcResult<evm_rpc_types::Block> {
@@ -67,7 +66,7 @@ pub async fn eth_get_block_by_number(
 #[update(name = "eth_getTransactionReceipt")]
 #[candid_method(rename = "eth_getTransactionReceipt")]
 pub async fn eth_get_transaction_receipt(
-    source: RpcServices,
+    source: evm_rpc_types::RpcServices,
     config: Option<evm_rpc_types::RpcConfig>,
     tx_hash: Hex32,
 ) -> MultiRpcResult<Option<evm_rpc_types::TransactionReceipt>> {
@@ -80,7 +79,7 @@ pub async fn eth_get_transaction_receipt(
 #[update(name = "eth_getTransactionCount")]
 #[candid_method(rename = "eth_getTransactionCount")]
 pub async fn eth_get_transaction_count(
-    source: RpcServices,
+    source: evm_rpc_types::RpcServices,
     config: Option<evm_rpc_types::RpcConfig>,
     args: evm_rpc_types::GetTransactionCountArgs,
 ) -> MultiRpcResult<evm_rpc_types::Nat256> {
@@ -93,7 +92,7 @@ pub async fn eth_get_transaction_count(
 #[update(name = "eth_feeHistory")]
 #[candid_method(rename = "eth_feeHistory")]
 pub async fn eth_fee_history(
-    source: RpcServices,
+    source: evm_rpc_types::RpcServices,
     config: Option<evm_rpc_types::RpcConfig>,
     args: evm_rpc_types::FeeHistoryArgs,
 ) -> MultiRpcResult<evm_rpc_types::FeeHistory> {
@@ -106,7 +105,7 @@ pub async fn eth_fee_history(
 #[update(name = "eth_sendRawTransaction")]
 #[candid_method(rename = "eth_sendRawTransaction")]
 pub async fn eth_send_raw_transaction(
-    source: RpcServices,
+    source: evm_rpc_types::RpcServices,
     config: Option<evm_rpc_types::RpcConfig>,
     raw_signed_transaction_hex: evm_rpc_types::Hex,
 ) -> MultiRpcResult<evm_rpc_types::SendRawTransactionStatus> {
@@ -123,7 +122,7 @@ pub async fn eth_send_raw_transaction(
 #[update]
 #[candid_method]
 async fn request(
-    service: RpcService,
+    service: evm_rpc_types::RpcService,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<String, RpcError> {
@@ -140,7 +139,7 @@ async fn request(
 #[query(name = "requestCost")]
 #[candid_method(query, rename = "requestCost")]
 fn request_cost(
-    _service: RpcService,
+    _service: evm_rpc_types::RpcService,
     json_rpc_payload: String,
     max_response_bytes: u64,
 ) -> Result<u128, RpcError> {

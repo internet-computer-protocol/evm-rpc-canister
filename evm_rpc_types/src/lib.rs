@@ -15,7 +15,10 @@ mod rpc_client;
 
 pub use request::{FeeHistoryArgs, GetLogsArgs, GetTransactionCountArgs};
 pub use response::{Block, FeeHistory, LogEntry, SendRawTransactionStatus, TransactionReceipt};
-pub use rpc_client::RpcConfig;
+pub use rpc_client::{
+    EthMainnetService, EthSepoliaService, HttpHeader, L2MainnetService, RpcApi, RpcConfig,
+    RpcService, RpcServices,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
 pub enum BlockTag {
