@@ -34,7 +34,7 @@ use evm_rpc::{
         InitArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod, RpcResult, RpcServices,
     },
 };
-use evm_rpc_types::{Hex, Hex32, Nat256};
+use evm_rpc_types::{Hex, Hex20, Hex32, Nat256};
 use mock::{MockOutcall, MockOutcallBuilder};
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
@@ -639,74 +639,6 @@ fn should_decode_transaction_receipt() {
         Decode!(&Encode!(&value).unwrap(), evm_rpc_types::TransactionReceipt).unwrap(),
         value
     );
-}
-
-#[test]
-fn should_use_fallback_public_url() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
-    let setup = EvmRpcSetup::with_args(InitArgs {
-        demo: Some(true),
-        manage_api_keys: Some(vec![authorized_caller.0]),
-    });
-    let response = setup
-        .eth_get_transaction_count(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
-            None,
-            evm_rpc_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
-                    .parse()
-                    .unwrap(),
-                block: evm_rpc_types::BlockTag::Latest,
-            },
-        )
-        .mock_http(
-            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
-                .with_url("https://rpc.ankr.com/eth"),
-        )
-        .wait()
-        .expect_consistent()
-        .unwrap();
-    assert_eq!(response, 1_u8.into());
-}
-
-#[test]
-fn should_insert_api_keys() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
-    let setup = EvmRpcSetup::with_args(InitArgs {
-        demo: Some(true),
-        manage_api_keys: Some(vec![authorized_caller.0]),
-    });
-    let provider_id = 1;
-    setup
-        .clone()
-        .as_caller(authorized_caller)
-        .update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
-    let response = setup
-        .eth_get_transaction_count(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
-            None,
-            evm_rpc_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
-                    .parse()
-                    .unwrap(),
-                block: evm_rpc_types::BlockTag::Latest,
-            },
-        )
-        .mock_http(
-            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
-                .with_url("https://rpc.ankr.com/eth/test-api-key"),
-        )
-        .wait()
-        .expect_consistent()
-        .unwrap();
-    assert_eq!(response, 1_u8.into());
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_prevent_unauthorized_update_api_keys() {
-    let setup = EvmRpcSetup::new();
-    setup.update_api_keys(&[(0, Some("unauthorized-api-key".to_string()))]);
 }
 
 #[test]
@@ -1429,9 +1361,9 @@ fn should_use_fallback_public_url() {
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http(
@@ -1441,7 +1373,40 @@ fn should_use_fallback_public_url() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(response, 1);
+    assert_eq!(response, 1u32.into());
+}
+
+#[test]
+fn should_insert_api_keys() {
+    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: Some(true),
+        manage_api_keys: Some(vec![authorized_caller.0]),
+    });
+    let provider_id = 1;
+    setup
+        .clone()
+        .as_caller(authorized_caller)
+        .update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
+    let response = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                    .parse()
+                    .unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://rpc.ankr.com/eth/test-api-key"),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response, 1_u8.into());
 }
 
 #[test]
@@ -1459,9 +1424,9 @@ fn should_update_api_key() {
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http(
@@ -1471,16 +1436,16 @@ fn should_update_api_key() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(response, 1);
+    assert_eq!(response, 1u32.into());
 
     setup.update_api_keys(&[(provider_id, None)]);
     let response_public = setup
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http(
@@ -1490,7 +1455,7 @@ fn should_update_api_key() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(response_public, 1);
+    assert_eq!(response_public, 1u32.into());
 }
 
 #[test]
@@ -1510,9 +1475,9 @@ fn should_update_bearer_token() {
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Alchemy])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http(
@@ -1526,7 +1491,7 @@ fn should_update_bearer_token() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(response, 1);
+    assert_eq!(response, 1u32.into());
 }
 
 #[test]
@@ -1568,9 +1533,9 @@ fn upgrade_should_keep_api_keys() {
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http(
@@ -1580,7 +1545,7 @@ fn upgrade_should_keep_api_keys() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(response, 1);
+    assert_eq!(response, 1u32.into());
 
     setup.upgrade_canister(InitArgs::default());
 
@@ -1588,9 +1553,9 @@ fn upgrade_should_keep_api_keys() {
         .eth_get_transaction_count(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
             None,
-            candid_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7".to_string(),
-                block: candid_types::BlockTag::Latest,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
             },
         )
         .mock_http(
@@ -1600,7 +1565,7 @@ fn upgrade_should_keep_api_keys() {
         .wait()
         .expect_consistent()
         .unwrap();
-    assert_eq!(response_post_upgrade, 1);
+    assert_eq!(response_post_upgrade, 1u32.into());
 }
 
 #[test]
