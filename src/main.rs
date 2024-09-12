@@ -1,5 +1,4 @@
 use candid::candid_method;
-use cketh_common::eth_rpc::RpcError;
 
 use cketh_common::eth_rpc_client::providers::RpcService;
 use cketh_common::eth_rpc_client::RpcConfig;
@@ -9,11 +8,12 @@ use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::constants::NODES_IN_SUBNET;
 use evm_rpc::http::get_http_response_body;
 use evm_rpc::memory::{
-    insert_api_key, is_api_key_principal, remove_api_key, set_api_key_principals, set_demo_active,
+    insert_api_key, is_api_key_principal, is_demo_active, remove_api_key, set_api_key_principals,
+    set_demo_active,
 };
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
-use evm_rpc::types::{Provider, ProviderId, RpcAccess};
+use evm_rpc::types::{Provider, ProviderId, RpcAccess, RpcResult};
 use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
@@ -127,7 +127,7 @@ async fn request(
     service: RpcService,
     json_rpc_payload: String,
     max_response_bytes: u64,
-) -> Result<String, RpcError> {
+) -> RpcResult<String> {
     let response = json_rpc_request(
         resolve_rpc_service(service)?,
         MetricRpcMethod("request".to_string()),
@@ -144,11 +144,15 @@ fn request_cost(
     _service: RpcService,
     json_rpc_payload: String,
     max_response_bytes: u64,
-) -> Result<u128, RpcError> {
-    Ok(get_cost_with_collateral(get_http_request_cost(
-        json_rpc_payload.len() as u64,
-        max_response_bytes,
-    )))
+) -> RpcResult<u128> {
+    if is_demo_active() {
+        Ok(0)
+    } else {
+        Ok(get_cost_with_collateral(get_http_request_cost(
+            json_rpc_payload.len() as u64,
+            max_response_bytes,
+        )))
+    }
 }
 
 #[query(name = "getProviders")]

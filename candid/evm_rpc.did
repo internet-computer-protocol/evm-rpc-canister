@@ -188,7 +188,7 @@ type RpcError = variant {
 type RpcApi = record { url : text; headers : opt vec HttpHeader };
 type RpcService = variant {
   Chain : nat64;
-  Provider : nat64;
+  Provider : ProviderId;
   Custom : RpcApi;
   EthSepolia : EthSepoliaService;
   EthMainnet : EthMainnetService;
