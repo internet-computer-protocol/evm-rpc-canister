@@ -78,7 +78,7 @@ type HttpOutcallError = variant {
     parsingError : opt text;
   };
 };
-type InitArgs = record {
+type InstallArgs = record {
   demo : opt bool;
   manageApiKeys : opt vec principal;
 };
@@ -239,7 +239,7 @@ type ValidationError = variant {
   CredentialPathNotAllowed;
   CredentialHeaderNotAllowed;
 };
-service : (InitArgs) -> {
+service : (InstallArgs) -> {
   eth_feeHistory : (RpcServices, opt RpcConfig, FeeHistoryArgs) -> (MultiFeeHistoryResult);
   eth_getBlockByNumber : (RpcServices, opt RpcConfig, BlockTag) -> (MultiGetBlockByNumberResult);
   eth_getLogs : (RpcServices, opt RpcConfig, GetLogsArgs) -> (MultiGetLogsResult);

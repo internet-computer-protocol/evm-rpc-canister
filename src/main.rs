@@ -26,7 +26,7 @@ use ic_nervous_system_common::serve_metrics;
 use evm_rpc::{
     http::{json_rpc_request, transform_http_request},
     memory::UNSTABLE_METRICS,
-    types::{InitArgs, MetricRpcMethod, Metrics, MultiRpcResult, RpcServices},
+    types::{InstallArgs, MetricRpcMethod, Metrics, MultiRpcResult, RpcServices},
 };
 use evm_rpc_types::Hex32;
 
@@ -220,12 +220,12 @@ fn transform(args: TransformArgs) -> HttpResponse {
 }
 
 #[ic_cdk::init]
-fn init(args: InitArgs) {
+fn init(args: InstallArgs) {
     post_upgrade(args);
 }
 
 #[ic_cdk::post_upgrade]
-fn post_upgrade(args: InitArgs) {
+fn post_upgrade(args: InstallArgs) {
     if let Some(demo) = args.demo {
         set_demo_active(demo);
     }

@@ -31,7 +31,7 @@ use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
     providers::PROVIDERS,
     types::{
-        InitArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod, RpcResult, RpcServices,
+        InstallArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod, RpcResult, RpcServices,
     },
 };
 use evm_rpc_types::{Hex, Hex20, Hex32, Nat256};
@@ -98,13 +98,13 @@ impl Default for EvmRpcSetup {
 
 impl EvmRpcSetup {
     pub fn new() -> Self {
-        Self::with_args(InitArgs {
+        Self::with_args(InstallArgs {
             manage_api_keys: None,
             demo: Some(true),
         })
     }
 
-    pub fn with_args(args: InitArgs) -> Self {
+    pub fn with_args(args: InstallArgs) -> Self {
         let env = Rc::new(
             StateMachineBuilder::new()
                 .with_default_canister_range()
@@ -134,7 +134,7 @@ impl EvmRpcSetup {
         }
     }
 
-    pub fn upgrade_canister(&self, args: InitArgs) {
+    pub fn upgrade_canister(&self, args: InstallArgs) {
         self.env
             .upgrade_canister(self.canister_id, evm_rpc_wasm(), Encode!(&args).unwrap())
             .expect("Error while upgrading canister");
@@ -925,7 +925,7 @@ fn candid_rpc_should_allow_unexpected_response_fields() {
 
 #[test]
 fn candid_rpc_should_err_without_cycles() {
-    let setup = EvmRpcSetup::with_args(InitArgs {
+    let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: None,
         manage_api_keys: None,
     })
@@ -1353,7 +1353,7 @@ fn should_use_custom_response_size_estimate() {
 #[test]
 fn should_use_fallback_public_url() {
     let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
-    let setup = EvmRpcSetup::with_args(InitArgs {
+    let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
         manage_api_keys: Some(vec![authorized_caller.0]),
     });
@@ -1379,7 +1379,7 @@ fn should_use_fallback_public_url() {
 #[test]
 fn should_insert_api_keys() {
     let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
-    let setup = EvmRpcSetup::with_args(InitArgs {
+    let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
         manage_api_keys: Some(vec![authorized_caller.0]),
     });
@@ -1412,7 +1412,7 @@ fn should_insert_api_keys() {
 #[test]
 fn should_update_api_key() {
     let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
-    let setup = EvmRpcSetup::with_args(InitArgs {
+    let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
         manage_api_keys: Some(vec![authorized_caller.0]),
     })
@@ -1461,7 +1461,7 @@ fn should_update_api_key() {
 #[test]
 fn should_update_bearer_token() {
     let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
-    let setup = EvmRpcSetup::with_args(InitArgs {
+    let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
         manage_api_keys: Some(vec![authorized_caller.0]),
     });
@@ -1547,7 +1547,7 @@ fn upgrade_should_keep_api_keys() {
         .unwrap();
     assert_eq!(response, 1u32.into());
 
-    setup.upgrade_canister(InitArgs::default());
+    setup.upgrade_canister(InstallArgs::default());
 
     let response_post_upgrade = setup
         .eth_get_transaction_count(
@@ -1570,7 +1570,7 @@ fn upgrade_should_keep_api_keys() {
 
 #[test]
 fn upgrade_should_keep_demo() {
-    let setup = EvmRpcSetup::with_args(InitArgs {
+    let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
         ..Default::default()
     });
@@ -1584,7 +1584,7 @@ fn upgrade_should_keep_demo() {
             .unwrap(),
         0
     );
-    setup.upgrade_canister(InitArgs::default());
+    setup.upgrade_canister(InstallArgs::default());
     assert_eq!(
         setup
             .request_cost(
@@ -1599,7 +1599,7 @@ fn upgrade_should_keep_demo() {
 
 #[test]
 fn upgrade_should_change_demo() {
-    let setup = EvmRpcSetup::with_args(InitArgs {
+    let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
         ..Default::default()
     });
@@ -1613,7 +1613,7 @@ fn upgrade_should_change_demo() {
             .unwrap(),
         0
     );
-    setup.upgrade_canister(InitArgs {
+    setup.upgrade_canister(InstallArgs {
         demo: Some(false),
         ..Default::default()
     });
@@ -1632,11 +1632,11 @@ fn upgrade_should_change_demo() {
 #[test]
 fn upgrade_should_keep_manage_api_key_principals() {
     let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
-    let setup = EvmRpcSetup::with_args(InitArgs {
+    let setup = EvmRpcSetup::with_args(InstallArgs {
         manage_api_keys: Some(vec![authorized_caller.0]),
         ..Default::default()
     });
-    setup.upgrade_canister(InitArgs {
+    setup.upgrade_canister(InstallArgs {
         manage_api_keys: None,
         ..Default::default()
     });
@@ -1649,11 +1649,11 @@ fn upgrade_should_keep_manage_api_key_principals() {
 #[should_panic(expected = "You are not authorized")]
 fn upgrade_should_change_manage_api_key_principals() {
     let deauthorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
-    let setup = EvmRpcSetup::with_args(InitArgs {
+    let setup = EvmRpcSetup::with_args(InstallArgs {
         manage_api_keys: Some(vec![deauthorized_caller.0]),
         ..Default::default()
     });
-    setup.upgrade_canister(InitArgs {
+    setup.upgrade_canister(InstallArgs {
         manage_api_keys: Some(vec![]),
         ..Default::default()
     });
