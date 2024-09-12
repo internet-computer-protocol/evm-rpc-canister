@@ -1577,7 +1577,7 @@ fn upgrade_should_keep_demo() {
     assert_eq!(
         setup
             .request_cost(
-                RpcService::Chain(0x1),
+                RpcService::EthMainnet(EthMainnetService::PublicNode),
                 r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
                 1000
             )
@@ -1588,7 +1588,7 @@ fn upgrade_should_keep_demo() {
     assert_eq!(
         setup
             .request_cost(
-                RpcService::Chain(0x1),
+                RpcService::EthMainnet(EthMainnetService::PublicNode),
                 r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
                 1000
             )
@@ -1606,7 +1606,7 @@ fn upgrade_should_change_demo() {
     assert_eq!(
         setup
             .request_cost(
-                RpcService::Chain(0x1),
+                RpcService::EthMainnet(EthMainnetService::PublicNode),
                 r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
                 1000
             )
@@ -1620,7 +1620,7 @@ fn upgrade_should_change_demo() {
     assert_ne!(
         setup
             .request_cost(
-                RpcService::Chain(0x1),
+                RpcService::EthMainnet(EthMainnetService::PublicNode),
                 r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
                 1000
             )
