@@ -27,7 +27,7 @@ mod eth_rpc_error;
 mod numeric;
 mod providers;
 mod requests;
-mod responses;
+pub(crate) mod responses;
 
 #[cfg(test)]
 mod tests;

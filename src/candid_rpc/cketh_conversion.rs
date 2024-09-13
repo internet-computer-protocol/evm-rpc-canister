@@ -102,7 +102,7 @@ pub(super) fn into_get_transaction_count_params(
 }
 
 pub(super) fn from_transaction_receipt(
-    value: cketh_common::eth_rpc_client::responses::TransactionReceipt,
+    value: crate::rpc_client::responses::TransactionReceipt,
 ) -> evm_rpc_types::TransactionReceipt {
     evm_rpc_types::TransactionReceipt {
         block_hash: Hex32::from(value.block_hash.0),
@@ -110,12 +110,8 @@ pub(super) fn from_transaction_receipt(
         effective_gas_price: from_checked_amount_of(value.effective_gas_price),
         gas_used: from_checked_amount_of(value.gas_used),
         status: match value.status {
-            cketh_common::eth_rpc_client::responses::TransactionStatus::Success => {
-                Nat256::from(1_u8)
-            }
-            cketh_common::eth_rpc_client::responses::TransactionStatus::Failure => {
-                Nat256::from(0_u8)
-            }
+            crate::rpc_client::responses::TransactionStatus::Success => Nat256::from(1_u8),
+            crate::rpc_client::responses::TransactionStatus::Failure => Nat256::from(0_u8),
         },
         transaction_hash: Hex32::from(value.transaction_hash.0),
         // TODO 243: responses types from querying JSON-RPC providers should be strongly typed
