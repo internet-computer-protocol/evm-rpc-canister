@@ -22,7 +22,6 @@ pub const RPC_URL_COST_BYTES: u32 = 256;
 
 pub const MINIMUM_WITHDRAWAL_CYCLES: u128 = 1_000_000_000;
 
-pub const STRING_STORABLE_MAX_SIZE: u32 = 100;
 pub const API_KEY_MAX_SIZE: u32 = 512;
 pub const PROVIDER_MAX_SIZE: u32 = 256;
 pub const RPC_SERVICE_MAX_SIZE: u32 = 256;

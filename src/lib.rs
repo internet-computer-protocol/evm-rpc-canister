@@ -1,5 +1,3 @@
-pub use candid::Principal;
-
 pub mod accounting;
 pub mod candid_rpc;
 pub mod constants;

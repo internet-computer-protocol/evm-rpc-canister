@@ -45,6 +45,7 @@ const MOCK_REQUEST_URL: &str = "https://cloudflare-eth.com";
 const MOCK_REQUEST_PAYLOAD: &str = r#"{"id":1,"jsonrpc":"2.0","method":"eth_gasPrice"}"#;
 const MOCK_REQUEST_RESPONSE: &str = r#"{"id":1,"jsonrpc":"2.0","result":"0x00112233"}"#;
 const MOCK_REQUEST_RESPONSE_BYTES: u64 = 1000;
+const MOCK_API_KEY: &str = "mock-api-key";
 
 const MOCK_TRANSACTION: &str="0xf86c098504a817c800825208943535353535353535353535353535353535353535880de0b6b3a76400008025a028ef61340bd939bc2195fe537567866003e1a15d3c71ff63e1590620aa636276a067cbe9d8997f761aecb703304b3800ccf555c9f3dc64214b297fb1966a3b6d83";
 const MOCK_TRANSACTION_HASH: &str =
@@ -129,6 +130,12 @@ impl EvmRpcSetup {
         }
     }
 
+    pub fn upgrade_canister(&self, args: InitArgs) {
+        self.env
+            .upgrade_canister(self.canister_id, evm_rpc_wasm(), Encode!(&args).unwrap())
+            .expect("Error while upgrading canister");
+    }
+
     /// Shorthand for deriving an `EvmRpcSetup` with the caller as the canister controller.
     pub fn as_controller(mut self) -> Self {
         self.caller = self.controller;
@@ -193,7 +200,7 @@ impl EvmRpcSetup {
         source: RpcService,
         json_rpc_payload: &str,
         max_response_bytes: u64,
-    ) -> Nat {
+    ) -> RpcResult<Nat> {
         self.call_query(
             "requestCost",
             Encode!(&source, &json_rpc_payload, &max_response_bytes).unwrap(),
@@ -292,7 +299,7 @@ impl EvmRpcSetup {
                     Some((
                         provider.provider_id,
                         match provider.access {
-                            RpcAccess::Authenticated { .. } => Some("mock-api-key".to_string()),
+                            RpcAccess::Authenticated { .. } => Some(MOCK_API_KEY.to_string()),
                             RpcAccess::Unauthenticated { .. } => None?,
                         },
                     ))
@@ -628,74 +635,6 @@ fn should_decode_transaction_receipt() {
         Decode!(&Encode!(&value).unwrap(), evm_rpc_types::TransactionReceipt).unwrap(),
         value
     );
-}
-
-#[test]
-fn should_use_fallback_public_url() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
-    let setup = EvmRpcSetup::with_args(InitArgs {
-        demo: Some(true),
-        manage_api_keys: Some(vec![authorized_caller.0]),
-    });
-    let response = setup
-        .eth_get_transaction_count(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
-            None,
-            evm_rpc_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
-                    .parse()
-                    .unwrap(),
-                block: evm_rpc_types::BlockTag::Latest,
-            },
-        )
-        .mock_http(
-            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
-                .with_url("https://rpc.ankr.com/eth"),
-        )
-        .wait()
-        .expect_consistent()
-        .unwrap();
-    assert_eq!(response, 1_u8.into());
-}
-
-#[test]
-fn should_insert_api_keys() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
-    let setup = EvmRpcSetup::with_args(InitArgs {
-        demo: Some(true),
-        manage_api_keys: Some(vec![authorized_caller.0]),
-    });
-    let provider_id = 1;
-    setup
-        .clone()
-        .as_caller(authorized_caller)
-        .update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
-    let response = setup
-        .eth_get_transaction_count(
-            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
-            None,
-            evm_rpc_types::GetTransactionCountArgs {
-                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
-                    .parse()
-                    .unwrap(),
-                block: evm_rpc_types::BlockTag::Latest,
-            },
-        )
-        .mock_http(
-            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
-                .with_url("https://rpc.ankr.com/eth/test-api-key"),
-        )
-        .wait()
-        .expect_consistent()
-        .unwrap();
-    assert_eq!(response, 1_u8.into());
-}
-
-#[test]
-#[should_panic(expected = "You are not authorized")]
-fn should_prevent_unauthorized_update_api_keys() {
-    let setup = EvmRpcSetup::new();
-    setup.update_api_keys(&[(0, Some("unauthorized-api-key".to_string()))]);
 }
 
 #[test]
@@ -1405,4 +1344,316 @@ fn should_use_custom_response_size_estimate() {
         .wait()
         .expect_consistent();
     assert_matches!(response, Ok(_));
+}
+
+#[test]
+fn should_use_fallback_public_url() {
+    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: Some(true),
+        manage_api_keys: Some(vec![authorized_caller.0]),
+    });
+    let response = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://rpc.ankr.com/eth"),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response, 1u32.into());
+}
+
+#[test]
+fn should_insert_api_keys() {
+    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: Some(true),
+        manage_api_keys: Some(vec![authorized_caller.0]),
+    });
+    let provider_id = 1;
+    setup
+        .clone()
+        .as_caller(authorized_caller)
+        .update_api_keys(&[(provider_id, Some("test-api-key".to_string()))]);
+    let response = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                    .parse()
+                    .unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://rpc.ankr.com/eth/test-api-key"),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response, 1_u8.into());
+}
+
+#[test]
+fn should_update_api_key() {
+    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: Some(true),
+        manage_api_keys: Some(vec![authorized_caller.0]),
+    })
+    .as_caller(authorized_caller);
+    let provider_id = 1; // Ankr / mainnet
+    let api_key = "test-api-key";
+    setup.update_api_keys(&[(provider_id, Some(api_key.to_string()))]);
+    let response = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url(format!("https://rpc.ankr.com/eth/{api_key}")),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response, 1u32.into());
+
+    setup.update_api_keys(&[(provider_id, None)]);
+    let response_public = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://rpc.ankr.com/eth"),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response_public, 1u32.into());
+}
+
+#[test]
+fn should_update_bearer_token() {
+    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: Some(true),
+        manage_api_keys: Some(vec![authorized_caller.0]),
+    });
+    let provider_id = 8; // Alchemy / mainnet
+    let api_key = "test-api-key";
+    setup
+        .clone()
+        .as_caller(authorized_caller)
+        .update_api_keys(&[(provider_id, Some(api_key.to_string()))]);
+    let response = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Alchemy])),
+            None,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url("https://eth-mainnet.g.alchemy.com/v2")
+                .with_request_headers(vec![
+                    ("Content-Type", "application/json"),
+                    ("Authorization", &format!("Bearer {api_key}")),
+                ]),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response, 1u32.into());
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn should_prevent_unauthorized_update_api_keys() {
+    let setup = EvmRpcSetup::new();
+    setup.update_api_keys(&[(0, Some("unauthorized-api-key".to_string()))]);
+}
+
+#[test]
+#[should_panic(expected = "Trying to set API key for unauthenticated provider")]
+fn should_prevent_unauthenticated_update_api_keys() {
+    let setup = EvmRpcSetup::new();
+    setup.as_controller().update_api_keys(&[(
+        2, /* PublicNode / mainnet */
+        Some("invalid-api-key".to_string()),
+    )]);
+}
+
+#[test]
+#[should_panic(expected = "Provider not found")]
+fn should_prevent_unknown_provider_update_api_keys() {
+    let setup = EvmRpcSetup::new();
+    setup
+        .as_controller()
+        .update_api_keys(&[(5555, Some("unknown-provider-api-key".to_string()))]);
+}
+
+#[test]
+fn upgrade_should_keep_api_keys() {
+    let setup = EvmRpcSetup::new();
+    let provider_id = 1; // Ankr / mainnet
+    let api_key = "test-api-key";
+    setup
+        .clone()
+        .as_controller()
+        .update_api_keys(&[(provider_id, Some(api_key.to_string()))]);
+    let response = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url(format!("https://rpc.ankr.com/eth/{api_key}")),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response, 1u32.into());
+
+    setup.upgrade_canister(InitArgs::default());
+
+    let response_post_upgrade = setup
+        .eth_get_transaction_count(
+            RpcServices::EthMainnet(Some(vec![EthMainnetService::Ankr])),
+            None,
+            evm_rpc_types::GetTransactionCountArgs {
+                address: Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
+            },
+        )
+        .mock_http(
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#)
+                .with_url(format!("https://rpc.ankr.com/eth/{api_key}")),
+        )
+        .wait()
+        .expect_consistent()
+        .unwrap();
+    assert_eq!(response_post_upgrade, 1u32.into());
+}
+
+#[test]
+fn upgrade_should_keep_demo() {
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: Some(true),
+        ..Default::default()
+    });
+    assert_eq!(
+        setup
+            .request_cost(
+                RpcService::Chain(0x1),
+                r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+                1000
+            )
+            .unwrap(),
+        0
+    );
+    setup.upgrade_canister(InitArgs::default());
+    assert_eq!(
+        setup
+            .request_cost(
+                RpcService::Chain(0x1),
+                r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+                1000
+            )
+            .unwrap(),
+        0
+    );
+}
+
+#[test]
+fn upgrade_should_change_demo() {
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        demo: Some(true),
+        ..Default::default()
+    });
+    assert_eq!(
+        setup
+            .request_cost(
+                RpcService::Chain(0x1),
+                r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+                1000
+            )
+            .unwrap(),
+        0
+    );
+    setup.upgrade_canister(InitArgs {
+        demo: Some(false),
+        ..Default::default()
+    });
+    assert_ne!(
+        setup
+            .request_cost(
+                RpcService::Chain(0x1),
+                r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#,
+                1000
+            )
+            .unwrap(),
+        0
+    );
+}
+
+#[test]
+fn upgrade_should_keep_manage_api_key_principals() {
+    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        manage_api_keys: Some(vec![authorized_caller.0]),
+        ..Default::default()
+    });
+    setup.upgrade_canister(InitArgs {
+        manage_api_keys: None,
+        ..Default::default()
+    });
+    setup
+        .as_caller(authorized_caller)
+        .update_api_keys(&[(0, Some("authorized-api-key".to_string()))]);
+}
+
+#[test]
+#[should_panic(expected = "You are not authorized")]
+fn upgrade_should_change_manage_api_key_principals() {
+    let deauthorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let setup = EvmRpcSetup::with_args(InitArgs {
+        manage_api_keys: Some(vec![deauthorized_caller.0]),
+        ..Default::default()
+    });
+    setup.upgrade_canister(InitArgs {
+        manage_api_keys: Some(vec![]),
+        ..Default::default()
+    });
+    setup
+        .as_caller(deauthorized_caller)
+        .update_api_keys(&[(0, Some("unauthorized-api-key".to_string()))]);
 }

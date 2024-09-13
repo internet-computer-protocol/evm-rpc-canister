@@ -9,12 +9,12 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, STRING_STORABLE_MAX_SIZE};
+use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING};
 use crate::memory::get_api_key;
 use crate::util::hostname_from_url;
 use crate::validate::validate_api_key;
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct InitArgs {
     pub demo: Option<bool>,
     #[serde(rename = "manageApiKeys")]
@@ -173,31 +173,12 @@ impl Storable for BoolStorable {
             bytes.len() == 1,
             "Unexpected byte length for `BoolStorable`"
         );
-        BoolStorable(bytes[0] == 0)
+        BoolStorable(bytes[0] != 0)
     }
 
     fn to_bytes(&self) -> Cow<[u8]> {
         vec![self.0 as u8].into()
     }
-}
-
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StringStorable(pub String);
-
-impl Storable for StringStorable {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        // String already implements `Storable`.
-        self.0.to_bytes()
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Self(String::from_bytes(bytes))
-    }
-}
-
-impl BoundedStorable for StringStorable {
-    const MAX_SIZE: u32 = STRING_STORABLE_MAX_SIZE;
-    const IS_FIXED_SIZE: bool = false;
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -427,9 +408,11 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
 
 #[cfg(test)]
 mod test {
+    use candid::Principal;
     use cketh_common::eth_rpc::RpcError;
+    use ic_stable_structures::Storable;
 
-    use crate::types::{ApiKey, MultiRpcResult};
+    use crate::types::{ApiKey, BoolStorable, MultiRpcResult, PrincipalStorable};
 
     #[test]
     fn test_multi_rpc_result_map() {
@@ -515,5 +498,28 @@ mod test {
     fn test_api_key_debug_output() {
         let api_key = ApiKey("55555".to_string());
         assert!(format!("{api_key:?}") == "{API_KEY}");
+    }
+
+    #[test]
+    fn test_bool_storable() {
+        for value in [true, false] {
+            let storable = BoolStorable(value);
+            assert_eq!(storable.0, BoolStorable::from_bytes(storable.to_bytes()).0);
+        }
+    }
+
+    #[test]
+    fn test_principal_storable() {
+        for value in [
+            Principal::anonymous(),
+            Principal::management_canister(),
+            Principal::from_text("7hfb6-caaaa-aaaar-qadga-cai").unwrap(),
+        ] {
+            let storable = PrincipalStorable(value);
+            assert_eq!(
+                storable.0,
+                PrincipalStorable::from_bytes(storable.to_bytes()).0
+            );
+        }
     }
 }
