@@ -21,7 +21,6 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use ic_cdk_macros::query;
 pub use metrics::encode as encode_metrics;
-use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
@@ -623,74 +622,6 @@ fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
         String::from_utf8_lossy(&args.response.body).to_string()
     );
     args.response
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
-pub enum RpcError {
-    // #[error("RPC provider error")]
-    ProviderError(/* #[source] */ ProviderError),
-    // #[error("HTTPS outcall error")]
-    HttpOutcallError(/* #[source] */ HttpOutcallError),
-    // #[error("JSON-RPC error")]
-    JsonRpcError(/* #[source] */ JsonRpcError),
-    // #[error("data format error")]
-    ValidationError(/* #[source] */ ValidationError),
-}
-
-impl From<ProviderError> for RpcError {
-    fn from(err: ProviderError) -> Self {
-        RpcError::ProviderError(err)
-    }
-}
-
-impl From<HttpOutcallError> for RpcError {
-    fn from(err: HttpOutcallError) -> Self {
-        RpcError::HttpOutcallError(err)
-    }
-}
-
-impl From<JsonRpcError> for RpcError {
-    fn from(err: JsonRpcError) -> Self {
-        RpcError::JsonRpcError(err)
-    }
-}
-
-impl From<ValidationError> for RpcError {
-    fn from(err: ValidationError) -> Self {
-        RpcError::ValidationError(err)
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
-pub enum ProviderError {
-    // #[error("no permission")]
-    NoPermission,
-    // #[error("too few cycles (expected {expected}, received {received})")]
-    TooFewCycles { expected: u128, received: u128 },
-    // #[error("provider not found")]
-    ProviderNotFound,
-    // #[error("missing required provider")]
-    MissingRequiredProvider,
-}
-
-#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize)]
-pub enum HttpOutcallError {
-    /// Error from the IC system API.
-    // #[error("IC system error code {}: {message}", *.code as i32)]
-    IcError {
-        code: RejectionCode,
-        message: String,
-    },
-    /// Response is not a valid JSON-RPC response,
-    /// which means that the response was not successful (status other than 2xx)
-    /// or that the response body could not be deserialized into a JSON-RPC response.
-    // #[error("invalid JSON-RPC response {status}: {})", .parsing_error.as_deref().unwrap_or(.body))]
-    InvalidHttpJsonRpcResponse {
-        status: u16,
-        body: String,
-        #[serde(rename = "parsingError")]
-        parsing_error: Option<String>,
-    },
 }
 
 impl HttpOutcallError {
