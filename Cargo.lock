@@ -1603,6 +1603,8 @@ dependencies = [
  "ic-certified-map",
  "ic-cketh-minter",
  "ic-config",
+ "ic-crypto-sha3 0.9.0 (git+https://github.com/dfinity/ic?rev=release-2024-09-12_01-30-base)",
+ "ic-ethereum-types",
  "ic-ic00-types 0.8.0",
  "ic-metrics-encoder",
  "ic-nervous-system-common",
@@ -1610,6 +1612,8 @@ dependencies = [
  "ic-state-machine-tests",
  "ic-test-utilities-load-wasm",
  "maplit",
+ "minicbor",
+ "minicbor-derive",
  "num",
  "num-bigint 0.4.6",
  "num-derive",
@@ -2589,7 +2593,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-crypto-ecdsa-secp256k1 0.9.0",
- "ic-crypto-sha3",
+ "ic-crypto-sha3 0.9.0 (git+https://github.com/dfinity/ic?rev=1f551bea63354370b6e7a5037e96d464bdab3b41)",
  "ic-ic00-types 0.9.0",
  "ic-metrics-encoder",
  "ic-stable-structures",
@@ -3208,6 +3212,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-crypto-sha3"
+version = "0.9.0"
+source = "git+https://github.com/dfinity/ic?rev=release-2024-09-12_01-30-base#afe1a18291987667fdb52dac3ca44b1aebf7176e"
+dependencies = [
+ "sha3 0.10.8",
+]
+
+[[package]]
 name = "ic-crypto-standalone-sig-verifier"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=release-2023-09-27_23-01#ca5e5052886de781021506814d2c6502e375da48"
@@ -3422,6 +3434,18 @@ dependencies = [
  "serde",
  "strum 0.25.0",
  "strum_macros 0.25.3",
+]
+
+[[package]]
+name = "ic-ethereum-types"
+version = "0.9.0"
+source = "git+https://github.com/dfinity/ic?rev=release-2024-09-12_01-30-base#afe1a18291987667fdb52dac3ca44b1aebf7176e"
+dependencies = [
+ "hex",
+ "ic-crypto-sha3 0.9.0 (git+https://github.com/dfinity/ic?rev=release-2024-09-12_01-30-base)",
+ "minicbor",
+ "minicbor-derive",
+ "serde",
 ]
 
 [[package]]

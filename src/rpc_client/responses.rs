@@ -52,7 +52,6 @@ impl HttpResponsePayload for TransactionReceipt {
 #[serde(try_from = "ethnum::u256", into = "ethnum::u256")]
 pub enum TransactionStatus {
     /// Transaction was mined and executed successfully.
-    #[n(0)]
     Success,
 
     /// Transaction was mined but execution failed (e.g., out-of-gas error).
@@ -60,7 +59,6 @@ pub enum TransactionStatus {
     /// Note that this is different from a transaction that is not mined at all: a failed transaction
     /// is part of the blockchain and the next transaction from the same sender should have an incremented
     /// transaction nonce.
-    #[n(1)]
     Failure,
 }
 

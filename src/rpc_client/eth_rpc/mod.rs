@@ -8,7 +8,7 @@ use crate::rpc_client::eth_rpc_error::{sanitize_send_raw_transaction_result, Par
 use crate::rpc_client::numeric::{BlockNumber, LogIndex, TransactionCount, Wei, WeiPerGas};
 use crate::rpc_client::responses::TransactionReceipt;
 use crate::rpc_client::RpcTransport;
-use candid::{candid_method, CandidType};
+use candid::candid_method;
 use ethnum;
 use evm_rpc_types::{HttpOutcallError, JsonRpcError, RpcError, RpcService};
 use ic_cdk::api::call::RejectionCode;
@@ -49,7 +49,7 @@ pub fn into_nat(quantity: Quantity) -> candid::Nat {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(transparent)]
-pub struct Data(#[serde(with = "crate::serde_data")] pub Vec<u8>);
+pub struct Data(#[serde(with = "ic_ethereum_types::serde_data")] pub Vec<u8>);
 
 impl AsRef<[u8]> for Data {
     fn as_ref(&self) -> &[u8] {
@@ -59,7 +59,7 @@ impl AsRef<[u8]> for Data {
 
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
-pub struct FixedSizeData(#[serde(with = "crate::serde_data")] pub [u8; 32]);
+pub struct FixedSizeData(#[serde(with = "ic_ethereum_types::serde_data")] pub [u8; 32]);
 
 impl AsRef<[u8]> for FixedSizeData {
     fn as_ref(&self) -> &[u8] {
@@ -120,24 +120,7 @@ impl HttpResponsePayload for SendRawTransactionResult {
 }
 
 #[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub struct Hash(
-    #[serde(with = "crate::serde_data")]
-    #[cbor(n(0), with = "minicbor::bytes")]
-    pub [u8; 32],
-);
-
-impl CandidType for Hash {
-    fn _ty() -> candid::types::Type {
-        String::_ty()
-    }
-
-    fn idl_serialize<S>(&self, serializer: S) -> Result<(), S::Error>
-    where
-        S: candid::types::Serializer,
-    {
-        serializer.serialize_text(&format!("{:#x}", self))
-    }
-}
+pub struct Hash(#[serde(with = "ic_ethereum_types::serde_data")] pub [u8; 32]);
 
 impl Debug for Hash {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -181,7 +164,7 @@ impl HttpResponsePayload for Hash {}
 
 /// Block tags.
 /// See <https://ethereum.org/en/developers/docs/apis/json-rpc/#default-block>
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum BlockTag {
     /// The latest mined block.
     #[default]
@@ -216,7 +199,7 @@ impl Display for BlockTag {
 }
 
 /// The block specification indicating which block to query.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum BlockSpec {
     /// Query the block with the specified index.
@@ -250,7 +233,7 @@ impl std::str::FromStr for BlockSpec {
 }
 
 /// Parameters of the [`eth_getLogs`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getlogs) call.
-#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetLogsParam {
     /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
     #[serde(rename = "fromBlock")]
@@ -285,7 +268,7 @@ pub struct GetLogsParam {
 ///    "removed": false
 ///  }
 /// ```
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, CandidType)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct LogEntry {
     /// The address from which this log originated.
     pub address: Address,
@@ -370,7 +353,7 @@ impl From<FeeHistoryParams> for (Quantity, BlockSpec, Vec<u8>) {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, CandidType)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FeeHistory {
     /// Lowest number block of the returned range.
     #[serde(rename = "oldestBlock")]
@@ -405,7 +388,7 @@ impl From<BlockNumber> for BlockSpec {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Block {
     #[serde(rename = "baseFeePerGas")]
     pub base_fee_per_gas: Option<Wei>,
@@ -599,14 +582,6 @@ pub fn is_response_too_large(code: &RejectionCode, message: &str) -> bool {
 }
 
 pub type HttpOutcallResult<T> = Result<T, HttpOutcallError>;
-
-#[derive(Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize)]
-pub enum ValidationError {
-    // #[error("{0}")]
-    Custom(String),
-    // #[error("invalid hex data: {0}")]
-    InvalidHex(String),
-}
 
 pub fn are_errors_consistent<T: PartialEq>(
     left: &Result<T, RpcError>,
@@ -876,6 +851,7 @@ pub(super) mod metrics {
         }
     }
 
+    //TODO XC-243: use existing METRICS declared in memory.rs
     thread_local! {
         static METRICS: RefCell<HttpMetrics> = RefCell::default();
     }

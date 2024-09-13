@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests;
 
-use candid::CandidType;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::cmp::Ordering;
 use std::fmt;

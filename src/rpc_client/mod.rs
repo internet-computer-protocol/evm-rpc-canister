@@ -16,13 +16,14 @@ use evm_rpc_types::{
     HttpOutcallError, JsonRpcError, ProviderError, RpcApi, RpcConfig, RpcError, RpcService,
 };
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
 pub mod checked_amount;
 mod eth_rpc;
+mod eth_rpc_error;
 mod numeric;
 mod providers;
 mod requests;
@@ -76,7 +77,7 @@ impl RpcTransport for DefaultTransport {
 }
 
 #[derive(Clone, Copy, Default, Debug, Eq, PartialEq)]
-pub struct EthereumNetwork(#[n(0)] u64);
+pub struct EthereumNetwork(u64);
 
 impl EthereumNetwork {
     pub const MAINNET: EthereumNetwork = EthereumNetwork(1);

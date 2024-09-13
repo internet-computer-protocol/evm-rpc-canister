@@ -5,17 +5,15 @@ use candid::Nat;
 use ethers_core::{types::Transaction, utils::rlp};
 use evm_rpc_types::{
     Hex, Hex32, MultiRpcResult, ProviderError, RpcApi, RpcError, RpcResult, RpcService,
-    RpcServices, ValidationError,
+    ValidationError,
 };
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 
-use crate::candid_rpc::cketh_conversion::into_rpc_error;
 use crate::rpc_client::{EthRpcClient, MultiCallError, RpcTransport};
 use crate::{
     accounting::get_http_request_cost,
     add_metric_entry,
     constants::{
-        DEFAULT_ETH_MAINNET_SERVICES, DEFAULT_ETH_SEPOLIA_SERVICES, DEFAULT_L2_MAINNET_SERVICES,
         ETH_GET_LOGS_MAX_BLOCKS,
     },
     http::http_request,
