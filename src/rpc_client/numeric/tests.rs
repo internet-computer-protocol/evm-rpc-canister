@@ -1,5 +1,5 @@
 mod transaction_nonce {
-    use crate::rpc_client::numeric::TransactionNonce;
+    use crate::rpc_client::numeric::TransactionCount;
     use assert_matches::assert_matches;
     use candid::Nat;
     use num_bigint::BigUint;
@@ -7,16 +7,16 @@ mod transaction_nonce {
 
     #[test]
     fn should_overflow() {
-        let nonce = TransactionNonce::MAX;
+        let nonce = TransactionCount::MAX;
         assert_eq!(nonce.checked_increment(), None);
     }
 
     #[test]
     fn should_not_overflow() {
-        let nonce = TransactionNonce::MAX
-            .checked_sub(TransactionNonce::ONE)
+        let nonce = TransactionCount::MAX
+            .checked_sub(TransactionCount::ONE)
             .unwrap();
-        assert_eq!(nonce.checked_increment(), Some(TransactionNonce::MAX));
+        assert_eq!(nonce.checked_increment(), Some(TransactionCount::MAX));
     }
 
     proptest! {
@@ -25,8 +25,8 @@ mod transaction_nonce {
             let u256 = Nat(BigUint::from_bytes_be(&u256_bytes));
 
             assert_eq!(
-                TransactionNonce::try_from(u256),
-                Ok(TransactionNonce::from_be_bytes(u256_bytes))
+                TransactionCount::try_from(u256),
+                Ok(TransactionCount::from_be_bytes(u256_bytes))
             );
         }
 
@@ -48,29 +48,17 @@ mod transaction_nonce {
             b"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
 
         assert_eq!(
-            TransactionNonce::try_from(Nat(
+            TransactionCount::try_from(Nat(
                 BigUint::parse_bytes(U256_MAX, 16).expect("Failed to parse u256 max")
             )),
-            Ok(TransactionNonce::MAX)
+            Ok(TransactionCount::MAX)
         );
 
         let u256_max_plus_one: Nat =
             Nat(BigUint::parse_bytes(U256_MAX, 16).expect("Failed to parse u256 max")) + 1;
         assert_matches!(
-            TransactionNonce::try_from(u256_max_plus_one),
+            TransactionCount::try_from(u256_max_plus_one),
             Err(e) if e.contains("Nat does not fit in a U256")
-        );
-    }
-}
-
-mod wei {
-    use crate::rpc_client::numeric::{wei_from_milli_ether, Wei};
-
-    #[test]
-    fn should_not_overflow_when_converting_from_milli_ether() {
-        assert_eq!(
-            wei_from_milli_ether(u128::MAX),
-            Wei::from_str_hex("0xDE0B6B3A763FFFFFFFFFFFFFFFFFFFFF21F494C589C0000").unwrap()
         );
     }
 }

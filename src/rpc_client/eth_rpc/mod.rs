@@ -42,11 +42,6 @@ pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
 
 pub type Quantity = ethnum::u256;
 
-pub fn into_nat(quantity: Quantity) -> candid::Nat {
-    use num_bigint::BigUint;
-    candid::Nat::from(BigUint::from_bytes_be(&quantity.to_be_bytes()))
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(transparent)]
 pub struct Data(#[serde(with = "ic_ethereum_types::serde_data")] pub Vec<u8>);
@@ -566,22 +561,10 @@ fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
     args.response
 }
 
-pub fn is_http_outcall_error_response_too_large(error: &HttpOutcallError) -> bool {
-    match error {
-        HttpOutcallError::IcError { code, message } => {
-            code == &RejectionCode::SysFatal
-                && (message.contains("size limit") || message.contains("length limit"))
-        }
-        _ => false,
-    }
-}
-
 pub fn is_response_too_large(code: &RejectionCode, message: &str) -> bool {
     code == &RejectionCode::SysFatal
         && (message.contains("size limit") || message.contains("length limit"))
 }
-
-pub type HttpOutcallResult<T> = Result<T, HttpOutcallError>;
 
 pub fn are_errors_consistent<T: PartialEq>(
     left: &Result<T, RpcError>,

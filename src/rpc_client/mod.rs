@@ -1,6 +1,6 @@
 use crate::rpc_client::eth_rpc::{
     are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetBlockByNumberParams,
-    GetLogsParam, Hash, HttpResponsePayload, JsonRpcResult, LogEntry, ResponseSizeEstimate,
+    GetLogsParam, Hash, HttpResponsePayload, LogEntry, ResponseSizeEstimate,
     SendRawTransactionResult, HEADER_SIZE_LIMIT,
 };
 use crate::rpc_client::numeric::TransactionCount;
@@ -11,7 +11,6 @@ use crate::rpc_client::providers::{
 use crate::rpc_client::requests::GetTransactionCountParams;
 use crate::rpc_client::responses::TransactionReceipt;
 use async_trait::async_trait;
-use candid::CandidType;
 use evm_rpc_types::{
     HttpOutcallError, JsonRpcError, ProviderError, RpcApi, RpcConfig, RpcError, RpcService,
 };
@@ -343,8 +342,14 @@ impl<T> MultiCallResults<T> {
         Self { results }
     }
 
+    #[cfg(test)]
     fn from_json_rpc_result<
-        I: IntoIterator<Item = (RpcService, Result<JsonRpcResult<T>, RpcError>)>,
+        I: IntoIterator<
+            Item = (
+                RpcService,
+                Result<crate::rpc_client::eth_rpc::JsonRpcResult<T>, RpcError>,
+            ),
+        >,
     >(
         iter: I,
     ) -> Self {
@@ -353,8 +358,8 @@ impl<T> MultiCallResults<T> {
                 provider,
                 match result {
                     Ok(json_rpc_result) => match json_rpc_result {
-                        JsonRpcResult::Result(value) => Ok(value),
-                        JsonRpcResult::Error { code, message } => {
+                        crate::rpc_client::eth_rpc::JsonRpcResult::Result(value) => Ok(value),
+                        crate::rpc_client::eth_rpc::JsonRpcResult::Error { code, message } => {
                             Err(RpcError::JsonRpcError(JsonRpcError { code, message }))
                         }
                     },
