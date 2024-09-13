@@ -404,22 +404,6 @@ pub enum MultiCallError<T> {
 }
 
 impl<T> MultiCallError<T> {
-    pub fn has_http_outcall_error_matching<P: Fn(&HttpOutcallError) -> bool>(
-        &self,
-        predicate: P,
-    ) -> bool {
-        match self {
-            MultiCallError::ConsistentError(RpcError::HttpOutcallError(error)) => predicate(error),
-            MultiCallError::ConsistentError(_) => false,
-            MultiCallError::InconsistentResults(results) => {
-                results.results.values().any(|result| match result {
-                    Err(RpcError::HttpOutcallError(error)) => predicate(error),
-                    _ => false,
-                })
-            }
-        }
-    }
-}
 
 impl<T: Debug + PartialEq> MultiCallResults<T> {
     pub fn reduce_with_equality(self) -> Result<T, MultiCallError<T>> {
