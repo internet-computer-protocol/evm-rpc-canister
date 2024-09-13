@@ -2,7 +2,6 @@ mod mock;
 
 use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
-use cketh_common::numeric::Wei;
 use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
     providers::PROVIDERS,
@@ -591,8 +590,8 @@ fn should_decode_renamed_field() {
 
 #[test]
 fn should_decode_checked_amount() {
-    let value = Wei::new(123);
-    assert_eq!(Decode!(&Encode!(&value).unwrap(), Wei).unwrap(), value);
+    let value = Nat256::from(123_u32);
+    assert_eq!(Decode!(&Encode!(&value).unwrap(), Nat256).unwrap(), value);
 }
 
 #[test]
