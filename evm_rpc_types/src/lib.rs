@@ -16,7 +16,10 @@ use std::str::FromStr;
 
 pub use request::{FeeHistoryArgs, GetLogsArgs, GetTransactionCountArgs};
 pub use response::{Block, FeeHistory, LogEntry, SendRawTransactionStatus, TransactionReceipt};
-pub use result::{MultiRpcResult, RpcResult};
+pub use result::{
+    HttpOutcallError, JsonRpcError, MultiRpcResult, ProviderError, RpcError, RpcResult,
+    ValidationError,
+};
 pub use rpc_client::{
     EthMainnetService, EthSepoliaService, HttpHeader, L2MainnetService, RpcApi, RpcConfig,
     RpcService, RpcServices,

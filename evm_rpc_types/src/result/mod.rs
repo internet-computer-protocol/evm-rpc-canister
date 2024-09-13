@@ -63,7 +63,6 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
 pub enum RpcError {
     ProviderError(ProviderError),
@@ -108,4 +107,28 @@ pub struct JsonRpcError {
 pub enum ValidationError {
     Custom(String),
     InvalidHex(String),
+}
+
+impl From<ProviderError> for RpcError {
+    fn from(err: ProviderError) -> Self {
+        RpcError::ProviderError(err)
+    }
+}
+
+impl From<HttpOutcallError> for RpcError {
+    fn from(err: HttpOutcallError) -> Self {
+        RpcError::HttpOutcallError(err)
+    }
+}
+
+impl From<JsonRpcError> for RpcError {
+    fn from(err: JsonRpcError) -> Self {
+        RpcError::JsonRpcError(err)
+    }
+}
+
+impl From<ValidationError> for RpcError {
+    fn from(err: ValidationError) -> Self {
+        RpcError::ValidationError(err)
+    }
 }
