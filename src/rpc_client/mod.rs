@@ -22,7 +22,7 @@ use std::fmt::Debug;
 use std::marker::PhantomData;
 
 pub mod checked_amount;
-mod eth_rpc;
+pub(crate) mod eth_rpc;
 mod eth_rpc_error;
 mod numeric;
 mod providers;
@@ -78,6 +78,12 @@ impl RpcTransport for DefaultTransport {
 
 #[derive(Clone, Copy, Default, Debug, Eq, PartialEq)]
 pub struct EthereumNetwork(u64);
+
+impl From<u64> for EthereumNetwork {
+    fn from(value: u64) -> Self {
+        Self(value)
+    }
+}
 
 impl EthereumNetwork {
     pub const MAINNET: EthereumNetwork = EthereumNetwork(1);

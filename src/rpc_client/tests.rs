@@ -1,7 +1,6 @@
 mod eth_rpc_client {
-    use crate::eth_rpc_client::providers::{EthMainnetService, EthSepoliaService, RpcService};
-    use crate::eth_rpc_client::EthRpcClient;
-    use crate::lifecycle::EthereumNetwork;
+    use crate::rpc_client::{EthRpcClient, EthereumNetwork};
+    use evm_rpc_types::{EthMainnetService, EthSepoliaService, RpcService};
 
     #[test]
     fn should_retrieve_sepolia_providers_in_stable_order() {
@@ -36,16 +35,17 @@ mod eth_rpc_client {
 }
 
 mod multi_call_results {
-    use crate::eth_rpc_client::providers::{EthMainnetService, RpcService};
+    use evm_rpc_types::{EthMainnetService, RpcService};
 
     const ANKR: RpcService = RpcService::EthMainnet(EthMainnetService::Ankr);
     const PUBLIC_NODE: RpcService = RpcService::EthMainnet(EthMainnetService::PublicNode);
     const CLOUDFLARE: RpcService = RpcService::EthMainnet(EthMainnetService::Cloudflare);
 
     mod reduce_with_equality {
-        use crate::eth_rpc::{HttpOutcallError, JsonRpcResult};
-        use crate::eth_rpc_client::tests::multi_call_results::{ANKR, PUBLIC_NODE};
-        use crate::eth_rpc_client::{MultiCallError, MultiCallResults};
+        use crate::rpc_client::eth_rpc::JsonRpcResult;
+        use crate::rpc_client::tests::multi_call_results::{ANKR, PUBLIC_NODE};
+        use crate::rpc_client::{MultiCallError, MultiCallResults};
+        use evm_rpc_types::HttpOutcallError;
         use ic_cdk::api::call::RejectionCode;
 
         #[test]
@@ -496,7 +496,7 @@ mod eth_get_transaction_receipt {
                 block_hash: Hash::from_str(
                     "0x82005d2f17b251900968f01b0ed482cb49b7e1d797342bc504904d442b64dbe4"
                 )
-                    .unwrap(),
+                .unwrap(),
                 block_number: BlockNumber::new(0x4132ec),
                 effective_gas_price: WeiPerGas::new(0xfefbee3e),
                 gas_used: GasAmount::new(0x5208),
@@ -504,7 +504,7 @@ mod eth_get_transaction_receipt {
                 transaction_hash: Hash::from_str(
                     "0x0e59bd032b9b22aca5e2784e4cf114783512db00988c716cf17a1cc755a0a93d"
                 )
-                    .unwrap(),
+                .unwrap(),
             }
         )
     }

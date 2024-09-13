@@ -6,7 +6,7 @@ use cketh_common::checked_amount::CheckedAmountOf;
 use cketh_common::eth_rpc::{Hash, Quantity};
 use evm_rpc_types::{BlockTag, Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
 
-pub(super) fn into_block_spec(value: BlockTag) -> cketh_common::eth_rpc::BlockSpec {
+pub(super) fn into_block_spec(value: BlockTag) -> crate::rpc_client::eth_rpc::BlockSpec {
     use cketh_common::eth_rpc::{self, BlockSpec};
     match value {
         BlockTag::Number(n) => BlockSpec::Number(into_checked_amount_of(n)),
@@ -20,14 +20,14 @@ pub(super) fn into_block_spec(value: BlockTag) -> cketh_common::eth_rpc::BlockSp
 
 pub(super) fn into_get_logs_param(
     value: evm_rpc_types::GetLogsArgs,
-) -> cketh_common::eth_rpc::GetLogsParam {
-    cketh_common::eth_rpc::GetLogsParam {
+) -> crate::rpc_client::eth_rpc::GetLogsParam {
+    crate::rpc_client::eth_rpc::GetLogsParam {
         from_block: value.from_block.map(into_block_spec).unwrap_or_default(),
         to_block: value.to_block.map(into_block_spec).unwrap_or_default(),
         address: value
             .addresses
             .into_iter()
-            .map(|address| cketh_common::address::Address::new(address.into()))
+            .map(|address| ic_ethereum_types::Address::new(address.into()))
             .collect(),
         topics: value
             .topics
@@ -36,7 +36,7 @@ pub(super) fn into_get_logs_param(
             .map(|topic| {
                 topic
                     .into_iter()
-                    .map(|t| cketh_common::eth_rpc::FixedSizeData(t.into()))
+                    .map(|t| crate::rpc_client::eth_rpc::FixedSizeData(t.into()))
                     .collect()
             })
             .collect(),
@@ -44,12 +44,12 @@ pub(super) fn into_get_logs_param(
 }
 
 pub(super) fn from_log_entries(
-    value: Vec<cketh_common::eth_rpc::LogEntry>,
+    value: Vec<crate::rpc_client::eth_rpc::LogEntry>,
 ) -> Vec<evm_rpc_types::LogEntry> {
     value.into_iter().map(from_log_entry).collect()
 }
 
-fn from_log_entry(value: cketh_common::eth_rpc::LogEntry) -> evm_rpc_types::LogEntry {
+fn from_log_entry(value: crate::rpc_client::eth_rpc::LogEntry) -> evm_rpc_types::LogEntry {
     evm_rpc_types::LogEntry {
         address: from_address(value.address),
         topics: value.topics.into_iter().map(|t| t.0.into()).collect(),
@@ -186,35 +186,19 @@ pub(super) fn from_send_raw_transaction_result(
     }
 }
 
-pub(super) fn into_rpc_config(
-    value: evm_rpc_types::RpcConfig,
-) -> cketh_common::eth_rpc_client::RpcConfig {
-    cketh_common::eth_rpc_client::RpcConfig {
-        response_size_estimate: value.response_size_estimate,
-    }
-}
-
 pub(super) fn into_ethereum_network(
     source: &evm_rpc_types::RpcServices,
-) -> cketh_common::lifecycle::EthereumNetwork {
+) -> crate::rpc_client::EthereumNetwork {
     match &source {
         evm_rpc_types::RpcServices::Custom { chain_id, .. } => {
-            cketh_common::lifecycle::EthereumNetwork(*chain_id)
+            crate::rpc_client::EthereumNetwork::from(*chain_id)
         }
-        evm_rpc_types::RpcServices::EthMainnet(_) => {
-            cketh_common::lifecycle::EthereumNetwork::MAINNET
-        }
-        evm_rpc_types::RpcServices::EthSepolia(_) => {
-            cketh_common::lifecycle::EthereumNetwork::SEPOLIA
-        }
-        evm_rpc_types::RpcServices::ArbitrumOne(_) => {
-            cketh_common::lifecycle::EthereumNetwork::ARBITRUM
-        }
-        evm_rpc_types::RpcServices::BaseMainnet(_) => {
-            cketh_common::lifecycle::EthereumNetwork::BASE
-        }
+        evm_rpc_types::RpcServices::EthMainnet(_) => crate::rpc_client::EthereumNetwork::MAINNET,
+        evm_rpc_types::RpcServices::EthSepolia(_) => crate::rpc_client::EthereumNetwork::SEPOLIA,
+        evm_rpc_types::RpcServices::ArbitrumOne(_) => crate::rpc_client::EthereumNetwork::ARBITRUM,
+        evm_rpc_types::RpcServices::BaseMainnet(_) => crate::rpc_client::EthereumNetwork::BASE,
         evm_rpc_types::RpcServices::OptimismMainnet(_) => {
-            cketh_common::lifecycle::EthereumNetwork::OPTIMISM
+            crate::rpc_client::EthereumNetwork::OPTIMISM
         }
     }
 }
@@ -349,130 +333,39 @@ pub(super) fn into_rpc_services(
     default_eth_mainnet_services: &[evm_rpc_types::EthMainnetService],
     default_eth_sepolia_services: &[evm_rpc_types::EthSepoliaService],
     default_l2_mainnet_services: &[evm_rpc_types::L2MainnetService],
-) -> Vec<cketh_common::eth_rpc_client::providers::RpcService> {
-    fn map_eth_mainnet_service(
-        service: evm_rpc_types::EthMainnetService,
-    ) -> cketh_common::eth_rpc_client::providers::EthMainnetService {
-        match service {
-            evm_rpc_types::EthMainnetService::Alchemy => {
-                cketh_common::eth_rpc_client::providers::EthMainnetService::Alchemy
-            }
-            evm_rpc_types::EthMainnetService::Ankr => {
-                cketh_common::eth_rpc_client::providers::EthMainnetService::Ankr
-            }
-            evm_rpc_types::EthMainnetService::BlockPi => {
-                cketh_common::eth_rpc_client::providers::EthMainnetService::BlockPi
-            }
-            evm_rpc_types::EthMainnetService::PublicNode => {
-                cketh_common::eth_rpc_client::providers::EthMainnetService::PublicNode
-            }
-            evm_rpc_types::EthMainnetService::Cloudflare => {
-                cketh_common::eth_rpc_client::providers::EthMainnetService::Cloudflare
-            }
-            evm_rpc_types::EthMainnetService::Llama => {
-                cketh_common::eth_rpc_client::providers::EthMainnetService::Llama
-            }
-        }
-    }
-
-    fn map_eth_sepolia_service(
-        service: evm_rpc_types::EthSepoliaService,
-    ) -> cketh_common::eth_rpc_client::providers::EthSepoliaService {
-        match service {
-            evm_rpc_types::EthSepoliaService::Alchemy => {
-                cketh_common::eth_rpc_client::providers::EthSepoliaService::Alchemy
-            }
-            evm_rpc_types::EthSepoliaService::Ankr => {
-                cketh_common::eth_rpc_client::providers::EthSepoliaService::Ankr
-            }
-            evm_rpc_types::EthSepoliaService::BlockPi => {
-                cketh_common::eth_rpc_client::providers::EthSepoliaService::BlockPi
-            }
-            evm_rpc_types::EthSepoliaService::PublicNode => {
-                cketh_common::eth_rpc_client::providers::EthSepoliaService::PublicNode
-            }
-            evm_rpc_types::EthSepoliaService::Sepolia => {
-                cketh_common::eth_rpc_client::providers::EthSepoliaService::Sepolia
-            }
-        }
-    }
-
-    fn map_l2_mainnet_service(
-        service: evm_rpc_types::L2MainnetService,
-    ) -> cketh_common::eth_rpc_client::providers::L2MainnetService {
-        match service {
-            evm_rpc_types::L2MainnetService::Alchemy => {
-                cketh_common::eth_rpc_client::providers::L2MainnetService::Alchemy
-            }
-            evm_rpc_types::L2MainnetService::Ankr => {
-                cketh_common::eth_rpc_client::providers::L2MainnetService::Ankr
-            }
-            evm_rpc_types::L2MainnetService::BlockPi => {
-                cketh_common::eth_rpc_client::providers::L2MainnetService::BlockPi
-            }
-            evm_rpc_types::L2MainnetService::PublicNode => {
-                cketh_common::eth_rpc_client::providers::L2MainnetService::PublicNode
-            }
-            evm_rpc_types::L2MainnetService::Llama => {
-                cketh_common::eth_rpc_client::providers::L2MainnetService::Llama
-            }
-        }
-    }
-
+) -> Vec<evm_rpc_types::RpcService> {
     match source {
         evm_rpc_types::RpcServices::Custom {
             chain_id: _,
             services,
         } => services
             .into_iter()
-            .map(|service| {
-                cketh_common::eth_rpc_client::providers::RpcService::Custom(into_rpc_api(service))
-            })
+            .map(|service| evm_rpc_types::RpcService::Custom(service))
             .collect(),
         evm_rpc_types::RpcServices::EthMainnet(services) => services
             .unwrap_or_else(|| default_eth_mainnet_services.to_vec())
             .into_iter()
-            .map(|service| {
-                cketh_common::eth_rpc_client::providers::RpcService::EthMainnet(
-                    map_eth_mainnet_service(service),
-                )
-            })
+            .map(|service| evm_rpc_types::RpcService::EthMainnet(service))
             .collect(),
         evm_rpc_types::RpcServices::EthSepolia(services) => services
             .unwrap_or_else(|| default_eth_sepolia_services.to_vec())
             .into_iter()
-            .map(|service| {
-                cketh_common::eth_rpc_client::providers::RpcService::EthSepolia(
-                    map_eth_sepolia_service(service),
-                )
-            })
+            .map(|service| evm_rpc_types::RpcService::EthSepolia(service))
             .collect(),
         evm_rpc_types::RpcServices::ArbitrumOne(services) => services
             .unwrap_or_else(|| default_l2_mainnet_services.to_vec())
             .into_iter()
-            .map(|service| {
-                cketh_common::eth_rpc_client::providers::RpcService::ArbitrumOne(
-                    map_l2_mainnet_service(service),
-                )
-            })
+            .map(|service| evm_rpc_types::RpcService::ArbitrumOne(service))
             .collect(),
         evm_rpc_types::RpcServices::BaseMainnet(services) => services
             .unwrap_or_else(|| default_l2_mainnet_services.to_vec())
             .into_iter()
-            .map(|service| {
-                cketh_common::eth_rpc_client::providers::RpcService::BaseMainnet(
-                    map_l2_mainnet_service(service),
-                )
-            })
+            .map(|service| evm_rpc_types::RpcService::BaseMainnet(service))
             .collect(),
         evm_rpc_types::RpcServices::OptimismMainnet(services) => services
             .unwrap_or_else(|| default_l2_mainnet_services.to_vec())
             .into_iter()
-            .map(|service| {
-                cketh_common::eth_rpc_client::providers::RpcService::OptimismMainnet(
-                    map_l2_mainnet_service(service),
-                )
-            })
+            .map(|service| evm_rpc_types::RpcService::OptimismMainnet(service))
             .collect(),
     }
 }
@@ -746,7 +639,7 @@ fn into_quantity(value: Nat256) -> Quantity {
     Quantity::from_be_bytes(value.into_be_bytes())
 }
 
-fn from_address(value: cketh_common::address::Address) -> evm_rpc_types::Hex20 {
+fn from_address(value: ic_ethereum_types::Address) -> evm_rpc_types::Hex20 {
     // TODO 243: cketh_common::address::Address should expose the underlying [u8; 20]
     // so that there is no artificial error handling here.
     value

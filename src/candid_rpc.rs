@@ -5,17 +5,18 @@ use candid::Nat;
 use ethers_core::{types::Transaction, utils::rlp};
 use evm_rpc_types::{
     Hex, Hex32, MultiRpcResult, ProviderError, RpcApi, RpcError, RpcResult, RpcService,
-    ValidationError,
+    RpcServices, ValidationError,
 };
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 
+use crate::constants::{
+    DEFAULT_ETH_MAINNET_SERVICES, DEFAULT_ETH_SEPOLIA_SERVICES, DEFAULT_L2_MAINNET_SERVICES,
+};
 use crate::rpc_client::{EthRpcClient, MultiCallError, RpcTransport};
 use crate::{
     accounting::get_http_request_cost,
     add_metric_entry,
-    constants::{
-        ETH_GET_LOGS_MAX_BLOCKS,
-    },
+    constants::ETH_GET_LOGS_MAX_BLOCKS,
     http::http_request,
     providers::resolve_rpc_service,
     types::{MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcMethod},
@@ -58,24 +59,21 @@ fn check_services<T>(services: Vec<T>) -> RpcResult<Vec<T>> {
     Ok(services)
 }
 
-// fn get_rpc_client(
-//     source: RpcServices,
-//     config: evm_rpc_types::RpcConfig,
-// ) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
-//     use crate::candid_rpc::cketh_conversion::{
-//         into_ethereum_network, into_rpc_config, into_rpc_services,
-//     };
-//
-//     let config = into_rpc_config(config);
-//     let chain = into_ethereum_network(&source);
-//     let providers = check_services(into_rpc_services(
-//         source,
-//         DEFAULT_ETH_MAINNET_SERVICES,
-//         DEFAULT_ETH_SEPOLIA_SERVICES,
-//         DEFAULT_L2_MAINNET_SERVICES,
-//     ))?;
-//     Ok(CkEthRpcClient::new(chain, Some(providers), config))
-// }
+fn get_rpc_client(
+    source: RpcServices,
+    config: evm_rpc_types::RpcConfig,
+) -> RpcResult<EthRpcClient<CanisterTransport>> {
+    use crate::candid_rpc::cketh_conversion::{into_ethereum_network, into_rpc_services};
+
+    let chain = into_ethereum_network(&source);
+    let providers = check_services(into_rpc_services(
+        source,
+        DEFAULT_ETH_MAINNET_SERVICES,
+        DEFAULT_ETH_SEPOLIA_SERVICES,
+        DEFAULT_L2_MAINNET_SERVICES,
+    ))?;
+    Ok(EthRpcClient::new(chain, Some(providers), config))
+}
 
 fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) -> MultiRpcResult<T> {
     match result {
@@ -123,7 +121,7 @@ impl CandidRpcClient {
         config: Option<evm_rpc_types::RpcConfig>,
     ) -> RpcResult<Self> {
         Ok(Self {
-            client: EthRpcClient::new(source, config.unwrap_or_default())?,
+            client: get_rpc_client(source, config.unwrap_or_default())?,
         })
     }
 
