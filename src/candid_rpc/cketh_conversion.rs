@@ -94,9 +94,9 @@ pub(super) fn from_fee_history(
 
 pub(super) fn into_get_transaction_count_params(
     value: evm_rpc_types::GetTransactionCountArgs,
-) -> cketh_common::eth_rpc_client::requests::GetTransactionCountParams {
-    cketh_common::eth_rpc_client::requests::GetTransactionCountParams {
-        address: cketh_common::address::Address::new(value.address.into()),
+) -> crate::rpc_client::requests::GetTransactionCountParams {
+    crate::rpc_client::requests::GetTransactionCountParams {
+        address: ic_ethereum_types::Address::new(value.address.into()),
         block: into_block_spec(value.block),
     }
 }

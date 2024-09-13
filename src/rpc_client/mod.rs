@@ -26,7 +26,7 @@ pub(crate) mod eth_rpc;
 mod eth_rpc_error;
 mod numeric;
 mod providers;
-mod requests;
+pub(crate) mod requests;
 pub(crate) mod responses;
 
 #[cfg(test)]
