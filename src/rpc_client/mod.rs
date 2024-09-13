@@ -1,29 +1,22 @@
-use crate::eth_rpc::{
-    self, are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetLogsParam,
-    Hash, HttpOutcallError, HttpResponsePayload, JsonRpcError, LogEntry, ProviderError,
-    ResponseSizeEstimate, RpcError, SendRawTransactionResult,
+use crate::rpc_client::eth_rpc::{
+    are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetBlockByNumberParams,
+    GetLogsParam, Hash, HttpResponsePayload, JsonRpcError, LogEntry, ResponseSizeEstimate,
+    SendRawTransactionResult, HEADER_SIZE_LIMIT,
 };
-use crate::eth_rpc_client::eth_rpc::HEADER_SIZE_LIMIT;
-use crate::eth_rpc_client::providers::{
-    RpcService, MAINNET_PROVIDERS, SEPOLIA_PROVIDERS, UNKNOWN_PROVIDERS,
-    ARBITRUM_PROVIDERS, BASE_PROVIDERS, OPTIMISM_PROVIDERS,
+use crate::rpc_client::providers::{
+    ARBITRUM_PROVIDERS, BASE_PROVIDERS, MAINNET_PROVIDERS, OPTIMISM_PROVIDERS, SEPOLIA_PROVIDERS,
+    UNKNOWN_PROVIDERS,
 };
-use crate::eth_rpc_client::requests::GetTransactionCountParams;
-use crate::eth_rpc_client::responses::TransactionReceipt;
-use crate::lifecycle::EthereumNetwork;
-use crate::logs::{DEBUG, INFO};
-use crate::numeric::TransactionCount;
-use crate::state::State;
+use crate::rpc_client::requests::GetTransactionCountParams;
+use crate::rpc_client::responses::TransactionReceipt;
 use async_trait::async_trait;
 use candid::CandidType;
-use ic_canister_log::log;
+use evm_rpc_types::{HttpOutcallError, ProviderError, RpcApi, RpcConfig, RpcError, RpcService};
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::marker::PhantomData;
-
-use self::providers::RpcApi;
 
 mod eth_rpc;
 mod providers;
@@ -32,6 +25,15 @@ mod responses;
 
 #[cfg(test)]
 mod tests;
+
+//TODO: Dummy log. use ic_canister_log::log
+macro_rules! log {
+    ($sink:expr, $message:expr $(,$args:expr)* $(,)*) => {{
+        let message = std::format!($message $(,$args)*);
+        // Print the message for convenience for local development (e.g. integration tests)
+        println!("{}", &message);
+    }}
+}
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
@@ -67,10 +69,19 @@ impl RpcTransport for DefaultTransport {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
-pub struct RpcConfig {
-    #[serde(rename = "responseSizeEstimate")]
-    pub response_size_estimate: Option<u64>,
+#[derive(Clone, Copy, Default, Debug, Eq, PartialEq)]
+pub struct EthereumNetwork(#[n(0)] u64);
+
+impl EthereumNetwork {
+    pub const MAINNET: EthereumNetwork = EthereumNetwork(1);
+    pub const SEPOLIA: EthereumNetwork = EthereumNetwork(11155111);
+    pub const ARBITRUM: EthereumNetwork = EthereumNetwork(42161);
+    pub const BASE: EthereumNetwork = EthereumNetwork(8453);
+    pub const OPTIMISM: EthereumNetwork = EthereumNetwork(10);
+
+    pub fn chain_id(&self) -> u64 {
+        self.0
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -93,10 +104,6 @@ impl<T: RpcTransport> EthRpcClient<T> {
             config,
             phantom: PhantomData,
         }
-    }
-
-    pub fn from_state(state: &State) -> Self {
-        Self::new(state.ethereum_network(), None, RpcConfig::default())
     }
 
     fn providers(&self) -> &[RpcService] {
@@ -145,7 +152,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
                 params.clone(),
                 response_size_estimate,
             )
-                .await;
+            .await;
             match result {
                 Ok(value) => return Ok(value),
                 Err(RpcError::JsonRpcError(json_rpc_error @ JsonRpcError { .. })) => {
@@ -191,7 +198,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
                         params.clone(),
                         response_size_estimate,
                     )
-                        .await
+                    .await
                 });
             }
             futures::future::join_all(fut).await
@@ -217,8 +224,6 @@ impl<T: RpcTransport> EthRpcClient<T> {
         &self,
         block: BlockSpec,
     ) -> Result<Block, MultiCallError<Block>> {
-        use crate::eth_rpc::GetBlockByNumberParams;
-
         let expected_block_size = match self.chain {
             EthereumNetwork::SEPOLIA => 12 * 1024,
             EthereumNetwork::MAINNET => 24 * 1024,
@@ -278,7 +283,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
             vec![raw_signed_transaction_hex],
             self.response_size_estimate(256 + HEADER_SIZE_LIMIT),
         )
-            .await
+        .await
     }
 
     pub async fn multi_eth_send_raw_transaction(
@@ -290,8 +295,8 @@ impl<T: RpcTransport> EthRpcClient<T> {
             vec![raw_signed_transaction_hex],
             self.response_size_estimate(256 + HEADER_SIZE_LIMIT),
         )
-            .await
-            .reduce_with_equality()
+        .await
+        .reduce_with_equality()
     }
 
     pub async fn eth_get_transaction_count(
@@ -303,7 +308,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
             params,
             self.response_size_estimate(50 + HEADER_SIZE_LIMIT),
         )
-            .await
+        .await
     }
 }
 
