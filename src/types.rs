@@ -409,90 +409,10 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
 #[cfg(test)]
 mod test {
     use candid::Principal;
-    use cketh_common::eth_rpc::RpcError;
     use ic_stable_structures::Storable;
 
-    use crate::types::{ApiKey, BoolStorable, MultiRpcResult, PrincipalStorable};
+    use crate::types::{ApiKey, BoolStorable, PrincipalStorable};
 
-    #[test]
-    fn test_multi_rpc_result_map() {
-        use cketh_common::eth_rpc::ProviderError;
-
-        let err = RpcError::ProviderError(ProviderError::ProviderNotFound);
-        assert_eq!(
-            MultiRpcResult::Consistent(Ok(5)).map(|n| n + 1),
-            MultiRpcResult::Consistent(Ok(6))
-        );
-        assert_eq!(
-            MultiRpcResult::Consistent(Err(err.clone())).map(|()| unreachable!()),
-            MultiRpcResult::Consistent(Err(err.clone()))
-        );
-        assert_eq!(
-            MultiRpcResult::Inconsistent(vec![(
-                evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
-                Ok(5)
-            )])
-            .map(|n| n + 1),
-            MultiRpcResult::Inconsistent(vec![(
-                evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
-                Ok(6)
-            )])
-        );
-        assert_eq!(
-            MultiRpcResult::Inconsistent(vec![
-                (
-                    evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
-                    Ok(5)
-                ),
-                (
-                    evm_rpc_types::RpcService::EthMainnet(
-                        evm_rpc_types::EthMainnetService::Cloudflare
-                    ),
-                    Ok(10)
-                )
-            ])
-            .map(|n| n + 1),
-            MultiRpcResult::Inconsistent(vec![
-                (
-                    evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
-                    Ok(6)
-                ),
-                (
-                    evm_rpc_types::RpcService::EthMainnet(
-                        evm_rpc_types::EthMainnetService::Cloudflare
-                    ),
-                    Ok(11)
-                )
-            ])
-        );
-        assert_eq!(
-            MultiRpcResult::Inconsistent(vec![
-                (
-                    evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
-                    Ok(5)
-                ),
-                (
-                    evm_rpc_types::RpcService::EthMainnet(
-                        evm_rpc_types::EthMainnetService::PublicNode
-                    ),
-                    Err(err.clone())
-                )
-            ])
-            .map(|n| n + 1),
-            MultiRpcResult::Inconsistent(vec![
-                (
-                    evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
-                    Ok(6)
-                ),
-                (
-                    evm_rpc_types::RpcService::EthMainnet(
-                        evm_rpc_types::EthMainnetService::PublicNode
-                    ),
-                    Err(err)
-                )
-            ])
-        );
-    }
 
     #[test]
     fn test_api_key_debug_output() {
