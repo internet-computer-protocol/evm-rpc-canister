@@ -65,8 +65,8 @@ fn from_log_entry(value: crate::rpc_client::eth_rpc::LogEntry) -> evm_rpc_types:
 
 pub(super) fn into_fee_history_params(
     value: evm_rpc_types::FeeHistoryArgs,
-) -> cketh_common::eth_rpc::FeeHistoryParams {
-    cketh_common::eth_rpc::FeeHistoryParams {
+) -> crate::rpc_client::eth_rpc::FeeHistoryParams {
+    crate::rpc_client::eth_rpc::FeeHistoryParams {
         block_count: into_quantity(value.block_count),
         highest_block: into_block_spec(value.newest_block),
         reward_percentiles: value.reward_percentiles.unwrap_or_default(),
@@ -74,7 +74,7 @@ pub(super) fn into_fee_history_params(
 }
 
 pub(super) fn from_fee_history(
-    value: cketh_common::eth_rpc::FeeHistory,
+    value: crate::rpc_client::eth_rpc::FeeHistory,
 ) -> evm_rpc_types::FeeHistory {
     evm_rpc_types::FeeHistory {
         oldest_block: from_checked_amount_of(value.oldest_block),
