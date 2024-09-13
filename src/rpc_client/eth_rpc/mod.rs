@@ -1,30 +1,28 @@
 //! This module contains definitions for communicating with an Ethereum API using the [JSON RPC](https://ethereum.org/en/developers/docs/apis/json-rpc/)
 //! interface.
 
-use crate::address::Address;
-use crate::checked_amount::CheckedAmountOf;
-use crate::endpoints::CandidBlockTag;
-use crate::eth_rpc_client::providers::RpcService;
-use crate::eth_rpc_client::responses::TransactionReceipt;
-use crate::eth_rpc_client::RpcTransport;
-use crate::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
-use crate::logs::{DEBUG, TRACE_HTTP};
-use crate::numeric::{BlockNumber, LogIndex, TransactionCount, Wei, WeiPerGas};
-use crate::state::{mutate_state, State};
+use crate::log;
+use crate::memory::next_request_id;
+use crate::rpc_client::checked_amount::CheckedAmountOf;
+use crate::rpc_client::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
+use crate::rpc_client::numeric::{BlockNumber, LogIndex, TransactionCount, Wei, WeiPerGas};
+use crate::rpc_client::responses::TransactionReceipt;
+use crate::rpc_client::RpcTransport;
 use candid::{candid_method, CandidType};
 use ethnum;
-use ic_canister_log::log;
+use evm_rpc_types::{HttpOutcallError, JsonRpcError, RpcError, RpcService};
 use ic_cdk::api::call::RejectionCode;
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs,
     TransformContext,
 };
 use ic_cdk_macros::query;
+use ic_ethereum_types::Address;
 pub use metrics::encode as encode_metrics;
+use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
-use thiserror::Error;
 
 #[cfg(test)]
 mod tests;
@@ -53,19 +51,6 @@ pub fn into_nat(quantity: Quantity) -> candid::Nat {
 #[serde(transparent)]
 pub struct Data(#[serde(with = "crate::serde_data")] pub Vec<u8>);
 
-impl CandidType for Data {
-    fn _ty() -> candid::types::Type {
-        String::_ty()
-    }
-
-    fn idl_serialize<S>(&self, serializer: S) -> Result<(), S::Error>
-    where
-        S: candid::types::Serializer,
-    {
-        serializer.serialize_text(&format!("0x{}", hex::encode(self)))
-    }
-}
-
 impl AsRef<[u8]> for Data {
     fn as_ref(&self) -> &[u8] {
         &self.0
@@ -75,19 +60,6 @@ impl AsRef<[u8]> for Data {
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
 pub struct FixedSizeData(#[serde(with = "crate::serde_data")] pub [u8; 32]);
-
-impl CandidType for FixedSizeData {
-    fn _ty() -> candid::types::Type {
-        String::_ty()
-    }
-
-    fn idl_serialize<S>(&self, serializer: S) -> Result<(), S::Error>
-    where
-        S: candid::types::Serializer,
-    {
-        serializer.serialize_text(&format!("{:#x}", self))
-    }
-}
 
 impl AsRef<[u8]> for FixedSizeData {
     fn as_ref(&self) -> &[u8] {
@@ -133,7 +105,7 @@ impl UpperHex for FixedSizeData {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, CandidType)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub enum SendRawTransactionResult {
     Ok,
     InsufficientFunds,
@@ -147,11 +119,7 @@ impl HttpResponsePayload for SendRawTransactionResult {
     }
 }
 
-#[derive(
-    Clone, Copy, Deserialize, Serialize, PartialEq, Eq, Hash, Ord, PartialOrd, Encode, Decode,
-)]
-#[serde(transparent)]
-#[cbor(transparent)]
+#[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Hash(
     #[serde(with = "crate::serde_data")]
     #[cbor(n(0), with = "minicbor::bytes")]
@@ -235,16 +203,6 @@ pub enum BlockTag {
     Pending,
 }
 
-impl From<CandidBlockTag> for BlockTag {
-    fn from(block_tag: CandidBlockTag) -> BlockTag {
-        match block_tag {
-            CandidBlockTag::Latest => BlockTag::Latest,
-            CandidBlockTag::Safe => BlockTag::Safe,
-            CandidBlockTag::Finalized => BlockTag::Finalized,
-        }
-    }
-}
-
 impl Display for BlockTag {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
@@ -310,22 +268,23 @@ pub struct GetLogsParam {
 }
 
 /// An entry of the [`eth_getLogs`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getlogs) call reply.
-// Example:
-// ```json
-// {
-//    "address": "0x7e41257f7b5c3dd3313ef02b1f4c864fe95bec2b",
-//    "topics": [
-//      "0x2a2607d40f4a6feb97c36e0efd57e0aa3e42e0332af4fceb78f21b7dffcbd657"
-//    ],
-//    "data": "0x00000000000000000000000055654e7405fcb336386ea8f36954a211b2cda764000000000000000000000000000000000000000000000000002386f26fc100000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000003f62327071372d71677a7a692d74623564622d72357363692d637736736c2d6e646f756c2d666f7435742d347a7732702d657a6677692d74616a32792d76716500",
-//    "blockNumber": "0x3aa4f4",
-//    "transactionHash": "0x5618f72c485bd98a3df58d900eabe9e24bfaa972a6fe5227e02233fad2db1154",
-//    "transactionIndex": "0x6",
-//    "blockHash": "0x908e6b84d26d71421bfaa08e7966e0afcef3883a28a53a0a7a31104caf1e94c2",
-//    "logIndex": "0x8",
-//    "removed": false
-//  }
-// ```
+///
+/// Example:
+/// ```json
+/// {
+///    "address": "0x7e41257f7b5c3dd3313ef02b1f4c864fe95bec2b",
+///    "topics": [
+///      "0x2a2607d40f4a6feb97c36e0efd57e0aa3e42e0332af4fceb78f21b7dffcbd657"
+///    ],
+///    "data": "0x00000000000000000000000055654e7405fcb336386ea8f36954a211b2cda764000000000000000000000000000000000000000000000000002386f26fc100000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000003f62327071372d71677a7a692d74623564622d72357363692d637736736c2d6e646f756c2d666f7435742d347a7732702d657a6677692d74616a32792d76716500",
+///    "blockNumber": "0x3aa4f4",
+///    "transactionHash": "0x5618f72c485bd98a3df58d900eabe9e24bfaa972a6fe5227e02233fad2db1154",
+///    "transactionIndex": "0x6",
+///    "blockHash": "0x908e6b84d26d71421bfaa08e7966e0afcef3883a28a53a0a7a31104caf1e94c2",
+///    "logIndex": "0x8",
+///    "removed": false
+///  }
+/// ```
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, CandidType)]
 pub struct LogEntry {
     /// The address from which this log originated.
@@ -510,7 +469,7 @@ pub struct JsonRpcReply<T> {
 }
 
 /// An envelope for all JSON-RPC replies.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, CandidType)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum JsonRpcResult<T> {
     #[serde(rename = "result")]
     Result(T),
@@ -541,7 +500,7 @@ impl<T> From<JsonRpcResult<T>> for Result<T, RpcError> {
 /// Describes a payload transformation to execute before passing the HTTP response to consensus.
 /// The purpose of these transformations is to ensure that the response encoding is deterministic
 /// (the field order is the same).
-#[derive(Encode, Decode, Debug)]
+#[derive(Debug, Decode, Encode)]
 pub enum ResponseTransform {
     #[n(0)]
     Block,
@@ -624,17 +583,19 @@ fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
     args.response
 }
 
-impl HttpOutcallError {
-    pub fn is_response_too_large(&self) -> bool {
-        match self {
-            Self::IcError { code, message } => is_response_too_large(code, message),
-            _ => false,
+pub fn is_http_outcall_error_response_too_large(error: &HttpOutcallError) -> bool {
+    match error {
+        HttpOutcallError::IcError { code, message } => {
+            code == &RejectionCode::SysFatal
+                && (message.contains("size limit") || message.contains("length limit"))
         }
+        _ => false,
     }
 }
 
 pub fn is_response_too_large(code: &RejectionCode, message: &str) -> bool {
-    code == &RejectionCode::SysFatal && message.contains("size limit")
+    code == &RejectionCode::SysFatal
+        && (message.contains("size limit") || message.contains("length limit"))
 }
 
 pub type HttpOutcallResult<T> = Result<T, HttpOutcallError>;
@@ -655,15 +616,6 @@ pub fn are_errors_consistent<T: PartialEq>(
         (Ok(_), _) | (_, Ok(_)) => true,
         _ => left == right,
     }
-}
-
-#[derive(
-    Clone, Hash, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Serialize, Deserialize, Error,
-)]
-#[error("code {code}: {message}")]
-pub struct JsonRpcError {
-    pub code: i64,
-    pub message: String,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -734,7 +686,7 @@ where
     }
     let mut retries = 0;
     loop {
-        rpc_request.id = mutate_state(State::next_request_id);
+        rpc_request.id = next_request_id();
         let payload = serde_json::to_string(&rpc_request).unwrap();
         log!(TRACE_HTTP, "Calling url: {}, with payload: {payload}", url);
 
@@ -766,20 +718,20 @@ where
             request,
             effective_size_estimate,
         )
-            .await
+        .await
         {
             Err(RpcError::HttpOutcallError(HttpOutcallError::IcError { code, message }))
-            if is_response_too_large(&code, &message) =>
-                {
-                    let new_estimate = response_size_estimate.adjust();
-                    if response_size_estimate == new_estimate {
-                        return Err(HttpOutcallError::IcError { code, message }.into());
-                    }
-                    log!(DEBUG, "The {eth_method} response didn't fit into {response_size_estimate} bytes, retrying with {new_estimate}");
-                    response_size_estimate = new_estimate;
-                    retries += 1;
-                    continue;
+                if is_response_too_large(&code, &message) =>
+            {
+                let new_estimate = response_size_estimate.adjust();
+                if response_size_estimate == new_estimate {
+                    return Err(HttpOutcallError::IcError { code, message }.into());
                 }
+                log!(DEBUG, "The {eth_method} response didn't fit into {response_size_estimate} bytes, retrying with {new_estimate}");
+                response_size_estimate = new_estimate;
+                retries += 1;
+                continue;
+            }
             result => result?,
         };
 
@@ -804,7 +756,7 @@ where
                 body: String::from_utf8_lossy(&response.body).to_string(),
                 parsing_error: None,
             }
-                .into());
+            .into());
         }
 
         let reply: JsonRpcReply<O> = serde_json::from_slice(&response.body).map_err(|e| {

@@ -34,6 +34,8 @@ ic-cdk-macros = { workspace = true }
 ic-certified-map = { workspace = true }
 cketh-common = { git = "https://github.com/dfinity/ic", rev = "1f551bea63354370b6e7a5037e96d464bdab3b41", package = "ic-cketh-minter" }
 maplit = "1.0"
+minicbor = { workspace = true }
+minicbor-derive = { workspace = true }
 num = "0.4"
 num-bigint = { workspace = true }
 num-traits = "0.2"
@@ -70,6 +72,8 @@ ic-certified-map = "0.4"
 ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
+minicbor = { version = "0.19.1", features = ["alloc", "derive"] }
+minicbor-derive = "0.13.0"
 num-bigint = "0.4.6"
 proptest = "1.5.0"
 serde = "1.0"
