@@ -1,7 +1,6 @@
-use crate::checked_amount::CheckedAmountOf;
-use crate::eth_rpc::{Hash, HttpResponsePayload, LogEntry, ResponseTransform};
-use crate::numeric::{BlockNumber, GasAmount, Wei, WeiPerGas};
-use minicbor::{Decode, Encode};
+use crate::rpc_client::checked_amount::CheckedAmountOf;
+use crate::rpc_client::eth_rpc::{Hash, HttpResponsePayload, LogEntry, ResponseTransform};
+use crate::rpc_client::numeric::{BlockNumber, GasAmount, WeiPerGas};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
@@ -43,21 +42,13 @@ pub struct TransactionReceipt {
     pub r#type: String,
 }
 
-impl TransactionReceipt {
-    pub fn effective_transaction_fee(&self) -> Wei {
-        self.effective_gas_price
-            .transaction_cost(self.gas_used)
-            .expect("ERROR: overflow during transaction fee calculation")
-    }
-}
-
 impl HttpResponsePayload for TransactionReceipt {
     fn response_transform() -> Option<ResponseTransform> {
         Some(ResponseTransform::TransactionReceipt)
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq, )]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(try_from = "ethnum::u256", into = "ethnum::u256")]
 pub enum TransactionStatus {
     /// Transaction was mined and executed successfully.
