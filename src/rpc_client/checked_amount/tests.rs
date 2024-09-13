@@ -1,4 +1,4 @@
-use crate::checked_amount::CheckedAmountOf;
+use crate::rpc_client::checked_amount::CheckedAmountOf;
 
 mod checked_div_ceil {
     use super::Amount;

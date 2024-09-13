@@ -33,10 +33,12 @@ ic-certified-map = { workspace = true }
 cketh-common = { git = "https://github.com/dfinity/ic", rev = "1f551bea63354370b6e7a5037e96d464bdab3b41", package = "ic-cketh-minter" }
 maplit = "1.0"
 num = "0.4"
+num-bigint = { workspace = true }
 num-traits = "0.2"
 num-derive = "0.4"
 serde = { workspace = true }
 serde_json = { workspace = true }
+thousands = "0.2"
 url = "2.5"
 async-trait = "0.1"
 hex = "0.4"
@@ -44,12 +46,13 @@ ethers-core = "2.0"
 zeroize = "1.8"
 
 [dev-dependencies]
+assert_matches = "1.5"
 ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-assert_matches = "1.5"
+proptest = { workspace = true }
 
 [workspace.dependencies]
 candid = { version = "0.9" }

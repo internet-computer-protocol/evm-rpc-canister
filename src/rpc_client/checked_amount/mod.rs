@@ -2,8 +2,6 @@
 mod tests;
 
 use candid::CandidType;
-use minicbor;
-use rlp::RlpStream;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::cmp::Ordering;
 use std::fmt;
@@ -11,14 +9,12 @@ use std::marker::PhantomData;
 use std::num::ParseIntError;
 use std::ops::Rem;
 
-use crate::eth_rpc::into_nat;
-
 /// `CheckedAmountOf<Unit>` provides a type-safe way to keep an amount of some `Unit`.
 /// In contrast to `AmountOf<Unit>`, all operations are checked and do not overflow.
 ///
 /// # Arithmetic
 /// ```
-/// use ic_cketh_minter::checked_amount::CheckedAmountOf;
+/// use evm_rpc::rpc_client::checked_amount::CheckedAmountOf;
 ///
 /// enum MetricApple {}
 /// type Apples = CheckedAmountOf<MetricApple>;
@@ -53,19 +49,6 @@ use crate::eth_rpc::into_nat;
 /// assert_eq!(three_apples.div_by_two(), Apples::ONE);
 /// ```
 pub struct CheckedAmountOf<Unit>(ethnum::u256, PhantomData<Unit>);
-
-impl<Unit> CandidType for CheckedAmountOf<Unit> {
-    fn _ty() -> candid::types::Type {
-        candid::Nat::_ty()
-    }
-
-    fn idl_serialize<S>(&self, serializer: S) -> Result<(), S::Error>
-    where
-        S: candid::types::Serializer,
-    {
-        serializer.serialize_nat(&into_nat(self.0))
-    }
-}
 
 impl<Unit> CheckedAmountOf<Unit> {
     pub const ZERO: Self = Self(ethnum::u256::ZERO, PhantomData);
@@ -155,7 +138,7 @@ impl<Unit> CheckedAmountOf<Unit> {
     /// Returns the display implementation of the inner value.
     /// Useful to avoid thousands separators if value is used for example in URLs.
     /// ```
-    /// use ic_cketh_minter::checked_amount::CheckedAmountOf;
+    /// use evm_rpc::rpc_client::checked_amount::CheckedAmountOf;
     ///
     /// enum MetricApple{}
     /// type Apples = CheckedAmountOf<MetricApple>;
@@ -303,28 +286,5 @@ impl<'de, Unit> Deserialize<'de> for CheckedAmountOf<Unit> {
             }
         }
         deserializer.deserialize_any(CheckedAmountVisitor::default())
-    }
-}
-
-impl<C, Unit> minicbor::Encode<C> for CheckedAmountOf<Unit> {
-    fn encode<W: minicbor::encode::Write>(
-        &self,
-        e: &mut minicbor::Encoder<W>,
-        ctx: &mut C,
-    ) -> Result<(), minicbor::encode::Error<W::Error>> {
-        crate::cbor::u256::encode(&self.0, e, ctx)
-    }
-}
-
-impl<'b, C, Unit> minicbor::Decode<'b, C> for CheckedAmountOf<Unit> {
-    fn decode(d: &mut minicbor::Decoder<'b>, ctx: &mut C) -> Result<Self, minicbor::decode::Error> {
-        crate::cbor::u256::decode(d, ctx).map(Self::from_inner)
-    }
-}
-
-impl<Unit> rlp::Encodable for CheckedAmountOf<Unit> {
-    fn rlp_append(&self, s: &mut RlpStream) {
-        let leading_empty_bytes: usize = self.0.leading_zeros() as usize / 8;
-        s.append(&self.0.to_be_bytes()[leading_empty_bytes..].as_ref());
     }
 }
