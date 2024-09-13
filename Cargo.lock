@@ -1591,6 +1591,7 @@ dependencies = [
  "candid",
  "ethers-core",
  "evm_rpc_types",
+ "futures",
  "getrandom 0.2.15",
  "hex",
  "ic-base-types 0.8.0",
