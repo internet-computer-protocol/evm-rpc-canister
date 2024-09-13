@@ -237,13 +237,11 @@ fn get_transaction_hash(raw_signed_transaction_hex: &Hex) -> Option<Hex32> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::candid_rpc::cketh_conversion::into_rpc_service;
-    use crate::rpc_client::MultiCallError;
+    use crate::rpc_client::{MultiCallError, MultiCallResults};
     use evm_rpc_types::RpcError;
 
     #[test]
     fn test_process_result_mapping() {
-        use cketh_common::eth_rpc_client::MultiCallResults;
         use evm_rpc_types::{EthMainnetService, RpcService};
 
         let method = RpcMethod::EthGetTransactionCount;
@@ -256,9 +254,7 @@ mod test {
             process_result(
                 method,
                 Err(MultiCallError::<()>::ConsistentError(
-                    cketh_common::eth_rpc::RpcError::ProviderError(
-                        cketh_common::eth_rpc::ProviderError::MissingRequiredProvider
-                    )
+                    RpcError::ProviderError(ProviderError::MissingRequiredProvider)
                 ))
             ),
             MultiRpcResult::Consistent(Err(RpcError::ProviderError(
@@ -280,12 +276,9 @@ mod test {
             process_result(
                 method,
                 Err(MultiCallError::InconsistentResults(MultiCallResults {
-                    results: vec![(
-                        into_rpc_service(RpcService::EthMainnet(EthMainnetService::Ankr)),
-                        Ok(5)
-                    )]
-                    .into_iter()
-                    .collect(),
+                    results: vec![(RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5))]
+                        .into_iter()
+                        .collect(),
                 }))
             ),
             MultiRpcResult::Inconsistent(vec![(
@@ -298,15 +291,10 @@ mod test {
                 method,
                 Err(MultiCallError::InconsistentResults(MultiCallResults {
                     results: vec![
+                        (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
                         (
-                            into_rpc_service(RpcService::EthMainnet(EthMainnetService::Ankr)),
-                            Ok(5)
-                        ),
-                        (
-                            into_rpc_service(RpcService::EthMainnet(EthMainnetService::Cloudflare)),
-                            Err(cketh_common::eth_rpc::RpcError::ProviderError(
-                                cketh_common::eth_rpc::ProviderError::NoPermission
-                            ))
+                            RpcService::EthMainnet(EthMainnetService::Cloudflare),
+                            Err(RpcError::ProviderError(ProviderError::NoPermission))
                         )
                     ]
                     .into_iter()
