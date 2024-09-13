@@ -1,9 +1,5 @@
 use candid::{CandidType, Principal};
 use cketh_common::eth_rpc::RpcError;
-use cketh_common::eth_rpc_client::providers::{
-    EthMainnetService, EthSepoliaService, L2MainnetService, RpcApi, RpcService,
-};
-
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_stable_structures::{BoundedStorable, Storable};
 use serde::{Deserialize, Serialize};
@@ -26,12 +22,12 @@ pub struct InitArgs {
 }
 
 pub enum ResolvedRpcService {
-    Api(RpcApi),
+    Api(evm_rpc_types::RpcApi),
     Provider(Provider),
 }
 
 impl ResolvedRpcService {
-    pub fn api(&self) -> RpcApi {
+    pub fn api(&self) -> evm_rpc_types::RpcApi {
         match self {
             Self::Api(api) => api.clone(),
             Self::Provider(provider) => provider.api(),
@@ -268,27 +264,27 @@ pub struct Provider {
     #[serde(rename = "chainId")]
     pub chain_id: u64,
     pub access: RpcAccess,
-    pub alias: Option<RpcService>,
+    pub alias: Option<evm_rpc_types::RpcService>,
 }
 
 impl Provider {
-    pub fn api(&self) -> RpcApi {
+    pub fn api(&self) -> evm_rpc_types::RpcApi {
         match &self.access {
             RpcAccess::Authenticated { auth, public_url } => match get_api_key(self.provider_id) {
                 Some(api_key) => match auth {
-                    RpcAuth::BearerToken { url } => RpcApi {
+                    RpcAuth::BearerToken { url } => evm_rpc_types::RpcApi {
                         url: url.to_string(),
-                        headers: Some(vec![HttpHeader {
+                        headers: Some(vec![evm_rpc_types::HttpHeader {
                             name: "Authorization".to_string(),
                             value: format!("Bearer {}", api_key.read()),
                         }]),
                     },
-                    RpcAuth::UrlParameter { url_pattern } => RpcApi {
+                    RpcAuth::UrlParameter { url_pattern } => evm_rpc_types::RpcApi {
                         url: url_pattern.replace(API_KEY_REPLACE_STRING, api_key.read()),
                         headers: None,
                     },
                 },
-                None => RpcApi {
+                None => evm_rpc_types::RpcApi {
                     url: public_url
                         .unwrap_or_else(|| {
                             panic!(
@@ -300,7 +296,7 @@ impl Provider {
                     headers: None,
                 },
             },
-            RpcAccess::Unauthenticated { public_url } => RpcApi {
+            RpcAccess::Unauthenticated { public_url } => evm_rpc_types::RpcApi {
                 url: public_url.to_string(),
                 headers: None,
             },
@@ -357,7 +353,7 @@ pub type RpcResult<T> = Result<T, RpcError>;
 #[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize)]
 pub enum MultiRpcResult<T> {
     Consistent(RpcResult<T>),
-    Inconsistent(Vec<(RpcService, RpcResult<T>)>),
+    Inconsistent(Vec<(evm_rpc_types::RpcService, RpcResult<T>)>),
 }
 
 impl<T> MultiRpcResult<T> {
@@ -388,7 +384,7 @@ impl<T> MultiRpcResult<T> {
         }
     }
 
-    pub fn inconsistent(self) -> Option<Vec<(RpcService, RpcResult<T>)>> {
+    pub fn inconsistent(self) -> Option<Vec<(evm_rpc_types::RpcService, RpcResult<T>)>> {
         match self {
             MultiRpcResult::Consistent(_) => None,
             MultiRpcResult::Inconsistent(results) => Some(results),
@@ -399,7 +395,7 @@ impl<T> MultiRpcResult<T> {
         self.consistent().expect("expected consistent results")
     }
 
-    pub fn expect_inconsistent(self) -> Vec<(RpcService, RpcResult<T>)> {
+    pub fn expect_inconsistent(self) -> Vec<(evm_rpc_types::RpcService, RpcResult<T>)> {
         self.inconsistent().expect("expected inconsistent results")
     }
 }
@@ -410,27 +406,10 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
     }
 }
 
-#[derive(Clone, CandidType, Deserialize)]
-pub enum RpcServices {
-    Custom {
-        #[serde(rename = "chainId")]
-        chain_id: u64,
-        services: Vec<RpcApi>,
-    },
-    EthMainnet(Option<Vec<EthMainnetService>>),
-    EthSepolia(Option<Vec<EthSepoliaService>>),
-    ArbitrumOne(Option<Vec<L2MainnetService>>),
-    BaseMainnet(Option<Vec<L2MainnetService>>),
-    OptimismMainnet(Option<Vec<L2MainnetService>>),
-}
-
 #[cfg(test)]
 mod test {
     use candid::Principal;
-    use cketh_common::{
-        eth_rpc::RpcError,
-        eth_rpc_client::providers::{EthMainnetService, RpcService},
-    };
+    use cketh_common::eth_rpc::RpcError;
     use ic_stable_structures::Storable;
 
     use crate::types::{ApiKey, BoolStorable, MultiRpcResult, PrincipalStorable};
@@ -450,45 +429,65 @@ mod test {
         );
         assert_eq!(
             MultiRpcResult::Inconsistent(vec![(
-                RpcService::EthMainnet(EthMainnetService::Ankr),
+                evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
                 Ok(5)
             )])
             .map(|n| n + 1),
             MultiRpcResult::Inconsistent(vec![(
-                RpcService::EthMainnet(EthMainnetService::Ankr),
+                evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
                 Ok(6)
             )])
         );
         assert_eq!(
             MultiRpcResult::Inconsistent(vec![
-                (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
                 (
-                    RpcService::EthMainnet(EthMainnetService::Cloudflare),
+                    evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
+                    Ok(5)
+                ),
+                (
+                    evm_rpc_types::RpcService::EthMainnet(
+                        evm_rpc_types::EthMainnetService::Cloudflare
+                    ),
                     Ok(10)
                 )
             ])
             .map(|n| n + 1),
             MultiRpcResult::Inconsistent(vec![
-                (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(6)),
                 (
-                    RpcService::EthMainnet(EthMainnetService::Cloudflare),
+                    evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
+                    Ok(6)
+                ),
+                (
+                    evm_rpc_types::RpcService::EthMainnet(
+                        evm_rpc_types::EthMainnetService::Cloudflare
+                    ),
                     Ok(11)
                 )
             ])
         );
         assert_eq!(
             MultiRpcResult::Inconsistent(vec![
-                (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
                 (
-                    RpcService::EthMainnet(EthMainnetService::PublicNode),
+                    evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
+                    Ok(5)
+                ),
+                (
+                    evm_rpc_types::RpcService::EthMainnet(
+                        evm_rpc_types::EthMainnetService::PublicNode
+                    ),
                     Err(err.clone())
                 )
             ])
             .map(|n| n + 1),
             MultiRpcResult::Inconsistent(vec![
-                (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(6)),
                 (
-                    RpcService::EthMainnet(EthMainnetService::PublicNode),
+                    evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
+                    Ok(6)
+                ),
+                (
+                    evm_rpc_types::RpcService::EthMainnet(
+                        evm_rpc_types::EthMainnetService::PublicNode
+                    ),
                     Err(err)
                 )
             ])
