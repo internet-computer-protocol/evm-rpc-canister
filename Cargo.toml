@@ -18,6 +18,7 @@ inherits = "release"
 
 [dependencies]
 candid = { workspace = true }
+ethnum = { workspace = true }
 evm_rpc_types = { path = "evm_rpc_types" }
 futures = { workspace = true }
 getrandom = { workspace = true }
@@ -52,6 +53,7 @@ assert_matches = "1.5"
 
 [workspace.dependencies]
 candid = { version = "0.9" }
+ethnum = "1.5.0"
 futures = "0.3.30"
 getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4.3"

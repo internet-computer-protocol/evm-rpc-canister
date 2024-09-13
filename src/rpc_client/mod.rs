@@ -25,9 +25,10 @@ use std::marker::PhantomData;
 
 use self::providers::RpcApi;
 
-pub mod providers;
-pub mod requests;
-pub mod responses;
+mod eth_rpc;
+mod providers;
+mod requests;
+mod responses;
 
 #[cfg(test)]
 mod tests;
