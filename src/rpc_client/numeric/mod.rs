@@ -3,8 +3,7 @@
 #[cfg(test)]
 mod tests;
 
-use crate::checked_amount::CheckedAmountOf;
-use phantom_newtype::Id;
+use crate::rpc_client::checked_amount::CheckedAmountOf;
 
 pub enum WeiTag {}
 pub type Wei = CheckedAmountOf<WeiTag>;
@@ -43,11 +42,6 @@ pub type GasAmount = CheckedAmountOf<GasUnit>;
 
 pub enum EthLogIndexTag {}
 pub type LogIndex = CheckedAmountOf<EthLogIndexTag>;
-pub enum BurnIndexTag {}
-pub type LedgerBurnIndex = Id<BurnIndexTag, u64>;
-
-pub enum MintIndexTag {}
-pub type LedgerMintIndex = Id<MintIndexTag, u64>;
 
 impl WeiPerGas {
     pub fn transaction_cost(self, gas: GasAmount) -> Option<Wei> {

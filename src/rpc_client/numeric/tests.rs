@@ -1,5 +1,5 @@
 mod transaction_nonce {
-    use crate::numeric::TransactionNonce;
+    use crate::rpc_client::numeric::TransactionNonce;
     use assert_matches::assert_matches;
     use candid::Nat;
     use num_bigint::BigUint;
@@ -32,7 +32,7 @@ mod transaction_nonce {
 
         #[test]
         fn biguint_to_u256_conversion(value in any::<u128>()) {
-            use crate::numeric::Wei;
+            use crate::rpc_client::numeric::{Wei};
 
             let nat_value: Nat = value.into();
             let expected_wei_value = Wei::from(value);
@@ -64,7 +64,7 @@ mod transaction_nonce {
 }
 
 mod wei {
-    use crate::numeric::{wei_from_milli_ether, Wei};
+    use crate::rpc_client::numeric::{wei_from_milli_ether, Wei};
 
     #[test]
     fn should_not_overflow_when_converting_from_milli_ether() {
