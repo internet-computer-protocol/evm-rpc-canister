@@ -1,8 +1,9 @@
 use crate::rpc_client::eth_rpc::{
     are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetBlockByNumberParams,
-    GetLogsParam, Hash, HttpResponsePayload, JsonRpcError, LogEntry, ResponseSizeEstimate,
+    GetLogsParam, Hash, HttpResponsePayload, LogEntry, ResponseSizeEstimate,
     SendRawTransactionResult, HEADER_SIZE_LIMIT,
 };
+use crate::rpc_client::numeric::TransactionCount;
 use crate::rpc_client::providers::{
     ARBITRUM_PROVIDERS, BASE_PROVIDERS, MAINNET_PROVIDERS, OPTIMISM_PROVIDERS, SEPOLIA_PROVIDERS,
     UNKNOWN_PROVIDERS,
@@ -11,14 +12,18 @@ use crate::rpc_client::requests::GetTransactionCountParams;
 use crate::rpc_client::responses::TransactionReceipt;
 use async_trait::async_trait;
 use candid::CandidType;
-use evm_rpc_types::{HttpOutcallError, ProviderError, RpcApi, RpcConfig, RpcError, RpcService};
+use evm_rpc_types::{
+    HttpOutcallError, JsonRpcError, ProviderError, RpcApi, RpcConfig, RpcError, RpcService,
+};
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
+pub mod checked_amount;
 mod eth_rpc;
+mod numeric;
 mod providers;
 mod requests;
 mod responses;
@@ -27,6 +32,7 @@ mod responses;
 mod tests;
 
 //TODO: Dummy log. use ic_canister_log::log
+#[macro_export]
 macro_rules! log {
     ($sink:expr, $message:expr $(,$args:expr)* $(,)*) => {{
         let message = std::format!($message $(,$args)*);
@@ -431,18 +437,6 @@ impl<T: Debug + PartialEq> MultiCallResults<T> {
             return Err(error);
         }
         Ok(base_result)
-    }
-
-    pub fn reduce_with_min_by_key<F: FnMut(&T) -> K, K: Ord>(
-        self,
-        extractor: F,
-    ) -> Result<T, MultiCallError<T>> {
-        let min = self
-            .all_ok()?
-            .into_values()
-            .min_by_key(extractor)
-            .expect("BUG: MultiCallResults is guaranteed to be non-empty");
-        Ok(min)
     }
 
     pub fn reduce_with_strict_majority_by_key<F: Fn(&T) -> K, K: Ord>(

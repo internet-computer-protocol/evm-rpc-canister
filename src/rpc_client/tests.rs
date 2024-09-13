@@ -189,43 +189,6 @@ mod multi_call_results {
         }
     }
 
-    mod reduce_with_min_by_key {
-        use crate::eth_rpc::{Block, JsonRpcResult};
-        use crate::eth_rpc_client::tests::multi_call_results::{ANKR, PUBLIC_NODE};
-        use crate::eth_rpc_client::MultiCallResults;
-        use crate::numeric::{BlockNumber, Wei};
-
-        #[test]
-        fn should_get_minimum_block_number() {
-            let results: MultiCallResults<Block> = MultiCallResults::from_non_empty_iter(vec![
-                (
-                    ANKR,
-                    Ok(JsonRpcResult::Result(Block {
-                        number: BlockNumber::new(0x411cda),
-                        base_fee_per_gas: Wei::new(0x10),
-                    })),
-                ),
-                (
-                    PUBLIC_NODE,
-                    Ok(JsonRpcResult::Result(Block {
-                        number: BlockNumber::new(0x411cd9),
-                        base_fee_per_gas: Wei::new(0x10),
-                    })),
-                ),
-            ]);
-
-            let reduced = results.reduce_with_min_by_key(|block| block.number);
-
-            assert_eq!(
-                reduced,
-                Ok(Block {
-                    number: BlockNumber::new(0x411cd9),
-                    base_fee_per_gas: Wei::new(0x10),
-                })
-            );
-        }
-    }
-
     mod reduce_with_stable_majority_by_key {
         use crate::eth_rpc::{FeeHistory, JsonRpcResult};
         use crate::eth_rpc_client::tests::multi_call_results::{ANKR, CLOUDFLARE, PUBLIC_NODE};
