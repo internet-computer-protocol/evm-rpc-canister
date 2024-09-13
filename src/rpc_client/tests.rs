@@ -1,10 +1,11 @@
 mod eth_rpc_client {
-    use crate::rpc_client::{EthRpcClient, EthereumNetwork};
-    use evm_rpc_types::{EthMainnetService, EthSepoliaService, RpcService};
+    use crate::rpc_client::{DefaultTransport, EthRpcClient, EthereumNetwork};
+    use evm_rpc_types::{EthMainnetService, EthSepoliaService, RpcConfig, RpcService};
 
     #[test]
     fn should_retrieve_sepolia_providers_in_stable_order() {
-        let client = EthRpcClient::new(EthereumNetwork::SEPOLIA, None);
+        let client: EthRpcClient<DefaultTransport> =
+            EthRpcClient::new(EthereumNetwork::SEPOLIA, None, RpcConfig::default());
 
         let providers = client.providers();
 
@@ -19,7 +20,8 @@ mod eth_rpc_client {
 
     #[test]
     fn should_retrieve_mainnet_providers_in_stable_order() {
-        let client = EthRpcClient::new(EthereumNetwork::MAINNET, None);
+        let client: EthRpcClient<DefaultTransport> =
+            EthRpcClient::new(EthereumNetwork::MAINNET, None, RpcConfig::default());
 
         let providers = client.providers();
 
@@ -45,7 +47,7 @@ mod multi_call_results {
         use crate::rpc_client::eth_rpc::JsonRpcResult;
         use crate::rpc_client::tests::multi_call_results::{ANKR, PUBLIC_NODE};
         use crate::rpc_client::{MultiCallError, MultiCallResults};
-        use evm_rpc_types::HttpOutcallError;
+        use evm_rpc_types::{HttpOutcallError, JsonRpcError, RpcError};
         use ic_cdk::api::call::RejectionCode;
 
         #[test]
@@ -59,17 +61,17 @@ mod multi_call_results {
             let results: MultiCallResults<String> = MultiCallResults::from_non_empty_iter(vec![
                 (
                     ANKR,
-                    Err(HttpOutcallError::IcError {
+                    Err(RpcError::HttpOutcallError(HttpOutcallError::IcError {
                         code: RejectionCode::CanisterReject,
                         message: "reject".to_string(),
-                    }),
+                    })),
                 ),
                 (
                     PUBLIC_NODE,
-                    Err(HttpOutcallError::IcError {
+                    Err(RpcError::HttpOutcallError(HttpOutcallError::IcError {
                         code: RejectionCode::SysTransient,
                         message: "transient".to_string(),
-                    }),
+                    })),
                 ),
             ]);
 
@@ -80,7 +82,7 @@ mod multi_call_results {
 
         #[test]
         fn should_be_inconsistent_when_different_rpc_errors() {
-            let results: MultiCallResults<String> = MultiCallResults::from_non_empty_iter(vec![
+            let results: MultiCallResults<String> = MultiCallResults::from_json_rpc_result(vec![
                 (
                     ANKR,
                     Ok(JsonRpcResult::Error {
@@ -104,7 +106,7 @@ mod multi_call_results {
 
         #[test]
         fn should_be_inconsistent_when_different_ok_results() {
-            let results: MultiCallResults<String> = MultiCallResults::from_non_empty_iter(vec![
+            let results: MultiCallResults<String> = MultiCallResults::from_json_rpc_result(vec![
                 (ANKR, Ok(JsonRpcResult::Result("hello".to_string()))),
                 (PUBLIC_NODE, Ok(JsonRpcResult::Result("world".to_string()))),
             ]);
@@ -119,17 +121,17 @@ mod multi_call_results {
             let results: MultiCallResults<String> = MultiCallResults::from_non_empty_iter(vec![
                 (
                     ANKR,
-                    Err(HttpOutcallError::IcError {
+                    Err(RpcError::HttpOutcallError(HttpOutcallError::IcError {
                         code: RejectionCode::CanisterReject,
                         message: "reject".to_string(),
-                    }),
+                    })),
                 ),
                 (
                     PUBLIC_NODE,
-                    Err(HttpOutcallError::IcError {
+                    Err(RpcError::HttpOutcallError(HttpOutcallError::IcError {
                         code: RejectionCode::CanisterReject,
                         message: "reject".to_string(),
-                    }),
+                    })),
                 ),
             ]);
 
@@ -137,18 +139,18 @@ mod multi_call_results {
 
             assert_eq!(
                 reduced,
-                Err(MultiCallError::ConsistentHttpOutcallError(
+                Err(MultiCallError::ConsistentError(RpcError::HttpOutcallError(
                     HttpOutcallError::IcError {
                         code: RejectionCode::CanisterReject,
                         message: "reject".to_string(),
                     }
-                ))
+                )))
             );
         }
 
         #[test]
         fn should_be_consistent_rpc_error() {
-            let results: MultiCallResults<String> = MultiCallResults::from_non_empty_iter(vec![
+            let results: MultiCallResults<String> = MultiCallResults::from_json_rpc_result(vec![
                 (
                     ANKR,
                     Ok(JsonRpcResult::Error {
@@ -169,16 +171,18 @@ mod multi_call_results {
 
             assert_eq!(
                 reduced,
-                Err(MultiCallError::ConsistentJsonRpcError {
-                    code: -32700,
-                    message: "insufficient funds for gas * price + value".to_string(),
-                })
+                Err(MultiCallError::ConsistentError(RpcError::JsonRpcError(
+                    JsonRpcError {
+                        code: -32700,
+                        message: "insufficient funds for gas * price + value".to_string(),
+                    }
+                )))
             );
         }
 
         #[test]
         fn should_be_consistent_ok_result() {
-            let results: MultiCallResults<String> = MultiCallResults::from_non_empty_iter(vec![
+            let results: MultiCallResults<String> = MultiCallResults::from_json_rpc_result(vec![
                 (ANKR, Ok(JsonRpcResult::Result("0x01".to_string()))),
                 (PUBLIC_NODE, Ok(JsonRpcResult::Result("0x01".to_string()))),
             ]);
@@ -190,16 +194,16 @@ mod multi_call_results {
     }
 
     mod reduce_with_stable_majority_by_key {
-        use crate::eth_rpc::{FeeHistory, JsonRpcResult};
-        use crate::eth_rpc_client::tests::multi_call_results::{ANKR, CLOUDFLARE, PUBLIC_NODE};
-        use crate::eth_rpc_client::MultiCallError::ConsistentJsonRpcError;
-        use crate::eth_rpc_client::{MultiCallError, MultiCallResults};
-        use crate::numeric::{BlockNumber, WeiPerGas};
+        use crate::rpc_client::eth_rpc::{FeeHistory, JsonRpcResult};
+        use crate::rpc_client::numeric::{BlockNumber, WeiPerGas};
+        use crate::rpc_client::tests::multi_call_results::{ANKR, CLOUDFLARE, PUBLIC_NODE};
+        use crate::rpc_client::{MultiCallError, MultiCallResults};
+        use evm_rpc_types::{JsonRpcError, RpcError};
 
         #[test]
         fn should_get_unanimous_fee_history() {
             let results: MultiCallResults<FeeHistory> =
-                MultiCallResults::from_non_empty_iter(vec![
+                MultiCallResults::from_json_rpc_result(vec![
                     (ANKR, Ok(JsonRpcResult::Result(fee_history()))),
                     (PUBLIC_NODE, Ok(JsonRpcResult::Result(fee_history()))),
                     (CLOUDFLARE, Ok(JsonRpcResult::Result(fee_history()))),
@@ -224,7 +228,7 @@ mod multi_call_results {
                 let majority_fee = fees[index_majority].clone();
                 let [ankr_fee_history, cloudflare_fee_history, public_node_fee_history] = fees;
                 let results: MultiCallResults<FeeHistory> =
-                    MultiCallResults::from_non_empty_iter(vec![
+                    MultiCallResults::from_json_rpc_result(vec![
                         (ANKR, Ok(JsonRpcResult::Result(ankr_fee_history))),
                         (
                             CLOUDFLARE,
@@ -258,7 +262,7 @@ mod multi_call_results {
                 ..fee_history()
             };
             let three_distinct_results: MultiCallResults<FeeHistory> =
-                MultiCallResults::from_non_empty_iter(vec![
+                MultiCallResults::from_json_rpc_result(vec![
                     (ANKR, Ok(JsonRpcResult::Result(ankr_fee_history.clone()))),
                     (
                         PUBLIC_NODE,
@@ -273,7 +277,7 @@ mod multi_call_results {
             assert_eq!(
                 reduced,
                 Err(MultiCallError::InconsistentResults(
-                    MultiCallResults::from_non_empty_iter(vec![
+                    MultiCallResults::from_json_rpc_result(vec![
                         (ANKR, Ok(JsonRpcResult::Result(ankr_fee_history.clone()))),
                         (
                             PUBLIC_NODE,
@@ -284,7 +288,7 @@ mod multi_call_results {
             );
 
             let two_distinct_results: MultiCallResults<FeeHistory> =
-                MultiCallResults::from_non_empty_iter(vec![
+                MultiCallResults::from_json_rpc_result(vec![
                     (ANKR, Ok(JsonRpcResult::Result(ankr_fee_history.clone()))),
                     (
                         PUBLIC_NODE,
@@ -299,7 +303,7 @@ mod multi_call_results {
             assert_eq!(
                 reduced,
                 Err(MultiCallError::InconsistentResults(
-                    MultiCallResults::from_non_empty_iter(vec![
+                    MultiCallResults::from_json_rpc_result(vec![
                         (ANKR, Ok(JsonRpcResult::Result(ankr_fee_history))),
                         (
                             PUBLIC_NODE,
@@ -321,7 +325,7 @@ mod multi_call_results {
             };
 
             let results: MultiCallResults<FeeHistory> =
-                MultiCallResults::from_non_empty_iter(vec![
+                MultiCallResults::from_json_rpc_result(vec![
                     (ANKR, Ok(JsonRpcResult::Result(fee.clone()))),
                     (
                         PUBLIC_NODE,
@@ -335,7 +339,7 @@ mod multi_call_results {
             assert_eq!(
                 reduced,
                 Err(MultiCallError::InconsistentResults(
-                    MultiCallResults::from_non_empty_iter(vec![
+                    MultiCallResults::from_json_rpc_result(vec![
                         (ANKR, Ok(JsonRpcResult::Result(fee.clone()))),
                         (PUBLIC_NODE, Ok(JsonRpcResult::Result(inconsistent_fee))),
                     ])
@@ -346,7 +350,7 @@ mod multi_call_results {
         #[test]
         fn should_fail_upon_any_error() {
             let results: MultiCallResults<FeeHistory> =
-                MultiCallResults::from_non_empty_iter(vec![
+                MultiCallResults::from_json_rpc_result(vec![
                     (ANKR, Ok(JsonRpcResult::Result(fee_history()))),
                     (
                         PUBLIC_NODE,
@@ -363,10 +367,12 @@ mod multi_call_results {
 
             assert_eq!(
                 reduced,
-                Err(ConsistentJsonRpcError {
-                    code: -32700,
-                    message: "error".to_string()
-                })
+                Err(MultiCallError::ConsistentError(RpcError::JsonRpcError(
+                    JsonRpcError {
+                        code: -32700,
+                        message: "error".to_string()
+                    }
+                )))
             );
         }
 
@@ -381,6 +387,13 @@ mod multi_call_results {
                     WeiPerGas::new(0x716724f03),
                     WeiPerGas::new(0x73b467f76),
                 ],
+                gas_used_ratio: vec![
+                    0.6332004,
+                    0.47556506666666665,
+                    0.4432122666666667,
+                    0.4092196,
+                    0.5811903,
+                ],
                 reward: vec![
                     vec![WeiPerGas::new(0x5f5e100)],
                     vec![WeiPerGas::new(0x55d4a80)],
@@ -394,9 +407,9 @@ mod multi_call_results {
 }
 
 mod eth_get_transaction_receipt {
-    use crate::eth_rpc::Hash;
-    use crate::eth_rpc_client::responses::{TransactionReceipt, TransactionStatus};
-    use crate::numeric::{BlockNumber, GasAmount, WeiPerGas};
+    use crate::rpc_client::eth_rpc::Hash;
+    use crate::rpc_client::numeric::{BlockNumber, GasAmount, WeiPerGas};
+    use crate::rpc_client::responses::{TransactionReceipt, TransactionStatus};
     use assert_matches::assert_matches;
     use proptest::proptest;
     use std::str::FromStr;
@@ -437,6 +450,13 @@ mod eth_get_transaction_receipt {
                     "0x0e59bd032b9b22aca5e2784e4cf114783512db00988c716cf17a1cc755a0a93d"
                 )
                 .unwrap(),
+                contract_address: None,
+                from: "0x1789f79e95324a47c5fd6693071188e82e9a3558".to_string(),
+                logs: vec![],
+                logs_bloom: "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string(),
+                to: "0xdd2851cdd40ae6536831558dd46db62fac7a844d".to_string(),
+                transaction_index: 0x32_u32.into(),
+                r#type: "0x2".to_string(),
             }
         )
     }
@@ -481,10 +501,10 @@ mod eth_get_transaction_receipt {
 }
 
 mod eth_get_transaction_count {
-    use crate::address::Address;
-    use crate::eth_rpc::{BlockSpec, BlockTag};
-    use crate::eth_rpc_client::requests::GetTransactionCountParams;
-    use crate::numeric::TransactionCount;
+    use crate::rpc_client::eth_rpc::{BlockSpec, BlockTag};
+    use crate::rpc_client::numeric::TransactionCount;
+    use crate::rpc_client::requests::GetTransactionCountParams;
+    use ic_ethereum_types::Address;
     use std::str::FromStr;
 
     #[test]

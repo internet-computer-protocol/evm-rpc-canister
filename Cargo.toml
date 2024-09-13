@@ -54,9 +54,11 @@ assert_matches = "1.5"
 ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-crypto-test-utils-reproducible-rng = { git = "https://github.com/dfinity/ic", rev = "release-2024-09-12_01-30-base" }
 ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 proptest = { workspace = true }
+rand = "0.8"
 
 [workspace.dependencies]
 candid = { version = "0.9" }

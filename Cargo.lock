@@ -1604,6 +1604,7 @@ dependencies = [
  "ic-cketh-minter",
  "ic-config",
  "ic-crypto-sha3 0.9.0 (git+https://github.com/dfinity/ic?rev=release-2024-09-12_01-30-base)",
+ "ic-crypto-test-utils-reproducible-rng",
  "ic-ethereum-types",
  "ic-ic00-types 0.8.0",
  "ic-metrics-encoder",
@@ -1619,6 +1620,7 @@ dependencies = [
  "num-derive",
  "num-traits",
  "proptest",
+ "rand",
  "serde",
  "serde_json",
  "thousands",
@@ -3254,6 +3256,15 @@ dependencies = [
  "hex",
  "ic-protobuf 0.8.0",
  "ic-types",
+]
+
+[[package]]
+name = "ic-crypto-test-utils-reproducible-rng"
+version = "0.9.0"
+source = "git+https://github.com/dfinity/ic?rev=release-2024-09-12_01-30-base#afe1a18291987667fdb52dac3ca44b1aebf7176e"
+dependencies = [
+ "rand",
+ "rand_chacha",
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 use crate::rpc_client::eth_rpc::{
     are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetBlockByNumberParams,
-    GetLogsParam, Hash, HttpResponsePayload, LogEntry, ResponseSizeEstimate,
+    GetLogsParam, Hash, HttpResponsePayload, JsonRpcResult, LogEntry, ResponseSizeEstimate,
     SendRawTransactionResult, HEADER_SIZE_LIMIT,
 };
 use crate::rpc_client::numeric::TransactionCount;
@@ -327,7 +327,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
 
 /// Aggregates responses of different providers to the same query.
 /// Guaranteed to be non-empty.
-#[derive(Debug, Clone, PartialEq, Eq, CandidType)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MultiCallResults<T> {
     pub results: BTreeMap<RpcService, Result<T, RpcError>>,
 }
@@ -341,6 +341,27 @@ impl<T> MultiCallResults<T> {
             panic!("BUG: MultiCallResults cannot be empty!")
         }
         Self { results }
+    }
+
+    fn from_json_rpc_result<
+        I: IntoIterator<Item = (RpcService, Result<JsonRpcResult<T>, RpcError>)>,
+    >(
+        iter: I,
+    ) -> Self {
+        Self::from_non_empty_iter(iter.into_iter().map(|(provider, result)| {
+            (
+                provider,
+                match result {
+                    Ok(json_rpc_result) => match json_rpc_result {
+                        JsonRpcResult::Result(value) => Ok(value),
+                        JsonRpcResult::Error { code, message } => {
+                            Err(RpcError::JsonRpcError(JsonRpcError { code, message }))
+                        }
+                    },
+                    Err(e) => Err(e),
+                },
+            )
+        }))
     }
 }
 
@@ -392,18 +413,17 @@ impl<T: PartialEq> MultiCallResults<T> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, CandidType)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum SingleCallError {
     HttpOutcallError(HttpOutcallError),
     JsonRpcError { code: i64, message: String },
 }
-#[derive(Debug, PartialEq, Eq, CandidType)]
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum MultiCallError<T> {
     ConsistentError(RpcError),
     InconsistentResults(MultiCallResults<T>),
 }
-
-impl<T> MultiCallError<T> {
 
 impl<T: Debug + PartialEq> MultiCallResults<T> {
     pub fn reduce_with_equality(self) -> Result<T, MultiCallError<T>> {
