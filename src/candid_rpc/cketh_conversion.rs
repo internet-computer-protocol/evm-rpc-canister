@@ -2,12 +2,12 @@
 //! This module is meant to be temporary and should be removed once the dependency on ckETH is removed,
 //! see <https://github.com/internet-computer-protocol/evm-rpc-canister/issues/243>
 
-use cketh_common::checked_amount::CheckedAmountOf;
-use cketh_common::eth_rpc::{Hash, Quantity};
+use crate::rpc_client::checked_amount::CheckedAmountOf;
+use crate::rpc_client::eth_rpc::{Hash, Quantity};
 use evm_rpc_types::{BlockTag, Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
 
 pub(super) fn into_block_spec(value: BlockTag) -> crate::rpc_client::eth_rpc::BlockSpec {
-    use cketh_common::eth_rpc::{self, BlockSpec};
+    use crate::rpc_client::eth_rpc::{self, BlockSpec};
     match value {
         BlockTag::Number(n) => BlockSpec::Number(into_checked_amount_of(n)),
         BlockTag::Latest => BlockSpec::Tag(eth_rpc::BlockTag::Latest),
@@ -132,7 +132,7 @@ pub(super) fn from_transaction_receipt(
     }
 }
 
-pub(super) fn from_block(value: cketh_common::eth_rpc::Block) -> evm_rpc_types::Block {
+pub(super) fn from_block(value: crate::rpc_client::eth_rpc::Block) -> evm_rpc_types::Block {
     evm_rpc_types::Block {
         base_fee_per_gas: value.base_fee_per_gas.map(from_checked_amount_of),
         number: from_checked_amount_of(value.number),
