@@ -1,6 +1,5 @@
-use crate::eth_rpc::{Hash, JsonRpcReply, JsonRpcResult, SendRawTransactionResult};
-use crate::logs::DEBUG;
-use ic_canister_log::log;
+use crate::log;
+use crate::rpc_client::eth_rpc::{Hash, JsonRpcReply, JsonRpcResult, SendRawTransactionResult};
 
 #[cfg(test)]
 mod tests;
