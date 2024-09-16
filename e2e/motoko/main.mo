@@ -57,7 +57,10 @@ shared ({ caller = installer }) actor class Main() {
                 #EthMainnet(#PublicNode),
             );
 
-            let service : EvmRpc.RpcService = #Chain(0x1 : Nat64);
+            let service : EvmRpc.RpcService = #Custom {
+                url = "https://ethereum-rpc.publicnode.com";
+                headers = null;
+            };
             let json = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":null,\"id\":1}";
             let maxResponseBytes : Nat64 = 1000;
 

@@ -293,9 +293,6 @@ pub(super) fn into_rpc_service(
     }
 
     match source {
-        evm_rpc_types::RpcService::Chain(id) => {
-            cketh_common::eth_rpc_client::providers::RpcService::Chain(id)
-        }
         evm_rpc_types::RpcService::Provider(id) => {
             cketh_common::eth_rpc_client::providers::RpcService::Provider(id)
         }
@@ -550,9 +547,6 @@ pub(super) fn from_rpc_service(
     }
 
     match service {
-        cketh_common::eth_rpc_client::providers::RpcService::Chain(id) => {
-            evm_rpc_types::RpcService::Chain(id)
-        }
         cketh_common::eth_rpc_client::providers::RpcService::Provider(id) => {
             evm_rpc_types::RpcService::Provider(id)
         }
