@@ -12,8 +12,11 @@ mod eth_rpc_client {
         assert_eq!(
             providers,
             &[
+                RpcService::EthSepolia(EthSepoliaService::Alchemy),
                 RpcService::EthSepolia(EthSepoliaService::Ankr),
-                RpcService::EthSepolia(EthSepoliaService::PublicNode)
+                RpcService::EthSepolia(EthSepoliaService::BlockPi),
+                RpcService::EthSepolia(EthSepoliaService::PublicNode),
+                RpcService::EthSepolia(EthSepoliaService::Sepolia)
             ]
         );
     }
@@ -28,9 +31,11 @@ mod eth_rpc_client {
         assert_eq!(
             providers,
             &[
+                RpcService::EthMainnet(EthMainnetService::Alchemy),
                 RpcService::EthMainnet(EthMainnetService::Ankr),
                 RpcService::EthMainnet(EthMainnetService::PublicNode),
-                RpcService::EthMainnet(EthMainnetService::Cloudflare)
+                RpcService::EthMainnet(EthMainnetService::Cloudflare),
+                RpcService::EthMainnet(EthMainnetService::Llama)
             ]
         );
     }
@@ -199,6 +204,7 @@ mod multi_call_results {
         use crate::rpc_client::tests::multi_call_results::{ANKR, CLOUDFLARE, PUBLIC_NODE};
         use crate::rpc_client::{MultiCallError, MultiCallResults};
         use evm_rpc_types::{JsonRpcError, RpcError};
+        use proptest::collection::vec;
 
         #[test]
         fn should_get_unanimous_fee_history() {
@@ -365,15 +371,7 @@ mod multi_call_results {
                 .clone()
                 .reduce_with_strict_majority_by_key(|fee_history| fee_history.oldest_block);
 
-            assert_eq!(
-                reduced,
-                Err(MultiCallError::ConsistentError(RpcError::JsonRpcError(
-                    JsonRpcError {
-                        code: -32700,
-                        message: "error".to_string()
-                    }
-                )))
-            );
+            assert_eq!(reduced, Err(MultiCallError::InconsistentResults(results)));
         }
 
         fn fee_history() -> FeeHistory {
