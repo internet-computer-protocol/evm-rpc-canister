@@ -14,7 +14,7 @@ use crate::util::hostname_from_url;
 use crate::validate::validate_api_key;
 
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
-pub struct InitArgs {
+pub struct InstallArgs {
     pub demo: Option<bool>,
     #[serde(rename = "manageApiKeys")]
     pub manage_api_keys: Option<Vec<Principal>>,
