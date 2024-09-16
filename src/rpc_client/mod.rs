@@ -19,6 +19,8 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::marker::PhantomData;
+use ic_canister_log::log;
+use crate::logs::{DEBUG, INFO};
 
 pub mod checked_amount;
 pub(crate) mod eth_rpc;
@@ -30,16 +32,6 @@ pub(crate) mod responses;
 
 #[cfg(test)]
 mod tests;
-
-//TODO: Dummy log. use ic_canister_log::log
-#[macro_export]
-macro_rules! log {
-    ($sink:expr, $message:expr $(,$args:expr)* $(,)*) => {{
-        let message = std::format!($message $(,$args)*);
-        // Print the message for convenience for local development (e.g. integration tests)
-        println!("{}", &message);
-    }}
-}
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]

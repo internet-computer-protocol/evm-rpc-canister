@@ -1,7 +1,7 @@
 //! This module contains definitions for communicating with an Ethereum API using the [JSON RPC](https://ethereum.org/en/developers/docs/apis/json-rpc/)
 //! interface.
 
-use crate::log;
+use crate::logs::{DEBUG, TRACE_HTTP};
 use crate::memory::next_request_id;
 use crate::rpc_client::checked_amount::CheckedAmountOf;
 use crate::rpc_client::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
@@ -11,6 +11,7 @@ use crate::rpc_client::RpcTransport;
 use candid::candid_method;
 use ethnum;
 use evm_rpc_types::{HttpOutcallError, JsonRpcError, RpcError, RpcService};
+use ic_canister_log::log;
 use ic_cdk::api::call::RejectionCode;
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs,

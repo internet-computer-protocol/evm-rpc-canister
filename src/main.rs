@@ -3,6 +3,7 @@ use evm_rpc::accounting::{get_cost_with_collateral, get_http_request_cost};
 use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::constants::NODES_IN_SUBNET;
 use evm_rpc::http::get_http_response_body;
+use evm_rpc::logs::INFO;
 use evm_rpc::memory::{
     insert_api_key, is_api_key_principal, is_demo_active, remove_api_key, set_api_key_principals,
     set_demo_active,
@@ -12,11 +13,11 @@ use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_
 use evm_rpc::types::{Provider, ProviderId, RpcAccess};
 use evm_rpc::{
     http::{json_rpc_request, transform_http_request},
-    log,
     memory::UNSTABLE_METRICS,
     types::{InitArgs, MetricRpcMethod, Metrics},
 };
 use evm_rpc_types::{Hex32, MultiRpcResult, RpcResult};
+use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
