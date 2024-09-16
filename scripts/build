@@ -121,7 +121,7 @@ function build_canister() {
         ic-wasm "$canister.wasm" -o "$canister.wasm" metadata candid:service -f "candid/$canister.did" -v public
 
         # Indicate the EVM RPC canister init argument type
-        ic-wasm "$canister.wasm" -o "$canister.wasm" metadata candid:args -d "(InitArgs)" -v public
+        ic-wasm "$canister.wasm" -o "$canister.wasm" metadata candid:args -d "(InstallArgs)" -v public
 
         # Write metadata for dfx
         asset_name="evm_rpc.wasm.gz"
