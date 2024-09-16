@@ -28,7 +28,7 @@ impl Sink for PrintProxySink {
     }
 }
 
-#[derive(Copy, Clone, Debug, Deserialize, serde::Serialize)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Deserialize, serde::Serialize)]
 pub enum Priority {
     Info,
     TraceHttp,
@@ -66,7 +66,7 @@ impl FromStr for Sort {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, serde::Serialize)]
 pub struct LogEntry {
     pub timestamp: u64,
     pub priority: Priority,
@@ -145,4 +145,3 @@ impl Log {
         self.entries.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
     }
 }
-
