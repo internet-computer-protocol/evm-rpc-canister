@@ -99,13 +99,7 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
                         )
                     }
                 });
-                MultiRpcResult::Inconsistent(
-                    multi_call_results
-                        .results
-                        .into_iter()
-                        .map(|(service, result)| (service, result))
-                        .collect(),
-                )
+                MultiRpcResult::Inconsistent(multi_call_results.results.into_iter().collect())
             }
         },
     }

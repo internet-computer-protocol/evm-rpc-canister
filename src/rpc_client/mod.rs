@@ -388,7 +388,7 @@ impl<T: PartialEq> MultiCallResults<T> {
                         first_error = Some((provider.clone(), result));
                     }
                     Some((first_error_provider, error)) => {
-                        if !are_errors_consistent(&error, result) {
+                        if !are_errors_consistent(error, result) {
                             return Err(MultiCallError::InconsistentResults(self));
                         }
                         first_error = Some((first_error_provider, error));

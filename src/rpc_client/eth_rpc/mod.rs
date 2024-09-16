@@ -18,7 +18,6 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use ic_cdk_macros::query;
 use ic_ethereum_types::Address;
-pub use metrics::encode as encode_metrics;
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt;
@@ -751,6 +750,7 @@ fn sort_by_hash<T: Serialize + DeserializeOwned>(to_sort: &mut [T]) {
     });
 }
 
+#[allow(dead_code)] //TODO 243: hook-up to existing metrics
 pub(super) mod metrics {
     use ic_metrics_encoder::MetricsEncoder;
     use std::cell::RefCell;

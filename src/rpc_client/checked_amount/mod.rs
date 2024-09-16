@@ -261,7 +261,7 @@ impl<'de, Unit> Deserialize<'de> for CheckedAmountOf<Unit> {
         impl<Unit> Default for CheckedAmountVisitor<Unit> {
             fn default() -> Self {
                 Self {
-                    phantom: PhantomData::default(),
+                    phantom: PhantomData,
                 }
             }
         }

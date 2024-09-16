@@ -211,32 +211,32 @@ pub(super) fn into_rpc_services(
             services,
         } => services
             .into_iter()
-            .map(|service| evm_rpc_types::RpcService::Custom(service))
+            .map(evm_rpc_types::RpcService::Custom)
             .collect(),
         evm_rpc_types::RpcServices::EthMainnet(services) => services
             .unwrap_or_else(|| default_eth_mainnet_services.to_vec())
             .into_iter()
-            .map(|service| evm_rpc_types::RpcService::EthMainnet(service))
+            .map(evm_rpc_types::RpcService::EthMainnet)
             .collect(),
         evm_rpc_types::RpcServices::EthSepolia(services) => services
             .unwrap_or_else(|| default_eth_sepolia_services.to_vec())
             .into_iter()
-            .map(|service| evm_rpc_types::RpcService::EthSepolia(service))
+            .map(evm_rpc_types::RpcService::EthSepolia)
             .collect(),
         evm_rpc_types::RpcServices::ArbitrumOne(services) => services
             .unwrap_or_else(|| default_l2_mainnet_services.to_vec())
             .into_iter()
-            .map(|service| evm_rpc_types::RpcService::ArbitrumOne(service))
+            .map(evm_rpc_types::RpcService::ArbitrumOne)
             .collect(),
         evm_rpc_types::RpcServices::BaseMainnet(services) => services
             .unwrap_or_else(|| default_l2_mainnet_services.to_vec())
             .into_iter()
-            .map(|service| evm_rpc_types::RpcService::BaseMainnet(service))
+            .map(evm_rpc_types::RpcService::BaseMainnet)
             .collect(),
         evm_rpc_types::RpcServices::OptimismMainnet(services) => services
             .unwrap_or_else(|| default_l2_mainnet_services.to_vec())
             .into_iter()
-            .map(|service| evm_rpc_types::RpcService::OptimismMainnet(service))
+            .map(evm_rpc_types::RpcService::OptimismMainnet)
             .collect(),
     }
 }

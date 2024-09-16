@@ -203,8 +203,6 @@ mod multi_call_results {
         use crate::rpc_client::numeric::{BlockNumber, WeiPerGas};
         use crate::rpc_client::tests::multi_call_results::{ANKR, CLOUDFLARE, PUBLIC_NODE};
         use crate::rpc_client::{MultiCallError, MultiCallResults};
-        use evm_rpc_types::{JsonRpcError, RpcError};
-        use proptest::collection::vec;
 
         #[test]
         fn should_get_unanimous_fee_history() {
