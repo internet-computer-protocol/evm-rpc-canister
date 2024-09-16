@@ -1,6 +1,11 @@
 #[cfg(test)]
 mod tests;
 
+mod request;
+mod response;
+mod result;
+mod rpc_client;
+
 use candid::types::{Serializer, Type};
 use candid::{CandidType, Nat};
 use hex::FromHexError;
@@ -9,12 +14,12 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 use std::str::FromStr;
 
-mod request;
-mod response;
-mod rpc_client;
-
 pub use request::{FeeHistoryArgs, GetLogsArgs, GetTransactionCountArgs};
 pub use response::{Block, FeeHistory, LogEntry, SendRawTransactionStatus, TransactionReceipt};
+pub use result::{
+    HttpOutcallError, JsonRpcError, MultiRpcResult, ProviderError, RpcError, RpcResult,
+    ValidationError,
+};
 pub use rpc_client::{
     EthMainnetService, EthSepoliaService, HttpHeader, L2MainnetService, RpcApi, RpcConfig,
     RpcService, RpcServices,

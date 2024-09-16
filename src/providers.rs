@@ -1,5 +1,6 @@
-use cketh_common::eth_rpc::ProviderError;
-use evm_rpc_types::{EthMainnetService, EthSepoliaService, L2MainnetService, RpcApi, RpcService};
+use evm_rpc_types::{
+    EthMainnetService, EthSepoliaService, L2MainnetService, ProviderError, RpcApi, RpcService,
+};
 use std::collections::HashMap;
 
 use crate::{

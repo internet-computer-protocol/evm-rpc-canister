@@ -1,5 +1,4 @@
 use candid::{CandidType, Principal};
-use cketh_common::eth_rpc::RpcError;
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_stable_structures::{BoundedStorable, Storable};
 use serde::{Deserialize, Serialize};
@@ -348,151 +347,12 @@ pub enum RpcAuth {
     },
 }
 
-pub type RpcResult<T> = Result<T, RpcError>;
-
-#[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize)]
-pub enum MultiRpcResult<T> {
-    Consistent(RpcResult<T>),
-    Inconsistent(Vec<(evm_rpc_types::RpcService, RpcResult<T>)>),
-}
-
-impl<T> MultiRpcResult<T> {
-    pub fn map<R>(self, mut f: impl FnMut(T) -> R) -> MultiRpcResult<R> {
-        match self {
-            MultiRpcResult::Consistent(result) => MultiRpcResult::Consistent(result.map(f)),
-            MultiRpcResult::Inconsistent(results) => MultiRpcResult::Inconsistent(
-                results
-                    .into_iter()
-                    .map(|(service, result)| {
-                        (
-                            service,
-                            match result {
-                                Ok(ok) => Ok(f(ok)),
-                                Err(err) => Err(err),
-                            },
-                        )
-                    })
-                    .collect(),
-            ),
-        }
-    }
-
-    pub fn consistent(self) -> Option<RpcResult<T>> {
-        match self {
-            MultiRpcResult::Consistent(result) => Some(result),
-            MultiRpcResult::Inconsistent(_) => None,
-        }
-    }
-
-    pub fn inconsistent(self) -> Option<Vec<(evm_rpc_types::RpcService, RpcResult<T>)>> {
-        match self {
-            MultiRpcResult::Consistent(_) => None,
-            MultiRpcResult::Inconsistent(results) => Some(results),
-        }
-    }
-
-    pub fn expect_consistent(self) -> RpcResult<T> {
-        self.consistent().expect("expected consistent results")
-    }
-
-    pub fn expect_inconsistent(self) -> Vec<(evm_rpc_types::RpcService, RpcResult<T>)> {
-        self.inconsistent().expect("expected inconsistent results")
-    }
-}
-
-impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
-    fn from(result: RpcResult<T>) -> Self {
-        MultiRpcResult::Consistent(result)
-    }
-}
-
 #[cfg(test)]
 mod test {
     use candid::Principal;
-    use cketh_common::eth_rpc::RpcError;
     use ic_stable_structures::Storable;
 
-    use crate::types::{ApiKey, BoolStorable, MultiRpcResult, PrincipalStorable};
-
-    #[test]
-    fn test_multi_rpc_result_map() {
-        use cketh_common::eth_rpc::ProviderError;
-
-        let err = RpcError::ProviderError(ProviderError::ProviderNotFound);
-        assert_eq!(
-            MultiRpcResult::Consistent(Ok(5)).map(|n| n + 1),
-            MultiRpcResult::Consistent(Ok(6))
-        );
-        assert_eq!(
-            MultiRpcResult::Consistent(Err(err.clone())).map(|()| unreachable!()),
-            MultiRpcResult::Consistent(Err(err.clone()))
-        );
-        assert_eq!(
-            MultiRpcResult::Inconsistent(vec![(
-                evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
-                Ok(5)
-            )])
-            .map(|n| n + 1),
-            MultiRpcResult::Inconsistent(vec![(
-                evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
-                Ok(6)
-            )])
-        );
-        assert_eq!(
-            MultiRpcResult::Inconsistent(vec![
-                (
-                    evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
-                    Ok(5)
-                ),
-                (
-                    evm_rpc_types::RpcService::EthMainnet(
-                        evm_rpc_types::EthMainnetService::Cloudflare
-                    ),
-                    Ok(10)
-                )
-            ])
-            .map(|n| n + 1),
-            MultiRpcResult::Inconsistent(vec![
-                (
-                    evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
-                    Ok(6)
-                ),
-                (
-                    evm_rpc_types::RpcService::EthMainnet(
-                        evm_rpc_types::EthMainnetService::Cloudflare
-                    ),
-                    Ok(11)
-                )
-            ])
-        );
-        assert_eq!(
-            MultiRpcResult::Inconsistent(vec![
-                (
-                    evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
-                    Ok(5)
-                ),
-                (
-                    evm_rpc_types::RpcService::EthMainnet(
-                        evm_rpc_types::EthMainnetService::PublicNode
-                    ),
-                    Err(err.clone())
-                )
-            ])
-            .map(|n| n + 1),
-            MultiRpcResult::Inconsistent(vec![
-                (
-                    evm_rpc_types::RpcService::EthMainnet(evm_rpc_types::EthMainnetService::Ankr),
-                    Ok(6)
-                ),
-                (
-                    evm_rpc_types::RpcService::EthMainnet(
-                        evm_rpc_types::EthMainnetService::PublicNode
-                    ),
-                    Err(err)
-                )
-            ])
-        );
-    }
+    use crate::types::{ApiKey, BoolStorable, PrincipalStorable};
 
     #[test]
     fn test_api_key_debug_output() {

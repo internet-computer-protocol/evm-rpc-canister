@@ -1,12 +1,15 @@
 mod mock;
 
-use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
-
 use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
-use cketh_common::{
-    eth_rpc::{HttpOutcallError, JsonRpcError, ProviderError, RpcError},
-    numeric::Wei,
+use evm_rpc::{
+    constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
+    providers::PROVIDERS,
+    types::{InitArgs, Metrics, ProviderId, RpcAccess, RpcMethod},
+};
+use evm_rpc_types::{
+    EthMainnetService, EthSepoliaService, Hex, Hex20, Hex32, HttpOutcallError, JsonRpcError,
+    MultiRpcResult, Nat256, ProviderError, RpcApi, RpcError, RpcResult, RpcService, RpcServices,
 };
 use ic_base_types::{CanisterId, PrincipalId};
 use ic_cdk::api::management_canister::http_request::{
@@ -20,18 +23,9 @@ use ic_state_machine_tests::{
 };
 use ic_test_utilities_load_wasm::load_wasm;
 use maplit::hashmap;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-
-use evm_rpc::{
-    constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
-    providers::PROVIDERS,
-    types::{InitArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod, RpcResult},
-};
-use evm_rpc_types::{
-    EthMainnetService, EthSepoliaService, Hex, Hex20, Hex32, Nat256, RpcApi, RpcService,
-    RpcServices,
-};
 use mock::{MockOutcall, MockOutcallBuilder};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
 const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
@@ -596,8 +590,8 @@ fn should_decode_renamed_field() {
 
 #[test]
 fn should_decode_checked_amount() {
-    let value = Wei::new(123);
-    assert_eq!(Decode!(&Encode!(&value).unwrap(), Wei).unwrap(), value);
+    let value = Nat256::from(123_u32);
+    assert_eq!(Decode!(&Encode!(&value).unwrap(), Nat256).unwrap(), value);
 }
 
 #[test]
@@ -958,7 +952,7 @@ fn candid_rpc_should_err_when_service_unavailable() {
     assert_eq!(
         result,
         Err(RpcError::HttpOutcallError(
-            cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
+            HttpOutcallError::InvalidHttpJsonRpcResponse {
                 status: 503,
                 body: "Service unavailable".to_string(),
                 parsing_error: None,
@@ -1293,7 +1287,7 @@ fn candid_rpc_should_recognize_rate_limit() {
     assert_eq!(
         result,
         Err(RpcError::HttpOutcallError(
-            cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
+            HttpOutcallError::InvalidHttpJsonRpcResponse {
                 status: 429,
                 body: "(Rate limit error message)".to_string(),
                 parsing_error: None

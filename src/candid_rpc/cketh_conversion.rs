@@ -588,6 +588,148 @@ pub(super) fn from_rpc_service(
     }
 }
 
+pub(super) fn into_provider_error(
+    error: evm_rpc_types::ProviderError,
+) -> cketh_common::eth_rpc::ProviderError {
+    match error {
+        evm_rpc_types::ProviderError::NoPermission => {
+            cketh_common::eth_rpc::ProviderError::NoPermission
+        }
+        evm_rpc_types::ProviderError::TooFewCycles { expected, received } => {
+            cketh_common::eth_rpc::ProviderError::TooFewCycles { expected, received }
+        }
+        evm_rpc_types::ProviderError::ProviderNotFound => {
+            cketh_common::eth_rpc::ProviderError::ProviderNotFound
+        }
+        evm_rpc_types::ProviderError::MissingRequiredProvider => {
+            cketh_common::eth_rpc::ProviderError::MissingRequiredProvider
+        }
+    }
+}
+
+pub(super) fn into_rpc_error(value: evm_rpc_types::RpcError) -> cketh_common::eth_rpc::RpcError {
+    fn map_http_outcall_error(
+        error: evm_rpc_types::HttpOutcallError,
+    ) -> cketh_common::eth_rpc::HttpOutcallError {
+        match error {
+            evm_rpc_types::HttpOutcallError::IcError { code, message } => {
+                cketh_common::eth_rpc::HttpOutcallError::IcError { code, message }
+            }
+            evm_rpc_types::HttpOutcallError::InvalidHttpJsonRpcResponse {
+                status,
+                body,
+                parsing_error,
+            } => cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
+                status,
+                body,
+                parsing_error,
+            },
+        }
+    }
+
+    fn map_json_rpc_error(
+        error: evm_rpc_types::JsonRpcError,
+    ) -> cketh_common::eth_rpc::JsonRpcError {
+        cketh_common::eth_rpc::JsonRpcError {
+            code: error.code,
+            message: error.message,
+        }
+    }
+
+    fn map_validation_error(
+        error: evm_rpc_types::ValidationError,
+    ) -> cketh_common::eth_rpc::ValidationError {
+        match error {
+            evm_rpc_types::ValidationError::Custom(message) => {
+                cketh_common::eth_rpc::ValidationError::Custom(message)
+            }
+            evm_rpc_types::ValidationError::InvalidHex(message) => {
+                cketh_common::eth_rpc::ValidationError::InvalidHex(message)
+            }
+        }
+    }
+
+    match value {
+        evm_rpc_types::RpcError::ProviderError(error) => into_provider_error(error).into(),
+        evm_rpc_types::RpcError::HttpOutcallError(error) => map_http_outcall_error(error).into(),
+        evm_rpc_types::RpcError::JsonRpcError(error) => map_json_rpc_error(error).into(),
+        evm_rpc_types::RpcError::ValidationError(error) => map_validation_error(error).into(),
+    }
+}
+
+fn from_provider_error(
+    error: cketh_common::eth_rpc::ProviderError,
+) -> evm_rpc_types::ProviderError {
+    match error {
+        cketh_common::eth_rpc::ProviderError::NoPermission => {
+            evm_rpc_types::ProviderError::NoPermission
+        }
+        cketh_common::eth_rpc::ProviderError::TooFewCycles { expected, received } => {
+            evm_rpc_types::ProviderError::TooFewCycles { expected, received }
+        }
+        cketh_common::eth_rpc::ProviderError::ProviderNotFound => {
+            evm_rpc_types::ProviderError::ProviderNotFound
+        }
+        cketh_common::eth_rpc::ProviderError::MissingRequiredProvider => {
+            evm_rpc_types::ProviderError::MissingRequiredProvider
+        }
+    }
+}
+
+pub(super) fn from_rpc_error(value: cketh_common::eth_rpc::RpcError) -> evm_rpc_types::RpcError {
+    fn map_http_outcall_error(
+        error: cketh_common::eth_rpc::HttpOutcallError,
+    ) -> evm_rpc_types::HttpOutcallError {
+        match error {
+            cketh_common::eth_rpc::HttpOutcallError::IcError { code, message } => {
+                evm_rpc_types::HttpOutcallError::IcError { code, message }
+            }
+            cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
+                status,
+                body,
+                parsing_error,
+            } => evm_rpc_types::HttpOutcallError::InvalidHttpJsonRpcResponse {
+                status,
+                body,
+                parsing_error,
+            },
+        }
+    }
+
+    fn map_json_rpc_error(
+        error: cketh_common::eth_rpc::JsonRpcError,
+    ) -> evm_rpc_types::JsonRpcError {
+        evm_rpc_types::JsonRpcError {
+            code: error.code,
+            message: error.message,
+        }
+    }
+
+    fn map_validation_error(
+        error: cketh_common::eth_rpc::ValidationError,
+    ) -> evm_rpc_types::ValidationError {
+        match error {
+            cketh_common::eth_rpc::ValidationError::Custom(message) => {
+                evm_rpc_types::ValidationError::Custom(message)
+            }
+            cketh_common::eth_rpc::ValidationError::InvalidHex(message) => {
+                evm_rpc_types::ValidationError::InvalidHex(message)
+            }
+        }
+    }
+
+    match value {
+        cketh_common::eth_rpc::RpcError::ProviderError(error) => from_provider_error(error).into(),
+        cketh_common::eth_rpc::RpcError::HttpOutcallError(error) => {
+            map_http_outcall_error(error).into()
+        }
+        cketh_common::eth_rpc::RpcError::JsonRpcError(error) => map_json_rpc_error(error).into(),
+        cketh_common::eth_rpc::RpcError::ValidationError(error) => {
+            map_validation_error(error).into()
+        }
+    }
+}
+
 pub(super) fn into_hash(value: Hex32) -> Hash {
     Hash(value.into())
 }

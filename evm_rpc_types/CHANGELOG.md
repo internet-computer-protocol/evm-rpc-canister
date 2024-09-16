@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - v1.0 Move `RpcConfig` to this crate.
 - v1.0 Move `SendRawTransactionStatus` to this crate.
 - v1.0 Move `TransactionReceipt` to this crate.
-- v1.0 Move providers-related struct `EthMainnetService`, `EthSepoliaService`, `HttpHeader`, `L2MainnetService`,
-  `RpcApi`, `RpcConfig`,
-  `RpcService`, `RpcServices` to this crate.
+- v1.0 Move providers-related types `EthMainnetService`, `EthSepoliaService`, `HttpHeader`, `L2MainnetService`,
+  `RpcApi`, `RpcConfig`, `RpcService`, `RpcServices` to this crate.
+- v1.0 Move result-related types `HttpOutcallError`, `JsonRpcError`, `MultiRpcResult`, `ProviderError`, `RpcError`,
+  `RpcResult`, `ValidationError` to this crate.
