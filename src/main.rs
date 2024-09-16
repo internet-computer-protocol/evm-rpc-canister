@@ -10,7 +10,12 @@ use evm_rpc::memory::{
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
 use evm_rpc::types::{Provider, ProviderId, RpcAccess};
-use evm_rpc::{http::{json_rpc_request, transform_http_request}, log, memory::UNSTABLE_METRICS, types::{InitArgs, MetricRpcMethod, Metrics}};
+use evm_rpc::{
+    http::{json_rpc_request, transform_http_request},
+    log,
+    memory::UNSTABLE_METRICS,
+    types::{InitArgs, MetricRpcMethod, Metrics},
+};
 use evm_rpc_types::{Hex32, MultiRpcResult, RpcResult};
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
