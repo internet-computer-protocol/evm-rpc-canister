@@ -32,7 +32,6 @@ ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "1f551bea633543
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-certified-map = { workspace = true }
-cketh-common = { git = "https://github.com/dfinity/ic", rev = "1f551bea63354370b6e7a5037e96d464bdab3b41", package = "ic-cketh-minter" }
 maplit = "1.0"
 minicbor = { workspace = true }
 minicbor-derive = { workspace = true }
@@ -47,7 +46,7 @@ url = "2.5"
 async-trait = "0.1"
 hex = "0.4"
 ethers-core = "2.0"
-zeroize = "1.8"
+zeroize = {version = "1.8", features = ["zeroize_derive"]}
 
 [dev-dependencies]
 assert_matches = "1.5"
@@ -62,7 +61,7 @@ rand = "0.8"
 
 [workspace.dependencies]
 candid = { version = "0.9" }
-ethnum = "1.5.0"
+ethnum = { version = "1.5.0", features = ["serde"] }
 futures = "0.3.30"
 getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4.3"
