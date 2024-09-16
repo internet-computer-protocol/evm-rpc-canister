@@ -497,6 +497,6 @@ cketh_eth_rpc_call_retry_count_bucket{method="eth_test2",le="+Inf"} 4 12346789
 cketh_eth_rpc_call_retry_count_sum{method="eth_test2"} 6 12346789
 cketh_eth_rpc_call_retry_count_count{method="eth_test2"} 4 12346789
 "#
-            .trim()
+        .trim()
     );
 }
