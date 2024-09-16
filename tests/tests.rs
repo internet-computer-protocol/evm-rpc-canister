@@ -1,17 +1,15 @@
 mod mock;
 
-use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
-
 use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
-use cketh_common::{
-    address::Address,
-    eth_rpc::{HttpOutcallError, JsonRpcError, ProviderError, RpcError},
-    eth_rpc_client::{
-        providers::{EthMainnetService, EthSepoliaService, RpcApi, RpcService},
-        RpcConfig,
-    },
-    numeric::Wei,
+use evm_rpc::{
+    constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
+    providers::PROVIDERS,
+    types::{InitArgs, Metrics, ProviderId, RpcAccess, RpcMethod},
+};
+use evm_rpc_types::{
+    EthMainnetService, EthSepoliaService, Hex, Hex20, Hex32, HttpOutcallError, JsonRpcError,
+    MultiRpcResult, Nat256, ProviderError, RpcApi, RpcError, RpcResult, RpcService, RpcServices,
 };
 use ic_base_types::{CanisterId, PrincipalId};
 use ic_cdk::api::management_canister::http_request::{
@@ -25,17 +23,9 @@ use ic_state_machine_tests::{
 };
 use ic_test_utilities_load_wasm::load_wasm;
 use maplit::hashmap;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-
-use evm_rpc::{
-    constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
-    providers::PROVIDERS,
-    types::{
-        InitArgs, Metrics, MultiRpcResult, ProviderId, RpcAccess, RpcMethod, RpcResult, RpcServices,
-    },
-};
-use evm_rpc_types::{Hex, Hex20, Hex32, Nat256};
 use mock::{MockOutcall, MockOutcallBuilder};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
 const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
@@ -226,7 +216,7 @@ impl EvmRpcSetup {
     pub fn eth_get_logs(
         &self,
         source: RpcServices,
-        config: Option<RpcConfig>,
+        config: Option<evm_rpc_types::RpcConfig>,
         args: evm_rpc_types::GetLogsArgs,
     ) -> CallFlow<MultiRpcResult<Vec<evm_rpc_types::LogEntry>>> {
         self.call_update("eth_getLogs", Encode!(&source, &config, &args).unwrap())
@@ -235,7 +225,7 @@ impl EvmRpcSetup {
     pub fn eth_get_block_by_number(
         &self,
         source: RpcServices,
-        config: Option<RpcConfig>,
+        config: Option<evm_rpc_types::RpcConfig>,
         block: evm_rpc_types::BlockTag,
     ) -> CallFlow<MultiRpcResult<evm_rpc_types::Block>> {
         self.call_update(
@@ -247,7 +237,7 @@ impl EvmRpcSetup {
     pub fn eth_get_transaction_receipt(
         &self,
         source: RpcServices,
-        config: Option<RpcConfig>,
+        config: Option<evm_rpc_types::RpcConfig>,
         tx_hash: &str,
     ) -> CallFlow<MultiRpcResult<Option<evm_rpc_types::TransactionReceipt>>> {
         self.call_update(
@@ -259,7 +249,7 @@ impl EvmRpcSetup {
     pub fn eth_get_transaction_count(
         &self,
         source: RpcServices,
-        config: Option<RpcConfig>,
+        config: Option<evm_rpc_types::RpcConfig>,
         args: evm_rpc_types::GetTransactionCountArgs,
     ) -> CallFlow<MultiRpcResult<Nat256>> {
         self.call_update(
@@ -271,7 +261,7 @@ impl EvmRpcSetup {
     pub fn eth_fee_history(
         &self,
         source: RpcServices,
-        config: Option<RpcConfig>,
+        config: Option<evm_rpc_types::RpcConfig>,
         args: evm_rpc_types::FeeHistoryArgs,
     ) -> CallFlow<MultiRpcResult<Option<evm_rpc_types::FeeHistory>>> {
         self.call_update("eth_feeHistory", Encode!(&source, &config, &args).unwrap())
@@ -280,7 +270,7 @@ impl EvmRpcSetup {
     pub fn eth_send_raw_transaction(
         &self,
         source: RpcServices,
-        config: Option<RpcConfig>,
+        config: Option<evm_rpc_types::RpcConfig>,
         signed_raw_transaction_hex: &str,
     ) -> CallFlow<MultiRpcResult<evm_rpc_types::SendRawTransactionStatus>> {
         let signed_raw_transaction_hex: Hex = signed_raw_transaction_hex.parse().unwrap();
@@ -600,14 +590,14 @@ fn should_decode_renamed_field() {
 
 #[test]
 fn should_decode_checked_amount() {
-    let value = Wei::new(123);
-    assert_eq!(Decode!(&Encode!(&value).unwrap(), Wei).unwrap(), value);
+    let value = Nat256::from(123_u32);
+    assert_eq!(Decode!(&Encode!(&value).unwrap(), Nat256).unwrap(), value);
 }
 
 #[test]
 fn should_decode_address() {
-    let value = Address::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap();
-    assert_eq!(Decode!(&Encode!(&value).unwrap(), Address).unwrap(), value);
+    let value = Hex20::from_str("0xdAC17F958D2ee523a2206206994597C13D831ec7").unwrap();
+    assert_eq!(Decode!(&Encode!(&value).unwrap(), Hex20).unwrap(), value);
 }
 
 #[test]
@@ -962,7 +952,7 @@ fn candid_rpc_should_err_when_service_unavailable() {
     assert_eq!(
         result,
         Err(RpcError::HttpOutcallError(
-            cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
+            HttpOutcallError::InvalidHttpJsonRpcResponse {
                 status: 503,
                 body: "Service unavailable".to_string(),
                 parsing_error: None,
@@ -1297,7 +1287,7 @@ fn candid_rpc_should_recognize_rate_limit() {
     assert_eq!(
         result,
         Err(RpcError::HttpOutcallError(
-            cketh_common::eth_rpc::HttpOutcallError::InvalidHttpJsonRpcResponse {
+            HttpOutcallError::InvalidHttpJsonRpcResponse {
                 status: 429,
                 body: "(Rate limit error message)".to_string(),
                 parsing_error: None
@@ -1329,7 +1319,7 @@ fn should_use_custom_response_size_estimate() {
     let response = setup
         .eth_get_logs(
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Cloudflare])),
-            Some(RpcConfig {
+            Some(evm_rpc_types::RpcConfig {
                 response_size_estimate: Some(max_response_bytes),
             }),
             evm_rpc_types::GetLogsArgs {

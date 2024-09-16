@@ -1,11 +1,7 @@
-use std::collections::HashMap;
-
-use cketh_common::{
-    eth_rpc::ProviderError,
-    eth_rpc_client::providers::{
-        EthMainnetService, EthSepoliaService, L2MainnetService, RpcApi, RpcService,
-    },
+use evm_rpc_types::{
+    EthMainnetService, EthSepoliaService, L2MainnetService, ProviderError, RpcApi, RpcService,
 };
+use std::collections::HashMap;
 
 use crate::{
     constants::{

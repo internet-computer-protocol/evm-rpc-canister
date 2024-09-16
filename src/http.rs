@@ -1,18 +1,17 @@
-use cketh_common::eth_rpc::{HttpOutcallError, ProviderError, RpcError, ValidationError};
-use ic_cdk::api::management_canister::http_request::{
-    CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs,
-    TransformContext,
-};
-use num_traits::ToPrimitive;
-
 use crate::{
     accounting::{get_cost_with_collateral, get_http_request_cost},
     add_metric_entry,
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE, SERVICE_HOSTS_BLOCKLIST},
     memory::is_demo_active,
-    types::{MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcResult},
+    types::{MetricRpcHost, MetricRpcMethod, ResolvedRpcService},
     util::canonicalize_json,
 };
+use evm_rpc_types::{HttpOutcallError, ProviderError, RpcError, RpcResult, ValidationError};
+use ic_cdk::api::management_canister::http_request::{
+    CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs,
+    TransformContext,
+};
+use num_traits::ToPrimitive;
 
 pub async fn json_rpc_request(
     service: ResolvedRpcService,
