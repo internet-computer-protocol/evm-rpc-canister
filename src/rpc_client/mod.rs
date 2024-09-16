@@ -1,3 +1,4 @@
+use crate::logs::{DEBUG, INFO};
 use crate::rpc_client::eth_rpc::{
     are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetBlockByNumberParams,
     GetLogsParam, Hash, HttpResponsePayload, LogEntry, ResponseSizeEstimate,
@@ -14,13 +15,12 @@ use async_trait::async_trait;
 use evm_rpc_types::{
     HttpOutcallError, JsonRpcError, ProviderError, RpcApi, RpcConfig, RpcError, RpcService,
 };
+use ic_canister_log::log;
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::marker::PhantomData;
-use ic_canister_log::log;
-use crate::logs::{DEBUG, INFO};
 
 pub mod checked_amount;
 pub(crate) mod eth_rpc;
