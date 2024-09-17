@@ -1,18 +1,19 @@
 use crate::rpc_client::eth_rpc::{
-    are_errors_consistent,
-    Hash, HttpResponsePayload, ResponseSizeEstimate,
-    HEADER_SIZE_LIMIT,
+    are_errors_consistent, Hash, HttpResponsePayload, ResponseSizeEstimate, HEADER_SIZE_LIMIT,
 };
 use crate::rpc_client::numeric::TransactionCount;
-use json::requests::{BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam, GetTransactionCountParams};
-use json::responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult, TransactionReceipt};
 use evm_rpc_types::{
     EthMainnetService, EthSepoliaService, HttpOutcallError, JsonRpcError, L2MainnetService,
     ProviderError, RpcConfig, RpcError, RpcService, RpcServices,
 };
+use json::requests::{
+    BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam, GetTransactionCountParams,
+};
+use json::responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult, TransactionReceipt};
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
+
 pub mod checked_amount;
 pub(crate) mod eth_rpc;
 mod eth_rpc_error;

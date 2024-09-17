@@ -1,10 +1,10 @@
-use std::fmt::{Display, Formatter};
-use std::fmt;
-use serde::Serialize;
-use candid::Deserialize;
-use ic_ethereum_types::Address;
 use crate::rpc_client::eth_rpc::{FixedSizeData, Quantity};
 use crate::rpc_client::numeric::BlockNumber;
+use candid::Deserialize;
+use ic_ethereum_types::Address;
+use serde::Serialize;
+use std::fmt;
+use std::fmt::{Display, Formatter};
 
 /// Parameters of the [`eth_getTransactionCount`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_gettransactioncount) call.
 #[derive(Debug, Serialize, Clone)]
