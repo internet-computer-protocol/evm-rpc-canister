@@ -1,5 +1,5 @@
 use crate::rpc_client::eth_rpc::{
-    are_errors_consistent, BlockSpec, GetBlockByNumberParams,
+    are_errors_consistent, GetBlockByNumberParams,
     Hash, HttpResponsePayload, ResponseSizeEstimate,
     HEADER_SIZE_LIMIT,
 };
@@ -10,7 +10,7 @@ use evm_rpc_types::{
     EthMainnetService, EthSepoliaService, HttpOutcallError, JsonRpcError, L2MainnetService,
     ProviderError, RpcConfig, RpcError, RpcService, RpcServices,
 };
-use requests::{FeeHistoryParams, GetLogsParam};
+use requests::{BlockSpec, FeeHistoryParams, GetLogsParam};
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;

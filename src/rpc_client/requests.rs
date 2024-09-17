@@ -1,7 +1,10 @@
-use crate::rpc_client::eth_rpc::{BlockSpec, FixedSizeData, Quantity};
+use crate::rpc_client::eth_rpc::{FixedSizeData, Quantity};
+use crate::rpc_client::numeric::BlockNumber;
+use candid::Deserialize;
 use ic_ethereum_types::Address;
 use serde::Serialize;
-use candid::Deserialize;
+use std::fmt;
+use std::fmt::{Display, Formatter};
 
 /// Parameters of the [`eth_getTransactionCount`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_gettransactioncount) call.
 #[derive(Debug, Serialize, Clone)]
@@ -61,5 +64,81 @@ impl From<FeeHistoryParams> for (Quantity, BlockSpec, Vec<u8>) {
             value.highest_block,
             value.reward_percentiles,
         )
+    }
+}
+
+/// The block specification indicating which block to query.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum BlockSpec {
+    /// Query the block with the specified index.
+    Number(BlockNumber),
+    /// Query the block with the specified tag.
+    Tag(BlockTag),
+}
+
+impl Default for BlockSpec {
+    fn default() -> Self {
+        Self::Tag(BlockTag::default())
+    }
+}
+
+impl std::str::FromStr for BlockSpec {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.starts_with("0x") {
+            let block_number = BlockNumber::from_str_hex(s)
+                .map_err(|e| format!("failed to parse block number '{s}': {e}"))?;
+            return Ok(BlockSpec::Number(block_number));
+        }
+        Ok(BlockSpec::Tag(match s {
+            "latest" => BlockTag::Latest,
+            "safe" => BlockTag::Safe,
+            "finalized" => BlockTag::Finalized,
+            _ => return Err(format!("unknown block tag '{s}'")),
+        }))
+    }
+}
+
+impl From<BlockNumber> for BlockSpec {
+    fn from(value: BlockNumber) -> Self {
+        BlockSpec::Number(value)
+    }
+}
+
+/// Block tags.
+/// See <https://ethereum.org/en/developers/docs/apis/json-rpc/#default-block>
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum BlockTag {
+    /// The latest mined block.
+    #[default]
+    #[serde(rename = "latest")]
+    Latest,
+    /// The latest safe head block.
+    /// See
+    /// <https://www.alchemy.com/overviews/ethereum-commitment-levels#what-are-ethereum-commitment-levels>
+    #[serde(rename = "safe")]
+    Safe,
+    /// The latest finalized block.
+    /// See
+    /// <https://www.alchemy.com/overviews/ethereum-commitment-levels#what-are-ethereum-commitment-levels>
+    #[serde(rename = "finalized")]
+    Finalized,
+    #[serde(rename = "earliest")]
+    Earliest,
+    #[serde(rename = "pending")]
+    Pending,
+}
+
+impl Display for BlockTag {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Latest => write!(f, "latest"),
+            Self::Safe => write!(f, "safe"),
+            Self::Finalized => write!(f, "finalized"),
+            Self::Earliest => write!(f, "earliest"),
+            Self::Pending => write!(f, "pending"),
+        }
     }
 }

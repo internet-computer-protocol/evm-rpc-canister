@@ -4,17 +4,18 @@
 
 use crate::rpc_client::checked_amount::CheckedAmountOf;
 use crate::rpc_client::eth_rpc::{Hash, Quantity};
+use crate::rpc_client::requests::BlockSpec;
 use evm_rpc_types::{BlockTag, Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
 /**/
-pub(super) fn into_block_spec(value: BlockTag) -> crate::rpc_client::eth_rpc::BlockSpec {
-    use crate::rpc_client::eth_rpc::{self, BlockSpec};
+pub(super) fn into_block_spec(value: BlockTag) -> BlockSpec {
+    use crate::rpc_client::requests;
     match value {
         BlockTag::Number(n) => BlockSpec::Number(into_checked_amount_of(n)),
-        BlockTag::Latest => BlockSpec::Tag(eth_rpc::BlockTag::Latest),
-        BlockTag::Safe => BlockSpec::Tag(eth_rpc::BlockTag::Safe),
-        BlockTag::Finalized => BlockSpec::Tag(eth_rpc::BlockTag::Finalized),
-        BlockTag::Earliest => BlockSpec::Tag(eth_rpc::BlockTag::Earliest),
-        BlockTag::Pending => BlockSpec::Tag(eth_rpc::BlockTag::Pending),
+        BlockTag::Latest => BlockSpec::Tag(requests::BlockTag::Latest),
+        BlockTag::Safe => BlockSpec::Tag(requests::BlockTag::Safe),
+        BlockTag::Finalized => BlockSpec::Tag(requests::BlockTag::Finalized),
+        BlockTag::Earliest => BlockSpec::Tag(requests::BlockTag::Earliest),
+        BlockTag::Pending => BlockSpec::Tag(requests::BlockTag::Pending),
     }
 }
 
