@@ -22,8 +22,6 @@ use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
-use crate::rpc_client::requests::BlockSpec;
-
 #[cfg(test)]
 mod tests;
 
@@ -142,22 +140,6 @@ impl std::str::FromStr for Hash {
 }
 
 impl HttpResponsePayload for Hash {}
-
-/// Parameters of the [`eth_getBlockByNumber`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getblockbynumber) call.
-#[derive(Debug, Serialize, Clone)]
-#[serde(into = "(BlockSpec, bool)")]
-pub struct GetBlockByNumberParams {
-    /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
-    pub block: BlockSpec,
-    /// If true, returns the full transaction objects. If false, returns only the hashes of the transactions.
-    pub include_full_transactions: bool,
-}
-
-impl From<GetBlockByNumberParams> for (BlockSpec, bool) {
-    fn from(value: GetBlockByNumberParams) -> Self {
-        (value.block, value.include_full_transactions)
-    }
-}
 
 impl HttpResponsePayload for Wei {}
 
