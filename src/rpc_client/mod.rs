@@ -12,7 +12,8 @@ use crate::rpc_client::requests::GetTransactionCountParams;
 use crate::rpc_client::responses::TransactionReceipt;
 use async_trait::async_trait;
 use evm_rpc_types::{
-    HttpOutcallError, JsonRpcError, ProviderError, RpcApi, RpcConfig, RpcError, RpcService,
+    EthMainnetService, EthSepoliaService, HttpOutcallError, JsonRpcError, L2MainnetService,
+    ProviderError, RpcApi, RpcConfig, RpcError, RpcService, RpcServices,
 };
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 use serde::{de::DeserializeOwned, Serialize};
@@ -99,23 +100,87 @@ impl EthereumNetwork {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EthRpcClient<T: RpcTransport> {
     chain: EthereumNetwork,
+    //TODO 243: remove Option
     providers: Option<Vec<RpcService>>,
     config: RpcConfig,
     phantom: PhantomData<T>,
 }
 
 impl<T: RpcTransport> EthRpcClient<T> {
-    pub const fn new(
-        chain: EthereumNetwork,
-        providers: Option<Vec<RpcService>>,
-        config: RpcConfig,
-    ) -> Self {
-        Self {
-            chain,
-            providers,
-            config,
-            phantom: PhantomData,
+    pub fn new(source: RpcServices, config: Option<RpcConfig>) -> Result<Self, ProviderError> {
+        const DEFAULT_ETH_MAINNET_SERVICES: &[EthMainnetService] = &[
+            EthMainnetService::Ankr,
+            EthMainnetService::Cloudflare,
+            EthMainnetService::PublicNode,
+        ];
+        const DEFAULT_ETH_SEPOLIA_SERVICES: &[EthSepoliaService] = &[
+            EthSepoliaService::Ankr,
+            EthSepoliaService::BlockPi,
+            EthSepoliaService::PublicNode,
+        ];
+        const DEFAULT_L2_MAINNET_SERVICES: &[L2MainnetService] = &[
+            L2MainnetService::Ankr,
+            L2MainnetService::BlockPi,
+            L2MainnetService::PublicNode,
+        ];
+
+        let (chain, providers): (_, Vec<_>) = match source {
+            RpcServices::Custom { chain_id, services } => (
+                EthereumNetwork::from(chain_id),
+                services.into_iter().map(RpcService::Custom).collect(),
+            ),
+            RpcServices::EthMainnet(services) => (
+                EthereumNetwork::MAINNET,
+                services
+                    .unwrap_or_else(|| DEFAULT_ETH_MAINNET_SERVICES.to_vec())
+                    .into_iter()
+                    .map(RpcService::EthMainnet)
+                    .collect(),
+            ),
+            RpcServices::EthSepolia(services) => (
+                EthereumNetwork::SEPOLIA,
+                services
+                    .unwrap_or_else(|| DEFAULT_ETH_SEPOLIA_SERVICES.to_vec())
+                    .into_iter()
+                    .map(RpcService::EthSepolia)
+                    .collect(),
+            ),
+            RpcServices::ArbitrumOne(services) => (
+                EthereumNetwork::ARBITRUM,
+                services
+                    .unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec())
+                    .into_iter()
+                    .map(RpcService::ArbitrumOne)
+                    .collect(),
+            ),
+            RpcServices::BaseMainnet(services) => (
+                EthereumNetwork::BASE,
+                services
+                    .unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec())
+                    .into_iter()
+                    .map(RpcService::BaseMainnet)
+                    .collect(),
+            ),
+            RpcServices::OptimismMainnet(services) => (
+                EthereumNetwork::OPTIMISM,
+                services
+                    .unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec())
+                    .into_iter()
+                    .map(RpcService::OptimismMainnet)
+                    .collect(),
+            ),
+        };
+
+        if providers.is_empty() {
+            return Err(ProviderError::ProviderNotFound);
         }
+
+        Ok(Self {
+            chain,
+            providers: Some(providers),
+            config: config.unwrap_or_default(),
+            phantom: PhantomData,
+        })
     }
 
     fn providers(&self) -> &[RpcService] {

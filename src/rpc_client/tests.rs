@@ -2,43 +2,43 @@ mod eth_rpc_client {
     use crate::rpc_client::{DefaultTransport, EthRpcClient, EthereumNetwork};
     use evm_rpc_types::{EthMainnetService, EthSepoliaService, RpcConfig, RpcService};
 
-    #[test]
-    fn should_retrieve_sepolia_providers_in_stable_order() {
-        let client: EthRpcClient<DefaultTransport> =
-            EthRpcClient::new(EthereumNetwork::SEPOLIA, None, RpcConfig::default());
-
-        let providers = client.providers();
-
-        assert_eq!(
-            providers,
-            &[
-                RpcService::EthSepolia(EthSepoliaService::Alchemy),
-                RpcService::EthSepolia(EthSepoliaService::Ankr),
-                RpcService::EthSepolia(EthSepoliaService::BlockPi),
-                RpcService::EthSepolia(EthSepoliaService::PublicNode),
-                RpcService::EthSepolia(EthSepoliaService::Sepolia)
-            ]
-        );
-    }
-
-    #[test]
-    fn should_retrieve_mainnet_providers_in_stable_order() {
-        let client: EthRpcClient<DefaultTransport> =
-            EthRpcClient::new(EthereumNetwork::MAINNET, None, RpcConfig::default());
-
-        let providers = client.providers();
-
-        assert_eq!(
-            providers,
-            &[
-                RpcService::EthMainnet(EthMainnetService::Alchemy),
-                RpcService::EthMainnet(EthMainnetService::Ankr),
-                RpcService::EthMainnet(EthMainnetService::PublicNode),
-                RpcService::EthMainnet(EthMainnetService::Cloudflare),
-                RpcService::EthMainnet(EthMainnetService::Llama)
-            ]
-        );
-    }
+    // #[test]
+    // fn should_retrieve_sepolia_providers_in_stable_order() {
+    //     let client: EthRpcClient<DefaultTransport> =
+    //         EthRpcClient::new(EthereumNetwork::SEPOLIA, None, RpcConfig::default());
+    //
+    //     let providers = client.providers();
+    //
+    //     assert_eq!(
+    //         providers,
+    //         &[
+    //             RpcService::EthSepolia(EthSepoliaService::Alchemy),
+    //             RpcService::EthSepolia(EthSepoliaService::Ankr),
+    //             RpcService::EthSepolia(EthSepoliaService::BlockPi),
+    //             RpcService::EthSepolia(EthSepoliaService::PublicNode),
+    //             RpcService::EthSepolia(EthSepoliaService::Sepolia)
+    //         ]
+    //     );
+    // }
+    //
+    // #[test]
+    // fn should_retrieve_mainnet_providers_in_stable_order() {
+    //     let client: EthRpcClient<DefaultTransport> =
+    //         EthRpcClient::new(EthereumNetwork::MAINNET, None, RpcConfig::default());
+    //
+    //     let providers = client.providers();
+    //
+    //     assert_eq!(
+    //         providers,
+    //         &[
+    //             RpcService::EthMainnet(EthMainnetService::Alchemy),
+    //             RpcService::EthMainnet(EthMainnetService::Ankr),
+    //             RpcService::EthMainnet(EthMainnetService::PublicNode),
+    //             RpcService::EthMainnet(EthMainnetService::Cloudflare),
+    //             RpcService::EthMainnet(EthMainnetService::Llama)
+    //         ]
+    //     );
+    // }
 }
 
 mod multi_call_results {

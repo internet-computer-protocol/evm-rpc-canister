@@ -1,17 +1,5 @@
 mod cketh_conversion;
 
-use async_trait::async_trait;
-use candid::Nat;
-use ethers_core::{types::Transaction, utils::rlp};
-use evm_rpc_types::{
-    Hex, Hex32, MultiRpcResult, ProviderError, RpcApi, RpcError, RpcResult, RpcService,
-    RpcServices, ValidationError,
-};
-use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
-
-use crate::constants::{
-    DEFAULT_ETH_MAINNET_SERVICES, DEFAULT_ETH_SEPOLIA_SERVICES, DEFAULT_L2_MAINNET_SERVICES,
-};
 use crate::rpc_client::{EthRpcClient, MultiCallError, RpcTransport};
 use crate::{
     accounting::get_http_request_cost,
@@ -21,6 +9,14 @@ use crate::{
     providers::resolve_rpc_service,
     types::{MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcMethod},
 };
+use async_trait::async_trait;
+use candid::Nat;
+use ethers_core::{types::Transaction, utils::rlp};
+use evm_rpc_types::{
+    Hex, Hex32, MultiRpcResult, ProviderError, RpcApi, RpcError, RpcResult, RpcService,
+    ValidationError,
+};
+use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct CanisterTransport;
@@ -50,29 +46,6 @@ impl RpcTransport for CanisterTransport {
         let rpc_method = MetricRpcMethod(method.to_string());
         http_request(rpc_method, service, request, cycles_cost).await
     }
-}
-
-fn check_services<T>(services: Vec<T>) -> RpcResult<Vec<T>> {
-    if services.is_empty() {
-        Err(ProviderError::ProviderNotFound)?;
-    }
-    Ok(services)
-}
-
-fn get_rpc_client(
-    source: RpcServices,
-    config: evm_rpc_types::RpcConfig,
-) -> RpcResult<EthRpcClient<CanisterTransport>> {
-    use crate::candid_rpc::cketh_conversion::{into_ethereum_network, into_rpc_services};
-
-    let chain = into_ethereum_network(&source);
-    let providers = check_services(into_rpc_services(
-        source,
-        DEFAULT_ETH_MAINNET_SERVICES,
-        DEFAULT_ETH_SEPOLIA_SERVICES,
-        DEFAULT_L2_MAINNET_SERVICES,
-    ))?;
-    Ok(EthRpcClient::new(chain, Some(providers), config))
 }
 
 fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) -> MultiRpcResult<T> {
@@ -115,7 +88,7 @@ impl CandidRpcClient {
         config: Option<evm_rpc_types::RpcConfig>,
     ) -> RpcResult<Self> {
         Ok(Self {
-            client: get_rpc_client(source, config.unwrap_or_default())?,
+            client: EthRpcClient::new(source, config)?,
         })
     }
 

@@ -182,65 +182,6 @@ pub(super) fn from_send_raw_transaction_result(
     }
 }
 
-pub(super) fn into_ethereum_network(
-    source: &evm_rpc_types::RpcServices,
-) -> crate::rpc_client::EthereumNetwork {
-    match &source {
-        evm_rpc_types::RpcServices::Custom { chain_id, .. } => {
-            crate::rpc_client::EthereumNetwork::from(*chain_id)
-        }
-        evm_rpc_types::RpcServices::EthMainnet(_) => crate::rpc_client::EthereumNetwork::MAINNET,
-        evm_rpc_types::RpcServices::EthSepolia(_) => crate::rpc_client::EthereumNetwork::SEPOLIA,
-        evm_rpc_types::RpcServices::ArbitrumOne(_) => crate::rpc_client::EthereumNetwork::ARBITRUM,
-        evm_rpc_types::RpcServices::BaseMainnet(_) => crate::rpc_client::EthereumNetwork::BASE,
-        evm_rpc_types::RpcServices::OptimismMainnet(_) => {
-            crate::rpc_client::EthereumNetwork::OPTIMISM
-        }
-    }
-}
-
-pub(super) fn into_rpc_services(
-    source: evm_rpc_types::RpcServices,
-    default_eth_mainnet_services: &[evm_rpc_types::EthMainnetService],
-    default_eth_sepolia_services: &[evm_rpc_types::EthSepoliaService],
-    default_l2_mainnet_services: &[evm_rpc_types::L2MainnetService],
-) -> Vec<evm_rpc_types::RpcService> {
-    match source {
-        evm_rpc_types::RpcServices::Custom {
-            chain_id: _,
-            services,
-        } => services
-            .into_iter()
-            .map(evm_rpc_types::RpcService::Custom)
-            .collect(),
-        evm_rpc_types::RpcServices::EthMainnet(services) => services
-            .unwrap_or_else(|| default_eth_mainnet_services.to_vec())
-            .into_iter()
-            .map(evm_rpc_types::RpcService::EthMainnet)
-            .collect(),
-        evm_rpc_types::RpcServices::EthSepolia(services) => services
-            .unwrap_or_else(|| default_eth_sepolia_services.to_vec())
-            .into_iter()
-            .map(evm_rpc_types::RpcService::EthSepolia)
-            .collect(),
-        evm_rpc_types::RpcServices::ArbitrumOne(services) => services
-            .unwrap_or_else(|| default_l2_mainnet_services.to_vec())
-            .into_iter()
-            .map(evm_rpc_types::RpcService::ArbitrumOne)
-            .collect(),
-        evm_rpc_types::RpcServices::BaseMainnet(services) => services
-            .unwrap_or_else(|| default_l2_mainnet_services.to_vec())
-            .into_iter()
-            .map(evm_rpc_types::RpcService::BaseMainnet)
-            .collect(),
-        evm_rpc_types::RpcServices::OptimismMainnet(services) => services
-            .unwrap_or_else(|| default_l2_mainnet_services.to_vec())
-            .into_iter()
-            .map(evm_rpc_types::RpcService::OptimismMainnet)
-            .collect(),
-    }
-}
-
 pub(super) fn into_hash(value: Hex32) -> Hash {
     Hash(value.into())
 }
