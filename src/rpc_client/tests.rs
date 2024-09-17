@@ -514,9 +514,8 @@ mod eth_get_transaction_receipt {
 }
 
 mod eth_get_transaction_count {
-    use crate::rpc_client::requests::BlockTag;
+    use crate::rpc_client::json::requests::{BlockSpec, BlockTag, GetTransactionCountParams};
     use crate::rpc_client::numeric::TransactionCount;
-    use crate::rpc_client::requests::{BlockSpec, GetTransactionCountParams};
     use ic_ethereum_types::Address;
     use std::str::FromStr;
 

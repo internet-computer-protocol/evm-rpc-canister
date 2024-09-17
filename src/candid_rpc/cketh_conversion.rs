@@ -4,11 +4,11 @@
 
 use crate::rpc_client::checked_amount::CheckedAmountOf;
 use crate::rpc_client::eth_rpc::{Hash, Quantity};
-use crate::rpc_client::requests::BlockSpec;
+use crate::rpc_client::json::requests::BlockSpec;
 use evm_rpc_types::{BlockTag, Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
 /**/
 pub(super) fn into_block_spec(value: BlockTag) -> BlockSpec {
-    use crate::rpc_client::requests;
+    use crate::rpc_client::json::requests;
     match value {
         BlockTag::Number(n) => BlockSpec::Number(into_checked_amount_of(n)),
         BlockTag::Latest => BlockSpec::Tag(requests::BlockTag::Latest),
@@ -21,8 +21,8 @@ pub(super) fn into_block_spec(value: BlockTag) -> BlockSpec {
 
 pub(super) fn into_get_logs_param(
     value: evm_rpc_types::GetLogsArgs,
-) -> crate::rpc_client::requests::GetLogsParam {
-    crate::rpc_client::requests::GetLogsParam {
+) -> crate::rpc_client::json::requests::GetLogsParam {
+    crate::rpc_client::json::requests::GetLogsParam {
         from_block: value.from_block.map(into_block_spec).unwrap_or_default(),
         to_block: value.to_block.map(into_block_spec).unwrap_or_default(),
         address: value
@@ -66,8 +66,8 @@ fn from_log_entry(value: crate::rpc_client::responses::LogEntry) -> evm_rpc_type
 
 pub(super) fn into_fee_history_params(
     value: evm_rpc_types::FeeHistoryArgs,
-) -> crate::rpc_client::requests::FeeHistoryParams {
-    crate::rpc_client::requests::FeeHistoryParams {
+) -> crate::rpc_client::json::requests::FeeHistoryParams {
+    crate::rpc_client::json::requests::FeeHistoryParams {
         block_count: into_quantity(value.block_count),
         highest_block: into_block_spec(value.newest_block),
         reward_percentiles: value.reward_percentiles.unwrap_or_default(),
@@ -95,8 +95,8 @@ pub(super) fn from_fee_history(
 
 pub(super) fn into_get_transaction_count_params(
     value: evm_rpc_types::GetTransactionCountArgs,
-) -> crate::rpc_client::requests::GetTransactionCountParams {
-    crate::rpc_client::requests::GetTransactionCountParams {
+) -> crate::rpc_client::json::requests::GetTransactionCountParams {
+    crate::rpc_client::json::requests::GetTransactionCountParams {
         address: ic_ethereum_types::Address::new(value.address.into()),
         block: into_block_spec(value.block),
     }

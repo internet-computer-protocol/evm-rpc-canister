@@ -4,13 +4,12 @@ use crate::rpc_client::eth_rpc::{
     HEADER_SIZE_LIMIT,
 };
 use crate::rpc_client::numeric::TransactionCount;
-use crate::rpc_client::requests::GetTransactionCountParams;
+use json::requests::{BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam, GetTransactionCountParams};
 use crate::rpc_client::responses::TransactionReceipt;
 use evm_rpc_types::{
     EthMainnetService, EthSepoliaService, HttpOutcallError, JsonRpcError, L2MainnetService,
     ProviderError, RpcConfig, RpcError, RpcService, RpcServices,
 };
-use requests::{BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam};
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
@@ -19,8 +18,8 @@ use responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult};
 pub mod checked_amount;
 pub(crate) mod eth_rpc;
 mod eth_rpc_error;
+pub(crate) mod json;
 mod numeric;
-pub(crate) mod requests;
 pub(crate) mod responses;
 
 #[cfg(test)]
