@@ -15,7 +15,7 @@ shared ({ caller = installer }) actor class Main() {
     // (`subnet name`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
     type SubnetTarget = (Text, Nat32, Nat);
     let collateralCycles = 10_000_000;
-    let fiduciarySubnet : SubnetTarget = ("fiduciary", 28, 239_142_400);
+    let fiduciarySubnet : SubnetTarget = ("fiduciary", 31, 270344800);
 
     let testTargets = [
         // (`canister module`, `canister type`, `subnet`)
