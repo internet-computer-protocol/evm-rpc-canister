@@ -1,5 +1,5 @@
 mod eth_rpc_client {
-    use crate::rpc_client::{DefaultTransport, EthRpcClient};
+    use crate::rpc_client::EthRpcClient;
     use evm_rpc_types::{EthMainnetService, ProviderError, RpcService, RpcServices};
 
     #[test]
@@ -16,7 +16,7 @@ mod eth_rpc_client {
             RpcServices::OptimismMainnet(Some(vec![])),
         ] {
             assert_eq!(
-                EthRpcClient::<DefaultTransport>::new(empty_source, None),
+                EthRpcClient::new(empty_source, None),
                 Err(ProviderError::ProviderNotFound)
             );
         }
@@ -31,7 +31,7 @@ mod eth_rpc_client {
             RpcServices::BaseMainnet(None),
             RpcServices::OptimismMainnet(None),
         ] {
-            let client = EthRpcClient::<DefaultTransport>::new(empty_source, None).unwrap();
+            let client = EthRpcClient::new(empty_source, None).unwrap();
             assert!(!client.providers().is_empty());
         }
     }
@@ -41,7 +41,7 @@ mod eth_rpc_client {
         let provider1 = EthMainnetService::Alchemy;
         let provider2 = EthMainnetService::PublicNode;
 
-        let client = EthRpcClient::<DefaultTransport>::new(
+        let client = EthRpcClient::new(
             RpcServices::EthMainnet(Some(vec![provider1, provider2])),
             None,
         )

@@ -43,10 +43,9 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thousands = "0.2"
 url = "2.5"
-async-trait = "0.1"
 hex = "0.4"
 ethers-core = "2.0"
-zeroize = {version = "1.8", features = ["zeroize_derive"]}
+zeroize = { version = "1.8", features = ["zeroize_derive"] }
 
 [dev-dependencies]
 assert_matches = "1.5"
