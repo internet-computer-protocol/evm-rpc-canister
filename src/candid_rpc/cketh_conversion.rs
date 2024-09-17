@@ -45,12 +45,12 @@ pub(super) fn into_get_logs_param(
 }
 
 pub(super) fn from_log_entries(
-    value: Vec<crate::rpc_client::responses::LogEntry>,
+    value: Vec<crate::rpc_client::json::responses::LogEntry>,
 ) -> Vec<evm_rpc_types::LogEntry> {
     value.into_iter().map(from_log_entry).collect()
 }
 
-fn from_log_entry(value: crate::rpc_client::responses::LogEntry) -> evm_rpc_types::LogEntry {
+fn from_log_entry(value: crate::rpc_client::json::responses::LogEntry) -> evm_rpc_types::LogEntry {
     evm_rpc_types::LogEntry {
         address: from_address(value.address),
         topics: value.topics.into_iter().map(|t| t.0.into()).collect(),
@@ -75,7 +75,7 @@ pub(super) fn into_fee_history_params(
 }
 
 pub(super) fn from_fee_history(
-    value: crate::rpc_client::responses::FeeHistory,
+    value: crate::rpc_client::json::responses::FeeHistory,
 ) -> evm_rpc_types::FeeHistory {
     evm_rpc_types::FeeHistory {
         oldest_block: from_checked_amount_of(value.oldest_block),
@@ -103,7 +103,7 @@ pub(super) fn into_get_transaction_count_params(
 }
 
 pub(super) fn from_transaction_receipt(
-    value: crate::rpc_client::responses::TransactionReceipt,
+    value: crate::rpc_client::json::responses::TransactionReceipt,
 ) -> evm_rpc_types::TransactionReceipt {
     evm_rpc_types::TransactionReceipt {
         block_hash: Hex32::from(value.block_hash.0),
@@ -111,8 +111,8 @@ pub(super) fn from_transaction_receipt(
         effective_gas_price: from_checked_amount_of(value.effective_gas_price),
         gas_used: from_checked_amount_of(value.gas_used),
         status: match value.status {
-            crate::rpc_client::responses::TransactionStatus::Success => Nat256::from(1_u8),
-            crate::rpc_client::responses::TransactionStatus::Failure => Nat256::from(0_u8),
+            crate::rpc_client::json::responses::TransactionStatus::Success => Nat256::from(1_u8),
+            crate::rpc_client::json::responses::TransactionStatus::Failure => Nat256::from(0_u8),
         },
         transaction_hash: Hex32::from(value.transaction_hash.0),
         // TODO 243: responses types from querying JSON-RPC providers should be strongly typed
@@ -129,7 +129,7 @@ pub(super) fn from_transaction_receipt(
     }
 }
 
-pub(super) fn from_block(value: crate::rpc_client::responses::Block) -> evm_rpc_types::Block {
+pub(super) fn from_block(value: crate::rpc_client::json::responses::Block) -> evm_rpc_types::Block {
     evm_rpc_types::Block {
         base_fee_per_gas: value.base_fee_per_gas.map(from_checked_amount_of),
         number: from_checked_amount_of(value.number),
@@ -165,19 +165,19 @@ pub(super) fn from_block(value: crate::rpc_client::responses::Block) -> evm_rpc_
 
 pub(super) fn from_send_raw_transaction_result(
     transaction_hash: Option<Hex32>,
-    value: crate::rpc_client::responses::SendRawTransactionResult,
+    value: crate::rpc_client::json::responses::SendRawTransactionResult,
 ) -> evm_rpc_types::SendRawTransactionStatus {
     match value {
-        crate::rpc_client::responses::SendRawTransactionResult::Ok => {
+        crate::rpc_client::json::responses::SendRawTransactionResult::Ok => {
             evm_rpc_types::SendRawTransactionStatus::Ok(transaction_hash)
         }
-        crate::rpc_client::responses::SendRawTransactionResult::InsufficientFunds => {
+        crate::rpc_client::json::responses::SendRawTransactionResult::InsufficientFunds => {
             evm_rpc_types::SendRawTransactionStatus::InsufficientFunds
         }
-        crate::rpc_client::responses::SendRawTransactionResult::NonceTooLow => {
+        crate::rpc_client::json::responses::SendRawTransactionResult::NonceTooLow => {
             evm_rpc_types::SendRawTransactionStatus::NonceTooLow
         }
-        crate::rpc_client::responses::SendRawTransactionResult::NonceTooHigh => {
+        crate::rpc_client::json::responses::SendRawTransactionResult::NonceTooHigh => {
             evm_rpc_types::SendRawTransactionStatus::NonceTooHigh
         }
     }

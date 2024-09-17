@@ -5,7 +5,7 @@ use crate::rpc_client::eth_rpc::{
 };
 use crate::rpc_client::numeric::TransactionCount;
 use json::requests::{BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam, GetTransactionCountParams};
-use crate::rpc_client::responses::TransactionReceipt;
+use json::responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult, TransactionReceipt};
 use evm_rpc_types::{
     EthMainnetService, EthSepoliaService, HttpOutcallError, JsonRpcError, L2MainnetService,
     ProviderError, RpcConfig, RpcError, RpcService, RpcServices,
@@ -13,14 +13,11 @@ use evm_rpc_types::{
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
-use responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult};
-
 pub mod checked_amount;
 pub(crate) mod eth_rpc;
 mod eth_rpc_error;
 pub(crate) mod json;
 mod numeric;
-pub(crate) mod responses;
 
 #[cfg(test)]
 mod tests;

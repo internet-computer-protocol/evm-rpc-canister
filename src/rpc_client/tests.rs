@@ -219,7 +219,7 @@ mod multi_call_results {
         use crate::rpc_client::numeric::{BlockNumber, WeiPerGas};
         use crate::rpc_client::tests::multi_call_results::{ANKR, CLOUDFLARE, PUBLIC_NODE};
         use crate::rpc_client::{MultiCallError, MultiCallResults};
-        use crate::rpc_client::responses::FeeHistory;
+        use crate::rpc_client::json::responses::FeeHistory;
 
         #[test]
         fn should_get_unanimous_fee_history() {
@@ -422,10 +422,10 @@ mod multi_call_results {
 mod eth_get_transaction_receipt {
     use crate::rpc_client::eth_rpc::Hash;
     use crate::rpc_client::numeric::{BlockNumber, GasAmount, WeiPerGas};
-    use crate::rpc_client::responses::{TransactionReceipt, TransactionStatus};
     use assert_matches::assert_matches;
     use proptest::proptest;
     use std::str::FromStr;
+    use crate::rpc_client::json::responses::{TransactionReceipt, TransactionStatus};
 
     #[test]
     fn should_deserialize_transaction_receipt() {

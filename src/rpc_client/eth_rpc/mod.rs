@@ -7,7 +7,6 @@ use crate::memory::next_request_id;
 use crate::providers::resolve_rpc_service;
 use crate::rpc_client::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
 use crate::rpc_client::numeric::{TransactionCount, Wei};
-use crate::rpc_client::responses::{Block, FeeHistory, LogEntry, TransactionReceipt};
 use crate::types::MetricRpcMethod;
 use candid::candid_method;
 use ethnum;
@@ -22,6 +21,8 @@ use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
+use crate::rpc_client::json::responses::{Block, FeeHistory, LogEntry, TransactionReceipt};
+
 #[cfg(test)]
 mod tests;
 
