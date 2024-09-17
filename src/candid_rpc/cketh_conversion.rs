@@ -128,7 +128,7 @@ pub(super) fn from_transaction_receipt(
     }
 }
 
-pub(super) fn from_block(value: crate::rpc_client::eth_rpc::Block) -> evm_rpc_types::Block {
+pub(super) fn from_block(value: crate::rpc_client::responses::Block) -> evm_rpc_types::Block {
     evm_rpc_types::Block {
         base_fee_per_gas: value.base_fee_per_gas.map(from_checked_amount_of),
         number: from_checked_amount_of(value.number),

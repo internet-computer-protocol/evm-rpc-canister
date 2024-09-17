@@ -5,10 +5,9 @@ use crate::accounting::get_http_request_cost;
 use crate::log;
 use crate::memory::next_request_id;
 use crate::providers::resolve_rpc_service;
-use crate::rpc_client::checked_amount::CheckedAmountOf;
 use crate::rpc_client::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
 use crate::rpc_client::numeric::{BlockNumber, TransactionCount, Wei, WeiPerGas};
-use crate::rpc_client::responses::{LogEntry, TransactionReceipt};
+use crate::rpc_client::responses::{Block, LogEntry, TransactionReceipt};
 use crate::types::MetricRpcMethod;
 use candid::candid_method;
 use ethnum;
@@ -302,52 +301,6 @@ impl HttpResponsePayload for Wei {}
 impl From<BlockNumber> for BlockSpec {
     fn from(value: BlockNumber) -> Self {
         BlockSpec::Number(value)
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Block {
-    #[serde(rename = "baseFeePerGas")]
-    pub base_fee_per_gas: Option<Wei>,
-    pub number: BlockNumber,
-    pub difficulty: Option<CheckedAmountOf<()>>,
-    #[serde(rename = "extraData")]
-    pub extra_data: String,
-    #[serde(rename = "gasLimit")]
-    pub gas_limit: CheckedAmountOf<()>,
-    #[serde(rename = "gasUsed")]
-    pub gas_used: CheckedAmountOf<()>,
-    pub hash: String,
-    #[serde(rename = "logsBloom")]
-    pub logs_bloom: String,
-    pub miner: String,
-    #[serde(rename = "mixHash")]
-    pub mix_hash: String,
-    pub nonce: CheckedAmountOf<()>,
-    #[serde(rename = "parentHash")]
-    pub parent_hash: String,
-    #[serde(rename = "receiptsRoot")]
-    pub receipts_root: String,
-    #[serde(rename = "sha3Uncles")]
-    pub sha3_uncles: String,
-    pub size: CheckedAmountOf<()>,
-    #[serde(rename = "stateRoot")]
-    pub state_root: String,
-    #[serde(rename = "timestamp")]
-    pub timestamp: CheckedAmountOf<()>,
-    #[serde(rename = "totalDifficulty")]
-    pub total_difficulty: Option<CheckedAmountOf<()>>,
-    #[serde(default)]
-    pub transactions: Vec<String>,
-    #[serde(rename = "transactionsRoot")]
-    pub transactions_root: Option<String>,
-    #[serde(default)]
-    pub uncles: Vec<String>,
-}
-
-impl HttpResponsePayload for Block {
-    fn response_transform() -> Option<ResponseTransform> {
-        Some(ResponseTransform::Block)
     }
 }
 
