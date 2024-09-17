@@ -99,20 +99,6 @@ impl UpperHex for FixedSizeData {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub enum SendRawTransactionResult {
-    Ok,
-    InsufficientFunds,
-    NonceTooLow,
-    NonceTooHigh,
-}
-
-impl HttpResponsePayload for SendRawTransactionResult {
-    fn response_transform() -> Option<ResponseTransform> {
-        Some(ResponseTransform::SendRawTransaction)
-    }
-}
-
 #[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Hash(#[serde(with = "ic_ethereum_types::serde_data")] pub [u8; 32]);
 

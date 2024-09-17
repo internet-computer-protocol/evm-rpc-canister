@@ -227,3 +227,17 @@ impl HttpResponsePayload for FeeHistory {
         Some(ResponseTransform::FeeHistory)
     }
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+pub enum SendRawTransactionResult {
+    Ok,
+    InsufficientFunds,
+    NonceTooLow,
+    NonceTooHigh,
+}
+
+impl HttpResponsePayload for SendRawTransactionResult {
+    fn response_transform() -> Option<ResponseTransform> {
+        Some(ResponseTransform::SendRawTransaction)
+    }
+}

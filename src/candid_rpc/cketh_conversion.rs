@@ -164,19 +164,19 @@ pub(super) fn from_block(value: crate::rpc_client::responses::Block) -> evm_rpc_
 
 pub(super) fn from_send_raw_transaction_result(
     transaction_hash: Option<Hex32>,
-    value: crate::rpc_client::eth_rpc::SendRawTransactionResult,
+    value: crate::rpc_client::responses::SendRawTransactionResult,
 ) -> evm_rpc_types::SendRawTransactionStatus {
     match value {
-        crate::rpc_client::eth_rpc::SendRawTransactionResult::Ok => {
+        crate::rpc_client::responses::SendRawTransactionResult::Ok => {
             evm_rpc_types::SendRawTransactionStatus::Ok(transaction_hash)
         }
-        crate::rpc_client::eth_rpc::SendRawTransactionResult::InsufficientFunds => {
+        crate::rpc_client::responses::SendRawTransactionResult::InsufficientFunds => {
             evm_rpc_types::SendRawTransactionStatus::InsufficientFunds
         }
-        crate::rpc_client::eth_rpc::SendRawTransactionResult::NonceTooLow => {
+        crate::rpc_client::responses::SendRawTransactionResult::NonceTooLow => {
             evm_rpc_types::SendRawTransactionStatus::NonceTooLow
         }
-        crate::rpc_client::eth_rpc::SendRawTransactionResult::NonceTooHigh => {
+        crate::rpc_client::responses::SendRawTransactionResult::NonceTooHigh => {
             evm_rpc_types::SendRawTransactionStatus::NonceTooHigh
         }
     }
