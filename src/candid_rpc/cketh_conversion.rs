@@ -20,8 +20,8 @@ pub(super) fn into_block_spec(value: BlockTag) -> crate::rpc_client::eth_rpc::Bl
 
 pub(super) fn into_get_logs_param(
     value: evm_rpc_types::GetLogsArgs,
-) -> crate::rpc_client::eth_rpc::GetLogsParam {
-    crate::rpc_client::eth_rpc::GetLogsParam {
+) -> crate::rpc_client::requests::GetLogsParam {
+    crate::rpc_client::requests::GetLogsParam {
         from_block: value.from_block.map(into_block_spec).unwrap_or_default(),
         to_block: value.to_block.map(into_block_spec).unwrap_or_default(),
         address: value
