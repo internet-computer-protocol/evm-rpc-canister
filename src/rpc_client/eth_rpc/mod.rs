@@ -6,8 +6,8 @@ use crate::log;
 use crate::memory::next_request_id;
 use crate::providers::resolve_rpc_service;
 use crate::rpc_client::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
-use crate::rpc_client::numeric::{BlockNumber, TransactionCount, Wei, WeiPerGas};
-use crate::rpc_client::responses::{Block, LogEntry, TransactionReceipt};
+use crate::rpc_client::numeric::{BlockNumber, TransactionCount, Wei};
+use crate::rpc_client::responses::{Block, FeeHistory, LogEntry, TransactionReceipt};
 use crate::types::MetricRpcMethod;
 use candid::candid_method;
 use ethnum;
@@ -239,60 +239,6 @@ pub struct GetBlockByNumberParams {
 impl From<GetBlockByNumberParams> for (BlockSpec, bool) {
     fn from(value: GetBlockByNumberParams) -> Self {
         (value.block, value.include_full_transactions)
-    }
-}
-
-/// Parameters of the [`eth_feeHistory`](https://ethereum.github.io/execution-apis/api-documentation/) call.
-#[derive(Debug, Serialize, Clone)]
-#[serde(into = "(Quantity, BlockSpec, Vec<u8>)")]
-pub struct FeeHistoryParams {
-    /// Number of blocks in the requested range.
-    /// Typically providers request this to be between 1 and 1024.
-    pub block_count: Quantity,
-    /// Highest block of the requested range.
-    /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
-    pub highest_block: BlockSpec,
-    /// A monotonically increasing list of percentile values between 0 and 100.
-    /// For each block in the requested range, the transactions will be sorted in ascending order
-    /// by effective tip per gas and the corresponding effective tip for the percentile
-    /// will be determined, accounting for gas consumed.
-    pub reward_percentiles: Vec<u8>,
-}
-
-impl From<FeeHistoryParams> for (Quantity, BlockSpec, Vec<u8>) {
-    fn from(value: FeeHistoryParams) -> Self {
-        (
-            value.block_count,
-            value.highest_block,
-            value.reward_percentiles,
-        )
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct FeeHistory {
-    /// Lowest number block of the returned range.
-    #[serde(rename = "oldestBlock")]
-    pub oldest_block: BlockNumber,
-    /// An array of block base fees per gas.
-    /// This includes the next block after the newest of the returned range,
-    /// because this value can be derived from the newest block.
-    /// Zeroes are returned for pre-EIP-1559 blocks.
-    #[serde(rename = "baseFeePerGas")]
-    pub base_fee_per_gas: Vec<WeiPerGas>,
-    /// An array of block gas used ratios (gasUsed / gasLimit).
-    #[serde(default)]
-    #[serde(rename = "gasUsedRatio")]
-    pub gas_used_ratio: Vec<f64>,
-    /// A two-dimensional array of effective priority fees per gas at the requested block percentiles.
-    #[serde(default)]
-    #[serde(rename = "reward")]
-    pub reward: Vec<Vec<WeiPerGas>>,
-}
-
-impl HttpResponsePayload for FeeHistory {
-    fn response_transform() -> Option<ResponseTransform> {
-        Some(ResponseTransform::FeeHistory)
     }
 }
 

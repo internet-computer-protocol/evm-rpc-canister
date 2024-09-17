@@ -215,10 +215,11 @@ mod multi_call_results {
     }
 
     mod reduce_with_stable_majority_by_key {
-        use crate::rpc_client::eth_rpc::{FeeHistory, JsonRpcResult};
+        use crate::rpc_client::eth_rpc::JsonRpcResult;
         use crate::rpc_client::numeric::{BlockNumber, WeiPerGas};
         use crate::rpc_client::tests::multi_call_results::{ANKR, CLOUDFLARE, PUBLIC_NODE};
         use crate::rpc_client::{MultiCallError, MultiCallResults};
+        use crate::rpc_client::responses::FeeHistory;
 
         #[test]
         fn should_get_unanimous_fee_history() {
