@@ -18,7 +18,7 @@ You can find extensive documentation for the EVM RPC canister in the [ICP develo
 
 ## Canister
 
-The EVM RPC canister runs on the 28-node fiduciary subnet with the following principal: [`7hfb6-caaaa-aaaar-qadga-cai`](https://dashboard.internetcomputer.org/canister/7hfb6-caaaa-aaaar-qadga-cai). 
+The EVM RPC canister runs on the 31-node fiduciary subnet with the following principal: [`7hfb6-caaaa-aaaar-qadga-cai`](https://dashboard.internetcomputer.org/canister/7hfb6-caaaa-aaaar-qadga-cai). 
 
 Refer to the [Reproducible Builds](#reproducible-builds) section for information on how to verify the hash of the deployed WebAssembly module.
 
@@ -38,7 +38,7 @@ Add the following to your `dfx.json` config file (replace the `ic` principal wit
           "ic": "7hfb6-caaaa-aaaar-qadga-cai"
         }
       },
-      "init_arg": "(record { nodesInSubnet = 28 })"
+      "init_arg": "(record {})"
     }
   }
 }
@@ -51,7 +51,7 @@ Run the following commands to deploy the canister in your local environment:
 dfx start --background
 
 # Locally deploy the `evm_rpc` canister
-dfx deploy evm_rpc --argument '(record { nodesInSubnet = 28 })'
+dfx deploy evm_rpc --argument '(record {})'
 ```
 
 The EVM RPC canister also supports [`dfx deps pull`](https://internetcomputer.org/docs/current/references/cli-reference/dfx-deps). Add the following to your `dfx.json` file:
@@ -75,7 +75,7 @@ dfx start --background
 
 # Locally deploy the `evm_rpc` canister
 dfx deps pull
-dfx deps init evm_rpc --argument '(record { nodesInSubnet = 28 })'
+dfx deps init evm_rpc --argument '(record {})'
 dfx deps deploy
 ```
 
