@@ -4,10 +4,6 @@ use crate::rpc_client::eth_rpc::{
     SendRawTransactionResult, HEADER_SIZE_LIMIT,
 };
 use crate::rpc_client::numeric::TransactionCount;
-use crate::rpc_client::providers::{
-    ARBITRUM_PROVIDERS, BASE_PROVIDERS, MAINNET_PROVIDERS, OPTIMISM_PROVIDERS, SEPOLIA_PROVIDERS,
-    UNKNOWN_PROVIDERS,
-};
 use crate::rpc_client::requests::GetTransactionCountParams;
 use crate::rpc_client::responses::TransactionReceipt;
 use async_trait::async_trait;
@@ -25,7 +21,6 @@ pub mod checked_amount;
 pub(crate) mod eth_rpc;
 mod eth_rpc_error;
 mod numeric;
-mod providers;
 pub(crate) mod requests;
 pub(crate) mod responses;
 
@@ -100,8 +95,8 @@ impl EthereumNetwork {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EthRpcClient<T: RpcTransport> {
     chain: EthereumNetwork,
-    //TODO 243: remove Option
-    providers: Option<Vec<RpcService>>,
+    /// *Non-empty* list of providers to query.
+    providers: Vec<RpcService>,
     config: RpcConfig,
     phantom: PhantomData<T>,
 }
@@ -177,24 +172,14 @@ impl<T: RpcTransport> EthRpcClient<T> {
 
         Ok(Self {
             chain,
-            providers: Some(providers),
+            providers,
             config: config.unwrap_or_default(),
             phantom: PhantomData,
         })
     }
 
     fn providers(&self) -> &[RpcService] {
-        match self.providers {
-            Some(ref providers) => providers,
-            None => match self.chain {
-                EthereumNetwork::MAINNET => MAINNET_PROVIDERS,
-                EthereumNetwork::SEPOLIA => SEPOLIA_PROVIDERS,
-                EthereumNetwork::ARBITRUM => ARBITRUM_PROVIDERS,
-                EthereumNetwork::BASE => BASE_PROVIDERS,
-                EthereumNetwork::OPTIMISM => OPTIMISM_PROVIDERS,
-                _ => UNKNOWN_PROVIDERS,
-            },
-        }
+        &self.providers
     }
 
     fn response_size_estimate(&self, estimate: u64) -> ResponseSizeEstimate {
