@@ -1,6 +1,6 @@
 use crate::rpc_client::eth_rpc::{
     are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetBlockByNumberParams,
-    Hash, HttpResponsePayload, LogEntry, ResponseSizeEstimate, SendRawTransactionResult,
+    Hash, HttpResponsePayload, ResponseSizeEstimate, SendRawTransactionResult,
     HEADER_SIZE_LIMIT,
 };
 use crate::rpc_client::numeric::TransactionCount;
@@ -14,6 +14,7 @@ use requests::GetLogsParam;
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
+use responses::LogEntry;
 
 pub mod checked_amount;
 pub(crate) mod eth_rpc;

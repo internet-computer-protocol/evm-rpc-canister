@@ -44,12 +44,12 @@ pub(super) fn into_get_logs_param(
 }
 
 pub(super) fn from_log_entries(
-    value: Vec<crate::rpc_client::eth_rpc::LogEntry>,
+    value: Vec<crate::rpc_client::responses::LogEntry>,
 ) -> Vec<evm_rpc_types::LogEntry> {
     value.into_iter().map(from_log_entry).collect()
 }
 
-fn from_log_entry(value: crate::rpc_client::eth_rpc::LogEntry) -> evm_rpc_types::LogEntry {
+fn from_log_entry(value: crate::rpc_client::responses::LogEntry) -> evm_rpc_types::LogEntry {
     evm_rpc_types::LogEntry {
         address: from_address(value.address),
         topics: value.topics.into_iter().map(|t| t.0.into()).collect(),

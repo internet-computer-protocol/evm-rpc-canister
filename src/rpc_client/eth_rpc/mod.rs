@@ -7,8 +7,8 @@ use crate::memory::next_request_id;
 use crate::providers::resolve_rpc_service;
 use crate::rpc_client::checked_amount::CheckedAmountOf;
 use crate::rpc_client::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
-use crate::rpc_client::numeric::{BlockNumber, LogIndex, TransactionCount, Wei, WeiPerGas};
-use crate::rpc_client::responses::TransactionReceipt;
+use crate::rpc_client::numeric::{BlockNumber, TransactionCount, Wei, WeiPerGas};
+use crate::rpc_client::responses::{LogEntry, TransactionReceipt};
 use crate::types::MetricRpcMethod;
 use candid::candid_method;
 use ethnum;
@@ -19,7 +19,6 @@ use ic_cdk::api::management_canister::http_request::{
     TransformContext,
 };
 use ic_cdk_macros::query;
-use ic_ethereum_types::Address;
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt;
@@ -225,66 +224,6 @@ impl std::str::FromStr for BlockSpec {
             "finalized" => BlockTag::Finalized,
             _ => return Err(format!("unknown block tag '{s}'")),
         }))
-    }
-}
-
-/// An entry of the [`eth_getLogs`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getlogs) call reply.
-///
-/// Example:
-/// ```json
-/// {
-///    "address": "0x7e41257f7b5c3dd3313ef02b1f4c864fe95bec2b",
-///    "topics": [
-///      "0x2a2607d40f4a6feb97c36e0efd57e0aa3e42e0332af4fceb78f21b7dffcbd657"
-///    ],
-///    "data": "0x00000000000000000000000055654e7405fcb336386ea8f36954a211b2cda764000000000000000000000000000000000000000000000000002386f26fc100000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000003f62327071372d71677a7a692d74623564622d72357363692d637736736c2d6e646f756c2d666f7435742d347a7732702d657a6677692d74616a32792d76716500",
-///    "blockNumber": "0x3aa4f4",
-///    "transactionHash": "0x5618f72c485bd98a3df58d900eabe9e24bfaa972a6fe5227e02233fad2db1154",
-///    "transactionIndex": "0x6",
-///    "blockHash": "0x908e6b84d26d71421bfaa08e7966e0afcef3883a28a53a0a7a31104caf1e94c2",
-///    "logIndex": "0x8",
-///    "removed": false
-///  }
-/// ```
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub struct LogEntry {
-    /// The address from which this log originated.
-    pub address: Address,
-    /// Array of 0 to 4 32 Bytes DATA of indexed log arguments.
-    /// In solidity: The first topic is the event signature hash (e.g. Deposit(address,bytes32,uint256)),
-    /// unless you declared the event with the anonymous specifier.
-    pub topics: Vec<FixedSizeData>,
-    /// Contains one or more 32-byte non-indexed log arguments.
-    pub data: Data,
-    /// The block number in which this log appeared.
-    /// None if the block is pending.
-    #[serde(rename = "blockNumber")]
-    pub block_number: Option<BlockNumber>,
-    // 32 Bytes - hash of the transactions from which this log was created.
-    // None when its pending log.
-    #[serde(rename = "transactionHash")]
-    pub transaction_hash: Option<Hash>,
-    // Integer of the transactions position within the block the log was created from.
-    // None if the log is pending.
-    #[serde(rename = "transactionIndex")]
-    pub transaction_index: Option<CheckedAmountOf<()>>,
-    /// 32 Bytes - hash of the block in which this log appeared.
-    /// None if the block is pending.
-    #[serde(rename = "blockHash")]
-    pub block_hash: Option<Hash>,
-    /// Integer of the log index position in the block.
-    /// None if the log is pending.
-    #[serde(rename = "logIndex")]
-    pub log_index: Option<LogIndex>,
-    /// "true" when the log was removed due to a chain reorganization.
-    /// "false" if it's a valid log.
-    #[serde(default)]
-    pub removed: bool,
-}
-
-impl HttpResponsePayload for Vec<LogEntry> {
-    fn response_transform() -> Option<ResponseTransform> {
-        Some(ResponseTransform::LogEntries)
     }
 }
 
