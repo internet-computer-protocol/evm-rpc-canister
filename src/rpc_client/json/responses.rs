@@ -1,4 +1,4 @@
-use crate::rpc_client::amount::AmountOf;
+use crate::rpc_client::amount::Amount;
 use crate::rpc_client::eth_rpc::{
     Data, FixedSizeData, Hash, HttpResponsePayload, ResponseTransform,
 };
@@ -42,7 +42,7 @@ pub struct TransactionReceipt {
     pub logs_bloom: String,
     pub to: String,
     #[serde(rename = "transactionIndex")]
-    pub transaction_index: AmountOf<()>,
+    pub transaction_index: Amount<()>,
     pub r#type: String,
 }
 
@@ -135,7 +135,7 @@ pub struct LogEntry {
     // Integer of the transactions position within the block the log was created from.
     // None if the log is pending.
     #[serde(rename = "transactionIndex")]
-    pub transaction_index: Option<AmountOf<()>>,
+    pub transaction_index: Option<Amount<()>>,
     /// 32 Bytes - hash of the block in which this log appeared.
     /// None if the block is pending.
     #[serde(rename = "blockHash")]
