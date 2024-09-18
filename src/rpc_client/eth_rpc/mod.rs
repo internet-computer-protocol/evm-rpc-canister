@@ -30,7 +30,7 @@ mod tests;
 // This constant is our approximation of the expected header size.
 // The HTTP standard doesn't define any limit, and many implementations limit
 // the headers size to 8 KiB. We chose a lower limit because headers observed on most providers
-// fit in the constant defined below, and if there is spike, then the payload size adjustment
+// fit in the constant defined below, and if there is a spike, then the payload size adjustment
 // should take care of that.
 pub const HEADER_SIZE_LIMIT: u64 = 2 * 1024;
 
@@ -278,7 +278,7 @@ pub struct LogEntry {
     #[serde(rename = "blockNumber")]
     pub block_number: Option<BlockNumber>,
     // 32 Bytes - hash of the transactions from which this log was created.
-    // None when its pending log.
+    // None if the transaction is pending.
     #[serde(rename = "transactionHash")]
     pub transaction_hash: Option<Hash>,
     // Integer of the transactions position within the block the log was created from.
