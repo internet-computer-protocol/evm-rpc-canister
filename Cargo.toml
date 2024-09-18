@@ -39,7 +39,6 @@ num = "0.4"
 num-bigint = { workspace = true }
 num-traits = "0.2"
 num-derive = "0.4"
-phantom_newtype = { version = "0.2.0", features = ["serde"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thousands = "0.2"
