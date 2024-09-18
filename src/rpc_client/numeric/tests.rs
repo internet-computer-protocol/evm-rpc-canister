@@ -10,7 +10,7 @@ mod transaction_nonce {
 
             prop_assert_eq!(
                 TransactionCount::from(u256.clone()),
-                TransactionCount::from_be_bytes(u256_bytes.clone())
+                TransactionCount::from_be_bytes(u256_bytes)
             );
 
             prop_assert_eq!(

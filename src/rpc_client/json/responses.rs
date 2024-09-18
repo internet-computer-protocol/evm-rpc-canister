@@ -2,7 +2,9 @@ use crate::rpc_client::amount::Amount;
 use crate::rpc_client::eth_rpc::{
     Data, FixedSizeData, Hash, HttpResponsePayload, ResponseTransform,
 };
-use crate::rpc_client::numeric::{BlockNonce, BlockNumber, Difficulty, GasAmount, LogIndex, NumBytes, Timestamp, Wei, WeiPerGas};
+use crate::rpc_client::numeric::{
+    BlockNonce, BlockNumber, Difficulty, GasAmount, LogIndex, NumBytes, Timestamp, Wei, WeiPerGas,
+};
 use candid::Deserialize;
 use ic_ethereum_types::Address;
 use serde::Serialize;
