@@ -107,8 +107,10 @@ pub enum BlockTag {
     /// <https://www.alchemy.com/overviews/ethereum-commitment-levels#what-are-ethereum-commitment-levels>
     #[serde(rename = "finalized")]
     Finalized,
+    /// Earliest/genesis block
     #[serde(rename = "earliest")]
     Earliest,
+    /// Pending state/transactions
     #[serde(rename = "pending")]
     Pending,
 }
