@@ -9,7 +9,7 @@ use crate::{
 };
 use candid::Nat;
 use ethers_core::{types::Transaction, utils::rlp};
-use evm_rpc_types::{Hex, Hex32, MultiRpcResult, RpcResult, ValidationError};
+use evm_rpc_types::{Hex, Hex32, MultiRpcResult, Nat256, RpcResult, ValidationError};
 
 fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) -> MultiRpcResult<T> {
     match result {
@@ -115,10 +115,8 @@ impl CandidRpcClient {
     pub async fn eth_get_transaction_count(
         &self,
         args: evm_rpc_types::GetTransactionCountArgs,
-    ) -> MultiRpcResult<evm_rpc_types::Nat256> {
-        use crate::candid_rpc::cketh_conversion::{
-            from_checked_amount_of, into_get_transaction_count_params,
-        };
+    ) -> MultiRpcResult<Nat256> {
+        use crate::candid_rpc::cketh_conversion::into_get_transaction_count_params;
         process_result(
             RpcMethod::EthGetTransactionCount,
             self.client
@@ -126,7 +124,7 @@ impl CandidRpcClient {
                 .await
                 .reduce_with_equality(),
         )
-        .map(from_checked_amount_of)
+        .map(Nat256::from)
     }
 
     pub async fn eth_fee_history(

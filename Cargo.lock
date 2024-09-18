@@ -1555,6 +1555,7 @@ dependencies = [
  "num-bigint 0.4.6",
  "num-derive",
  "num-traits",
+ "phantom_newtype 0.2.0",
  "proptest",
  "rand",
  "serde",
@@ -2200,7 +2201,7 @@ dependencies = [
  "ic-crypto-sha2",
  "ic-protobuf",
  "ic-stable-structures",
- "phantom_newtype",
+ "phantom_newtype 0.8.0",
  "prost",
  "serde",
  "strum 0.23.0",
@@ -2350,7 +2351,7 @@ dependencies = [
  "ic-types",
  "itertools 0.10.5",
  "leb128",
- "phantom_newtype",
+ "phantom_newtype 0.8.0",
  "scoped_threadpool",
  "serde",
  "serde_bytes",
@@ -2939,7 +2940,7 @@ dependencies = [
  "base64 0.11.0",
  "hex",
  "ic-protobuf",
- "phantom_newtype",
+ "phantom_newtype 0.8.0",
  "serde",
  "serde_cbor",
  "strum 0.23.0",
@@ -3276,7 +3277,7 @@ dependencies = [
  "nix",
  "num-rational 0.2.4",
  "num-traits",
- "phantom_newtype",
+ "phantom_newtype 0.8.0",
  "prometheus",
  "rand",
  "scoped_threadpool",
@@ -3384,7 +3385,7 @@ source = "git+https://github.com/dfinity/ic?rev=release-2023-09-27_23-01#ca5e505
 dependencies = [
  "ic-crypto-tree-hash",
  "ic-types",
- "phantom_newtype",
+ "phantom_newtype 0.8.0",
  "thiserror",
 ]
 
@@ -3729,7 +3730,7 @@ dependencies = [
  "libc",
  "maplit",
  "nix",
- "phantom_newtype",
+ "phantom_newtype 0.8.0",
  "rand",
  "rand_chacha",
  "serde",
@@ -3883,7 +3884,7 @@ dependencies = [
  "lazy_static",
  "libc",
  "nix",
- "phantom_newtype",
+ "phantom_newtype 0.8.0",
  "wsl",
 ]
 
@@ -3985,7 +3986,7 @@ dependencies = [
  "ic-utils",
  "maplit",
  "once_cell",
- "phantom_newtype",
+ "phantom_newtype 0.8.0",
  "prost",
  "serde",
  "serde_bytes",
@@ -5102,6 +5103,15 @@ checksum = "b4c5cc86750666a3ed20bdaf5ca2a0344f9c67674cae0515bec2da16fbaa47db"
 dependencies = [
  "fixedbitset",
  "indexmap 2.5.0",
+]
+
+[[package]]
+name = "phantom_newtype"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4e36614e15df8570f9eefecc326fe379c2551366cb20a43105639596e474506"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

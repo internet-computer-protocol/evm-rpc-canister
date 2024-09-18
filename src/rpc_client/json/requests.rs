@@ -1,5 +1,5 @@
-use crate::rpc_client::eth_rpc::{FixedSizeData, Quantity};
-use crate::rpc_client::numeric::BlockNumber;
+use crate::rpc_client::eth_rpc::FixedSizeData;
+use crate::rpc_client::numeric::{BlockNumber, NumBlocks};
 use candid::Deserialize;
 use ic_ethereum_types::Address;
 use serde::Serialize;
@@ -42,11 +42,11 @@ pub struct GetLogsParam {
 
 /// Parameters of the [`eth_feeHistory`](https://ethereum.github.io/execution-apis/api-documentation/) call.
 #[derive(Debug, Serialize, Clone)]
-#[serde(into = "(Quantity, BlockSpec, Vec<u8>)")]
+#[serde(into = "(NumBlocks, BlockSpec, Vec<u8>)")]
 pub struct FeeHistoryParams {
     /// Number of blocks in the requested range.
     /// Typically providers request this to be between 1 and 1024.
-    pub block_count: Quantity,
+    pub block_count: NumBlocks,
     /// Highest block of the requested range.
     /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
     pub highest_block: BlockSpec,
@@ -57,7 +57,7 @@ pub struct FeeHistoryParams {
     pub reward_percentiles: Vec<u8>,
 }
 
-impl From<FeeHistoryParams> for (Quantity, BlockSpec, Vec<u8>) {
+impl From<FeeHistoryParams> for (NumBlocks, BlockSpec, Vec<u8>) {
     fn from(value: FeeHistoryParams) -> Self {
         (
             value.block_count,

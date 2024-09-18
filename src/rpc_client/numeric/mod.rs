@@ -12,9 +12,8 @@ pub enum WeiPerGasUnit {}
 pub type WeiPerGas = CheckedAmountOf<WeiPerGasUnit>;
 
 pub enum TransactionCountTag {}
-
 /// Number of transactions emitted by an address at a given block height (`finalized`, `safe` or `latest`).
-/// This should closely follow [`TransactionNonce`] in case the address is the minter's one,
+/// This should closely follow [`TransactionNonce`] in case the address is the same,
 /// but depending on the block height the two may differ.
 pub type TransactionCount = CheckedAmountOf<TransactionCountTag>;
 
@@ -28,9 +27,17 @@ pub type GasAmount = CheckedAmountOf<GasUnit>;
 pub enum EthLogIndexTag {}
 pub type LogIndex = CheckedAmountOf<EthLogIndexTag>;
 
-impl WeiPerGas {
-    pub fn transaction_cost(self, gas: GasAmount) -> Option<Wei> {
-        self.checked_mul(gas.into_inner())
-            .map(|value| value.change_units())
-    }
-}
+pub enum DifficultyTag {}
+pub type Difficulty = CheckedAmountOf<DifficultyTag>;
+
+pub enum BlockNonceTag {}
+pub type BlockNonce = CheckedAmountOf<BlockNonceTag>;
+
+pub enum NumBlocksTag {}
+pub type NumBlocks = CheckedAmountOf<NumBlocksTag>;
+
+pub enum NumBytesTag {}
+pub type NumBytes = CheckedAmountOf<NumBytesTag>;
+
+pub enum TimestampTag {}
+pub type Timestamp = CheckedAmountOf<TimestampTag>;
