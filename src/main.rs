@@ -3,6 +3,7 @@ use evm_rpc::accounting::{get_cost_with_collateral, get_http_request_cost};
 use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::constants::NODES_IN_SUBNET;
 use evm_rpc::http::get_http_response_body;
+use evm_rpc::logs::INFO;
 use evm_rpc::memory::{
     insert_api_key, is_api_key_principal, is_demo_active, remove_api_key, set_api_key_principals,
     set_demo_active,
@@ -12,11 +13,11 @@ use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_
 use evm_rpc::types::{InstallArgs, Provider, ProviderId, RpcAccess};
 use evm_rpc::{
     http::{json_rpc_request, transform_http_request},
-    log,
     memory::UNSTABLE_METRICS,
     types::{MetricRpcMethod, Metrics},
 };
 use evm_rpc_types::{Hex32, MultiRpcResult, RpcResult};
+use ic_canister_log::log;
 use ic_canisters_http_types::{
     HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
 };
@@ -233,72 +234,72 @@ fn post_upgrade(args: InstallArgs) {
 fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
     match request.path() {
         "/metrics" => serve_metrics(encode_metrics),
-        // TODO 243: re-enable logs
-        // "/logs" => {
-        //     use std::str::FromStr;
-        //
-        //     let max_skip_timestamp = match request.raw_query_param("time") {
-        //         Some(arg) => match u64::from_str(arg) {
-        //             Ok(value) => value,
-        //             Err(_) => {
-        //                 return HttpResponseBuilder::bad_request()
-        //                     .with_body_and_content_length("failed to parse the 'time' parameter")
-        //                     .build()
-        //             }
-        //         },
-        //         None => 0,
-        //     };
-        //
-        //     let mut log: Log = Default::default();
-        //
-        //     match request.raw_query_param("priority").map(Priority::from_str) {
-        //         Some(Ok(priority)) => match priority {
-        //             Priority::Info => log.push_logs(Priority::Info),
-        //             Priority::Debug => log.push_logs(Priority::Debug),
-        //             Priority::TraceHttp => {}
-        //         },
-        //         _ => {
-        //             log.push_logs(Priority::Info);
-        //             log.push_logs(Priority::Debug);
-        //         }
-        //     }
-        //
-        //     log.entries
-        //         .retain(|entry| entry.timestamp >= max_skip_timestamp);
-        //
-        //     fn ordering_from_query_params(sort: Option<&str>, max_skip_timestamp: u64) -> Sort {
-        //         match sort {
-        //             Some(ord_str) => match Sort::from_str(ord_str) {
-        //                 Ok(order) => order,
-        //                 Err(_) => {
-        //                     if max_skip_timestamp == 0 {
-        //                         Sort::Ascending
-        //                     } else {
-        //                         Sort::Descending
-        //                     }
-        //                 }
-        //             },
-        //             None => {
-        //                 if max_skip_timestamp == 0 {
-        //                     Sort::Ascending
-        //                 } else {
-        //                     Sort::Descending
-        //                 }
-        //             }
-        //         }
-        //     }
-        //
-        //     log.sort_logs(ordering_from_query_params(
-        //         request.raw_query_param("sort"),
-        //         max_skip_timestamp,
-        //     ));
-        //
-        //     const MAX_BODY_SIZE: usize = 3_000_000;
-        //     HttpResponseBuilder::ok()
-        //         .header("Content-Type", "application/json; charset=utf-8")
-        //         .with_body_and_content_length(log.serialize_logs(MAX_BODY_SIZE))
-        //         .build()
-        // }
+        "/logs" => {
+            use evm_rpc::logs::{Log, Priority, Sort};
+            use std::str::FromStr;
+
+            let max_skip_timestamp = match request.raw_query_param("time") {
+                Some(arg) => match u64::from_str(arg) {
+                    Ok(value) => value,
+                    Err(_) => {
+                        return HttpResponseBuilder::bad_request()
+                            .with_body_and_content_length("failed to parse the 'time' parameter")
+                            .build()
+                    }
+                },
+                None => 0,
+            };
+
+            let mut log: Log = Default::default();
+
+            match request.raw_query_param("priority").map(Priority::from_str) {
+                Some(Ok(priority)) => match priority {
+                    Priority::Info => log.push_logs(Priority::Info),
+                    Priority::Debug => log.push_logs(Priority::Debug),
+                    Priority::TraceHttp => {}
+                },
+                _ => {
+                    log.push_logs(Priority::Info);
+                    log.push_logs(Priority::Debug);
+                }
+            }
+
+            log.entries
+                .retain(|entry| entry.timestamp >= max_skip_timestamp);
+
+            fn ordering_from_query_params(sort: Option<&str>, max_skip_timestamp: u64) -> Sort {
+                match sort {
+                    Some(ord_str) => match Sort::from_str(ord_str) {
+                        Ok(order) => order,
+                        Err(_) => {
+                            if max_skip_timestamp == 0 {
+                                Sort::Ascending
+                            } else {
+                                Sort::Descending
+                            }
+                        }
+                    },
+                    None => {
+                        if max_skip_timestamp == 0 {
+                            Sort::Ascending
+                        } else {
+                            Sort::Descending
+                        }
+                    }
+                }
+            }
+
+            log.sort_logs(ordering_from_query_params(
+                request.raw_query_param("sort"),
+                max_skip_timestamp,
+            ));
+
+            const MAX_BODY_SIZE: usize = 2_000_000;
+            HttpResponseBuilder::ok()
+                .header("Content-Type", "application/json; charset=utf-8")
+                .with_body_and_content_length(log.serialize_logs(MAX_BODY_SIZE))
+                .build()
+        }
         _ => HttpResponseBuilder::not_found().build(),
     }
 }

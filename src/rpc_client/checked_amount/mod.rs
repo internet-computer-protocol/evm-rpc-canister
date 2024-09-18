@@ -135,7 +135,7 @@ impl<Unit> CheckedAmountOf<Unit> {
     }
 
     /// Returns the display implementation of the inner value.
-    /// Useful to avoid thousands separators if value is used for example in URLs.
+    /// Useful to avoid thousands of separators if value is used for example in URLs.
     /// ```
     /// use evm_rpc::rpc_client::checked_amount::CheckedAmountOf;
     ///

@@ -126,7 +126,7 @@ function build_canister() {
         # Write metadata for dfx
         asset_name="evm_rpc.wasm.gz"
         wasm_url="https://github.com/internet-computer-protocol/evm-rpc-canister/releases/latest/download/evm_rpc.wasm.gz"
-        init_guide="Number of nodes in the subnet, e.g. '(record {nodesInSubnet = 28})'"
+        init_guide="https://internetcomputer.org/docs/current/developer-docs/multi-chain/ethereum/evm-rpc/evm-rpc-canister"
         metadata_json=$(echo '{}' | jq -cMr \
             --arg wasm_url "$wasm_url" \
             --arg init_guide "$init_guide" \

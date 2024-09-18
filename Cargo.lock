@@ -1558,6 +1558,7 @@ dependencies = [
  "proptest",
  "rand",
  "serde",
+ "serde_bytes",
  "serde_json",
  "thousands",
  "url",

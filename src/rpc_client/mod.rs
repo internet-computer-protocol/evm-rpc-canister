@@ -1,3 +1,4 @@
+use crate::logs::{DEBUG, INFO};
 use crate::rpc_client::eth_rpc::{
     are_errors_consistent, Hash, HttpResponsePayload, ResponseSizeEstimate, HEADER_SIZE_LIMIT,
 };
@@ -10,6 +11,7 @@ use json::requests::{
     BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam, GetTransactionCountParams,
 };
 use json::responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult, TransactionReceipt};
+use ic_canister_log::log;
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
@@ -22,16 +24,6 @@ mod numeric;
 
 #[cfg(test)]
 mod tests;
-
-//TODO: Dummy log. use ic_canister_log::log
-#[macro_export]
-macro_rules! log {
-    ($sink:expr, $message:expr $(,$args:expr)* $(,)*) => {{
-        let message = std::format!($message $(,$args)*);
-        // Print the message for convenience for local development (e.g. integration tests)
-        println!("{}", &message);
-    }}
-}
 
 #[derive(Clone, Copy, Default, Debug, Eq, PartialEq)]
 pub struct EthereumNetwork(u64);
@@ -194,7 +186,7 @@ impl EthRpcClient {
     }
 
     /// Query all providers in parallel and return all results.
-    /// It's up to the caller to decide how to handle the results, which could be inconsistent among one another,
+    /// It's up to the caller to decide how to handle the results, which could be inconsistent
     /// (e.g., if different providers gave different responses).
     /// This method is useful for querying data that is critical for the system to ensure that there is no single point of failure,
     /// e.g., ethereum logs upon which ckETH will be minted.
