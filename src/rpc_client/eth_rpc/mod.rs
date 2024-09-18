@@ -2,7 +2,7 @@
 //! interface.
 
 use crate::accounting::get_http_request_cost;
-use crate::log;
+use crate::logs::{DEBUG, TRACE_HTTP};
 use crate::memory::next_request_id;
 use crate::providers::resolve_rpc_service;
 use crate::rpc_client::checked_amount::CheckedAmountOf;
@@ -13,6 +13,7 @@ use crate::types::MetricRpcMethod;
 use candid::candid_method;
 use ethnum;
 use evm_rpc_types::{HttpOutcallError, JsonRpcError, ProviderError, RpcApi, RpcError, RpcService};
+use ic_canister_log::log;
 use ic_cdk::api::call::RejectionCode;
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs,
@@ -31,7 +32,7 @@ mod tests;
 // This constant is our approximation of the expected header size.
 // The HTTP standard doesn't define any limit, and many implementations limit
 // the headers size to 8 KiB. We chose a lower limit because headers observed on most providers
-// fit in the constant defined below, and if there is spike, then the payload size adjustment
+// fit in the constant defined below, and if there is a spike, then the payload size adjustment
 // should take care of that.
 pub const HEADER_SIZE_LIMIT: u64 = 2 * 1024;
 
@@ -279,7 +280,7 @@ pub struct LogEntry {
     #[serde(rename = "blockNumber")]
     pub block_number: Option<BlockNumber>,
     // 32 Bytes - hash of the transactions from which this log was created.
-    // None when its pending log.
+    // None if the transaction is pending.
     #[serde(rename = "transactionHash")]
     pub transaction_hash: Option<Hash>,
     // Integer of the transactions position within the block the log was created from.
@@ -646,7 +647,10 @@ where
     loop {
         rpc_request.id = next_request_id();
         let payload = serde_json::to_string(&rpc_request).unwrap();
-        log!(TRACE_HTTP, "Calling url: {}, with payload: {payload}", url);
+        log!(
+            TRACE_HTTP,
+            "Calling url (retries={retries}): {url}, with payload: {payload}"
+        );
 
         let effective_size_estimate = response_size_estimate.get();
         let transform_op = O::response_transform()

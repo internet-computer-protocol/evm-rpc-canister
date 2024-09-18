@@ -28,7 +28,7 @@ pub const WASM_PAGE_SIZE: u64 = 65536;
 
 pub const ETH_GET_LOGS_MAX_BLOCKS: u32 = 500;
 
-pub const NODES_IN_SUBNET: u32 = 28;
+pub const NODES_IN_SUBNET: u32 = 34;
 
 pub const API_KEY_REPLACE_STRING: &str = "{API_KEY}";
 pub const VALID_API_KEY_CHARS: &str =
