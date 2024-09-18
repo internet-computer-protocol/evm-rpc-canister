@@ -176,7 +176,7 @@ impl<T: RpcTransport> EthRpcClient<T> {
     }
 
     /// Query all providers in parallel and return all results.
-    /// It's up to the caller to decide how to handle the results, which could be inconsistent among one another,
+    /// It's up to the caller to decide how to handle the results, which could be inconsistent
     /// (e.g., if different providers gave different responses).
     /// This method is useful for querying data that is critical for the system to ensure that there is no single point of failure,
     /// e.g., ethereum logs upon which ckETH will be minted.

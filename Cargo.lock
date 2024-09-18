@@ -1534,7 +1534,7 @@ dependencies = [
  "getrandom 0.2.15",
  "hex",
  "ic-base-types",
- "ic-canister-log 0.2.0 (git+https://github.com/dfinity/ic?rev=1f551bea63354370b6e7a5037e96d464bdab3b41)",
+ "ic-canister-log 0.2.0 (git+https://github.com/dfinity/ic?rev=b7b0e54832bbe6bf4b80a2f75f4252699f5878e0)",
  "ic-canisters-http-types",
  "ic-cdk",
  "ic-cdk-macros",
@@ -2233,7 +2233,7 @@ dependencies = [
 [[package]]
 name = "ic-canister-log"
 version = "0.2.0"
-source = "git+https://github.com/dfinity/ic?rev=1f551bea63354370b6e7a5037e96d464bdab3b41#1f551bea63354370b6e7a5037e96d464bdab3b41"
+source = "git+https://github.com/dfinity/ic?rev=b7b0e54832bbe6bf4b80a2f75f4252699f5878e0#b7b0e54832bbe6bf4b80a2f75f4252699f5878e0"
 dependencies = [
  "serde",
 ]
