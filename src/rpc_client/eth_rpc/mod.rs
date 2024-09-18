@@ -1,16 +1,18 @@
 //! This module contains definitions for communicating with an Ethereum API using the [JSON RPC](https://ethereum.org/en/developers/docs/apis/json-rpc/)
 //! interface.
 
+use crate::accounting::get_http_request_cost;
 use crate::logs::{DEBUG, TRACE_HTTP};
 use crate::memory::next_request_id;
+use crate::providers::resolve_rpc_service;
 use crate::rpc_client::checked_amount::CheckedAmountOf;
 use crate::rpc_client::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
 use crate::rpc_client::numeric::{BlockNumber, LogIndex, TransactionCount, Wei, WeiPerGas};
 use crate::rpc_client::responses::TransactionReceipt;
-use crate::rpc_client::RpcTransport;
+use crate::types::MetricRpcMethod;
 use candid::candid_method;
 use ethnum;
-use evm_rpc_types::{HttpOutcallError, JsonRpcError, RpcError, RpcService};
+use evm_rpc_types::{HttpOutcallError, JsonRpcError, ProviderError, RpcApi, RpcError, RpcService};
 use ic_canister_log::log;
 use ic_cdk::api::call::RejectionCode;
 use ic_cdk::api::management_canister::http_request::{
@@ -615,14 +617,13 @@ impl<T: HttpResponsePayload> HttpResponsePayload for Option<T> {}
 impl HttpResponsePayload for TransactionCount {}
 
 /// Calls a JSON-RPC method on an Ethereum node at the specified URL.
-pub async fn call<T, I, O>(
+pub async fn call<I, O>(
     provider: &RpcService,
     method: impl Into<String>,
     params: I,
     mut response_size_estimate: ResponseSizeEstimate,
 ) -> Result<O, RpcError>
 where
-    T: RpcTransport,
     I: Serialize,
     O: DeserializeOwned + HttpResponsePayload,
 {
@@ -633,7 +634,7 @@ where
         method: eth_method.clone(),
         id: 1,
     };
-    let api = T::resolve_api(provider)?;
+    let api = resolve_api(provider)?;
     let url = &api.url;
     let mut headers = vec![HttpHeader {
         name: "Content-Type".to_string(),
@@ -673,13 +674,8 @@ where
             )),
         };
 
-        let response = match T::http_request(
-            provider,
-            &eth_method,
-            request,
-            effective_size_estimate,
-        )
-        .await
+        let response = match http_request(provider, &eth_method, request, effective_size_estimate)
+            .await
         {
             Err(RpcError::HttpOutcallError(HttpOutcallError::IcError { code, message }))
                 if is_response_too_large(&code, &message) =>
@@ -728,6 +724,29 @@ where
 
         return reply.result.into();
     }
+}
+
+fn resolve_api(service: &RpcService) -> Result<RpcApi, ProviderError> {
+    Ok(resolve_rpc_service(service.clone())?.api())
+}
+
+async fn http_request(
+    service: &RpcService,
+    method: &str,
+    request: CanisterHttpRequestArgument,
+    effective_response_size_estimate: u64,
+) -> Result<HttpResponse, RpcError> {
+    let service = resolve_rpc_service(service.clone())?;
+    let cycles_cost = get_http_request_cost(
+        request
+            .body
+            .as_ref()
+            .map(|bytes| bytes.len() as u64)
+            .unwrap_or_default(),
+        effective_response_size_estimate,
+    );
+    let rpc_method = MetricRpcMethod(method.to_string());
+    crate::http::http_request(rpc_method, service, request, cycles_cost).await
 }
 
 fn http_status_code(response: &HttpResponse) -> u16 {

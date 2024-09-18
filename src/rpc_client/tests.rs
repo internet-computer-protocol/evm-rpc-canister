@@ -1,41 +1,57 @@
 mod eth_rpc_client {
-    use crate::rpc_client::{DefaultTransport, EthRpcClient, EthereumNetwork};
-    use evm_rpc_types::{EthMainnetService, EthSepoliaService, RpcConfig, RpcService};
+    use crate::rpc_client::EthRpcClient;
+    use evm_rpc_types::{EthMainnetService, ProviderError, RpcService, RpcServices};
 
     #[test]
-    fn should_retrieve_sepolia_providers_in_stable_order() {
-        let client: EthRpcClient<DefaultTransport> =
-            EthRpcClient::new(EthereumNetwork::SEPOLIA, None, RpcConfig::default());
-
-        let providers = client.providers();
-
-        assert_eq!(
-            providers,
-            &[
-                RpcService::EthSepolia(EthSepoliaService::Alchemy),
-                RpcService::EthSepolia(EthSepoliaService::Ankr),
-                RpcService::EthSepolia(EthSepoliaService::BlockPi),
-                RpcService::EthSepolia(EthSepoliaService::PublicNode),
-                RpcService::EthSepolia(EthSepoliaService::Sepolia)
-            ]
-        );
+    fn should_fail_when_providers_explicitly_set_to_empty() {
+        for empty_source in [
+            RpcServices::Custom {
+                chain_id: 1,
+                services: vec![],
+            },
+            RpcServices::EthMainnet(Some(vec![])),
+            RpcServices::EthSepolia(Some(vec![])),
+            RpcServices::ArbitrumOne(Some(vec![])),
+            RpcServices::BaseMainnet(Some(vec![])),
+            RpcServices::OptimismMainnet(Some(vec![])),
+        ] {
+            assert_eq!(
+                EthRpcClient::new(empty_source, None),
+                Err(ProviderError::ProviderNotFound)
+            );
+        }
     }
 
     #[test]
-    fn should_retrieve_mainnet_providers_in_stable_order() {
-        let client: EthRpcClient<DefaultTransport> =
-            EthRpcClient::new(EthereumNetwork::MAINNET, None, RpcConfig::default());
+    fn should_use_default_providers() {
+        for empty_source in [
+            RpcServices::EthMainnet(None),
+            RpcServices::EthSepolia(None),
+            RpcServices::ArbitrumOne(None),
+            RpcServices::BaseMainnet(None),
+            RpcServices::OptimismMainnet(None),
+        ] {
+            let client = EthRpcClient::new(empty_source, None).unwrap();
+            assert!(!client.providers().is_empty());
+        }
+    }
 
-        let providers = client.providers();
+    #[test]
+    fn should_use_specified_provider() {
+        let provider1 = EthMainnetService::Alchemy;
+        let provider2 = EthMainnetService::PublicNode;
+
+        let client = EthRpcClient::new(
+            RpcServices::EthMainnet(Some(vec![provider1, provider2])),
+            None,
+        )
+        .unwrap();
 
         assert_eq!(
-            providers,
+            client.providers(),
             &[
-                RpcService::EthMainnet(EthMainnetService::Alchemy),
-                RpcService::EthMainnet(EthMainnetService::Ankr),
-                RpcService::EthMainnet(EthMainnetService::PublicNode),
-                RpcService::EthMainnet(EthMainnetService::Cloudflare),
-                RpcService::EthMainnet(EthMainnetService::Llama)
+                RpcService::EthMainnet(provider1),
+                RpcService::EthMainnet(provider2)
             ]
         );
     }

@@ -1,5 +1,3 @@
-use evm_rpc_types::{EthMainnetService, EthSepoliaService, L2MainnetService};
-
 // HTTP outcall cost calculation
 // See https://internetcomputer.org/docs/current/developer-docs/gas-cost#special-features
 pub const INGRESS_OVERHEAD_BYTES: u128 = 100;
@@ -35,23 +33,6 @@ pub const NODES_IN_SUBNET: u32 = 34;
 pub const API_KEY_REPLACE_STRING: &str = "{API_KEY}";
 pub const VALID_API_KEY_CHARS: &str =
     "0123456789ABCDEFGHIJKLMNOPQRTSUVWXYZabcdefghijklmnopqrstuvwxyz$-_.+!*";
-
-// Providers used by default (when passing `null` with `RpcServices`)
-pub const DEFAULT_ETH_MAINNET_SERVICES: &[EthMainnetService] = &[
-    EthMainnetService::Ankr,
-    EthMainnetService::Cloudflare,
-    EthMainnetService::PublicNode,
-];
-pub const DEFAULT_ETH_SEPOLIA_SERVICES: &[EthSepoliaService] = &[
-    EthSepoliaService::Ankr,
-    EthSepoliaService::BlockPi,
-    EthSepoliaService::PublicNode,
-];
-pub const DEFAULT_L2_MAINNET_SERVICES: &[L2MainnetService] = &[
-    L2MainnetService::Ankr,
-    L2MainnetService::BlockPi,
-    L2MainnetService::PublicNode,
-];
 
 pub const CONTENT_TYPE_HEADER_LOWERCASE: &str = "content-type";
 pub const CONTENT_TYPE_VALUE: &str = "application/json";

@@ -1525,7 +1525,6 @@ name = "evm_rpc"
 version = "0.1.0"
 dependencies = [
  "assert_matches",
- "async-trait",
  "candid",
  "ethers-core",
  "ethnum",
