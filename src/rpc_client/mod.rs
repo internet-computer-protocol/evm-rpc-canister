@@ -7,11 +7,11 @@ use evm_rpc_types::{
     EthMainnetService, EthSepoliaService, HttpOutcallError, JsonRpcError, L2MainnetService,
     ProviderError, RpcConfig, RpcError, RpcService, RpcServices,
 };
+use ic_canister_log::log;
 use json::requests::{
     BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam, GetTransactionCountParams,
 };
 use json::responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult, TransactionReceipt};
-use ic_canister_log::log;
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
