@@ -18,9 +18,13 @@ inherits = "release"
 
 [dependencies]
 candid = { workspace = true }
+ethnum = { workspace = true }
 evm_rpc_types = { path = "evm_rpc_types" }
+futures = { workspace = true }
 getrandom = { workspace = true }
 ic-canisters-http-types = { workspace = true }
+ic-crypto-sha3 = { git = "https://github.com/dfinity/ic", rev = "release-2024-09-12_01-30-base" }
+ic-ethereum-types = { git = "https://github.com/dfinity/ic", rev = "release-2024-09-12_01-30-base" }
 ic-nervous-system-common = { workspace = true }
 ic-metrics-encoder = { workspace = true }
 ic-stable-structures = { workspace = true }
@@ -28,29 +32,37 @@ ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "b7b0e54832bbe6
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-certified-map = { workspace = true }
-cketh-common = { git = "https://github.com/dfinity/ic", rev = "b7b0e54832bbe6bf4b80a2f75f4252699f5878e0", package = "ic-cketh-minter" }
 maplit = "1.0"
+minicbor = { workspace = true }
+minicbor-derive = { workspace = true }
 num = "0.4"
+num-bigint = { workspace = true }
 num-traits = "0.2"
 num-derive = "0.4"
 serde = { workspace = true }
 serde_json = { workspace = true }
+thousands = "0.2"
 url = "2.5"
 async-trait = "0.1"
 hex = "0.4"
 ethers-core = "2.0"
-zeroize = "1.8"
+zeroize = {version = "1.8", features = ["zeroize_derive"]}
 
 [dev-dependencies]
+assert_matches = "1.5"
 ic-ic00-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-base-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-config = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-crypto-test-utils-reproducible-rng = { git = "https://github.com/dfinity/ic", rev = "release-2024-09-12_01-30-base" }
 ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
-assert_matches = "1.5"
+proptest = { workspace = true }
+rand = "0.8"
 
 [workspace.dependencies]
 candid = { version = "0.9" }
+ethnum = { version = "1.5.0", features = ["serde"] }
+futures = "0.3.30"
 getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4.3"
 ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
@@ -61,6 +73,8 @@ ic-certified-map = "0.4"
 ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
+minicbor = { version = "0.19.1", features = ["alloc", "derive"] }
+minicbor-derive = "0.13.0"
 num-bigint = "0.4.6"
 proptest = "1.5.0"
 serde = "1.0"
