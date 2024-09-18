@@ -1,3 +1,4 @@
+use crate::logs::{DEBUG, INFO};
 use crate::rpc_client::eth_rpc::{
     are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetBlockByNumberParams,
     GetLogsParam, Hash, HttpResponsePayload, LogEntry, ResponseSizeEstimate,
@@ -14,6 +15,7 @@ use async_trait::async_trait;
 use evm_rpc_types::{
     HttpOutcallError, JsonRpcError, ProviderError, RpcApi, RpcConfig, RpcError, RpcService,
 };
+use ic_canister_log::log;
 use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
@@ -30,16 +32,6 @@ pub(crate) mod responses;
 
 #[cfg(test)]
 mod tests;
-
-//TODO: Dummy log. use ic_canister_log::log
-#[macro_export]
-macro_rules! log {
-    ($sink:expr, $message:expr $(,$args:expr)* $(,)*) => {{
-        let message = std::format!($message $(,$args)*);
-        // Print the message for convenience for local development (e.g. integration tests)
-        println!("{}", &message);
-    }}
-}
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
