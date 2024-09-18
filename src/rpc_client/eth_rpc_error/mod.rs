@@ -11,7 +11,7 @@ mod tests;
 /// Note that `eth_sendRawTransaction` endpoint is not idempotent,
 /// meaning that when called via HTTP outcalls it's expected that one node will receive
 /// a successful answer and other nodes will receive an error but we still need the consensus
-/// result to indicate whether the transaction was sent to the network or not.
+/// result to indicate whether or not the transaction was sent to the network.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SendRawTransactionError {
     /// The transaction is known to the mempool and may indicate
