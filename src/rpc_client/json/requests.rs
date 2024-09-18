@@ -83,24 +83,6 @@ impl Default for BlockSpec {
     }
 }
 
-impl std::str::FromStr for BlockSpec {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.starts_with("0x") {
-            let block_number = BlockNumber::from_str_hex(s)
-                .map_err(|e| format!("failed to parse block number '{s}': {e}"))?;
-            return Ok(BlockSpec::Number(block_number));
-        }
-        Ok(BlockSpec::Tag(match s {
-            "latest" => BlockTag::Latest,
-            "safe" => BlockTag::Safe,
-            "finalized" => BlockTag::Finalized,
-            _ => return Err(format!("unknown block tag '{s}'")),
-        }))
-    }
-}
-
 impl From<BlockNumber> for BlockSpec {
     fn from(value: BlockNumber) -> Self {
         BlockSpec::Number(value)
