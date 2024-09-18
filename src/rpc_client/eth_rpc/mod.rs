@@ -701,8 +701,6 @@ where
             response.status
         );
 
-        metrics::observe_retry_count(eth_method.clone(), retries);
-
         // JSON-RPC responses over HTTP should have a 2xx status code,
         // even if the contained JsonRpcResult is an error.
         // If the server is not available, it will sometimes (wrongly) return HTML that will fail parsing as JSON.
@@ -771,104 +769,4 @@ fn sort_by_hash<T: Serialize + DeserializeOwned>(to_sort: &mut [T]) {
         let b_hash = Keccak256::hash(serde_json::to_vec(b).expect("BUG: failed to serialize"));
         a_hash.cmp(&b_hash)
     });
-}
-
-#[allow(dead_code)] //TODO 243: hook-up to existing metrics
-pub(super) mod metrics {
-    use ic_metrics_encoder::MetricsEncoder;
-    use std::cell::RefCell;
-    use std::collections::BTreeMap;
-
-    /// The max number of RPC call retries we expect to see (plus one).
-    const MAX_EXPECTED_RETRIES: usize = 20;
-
-    #[derive(Default)]
-    struct RetryHistogram {
-        /// The histogram of HTTP call retry counts.
-        /// The last bucket corresponds to the "infinite" value that exceeds the maximum number we
-        /// expect to see in practice.
-        retry_buckets: [u64; MAX_EXPECTED_RETRIES + 1],
-        retry_count: u64,
-    }
-
-    impl RetryHistogram {
-        fn observe_retry_count(&mut self, count: usize) {
-            self.retry_buckets[count.min(MAX_EXPECTED_RETRIES)] += 1;
-            self.retry_count += count as u64;
-        }
-
-        /// Returns a iterator over the histrogram buckets in the format that ic-metrics-encoder
-        /// expects.
-        fn iter(&self) -> impl Iterator<Item = (f64, f64)> + '_ {
-            (0..MAX_EXPECTED_RETRIES)
-                .zip(self.retry_buckets[0..MAX_EXPECTED_RETRIES].iter().cloned())
-                .map(|(k, v)| (k as f64, v as f64))
-                .chain(std::iter::once((
-                    f64::INFINITY,
-                    self.retry_buckets[MAX_EXPECTED_RETRIES] as f64,
-                )))
-        }
-    }
-
-    #[derive(Default)]
-    pub struct HttpMetrics {
-        /// Retry counts histograms indexed by the ETH RCP method name.
-        retry_histogram_per_method: BTreeMap<String, RetryHistogram>,
-    }
-
-    impl HttpMetrics {
-        pub fn observe_retry_count(&mut self, method: String, count: usize) {
-            self.retry_histogram_per_method
-                .entry(method)
-                .or_default()
-                .observe_retry_count(count);
-        }
-
-        #[cfg(test)]
-        pub fn count_retries_in_bucket(&self, method: &str, count: usize) -> u64 {
-            match self.retry_histogram_per_method.get(method) {
-                Some(histogram) => histogram.retry_buckets[count.min(MAX_EXPECTED_RETRIES)],
-                None => 0,
-            }
-        }
-
-        pub fn encode<W: std::io::Write>(
-            &self,
-            encoder: &mut MetricsEncoder<W>,
-        ) -> std::io::Result<()> {
-            if self.retry_histogram_per_method.is_empty() {
-                return Ok(());
-            }
-
-            let mut histogram_vec = encoder.histogram_vec(
-                "cketh_eth_rpc_call_retry_count",
-                "The number of ETH RPC call retries by method.",
-            )?;
-
-            for (method, histogram) in &self.retry_histogram_per_method {
-                histogram_vec = histogram_vec.histogram(
-                    &[("method", method.as_str())],
-                    histogram.iter(),
-                    histogram.retry_count as f64,
-                )?;
-            }
-
-            Ok(())
-        }
-    }
-
-    //TODO XC-243: use existing METRICS declared in memory.rs
-    thread_local! {
-        static METRICS: RefCell<HttpMetrics> = RefCell::default();
-    }
-
-    /// Record the retry count for the specified ETH RPC method.
-    pub fn observe_retry_count(method: String, count: usize) {
-        METRICS.with(|metrics| metrics.borrow_mut().observe_retry_count(method, count));
-    }
-
-    /// Encodes the metrics related to ETH RPC method calls.
-    pub fn encode<W: std::io::Write>(encoder: &mut MetricsEncoder<W>) -> std::io::Result<()> {
-        METRICS.with(|metrics| metrics.borrow().encode(encoder))
-    }
 }
