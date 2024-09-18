@@ -215,7 +215,8 @@ mod multi_call_results {
     }
 
     mod reduce_with_stable_majority_by_key {
-        use crate::rpc_client::eth_rpc::{FeeHistory, JsonRpcResult};
+        use crate::rpc_client::eth_rpc::JsonRpcResult;
+        use crate::rpc_client::json::responses::FeeHistory;
         use crate::rpc_client::numeric::{BlockNumber, WeiPerGas};
         use crate::rpc_client::tests::multi_call_results::{ANKR, CLOUDFLARE, PUBLIC_NODE};
         use crate::rpc_client::{MultiCallError, MultiCallResults};
@@ -420,8 +421,8 @@ mod multi_call_results {
 
 mod eth_get_transaction_receipt {
     use crate::rpc_client::eth_rpc::Hash;
+    use crate::rpc_client::json::responses::{TransactionReceipt, TransactionStatus};
     use crate::rpc_client::numeric::{BlockNumber, GasAmount, WeiPerGas};
-    use crate::rpc_client::responses::{TransactionReceipt, TransactionStatus};
     use assert_matches::assert_matches;
     use proptest::proptest;
     use std::str::FromStr;
@@ -513,9 +514,8 @@ mod eth_get_transaction_receipt {
 }
 
 mod eth_get_transaction_count {
-    use crate::rpc_client::eth_rpc::{BlockSpec, BlockTag};
+    use crate::rpc_client::json::requests::{BlockSpec, BlockTag, GetTransactionCountParams};
     use crate::rpc_client::numeric::TransactionCount;
-    use crate::rpc_client::requests::GetTransactionCountParams;
     use ic_ethereum_types::Address;
     use std::str::FromStr;
 

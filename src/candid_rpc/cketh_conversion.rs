@@ -4,24 +4,25 @@
 
 use crate::rpc_client::checked_amount::CheckedAmountOf;
 use crate::rpc_client::eth_rpc::{Hash, Quantity};
+use crate::rpc_client::json::requests::BlockSpec;
 use evm_rpc_types::{BlockTag, Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
-/**/
-pub(super) fn into_block_spec(value: BlockTag) -> crate::rpc_client::eth_rpc::BlockSpec {
-    use crate::rpc_client::eth_rpc::{self, BlockSpec};
+
+pub(super) fn into_block_spec(value: BlockTag) -> BlockSpec {
+    use crate::rpc_client::json::requests;
     match value {
         BlockTag::Number(n) => BlockSpec::Number(into_checked_amount_of(n)),
-        BlockTag::Latest => BlockSpec::Tag(eth_rpc::BlockTag::Latest),
-        BlockTag::Safe => BlockSpec::Tag(eth_rpc::BlockTag::Safe),
-        BlockTag::Finalized => BlockSpec::Tag(eth_rpc::BlockTag::Finalized),
-        BlockTag::Earliest => BlockSpec::Tag(eth_rpc::BlockTag::Earliest),
-        BlockTag::Pending => BlockSpec::Tag(eth_rpc::BlockTag::Pending),
+        BlockTag::Latest => BlockSpec::Tag(requests::BlockTag::Latest),
+        BlockTag::Safe => BlockSpec::Tag(requests::BlockTag::Safe),
+        BlockTag::Finalized => BlockSpec::Tag(requests::BlockTag::Finalized),
+        BlockTag::Earliest => BlockSpec::Tag(requests::BlockTag::Earliest),
+        BlockTag::Pending => BlockSpec::Tag(requests::BlockTag::Pending),
     }
 }
 
 pub(super) fn into_get_logs_param(
     value: evm_rpc_types::GetLogsArgs,
-) -> crate::rpc_client::eth_rpc::GetLogsParam {
-    crate::rpc_client::eth_rpc::GetLogsParam {
+) -> crate::rpc_client::json::requests::GetLogsParam {
+    crate::rpc_client::json::requests::GetLogsParam {
         from_block: value.from_block.map(into_block_spec).unwrap_or_default(),
         to_block: value.to_block.map(into_block_spec).unwrap_or_default(),
         address: value
@@ -44,12 +45,12 @@ pub(super) fn into_get_logs_param(
 }
 
 pub(super) fn from_log_entries(
-    value: Vec<crate::rpc_client::eth_rpc::LogEntry>,
+    value: Vec<crate::rpc_client::json::responses::LogEntry>,
 ) -> Vec<evm_rpc_types::LogEntry> {
     value.into_iter().map(from_log_entry).collect()
 }
 
-fn from_log_entry(value: crate::rpc_client::eth_rpc::LogEntry) -> evm_rpc_types::LogEntry {
+fn from_log_entry(value: crate::rpc_client::json::responses::LogEntry) -> evm_rpc_types::LogEntry {
     evm_rpc_types::LogEntry {
         address: from_address(value.address),
         topics: value.topics.into_iter().map(|t| t.0.into()).collect(),
@@ -65,8 +66,8 @@ fn from_log_entry(value: crate::rpc_client::eth_rpc::LogEntry) -> evm_rpc_types:
 
 pub(super) fn into_fee_history_params(
     value: evm_rpc_types::FeeHistoryArgs,
-) -> crate::rpc_client::eth_rpc::FeeHistoryParams {
-    crate::rpc_client::eth_rpc::FeeHistoryParams {
+) -> crate::rpc_client::json::requests::FeeHistoryParams {
+    crate::rpc_client::json::requests::FeeHistoryParams {
         block_count: into_quantity(value.block_count),
         highest_block: into_block_spec(value.newest_block),
         reward_percentiles: value.reward_percentiles.unwrap_or_default(),
@@ -74,7 +75,7 @@ pub(super) fn into_fee_history_params(
 }
 
 pub(super) fn from_fee_history(
-    value: crate::rpc_client::eth_rpc::FeeHistory,
+    value: crate::rpc_client::json::responses::FeeHistory,
 ) -> evm_rpc_types::FeeHistory {
     evm_rpc_types::FeeHistory {
         oldest_block: from_checked_amount_of(value.oldest_block),
@@ -94,15 +95,15 @@ pub(super) fn from_fee_history(
 
 pub(super) fn into_get_transaction_count_params(
     value: evm_rpc_types::GetTransactionCountArgs,
-) -> crate::rpc_client::requests::GetTransactionCountParams {
-    crate::rpc_client::requests::GetTransactionCountParams {
+) -> crate::rpc_client::json::requests::GetTransactionCountParams {
+    crate::rpc_client::json::requests::GetTransactionCountParams {
         address: ic_ethereum_types::Address::new(value.address.into()),
         block: into_block_spec(value.block),
     }
 }
 
 pub(super) fn from_transaction_receipt(
-    value: crate::rpc_client::responses::TransactionReceipt,
+    value: crate::rpc_client::json::responses::TransactionReceipt,
 ) -> evm_rpc_types::TransactionReceipt {
     evm_rpc_types::TransactionReceipt {
         block_hash: Hex32::from(value.block_hash.0),
@@ -110,8 +111,8 @@ pub(super) fn from_transaction_receipt(
         effective_gas_price: from_checked_amount_of(value.effective_gas_price),
         gas_used: from_checked_amount_of(value.gas_used),
         status: match value.status {
-            crate::rpc_client::responses::TransactionStatus::Success => Nat256::from(1_u8),
-            crate::rpc_client::responses::TransactionStatus::Failure => Nat256::from(0_u8),
+            crate::rpc_client::json::responses::TransactionStatus::Success => Nat256::from(1_u8),
+            crate::rpc_client::json::responses::TransactionStatus::Failure => Nat256::from(0_u8),
         },
         transaction_hash: Hex32::from(value.transaction_hash.0),
         // TODO 243: responses types from querying JSON-RPC providers should be strongly typed
@@ -128,7 +129,7 @@ pub(super) fn from_transaction_receipt(
     }
 }
 
-pub(super) fn from_block(value: crate::rpc_client::eth_rpc::Block) -> evm_rpc_types::Block {
+pub(super) fn from_block(value: crate::rpc_client::json::responses::Block) -> evm_rpc_types::Block {
     evm_rpc_types::Block {
         base_fee_per_gas: value.base_fee_per_gas.map(from_checked_amount_of),
         number: from_checked_amount_of(value.number),
@@ -164,19 +165,19 @@ pub(super) fn from_block(value: crate::rpc_client::eth_rpc::Block) -> evm_rpc_ty
 
 pub(super) fn from_send_raw_transaction_result(
     transaction_hash: Option<Hex32>,
-    value: crate::rpc_client::eth_rpc::SendRawTransactionResult,
+    value: crate::rpc_client::json::responses::SendRawTransactionResult,
 ) -> evm_rpc_types::SendRawTransactionStatus {
     match value {
-        crate::rpc_client::eth_rpc::SendRawTransactionResult::Ok => {
+        crate::rpc_client::json::responses::SendRawTransactionResult::Ok => {
             evm_rpc_types::SendRawTransactionStatus::Ok(transaction_hash)
         }
-        crate::rpc_client::eth_rpc::SendRawTransactionResult::InsufficientFunds => {
+        crate::rpc_client::json::responses::SendRawTransactionResult::InsufficientFunds => {
             evm_rpc_types::SendRawTransactionStatus::InsufficientFunds
         }
-        crate::rpc_client::eth_rpc::SendRawTransactionResult::NonceTooLow => {
+        crate::rpc_client::json::responses::SendRawTransactionResult::NonceTooLow => {
             evm_rpc_types::SendRawTransactionStatus::NonceTooLow
         }
-        crate::rpc_client::eth_rpc::SendRawTransactionResult::NonceTooHigh => {
+        crate::rpc_client::json::responses::SendRawTransactionResult::NonceTooHigh => {
             evm_rpc_types::SendRawTransactionStatus::NonceTooHigh
         }
     }

@@ -1,17 +1,17 @@
 use crate::logs::{DEBUG, INFO};
 use crate::rpc_client::eth_rpc::{
-    are_errors_consistent, Block, BlockSpec, FeeHistory, FeeHistoryParams, GetBlockByNumberParams,
-    GetLogsParam, Hash, HttpResponsePayload, LogEntry, ResponseSizeEstimate,
-    SendRawTransactionResult, HEADER_SIZE_LIMIT,
+    are_errors_consistent, Hash, HttpResponsePayload, ResponseSizeEstimate, HEADER_SIZE_LIMIT,
 };
 use crate::rpc_client::numeric::TransactionCount;
-use crate::rpc_client::requests::GetTransactionCountParams;
-use crate::rpc_client::responses::TransactionReceipt;
 use evm_rpc_types::{
     EthMainnetService, EthSepoliaService, HttpOutcallError, JsonRpcError, L2MainnetService,
     ProviderError, RpcConfig, RpcError, RpcService, RpcServices,
 };
 use ic_canister_log::log;
+use json::requests::{
+    BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam, GetTransactionCountParams,
+};
+use json::responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult, TransactionReceipt};
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
@@ -19,9 +19,8 @@ use std::fmt::Debug;
 pub mod checked_amount;
 pub(crate) mod eth_rpc;
 mod eth_rpc_error;
+pub(crate) mod json;
 mod numeric;
-pub(crate) mod requests;
-pub(crate) mod responses;
 
 #[cfg(test)]
 mod tests;

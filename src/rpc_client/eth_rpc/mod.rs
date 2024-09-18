@@ -5,10 +5,9 @@ use crate::accounting::get_http_request_cost;
 use crate::logs::{DEBUG, TRACE_HTTP};
 use crate::memory::next_request_id;
 use crate::providers::resolve_rpc_service;
-use crate::rpc_client::checked_amount::CheckedAmountOf;
 use crate::rpc_client::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
-use crate::rpc_client::numeric::{BlockNumber, LogIndex, TransactionCount, Wei, WeiPerGas};
-use crate::rpc_client::responses::TransactionReceipt;
+use crate::rpc_client::json::responses::{Block, FeeHistory, LogEntry, TransactionReceipt};
+use crate::rpc_client::numeric::{TransactionCount, Wei};
 use crate::types::MetricRpcMethod;
 use candid::candid_method;
 use ethnum;
@@ -20,7 +19,6 @@ use ic_cdk::api::management_canister::http_request::{
     TransformContext,
 };
 use ic_cdk_macros::query;
-use ic_ethereum_types::Address;
 use minicbor::{Decode, Encode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt;
@@ -37,8 +35,8 @@ mod tests;
 pub const HEADER_SIZE_LIMIT: u64 = 2 * 1024;
 
 // This constant comes from the IC specification:
-// > If provided, the value must not exceed 2MB
-const HTTP_MAX_SIZE: u64 = 2_000_000;
+// > If provided, the value must not exceed 2MiB
+const HTTP_MAX_SIZE: u64 = 2 * 1024 * 1024;
 
 pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
 
@@ -102,20 +100,6 @@ impl UpperHex for FixedSizeData {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub enum SendRawTransactionResult {
-    Ok,
-    InsufficientFunds,
-    NonceTooLow,
-    NonceTooHigh,
-}
-
-impl HttpResponsePayload for SendRawTransactionResult {
-    fn response_transform() -> Option<ResponseTransform> {
-        Some(ResponseTransform::SendRawTransaction)
-    }
-}
-
 #[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Hash(#[serde(with = "ic_ethereum_types::serde_data")] pub [u8; 32]);
 
@@ -159,277 +143,7 @@ impl std::str::FromStr for Hash {
 
 impl HttpResponsePayload for Hash {}
 
-/// Block tags.
-/// See <https://ethereum.org/en/developers/docs/apis/json-rpc/#default-block>
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum BlockTag {
-    /// The latest mined block.
-    #[default]
-    #[serde(rename = "latest")]
-    Latest,
-    /// The latest safe head block.
-    /// See
-    /// <https://www.alchemy.com/overviews/ethereum-commitment-levels#what-are-ethereum-commitment-levels>
-    #[serde(rename = "safe")]
-    Safe,
-    /// The latest finalized block.
-    /// See
-    /// <https://www.alchemy.com/overviews/ethereum-commitment-levels#what-are-ethereum-commitment-levels>
-    #[serde(rename = "finalized")]
-    Finalized,
-    #[serde(rename = "earliest")]
-    Earliest,
-    #[serde(rename = "pending")]
-    Pending,
-}
-
-impl Display for BlockTag {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Latest => write!(f, "latest"),
-            Self::Safe => write!(f, "safe"),
-            Self::Finalized => write!(f, "finalized"),
-            Self::Earliest => write!(f, "earliest"),
-            Self::Pending => write!(f, "pending"),
-        }
-    }
-}
-
-/// The block specification indicating which block to query.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum BlockSpec {
-    /// Query the block with the specified index.
-    Number(BlockNumber),
-    /// Query the block with the specified tag.
-    Tag(BlockTag),
-}
-
-impl Default for BlockSpec {
-    fn default() -> Self {
-        Self::Tag(BlockTag::default())
-    }
-}
-
-impl std::str::FromStr for BlockSpec {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.starts_with("0x") {
-            let block_number = BlockNumber::from_str_hex(s)
-                .map_err(|e| format!("failed to parse block number '{s}': {e}"))?;
-            return Ok(BlockSpec::Number(block_number));
-        }
-        Ok(BlockSpec::Tag(match s {
-            "latest" => BlockTag::Latest,
-            "safe" => BlockTag::Safe,
-            "finalized" => BlockTag::Finalized,
-            _ => return Err(format!("unknown block tag '{s}'")),
-        }))
-    }
-}
-
-/// Parameters of the [`eth_getLogs`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getlogs) call.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GetLogsParam {
-    /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
-    #[serde(rename = "fromBlock")]
-    pub from_block: BlockSpec,
-    /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
-    #[serde(rename = "toBlock")]
-    pub to_block: BlockSpec,
-    /// Contract address or a list of addresses from which logs should originate.
-    pub address: Vec<Address>,
-    /// Array of 32 Bytes DATA topics.
-    /// Topics are order-dependent.
-    /// Each topic can also be an array of DATA with "or" options.
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub topics: Vec<Vec<FixedSizeData>>,
-}
-
-/// An entry of the [`eth_getLogs`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getlogs) call reply.
-///
-/// Example:
-/// ```json
-/// {
-///    "address": "0x7e41257f7b5c3dd3313ef02b1f4c864fe95bec2b",
-///    "topics": [
-///      "0x2a2607d40f4a6feb97c36e0efd57e0aa3e42e0332af4fceb78f21b7dffcbd657"
-///    ],
-///    "data": "0x00000000000000000000000055654e7405fcb336386ea8f36954a211b2cda764000000000000000000000000000000000000000000000000002386f26fc100000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000003f62327071372d71677a7a692d74623564622d72357363692d637736736c2d6e646f756c2d666f7435742d347a7732702d657a6677692d74616a32792d76716500",
-///    "blockNumber": "0x3aa4f4",
-///    "transactionHash": "0x5618f72c485bd98a3df58d900eabe9e24bfaa972a6fe5227e02233fad2db1154",
-///    "transactionIndex": "0x6",
-///    "blockHash": "0x908e6b84d26d71421bfaa08e7966e0afcef3883a28a53a0a7a31104caf1e94c2",
-///    "logIndex": "0x8",
-///    "removed": false
-///  }
-/// ```
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub struct LogEntry {
-    /// The address from which this log originated.
-    pub address: Address,
-    /// Array of 0 to 4 32 Bytes DATA of indexed log arguments.
-    /// In solidity: The first topic is the event signature hash (e.g. Deposit(address,bytes32,uint256)),
-    /// unless you declared the event with the anonymous specifier.
-    pub topics: Vec<FixedSizeData>,
-    /// Contains one or more 32-byte non-indexed log arguments.
-    pub data: Data,
-    /// The block number in which this log appeared.
-    /// None if the block is pending.
-    #[serde(rename = "blockNumber")]
-    pub block_number: Option<BlockNumber>,
-    // 32 Bytes - hash of the transactions from which this log was created.
-    // None if the transaction is pending.
-    #[serde(rename = "transactionHash")]
-    pub transaction_hash: Option<Hash>,
-    // Integer of the transactions position within the block the log was created from.
-    // None if the log is pending.
-    #[serde(rename = "transactionIndex")]
-    pub transaction_index: Option<CheckedAmountOf<()>>,
-    /// 32 Bytes - hash of the block in which this log appeared.
-    /// None if the block is pending.
-    #[serde(rename = "blockHash")]
-    pub block_hash: Option<Hash>,
-    /// Integer of the log index position in the block.
-    /// None if the log is pending.
-    #[serde(rename = "logIndex")]
-    pub log_index: Option<LogIndex>,
-    /// "true" when the log was removed due to a chain reorganization.
-    /// "false" if it's a valid log.
-    #[serde(default)]
-    pub removed: bool,
-}
-
-impl HttpResponsePayload for Vec<LogEntry> {
-    fn response_transform() -> Option<ResponseTransform> {
-        Some(ResponseTransform::LogEntries)
-    }
-}
-
-/// Parameters of the [`eth_getBlockByNumber`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getblockbynumber) call.
-#[derive(Debug, Serialize, Clone)]
-#[serde(into = "(BlockSpec, bool)")]
-pub struct GetBlockByNumberParams {
-    /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
-    pub block: BlockSpec,
-    /// If true, returns the full transaction objects. If false, returns only the hashes of the transactions.
-    pub include_full_transactions: bool,
-}
-
-impl From<GetBlockByNumberParams> for (BlockSpec, bool) {
-    fn from(value: GetBlockByNumberParams) -> Self {
-        (value.block, value.include_full_transactions)
-    }
-}
-
-/// Parameters of the [`eth_feeHistory`](https://ethereum.github.io/execution-apis/api-documentation/) call.
-#[derive(Debug, Serialize, Clone)]
-#[serde(into = "(Quantity, BlockSpec, Vec<u8>)")]
-pub struct FeeHistoryParams {
-    /// Number of blocks in the requested range.
-    /// Typically providers request this to be between 1 and 1024.
-    pub block_count: Quantity,
-    /// Highest block of the requested range.
-    /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
-    pub highest_block: BlockSpec,
-    /// A monotonically increasing list of percentile values between 0 and 100.
-    /// For each block in the requested range, the transactions will be sorted in ascending order
-    /// by effective tip per gas and the corresponding effective tip for the percentile
-    /// will be determined, accounting for gas consumed.
-    pub reward_percentiles: Vec<u8>,
-}
-
-impl From<FeeHistoryParams> for (Quantity, BlockSpec, Vec<u8>) {
-    fn from(value: FeeHistoryParams) -> Self {
-        (
-            value.block_count,
-            value.highest_block,
-            value.reward_percentiles,
-        )
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct FeeHistory {
-    /// Lowest number block of the returned range.
-    #[serde(rename = "oldestBlock")]
-    pub oldest_block: BlockNumber,
-    /// An array of block base fees per gas.
-    /// This includes the next block after the newest of the returned range,
-    /// because this value can be derived from the newest block.
-    /// Zeroes are returned for pre-EIP-1559 blocks.
-    #[serde(rename = "baseFeePerGas")]
-    pub base_fee_per_gas: Vec<WeiPerGas>,
-    /// An array of block gas used ratios (gasUsed / gasLimit).
-    #[serde(default)]
-    #[serde(rename = "gasUsedRatio")]
-    pub gas_used_ratio: Vec<f64>,
-    /// A two-dimensional array of effective priority fees per gas at the requested block percentiles.
-    #[serde(default)]
-    #[serde(rename = "reward")]
-    pub reward: Vec<Vec<WeiPerGas>>,
-}
-
-impl HttpResponsePayload for FeeHistory {
-    fn response_transform() -> Option<ResponseTransform> {
-        Some(ResponseTransform::FeeHistory)
-    }
-}
-
 impl HttpResponsePayload for Wei {}
-
-impl From<BlockNumber> for BlockSpec {
-    fn from(value: BlockNumber) -> Self {
-        BlockSpec::Number(value)
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Block {
-    #[serde(rename = "baseFeePerGas")]
-    pub base_fee_per_gas: Option<Wei>,
-    pub number: BlockNumber,
-    pub difficulty: Option<CheckedAmountOf<()>>,
-    #[serde(rename = "extraData")]
-    pub extra_data: String,
-    #[serde(rename = "gasLimit")]
-    pub gas_limit: CheckedAmountOf<()>,
-    #[serde(rename = "gasUsed")]
-    pub gas_used: CheckedAmountOf<()>,
-    pub hash: String,
-    #[serde(rename = "logsBloom")]
-    pub logs_bloom: String,
-    pub miner: String,
-    #[serde(rename = "mixHash")]
-    pub mix_hash: String,
-    pub nonce: CheckedAmountOf<()>,
-    #[serde(rename = "parentHash")]
-    pub parent_hash: String,
-    #[serde(rename = "receiptsRoot")]
-    pub receipts_root: String,
-    #[serde(rename = "sha3Uncles")]
-    pub sha3_uncles: String,
-    pub size: CheckedAmountOf<()>,
-    #[serde(rename = "stateRoot")]
-    pub state_root: String,
-    #[serde(rename = "timestamp")]
-    pub timestamp: CheckedAmountOf<()>,
-    #[serde(rename = "totalDifficulty")]
-    pub total_difficulty: Option<CheckedAmountOf<()>>,
-    #[serde(default)]
-    pub transactions: Vec<String>,
-    #[serde(rename = "transactionsRoot")]
-    pub transactions_root: Option<String>,
-    #[serde(default)]
-    pub uncles: Vec<String>,
-}
-
-impl HttpResponsePayload for Block {
-    fn response_transform() -> Option<ResponseTransform> {
-        Some(ResponseTransform::Block)
-    }
-}
 
 /// An envelope for all JSON-RPC requests.
 #[derive(Clone, Serialize, Deserialize)]
