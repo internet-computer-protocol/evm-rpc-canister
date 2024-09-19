@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::marker::PhantomData;
 
-/// `CheckedAmountOf<Unit>` provides a type-safe way to keep an amount of some `Unit`.
+/// `Amount<Unit>` provides a type-safe way to keep an amount of some `Unit`.
 pub struct Amount<Unit>(ethnum::u256, PhantomData<Unit>);
 
 impl<Unit> Amount<Unit> {
