@@ -1,4 +1,5 @@
 pub use ic_cdk::api::management_canister::http_request::HttpHeader;
+use std::fmt::Debug;
 
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
@@ -27,7 +28,7 @@ pub enum ConsensusStrategy {
     },
 }
 
-#[derive(Clone, CandidType, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
 pub enum RpcServices {
     Custom {
         #[serde(rename = "chainId")]
@@ -45,6 +46,12 @@ pub enum RpcServices {
 pub struct RpcApi {
     pub url: String,
     pub headers: Option<Vec<HttpHeader>>,
+}
+
+impl Debug for RpcApi {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "RpcApi {{ url: ***, headers: *** }}",) //URL or header value could contain API keys
+    }
 }
 
 #[derive(

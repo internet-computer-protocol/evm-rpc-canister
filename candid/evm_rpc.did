@@ -133,6 +133,7 @@ type ProviderError = variant {
   MissingRequiredProvider;
   ProviderNotFound;
   NoPermission;
+  InvalidRpcConfig : text ;
 };
 type ProviderId = nat64;
 type ChainId = nat64;

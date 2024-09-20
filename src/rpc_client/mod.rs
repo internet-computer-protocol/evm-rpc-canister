@@ -51,7 +51,7 @@ impl EthereumNetwork {
 pub struct Providers {
     chain: EthereumNetwork,
     /// *Non-empty* set of providers to query.
-    providers: BTreeSet<RpcService>,
+    services: BTreeSet<RpcService>,
 }
 
 impl Providers {
@@ -157,7 +157,7 @@ impl Providers {
             return Err(ProviderError::ProviderNotFound);
         }
 
-        Ok(Self { chain, providers })
+        Ok(Self { chain, services: providers })
     }
 }
 
@@ -263,7 +263,7 @@ impl EthRpcClient {
     }
 
     fn providers(&self) -> &BTreeSet<RpcService> {
-        &self.providers.providers
+        &self.providers.services
     }
 
     fn response_size_estimate(&self, estimate: u64) -> ResponseSizeEstimate {
