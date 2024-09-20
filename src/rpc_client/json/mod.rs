@@ -1,9 +1,9 @@
 //! Types used for JSON-RPC requests and responses with Ethereum JSON-RPC providers.
 
-use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
+use crate::rpc_client::eth_rpc::HttpResponsePayload;
 use candid::Deserialize;
 use serde::Serialize;
-use crate::rpc_client::eth_rpc::HttpResponsePayload;
+use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
 
 pub mod requests;
 pub mod responses;
@@ -98,4 +98,3 @@ impl std::str::FromStr for Hash {
 }
 
 impl HttpResponsePayload for Hash {}
-
