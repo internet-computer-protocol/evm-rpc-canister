@@ -7,6 +7,23 @@ use serde::Serialize;
 pub struct RpcConfig {
     #[serde(rename = "responseSizeEstimate")]
     pub response_size_estimate: Option<u64>,
+
+    #[serde(rename = "responseConsensus")]
+    pub response_consensus: Option<ConsensusStrategy>
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
+pub enum ConsensusStrategy {
+    /// All providers must return the same non-error result.
+    #[default]
+    Equality,
+    Threshold {
+        /// Number of providers to be queried.
+        /// Can be omitted, if caller specifies manually the providers to be used.
+        num_providers: Option<u8>,
+        /// Minimum number of providers that must return the same (non-error) result.
+        min_num_ok: u8,
+    }
 }
 
 #[derive(Clone, CandidType, Deserialize)]
