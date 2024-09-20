@@ -150,7 +150,7 @@ impl CandidRpcClient {
         process_result(
             RpcMethod::EthSendRawTransaction,
             self.client
-                .multi_eth_send_raw_transaction(raw_signed_transaction_hex.to_string())
+                .eth_send_raw_transaction(raw_signed_transaction_hex.to_string())
                 .await,
         )
         .map(|result| from_send_raw_transaction_result(transaction_hash.clone(), result))

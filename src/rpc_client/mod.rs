@@ -4,8 +4,8 @@ use crate::rpc_client::eth_rpc::{
 };
 use crate::rpc_client::numeric::TransactionCount;
 use evm_rpc_types::{
-    EthMainnetService, EthSepoliaService, HttpOutcallError, JsonRpcError, L2MainnetService,
-    ProviderError, RpcConfig, RpcError, RpcService, RpcServices,
+    EthMainnetService, EthSepoliaService, HttpOutcallError, L2MainnetService, ProviderError,
+    RpcConfig, RpcError, RpcService, RpcServices,
 };
 use ic_canister_log::log;
 use json::requests::{
@@ -138,53 +138,6 @@ impl EthRpcClient {
         ResponseSizeEstimate::new(self.config.response_size_estimate.unwrap_or(estimate))
     }
 
-    /// Query all providers in sequence until one returns an ok result
-    /// (which could still be a JsonRpcResult::Error).
-    /// If none of the providers return an ok result, return the last error.
-    /// This method is useful in case a provider is temporarily down but should only be for
-    /// querying data that is **not** critical since the returned value comes from a single provider.
-    async fn sequential_call_until_ok<I, O>(
-        &self,
-        method: impl Into<String> + Clone,
-        params: I,
-        response_size_estimate: ResponseSizeEstimate,
-    ) -> Result<O, RpcError>
-    where
-        I: Serialize + Clone,
-        O: DeserializeOwned + HttpResponsePayload + Debug,
-    {
-        let mut last_result: Option<Result<O, RpcError>> = None;
-        for provider in self.providers() {
-            log!(
-                DEBUG,
-                "[sequential_call_until_ok]: calling provider: {:?}",
-                provider
-            );
-            let result = eth_rpc::call::<_, _>(
-                provider,
-                method.clone(),
-                params.clone(),
-                response_size_estimate,
-            )
-            .await;
-            match result {
-                Ok(value) => return Ok(value),
-                Err(RpcError::JsonRpcError(json_rpc_error @ JsonRpcError { .. })) => {
-                    log!(
-                        INFO,
-                        "{provider:?} returned JSON-RPC error {json_rpc_error:?}",
-                    );
-                    last_result = Some(Err(json_rpc_error.into()));
-                }
-                Err(e) => {
-                    log!(INFO, "Querying {provider:?} returned error {e:?}");
-                    last_result = Some(Err(e));
-                }
-            };
-        }
-        last_result.unwrap_or_else(|| panic!("BUG: No providers in RPC client {:?}", self))
-    }
-
     /// Query all providers in parallel and return all results.
     /// It's up to the caller to decide how to handle the results, which could be inconsistent
     /// (e.g., if different providers gave different responses).
@@ -289,21 +242,9 @@ impl EthRpcClient {
     pub async fn eth_send_raw_transaction(
         &self,
         raw_signed_transaction_hex: String,
-    ) -> Result<SendRawTransactionResult, RpcError> {
+    ) -> Result<SendRawTransactionResult, MultiCallError<SendRawTransactionResult>> {
         // A successful reply is under 256 bytes, but we expect most calls to end with an error
         // since we submit the same transaction from multiple nodes.
-        self.sequential_call_until_ok(
-            "eth_sendRawTransaction",
-            vec![raw_signed_transaction_hex],
-            self.response_size_estimate(256 + HEADER_SIZE_LIMIT),
-        )
-        .await
-    }
-
-    pub async fn multi_eth_send_raw_transaction(
-        &self,
-        raw_signed_transaction_hex: String,
-    ) -> Result<SendRawTransactionResult, MultiCallError<SendRawTransactionResult>> {
         self.parallel_call(
             "eth_sendRawTransaction",
             vec![raw_signed_transaction_hex],
