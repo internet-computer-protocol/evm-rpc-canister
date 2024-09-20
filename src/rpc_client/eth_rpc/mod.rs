@@ -6,7 +6,10 @@ use crate::logs::{DEBUG, TRACE_HTTP};
 use crate::memory::next_request_id;
 use crate::providers::resolve_rpc_service;
 use crate::rpc_client::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
-use crate::rpc_client::json::responses::{Block, FeeHistory, LogEntry, TransactionReceipt};
+use crate::rpc_client::json::requests::JsonRpcRequest;
+use crate::rpc_client::json::responses::{
+    Block, FeeHistory, JsonRpcReply, JsonRpcResult, LogEntry, TransactionReceipt,
+};
 use crate::rpc_client::numeric::{TransactionCount, Wei};
 use crate::types::MetricRpcMethod;
 use candid::candid_method;
@@ -38,52 +41,6 @@ pub const HEADER_SIZE_LIMIT: u64 = 2 * 1024;
 const HTTP_MAX_SIZE: u64 = 2 * 1024 * 1024;
 
 pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
-
-/// An envelope for all JSON-RPC requests.
-#[derive(Clone, Serialize, Deserialize)]
-pub struct JsonRpcRequest<T> {
-    jsonrpc: String,
-    method: String,
-    id: u64,
-    pub params: T,
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct JsonRpcReply<T> {
-    pub id: u64,
-    pub jsonrpc: String,
-    #[serde(flatten)]
-    pub result: JsonRpcResult<T>,
-}
-
-/// An envelope for all JSON-RPC replies.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum JsonRpcResult<T> {
-    #[serde(rename = "result")]
-    Result(T),
-    #[serde(rename = "error")]
-    Error { code: i64, message: String },
-}
-
-impl<T> JsonRpcResult<T> {
-    pub fn unwrap(self) -> T {
-        match self {
-            Self::Result(t) => t,
-            Self::Error { code, message } => panic!(
-                "expected JSON RPC call to succeed, got an error: error_code = {code}, message = {message}"
-            ),
-        }
-    }
-}
-
-impl<T> From<JsonRpcResult<T>> for Result<T, RpcError> {
-    fn from(result: JsonRpcResult<T>) -> Self {
-        match result {
-            JsonRpcResult::Result(r) => Ok(r),
-            JsonRpcResult::Error { code, message } => Err(JsonRpcError { code, message }.into()),
-        }
-    }
-}
 
 /// Describes a payload transformation to execute before passing the HTTP response to consensus.
 /// The purpose of these transformations is to ensure that the response encoding is deterministic

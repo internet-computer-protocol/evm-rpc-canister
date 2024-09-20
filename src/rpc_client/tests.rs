@@ -65,7 +65,7 @@ mod multi_call_results {
     const CLOUDFLARE: RpcService = RpcService::EthMainnet(EthMainnetService::Cloudflare);
 
     mod reduce_with_equality {
-        use crate::rpc_client::eth_rpc::JsonRpcResult;
+        use crate::rpc_client::json::responses::JsonRpcResult;
         use crate::rpc_client::tests::multi_call_results::{ANKR, PUBLIC_NODE};
         use crate::rpc_client::{MultiCallError, MultiCallResults};
         use evm_rpc_types::{HttpOutcallError, JsonRpcError, RpcError};
@@ -215,7 +215,7 @@ mod multi_call_results {
     }
 
     mod reduce_with_stable_majority_by_key {
-        use crate::rpc_client::eth_rpc::JsonRpcResult;
+        use crate::rpc_client::json::responses::JsonRpcResult;
         use crate::rpc_client::json::responses::FeeHistory;
         use crate::rpc_client::numeric::{BlockNumber, WeiPerGas};
         use crate::rpc_client::tests::multi_call_results::{ANKR, CLOUDFLARE, PUBLIC_NODE};

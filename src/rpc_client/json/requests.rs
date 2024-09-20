@@ -156,3 +156,12 @@ impl From<GetBlockByNumberParams> for (BlockSpec, bool) {
         (value.block, value.include_full_transactions)
     }
 }
+
+/// An envelope for all JSON-RPC requests.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct JsonRpcRequest<T> {
+    pub jsonrpc: String,
+    pub method: String,
+    pub id: u64,
+    pub params: T,
+}

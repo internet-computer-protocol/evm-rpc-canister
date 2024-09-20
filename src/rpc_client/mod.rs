@@ -15,7 +15,7 @@ use json::responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult, Tra
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
-use json::Hash;
+use json::{responses, Hash};
 
 pub mod amount;
 pub(crate) mod eth_rpc;
@@ -291,7 +291,7 @@ impl<T> MultiCallResults<T> {
         I: IntoIterator<
             Item = (
                 RpcService,
-                Result<crate::rpc_client::eth_rpc::JsonRpcResult<T>, RpcError>,
+                Result<responses::JsonRpcResult<T>, RpcError>,
             ),
         >,
     >(
@@ -302,8 +302,8 @@ impl<T> MultiCallResults<T> {
                 provider,
                 match result {
                     Ok(json_rpc_result) => match json_rpc_result {
-                        crate::rpc_client::eth_rpc::JsonRpcResult::Result(value) => Ok(value),
-                        crate::rpc_client::eth_rpc::JsonRpcResult::Error { code, message } => {
+                        responses::JsonRpcResult::Result(value) => Ok(value),
+                        responses::JsonRpcResult::Error { code, message } => {
                             Err(RpcError::JsonRpcError(JsonRpcError { code, message }))
                         }
                     },
