@@ -36,7 +36,7 @@ pub(super) fn into_get_logs_param(
             .map(|topic| {
                 topic
                     .into_iter()
-                    .map(|t| crate::rpc_client::eth_rpc::FixedSizeData(t.into()))
+                    .map(|t| crate::rpc_client::json::FixedSizeData(t.into()))
                     .collect()
             })
             .collect(),

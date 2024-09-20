@@ -1,6 +1,7 @@
-use crate::rpc_client::eth_rpc::FixedSizeData;
+use crate::rpc_client::json::FixedSizeData;
 use crate::rpc_client::numeric::{BlockNumber, NumBlocks};
 use candid::Deserialize;
+use evm_rpc_types::GetLogsArgs;
 use ic_ethereum_types::Address;
 use serde::Serialize;
 use std::fmt;
@@ -75,6 +76,19 @@ pub enum BlockSpec {
     Number(BlockNumber),
     /// Query the block with the specified tag.
     Tag(BlockTag),
+}
+
+impl From<evm_rpc_types::BlockTag> for BlockSpec {
+    fn from(value: evm_rpc_types::BlockTag) -> Self {
+        match value {
+            evm_rpc_types::BlockTag::Number(n) => BlockSpec::Number(n.into()),
+            evm_rpc_types::BlockTag::Latest => BlockSpec::Tag(BlockTag::Latest),
+            evm_rpc_types::BlockTag::Safe => BlockSpec::Tag(BlockTag::Safe),
+            evm_rpc_types::BlockTag::Finalized => BlockSpec::Tag(BlockTag::Finalized),
+            evm_rpc_types::BlockTag::Earliest => BlockSpec::Tag(BlockTag::Earliest),
+            evm_rpc_types::BlockTag::Pending => BlockSpec::Tag(BlockTag::Pending),
+        }
+    }
 }
 
 impl Default for BlockSpec {

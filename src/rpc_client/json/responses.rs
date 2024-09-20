@@ -1,6 +1,6 @@
 use crate::rpc_client::amount::Amount;
 use crate::rpc_client::eth_rpc::{
-    FixedSizeData, Hash, HttpResponsePayload, ResponseTransform,
+    Hash, HttpResponsePayload, ResponseTransform,
 };
 use crate::rpc_client::numeric::{
     BlockNonce, BlockNumber, Difficulty, GasAmount, LogIndex, NumBytes, Timestamp, Wei, WeiPerGas,
@@ -9,6 +9,7 @@ use candid::Deserialize;
 use ic_ethereum_types::Address;
 use serde::Serialize;
 use std::fmt::{Display, Formatter};
+use crate::rpc_client::json::FixedSizeData;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub struct TransactionReceipt {
