@@ -10,7 +10,6 @@ use crate::rpc_client::json::responses::{Block, FeeHistory, LogEntry, Transactio
 use crate::rpc_client::numeric::{TransactionCount, Wei};
 use crate::types::MetricRpcMethod;
 use candid::candid_method;
-use ethnum;
 use evm_rpc_types::{HttpOutcallError, JsonRpcError, ProviderError, RpcApi, RpcError, RpcService};
 use ic_canister_log::log;
 use ic_cdk::api::call::RejectionCode;
@@ -39,8 +38,6 @@ pub const HEADER_SIZE_LIMIT: u64 = 2 * 1024;
 const HTTP_MAX_SIZE: u64 = 2 * 1024 * 1024;
 
 pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
-
-pub type Quantity = ethnum::u256;
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(transparent)]

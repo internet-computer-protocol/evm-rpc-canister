@@ -1,8 +1,10 @@
-use crate::rpc_client::checked_amount::CheckedAmountOf;
+use crate::rpc_client::amount::Amount;
 use crate::rpc_client::eth_rpc::{
     Data, FixedSizeData, Hash, HttpResponsePayload, ResponseTransform,
 };
-use crate::rpc_client::numeric::{BlockNumber, GasAmount, LogIndex, Wei, WeiPerGas};
+use crate::rpc_client::numeric::{
+    BlockNonce, BlockNumber, Difficulty, GasAmount, LogIndex, NumBytes, Timestamp, Wei, WeiPerGas,
+};
 use candid::Deserialize;
 use ic_ethereum_types::Address;
 use serde::Serialize;
@@ -42,7 +44,7 @@ pub struct TransactionReceipt {
     pub logs_bloom: String,
     pub to: String,
     #[serde(rename = "transactionIndex")]
-    pub transaction_index: CheckedAmountOf<()>,
+    pub transaction_index: Amount<()>,
     pub r#type: String,
 }
 
@@ -135,7 +137,7 @@ pub struct LogEntry {
     // Integer of the transactions position within the block the log was created from.
     // None if the log is pending.
     #[serde(rename = "transactionIndex")]
-    pub transaction_index: Option<CheckedAmountOf<()>>,
+    pub transaction_index: Option<Amount<()>>,
     /// 32 Bytes - hash of the block in which this log appeared.
     /// None if the block is pending.
     #[serde(rename = "blockHash")]
@@ -161,33 +163,33 @@ pub struct Block {
     #[serde(rename = "baseFeePerGas")]
     pub base_fee_per_gas: Option<Wei>,
     pub number: BlockNumber,
-    pub difficulty: Option<CheckedAmountOf<()>>,
+    pub difficulty: Option<Difficulty>,
     #[serde(rename = "extraData")]
     pub extra_data: String,
     #[serde(rename = "gasLimit")]
-    pub gas_limit: CheckedAmountOf<()>,
+    pub gas_limit: GasAmount,
     #[serde(rename = "gasUsed")]
-    pub gas_used: CheckedAmountOf<()>,
+    pub gas_used: GasAmount,
     pub hash: String,
     #[serde(rename = "logsBloom")]
     pub logs_bloom: String,
     pub miner: String,
     #[serde(rename = "mixHash")]
     pub mix_hash: String,
-    pub nonce: CheckedAmountOf<()>,
+    pub nonce: BlockNonce,
     #[serde(rename = "parentHash")]
     pub parent_hash: String,
     #[serde(rename = "receiptsRoot")]
     pub receipts_root: String,
     #[serde(rename = "sha3Uncles")]
     pub sha3_uncles: String,
-    pub size: CheckedAmountOf<()>,
+    pub size: NumBytes,
     #[serde(rename = "stateRoot")]
     pub state_root: String,
     #[serde(rename = "timestamp")]
-    pub timestamp: CheckedAmountOf<()>,
+    pub timestamp: Timestamp,
     #[serde(rename = "totalDifficulty")]
-    pub total_difficulty: Option<CheckedAmountOf<()>>,
+    pub total_difficulty: Option<Difficulty>,
     #[serde(default)]
     pub transactions: Vec<String>,
     #[serde(rename = "transactionsRoot")]

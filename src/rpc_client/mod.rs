@@ -16,7 +16,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 
-pub mod checked_amount;
+pub mod amount;
 pub(crate) mod eth_rpc;
 mod eth_rpc_error;
 pub(crate) mod json;
