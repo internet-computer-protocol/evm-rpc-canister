@@ -4,18 +4,18 @@ use crate::rpc_client::eth_rpc::{
 };
 use crate::rpc_client::numeric::TransactionCount;
 use evm_rpc_types::{
-    EthMainnetService, EthSepoliaService, HttpOutcallError, L2MainnetService, ProviderError,
-    RpcConfig, RpcError, RpcService, RpcServices,
+    EthMainnetService, EthSepoliaService, L2MainnetService, ProviderError, RpcConfig, RpcError,
+    RpcService, RpcServices,
 };
 use ic_canister_log::log;
 use json::requests::{
     BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam, GetTransactionCountParams,
 };
 use json::responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult, TransactionReceipt};
+use json::Hash;
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
-use json::{responses, Hash};
 
 pub mod amount;
 pub(crate) mod eth_rpc;
@@ -291,7 +291,7 @@ impl<T> MultiCallResults<T> {
         I: IntoIterator<
             Item = (
                 RpcService,
-                Result<responses::JsonRpcResult<T>, RpcError>,
+                Result<json::responses::JsonRpcResult<T>, RpcError>,
             ),
         >,
     >(
@@ -302,9 +302,12 @@ impl<T> MultiCallResults<T> {
                 provider,
                 match result {
                     Ok(json_rpc_result) => match json_rpc_result {
-                        responses::JsonRpcResult::Result(value) => Ok(value),
-                        responses::JsonRpcResult::Error { code, message } => {
-                            Err(RpcError::JsonRpcError(JsonRpcError { code, message }))
+                        json::responses::JsonRpcResult::Result(value) => Ok(value),
+                        json::responses::JsonRpcResult::Error { code, message } => {
+                            Err(RpcError::JsonRpcError(evm_rpc_types::JsonRpcError {
+                                code,
+                                message,
+                            }))
                         }
                     },
                     Err(e) => Err(e),
@@ -360,12 +363,6 @@ impl<T: PartialEq> MultiCallResults<T> {
             }
         }
     }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum SingleCallError {
-    HttpOutcallError(HttpOutcallError),
-    JsonRpcError { code: i64, message: String },
 }
 
 #[derive(Debug, PartialEq, Eq)]
