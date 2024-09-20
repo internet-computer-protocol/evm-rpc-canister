@@ -1,9 +1,9 @@
 use candid::candid_method;
-use cketh_common::logs::INFO;
 use evm_rpc::accounting::{get_cost_with_collateral, get_http_request_cost};
 use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::constants::NODES_IN_SUBNET;
 use evm_rpc::http::get_http_response_body;
+use evm_rpc::logs::INFO;
 use evm_rpc::memory::{
     insert_api_key, is_api_key_principal, is_demo_active, remove_api_key, set_api_key_principals,
     set_demo_active,
@@ -235,7 +235,7 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
     match request.path() {
         "/metrics" => serve_metrics(encode_metrics),
         "/logs" => {
-            use cketh_common::logs::{Log, Priority, Sort};
+            use evm_rpc::logs::{Log, Priority, Sort};
             use std::str::FromStr;
 
             let max_skip_timestamp = match request.raw_query_param("time") {
@@ -294,7 +294,7 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
                 max_skip_timestamp,
             ));
 
-            const MAX_BODY_SIZE: usize = 3_000_000;
+            const MAX_BODY_SIZE: usize = 2_000_000;
             HttpResponseBuilder::ok()
                 .header("Content-Type", "application/json; charset=utf-8")
                 .with_body_and_content_length(log.serialize_logs(MAX_BODY_SIZE))

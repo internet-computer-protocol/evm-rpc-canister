@@ -18,6 +18,7 @@ type StableMemory = VirtualMemory<DefaultMemoryImpl>;
 thread_local! {
     // Unstable static data: these are reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
+    static UNSTABLE_HTTP_REQUEST_COUNTER: RefCell<u64> = RefCell::new(0);
 
     // Stable static data: these are preserved when the canister is upgraded.
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
@@ -72,6 +73,16 @@ pub fn set_demo_active(is_active: bool) {
         demo.set(BoolStorable(is_active))
             .expect("Error while storing new demo status")
     });
+}
+
+pub fn next_request_id() -> u64 {
+    UNSTABLE_HTTP_REQUEST_COUNTER.with_borrow_mut(|counter| {
+        let current_request_id = *counter;
+        // overflow is not an issue here because we only use `next_request_id` to correlate
+        // requests and responses in logs.
+        *counter = counter.wrapping_add(1);
+        current_request_id
+    })
 }
 
 #[cfg(test)]

@@ -2,6 +2,7 @@ mod mock;
 
 use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat};
+use evm_rpc::logs::{Log, LogEntry};
 use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
     providers::PROVIDERS,
@@ -12,6 +13,7 @@ use evm_rpc_types::{
     MultiRpcResult, Nat256, ProviderError, RpcApi, RpcError, RpcResult, RpcService, RpcServices,
 };
 use ic_base_types::{CanisterId, PrincipalId};
+use ic_canisters_http_types::{HttpRequest, HttpResponse};
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse as OutCallHttpResponse,
     TransformArgs, TransformContext, TransformFunc,
@@ -302,6 +304,26 @@ impl EvmRpcSetup {
                 .collect::<Vec<_>>(),
         );
         self
+    }
+    pub fn http_get_logs(&self, priority: &str) -> Vec<LogEntry> {
+        let request = HttpRequest {
+            method: "".to_string(),
+            url: format!("/logs?priority={priority}"),
+            headers: vec![],
+            body: serde_bytes::ByteBuf::new(),
+        };
+        let response = Decode!(
+            &assert_reply(
+                self.env
+                    .query(self.canister_id, "http_request", Encode!(&request).unwrap(),)
+                    .expect("failed to get minter info")
+            ),
+            HttpResponse
+        )
+        .unwrap();
+        serde_json::from_slice::<Log>(&response.body)
+            .expect("failed to parse EVM_RPC minter log")
+            .entries
     }
 }
 
@@ -1651,4 +1673,21 @@ fn upgrade_should_change_manage_api_key_principals() {
     setup
         .as_caller(deauthorized_caller)
         .update_api_keys(&[(0, Some("unauthorized-api-key".to_string()))]);
+}
+
+#[test]
+fn should_retrieve_logs() {
+    let setup = EvmRpcSetup::with_args(InstallArgs {
+        demo: None,
+        manage_api_keys: None,
+    });
+    assert_eq!(setup.http_get_logs("DEBUG"), vec![]);
+    assert_eq!(setup.http_get_logs("INFO"), vec![]);
+
+    let setup = setup.mock_api_keys();
+
+    assert_eq!(setup.http_get_logs("DEBUG"), vec![]);
+    assert!(setup.http_get_logs("INFO")[0]
+        .message
+        .contains("Updating API keys"));
 }

@@ -14,8 +14,7 @@ shared ({ caller = installer }) actor class Main() {
 
     // (`subnet name`, `nodes in subnet`, `expected cycles for JSON-RPC call`)
     type SubnetTarget = (Text, Nat32, Nat);
-    let collateralCycles = 10_000_000;
-    let fiduciarySubnet : SubnetTarget = ("fiduciary", 28, 239_142_400);
+    let fiduciarySubnet : SubnetTarget = ("fiduciary", 34, 642_627_200);
 
     let testTargets = [
         // (`canister module`, `canister type`, `subnet`)
@@ -79,9 +78,8 @@ shared ({ caller = installer }) actor class Main() {
                 };
             };
 
-            let expectedCyclesWithCollateral = expectedCycles + collateralCycles * Nat32.toNat(nodesInSubnet);
-            if (cycles != expectedCyclesWithCollateral) {
-                addError("Unexpected number of cycles: " # debug_show cycles # " (expected " # debug_show expectedCyclesWithCollateral # ")");
+            if (cycles != expectedCycles) {
+                addError("Unexpected number of cycles: " # debug_show cycles # " (expected " # debug_show expectedCycles # ")");
             };
 
             // `request()` without cycles

@@ -1,109 +1,25 @@
 mod cketh_conversion;
 
-use async_trait::async_trait;
-use candid::Nat;
-use cketh_common::eth_rpc_client::{EthRpcClient as CkEthRpcClient, MultiCallError, RpcTransport};
-use ethers_core::{types::Transaction, utils::rlp};
-use evm_rpc_types::{
-    Hex, Hex32, MultiRpcResult, ProviderError, RpcResult, RpcServices, ValidationError,
-};
-use ic_cdk::api::management_canister::http_request::{CanisterHttpRequestArgument, HttpResponse};
-
-use crate::candid_rpc::cketh_conversion::into_rpc_error;
+use crate::rpc_client::{EthRpcClient, MultiCallError};
 use crate::{
-    accounting::get_http_request_cost,
     add_metric_entry,
-    constants::{
-        DEFAULT_ETH_MAINNET_SERVICES, DEFAULT_ETH_SEPOLIA_SERVICES, DEFAULT_L2_MAINNET_SERVICES,
-        ETH_GET_LOGS_MAX_BLOCKS,
-    },
-    http::http_request,
+    constants::ETH_GET_LOGS_MAX_BLOCKS,
     providers::resolve_rpc_service,
-    types::{MetricRpcHost, MetricRpcMethod, ResolvedRpcService, RpcMethod},
+    types::{MetricRpcHost, ResolvedRpcService, RpcMethod},
 };
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-struct CanisterTransport;
-
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-impl RpcTransport for CanisterTransport {
-    fn resolve_api(
-        service: &cketh_common::eth_rpc_client::providers::RpcService,
-    ) -> Result<cketh_common::eth_rpc_client::providers::RpcApi, cketh_common::eth_rpc::ProviderError>
-    {
-        use crate::candid_rpc::cketh_conversion::{
-            from_rpc_service, into_provider_error, into_rpc_api,
-        };
-        Ok(into_rpc_api(
-            resolve_rpc_service(from_rpc_service(service.clone()))
-                .map_err(into_provider_error)?
-                .api(),
-        ))
-    }
-
-    async fn http_request(
-        service: &cketh_common::eth_rpc_client::providers::RpcService,
-        method: &str,
-        request: CanisterHttpRequestArgument,
-        effective_response_size_estimate: u64,
-    ) -> Result<HttpResponse, cketh_common::eth_rpc::RpcError> {
-        use crate::candid_rpc::cketh_conversion::{from_rpc_service, into_provider_error};
-        let service =
-            resolve_rpc_service(from_rpc_service(service.clone())).map_err(into_provider_error)?;
-        let cycles_cost = get_http_request_cost(
-            request
-                .body
-                .as_ref()
-                .map(|bytes| bytes.len() as u64)
-                .unwrap_or_default(),
-            effective_response_size_estimate,
-        );
-        let rpc_method = MetricRpcMethod(method.to_string());
-        http_request(rpc_method, service, request, cycles_cost)
-            .await
-            .map_err(into_rpc_error)
-    }
-}
-
-fn check_services<T>(services: Vec<T>) -> RpcResult<Vec<T>> {
-    if services.is_empty() {
-        Err(ProviderError::ProviderNotFound)?;
-    }
-    Ok(services)
-}
-
-fn get_rpc_client(
-    source: RpcServices,
-    config: evm_rpc_types::RpcConfig,
-) -> RpcResult<CkEthRpcClient<CanisterTransport>> {
-    use crate::candid_rpc::cketh_conversion::{
-        into_ethereum_network, into_rpc_config, into_rpc_services,
-    };
-
-    let config = into_rpc_config(config);
-    let chain = into_ethereum_network(&source);
-    let providers = check_services(into_rpc_services(
-        source,
-        DEFAULT_ETH_MAINNET_SERVICES,
-        DEFAULT_ETH_SEPOLIA_SERVICES,
-        DEFAULT_L2_MAINNET_SERVICES,
-    ))?;
-    Ok(CkEthRpcClient::new(chain, Some(providers), config))
-}
+use candid::Nat;
+use ethers_core::{types::Transaction, utils::rlp};
+use evm_rpc_types::{Hex, Hex32, MultiRpcResult, Nat256, RpcResult, ValidationError};
 
 fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) -> MultiRpcResult<T> {
-    use crate::candid_rpc::cketh_conversion::{from_rpc_error, from_rpc_service};
     match result {
         Ok(value) => MultiRpcResult::Consistent(Ok(value)),
         Err(err) => match err {
-            MultiCallError::ConsistentError(err) => {
-                MultiRpcResult::Consistent(Err(from_rpc_error(err)))
-            }
+            MultiCallError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
             MultiCallError::InconsistentResults(multi_call_results) => {
                 multi_call_results.results.iter().for_each(|(service, _)| {
                     if let Ok(ResolvedRpcService::Provider(provider)) =
-                        resolve_rpc_service(from_rpc_service(service.clone()))
+                        resolve_rpc_service(service.clone())
                     {
                         add_metric_entry!(
                             inconsistent_responses,
@@ -119,22 +35,14 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
                         )
                     }
                 });
-                MultiRpcResult::Inconsistent(
-                    multi_call_results
-                        .results
-                        .into_iter()
-                        .map(|(service, result)| {
-                            (from_rpc_service(service), result.map_err(from_rpc_error))
-                        })
-                        .collect(),
-                )
+                MultiRpcResult::Inconsistent(multi_call_results.results.into_iter().collect())
             }
         },
     }
 }
 
 pub struct CandidRpcClient {
-    client: CkEthRpcClient<CanisterTransport>,
+    client: EthRpcClient,
 }
 
 impl CandidRpcClient {
@@ -143,7 +51,7 @@ impl CandidRpcClient {
         config: Option<evm_rpc_types::RpcConfig>,
     ) -> RpcResult<Self> {
         Ok(Self {
-            client: get_rpc_client(source, config.unwrap_or_default())?,
+            client: EthRpcClient::new(source, config)?,
         })
     }
 
@@ -207,10 +115,8 @@ impl CandidRpcClient {
     pub async fn eth_get_transaction_count(
         &self,
         args: evm_rpc_types::GetTransactionCountArgs,
-    ) -> MultiRpcResult<evm_rpc_types::Nat256> {
-        use crate::candid_rpc::cketh_conversion::{
-            from_checked_amount_of, into_get_transaction_count_params,
-        };
+    ) -> MultiRpcResult<Nat256> {
+        use crate::candid_rpc::cketh_conversion::into_get_transaction_count_params;
         process_result(
             RpcMethod::EthGetTransactionCount,
             self.client
@@ -218,7 +124,7 @@ impl CandidRpcClient {
                 .await
                 .reduce_with_equality(),
         )
-        .map(from_checked_amount_of)
+        .map(Nat256::from)
     }
 
     pub async fn eth_fee_history(
@@ -259,12 +165,11 @@ fn get_transaction_hash(raw_signed_transaction_hex: &Hex) -> Option<Hex32> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::candid_rpc::cketh_conversion::into_rpc_service;
-    use evm_rpc_types::RpcError;
+    use crate::rpc_client::{MultiCallError, MultiCallResults};
+    use evm_rpc_types::{ProviderError, RpcError};
 
     #[test]
     fn test_process_result_mapping() {
-        use cketh_common::eth_rpc_client::MultiCallResults;
         use evm_rpc_types::{EthMainnetService, RpcService};
 
         let method = RpcMethod::EthGetTransactionCount;
@@ -277,9 +182,7 @@ mod test {
             process_result(
                 method,
                 Err(MultiCallError::<()>::ConsistentError(
-                    cketh_common::eth_rpc::RpcError::ProviderError(
-                        cketh_common::eth_rpc::ProviderError::MissingRequiredProvider
-                    )
+                    RpcError::ProviderError(ProviderError::MissingRequiredProvider)
                 ))
             ),
             MultiRpcResult::Consistent(Err(RpcError::ProviderError(
@@ -301,12 +204,9 @@ mod test {
             process_result(
                 method,
                 Err(MultiCallError::InconsistentResults(MultiCallResults {
-                    results: vec![(
-                        into_rpc_service(RpcService::EthMainnet(EthMainnetService::Ankr)),
-                        Ok(5)
-                    )]
-                    .into_iter()
-                    .collect(),
+                    results: vec![(RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5))]
+                        .into_iter()
+                        .collect(),
                 }))
             ),
             MultiRpcResult::Inconsistent(vec![(
@@ -319,15 +219,10 @@ mod test {
                 method,
                 Err(MultiCallError::InconsistentResults(MultiCallResults {
                     results: vec![
+                        (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
                         (
-                            into_rpc_service(RpcService::EthMainnet(EthMainnetService::Ankr)),
-                            Ok(5)
-                        ),
-                        (
-                            into_rpc_service(RpcService::EthMainnet(EthMainnetService::Cloudflare)),
-                            Err(cketh_common::eth_rpc::RpcError::ProviderError(
-                                cketh_common::eth_rpc::ProviderError::NoPermission
-                            ))
+                            RpcService::EthMainnet(EthMainnetService::Cloudflare),
+                            Err(RpcError::ProviderError(ProviderError::NoPermission))
                         )
                     ]
                     .into_iter()
