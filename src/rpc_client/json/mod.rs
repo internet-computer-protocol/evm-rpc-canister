@@ -1,9 +1,10 @@
 //! Types used for JSON-RPC requests and responses with Ethereum JSON-RPC providers.
 
-use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
-use candid::Deserialize;
-use serde::Serialize;
 use crate::rpc_client::eth_rpc::HttpResponsePayload;
+use candid::Deserialize;
+use evm_rpc_types::Hex32;
+use serde::Serialize;
+use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
 
 pub mod requests;
 pub mod responses;
@@ -11,6 +12,12 @@ pub mod responses;
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
 pub struct FixedSizeData(#[serde(with = "ic_ethereum_types::serde_data")] pub [u8; 32]);
+
+impl From<Hex32> for FixedSizeData {
+    fn from(value: Hex32) -> Self {
+        Self(value.into())
+    }
+}
 
 impl AsRef<[u8]> for FixedSizeData {
     fn as_ref(&self) -> &[u8] {
@@ -98,4 +105,3 @@ impl std::str::FromStr for Hash {
 }
 
 impl HttpResponsePayload for Hash {}
-
