@@ -5,7 +5,7 @@ use crate::rpc_client::eth_rpc::{
 use crate::rpc_client::numeric::TransactionCount;
 use evm_rpc_types::{
     ConsensusStrategy, EthMainnetService, EthSepoliaService, L2MainnetService, ProviderError,
-    RpcApi, RpcConfig, RpcError, RpcService, RpcServices,
+    RpcConfig, RpcError, RpcService, RpcServices,
 };
 use ic_canister_log::log;
 use json::requests::{
@@ -55,8 +55,194 @@ pub struct Providers {
 }
 
 impl Providers {
-    pub fn new(source: RpcServices, config: Option<&RpcConfig>) -> Result<Self, ProviderError> {
-        todo!()
+    const DEFAULT_ETH_MAINNET_SERVICES: &'static [EthMainnetService] = &[
+        EthMainnetService::Ankr,
+        EthMainnetService::Cloudflare,
+        EthMainnetService::PublicNode,
+    ];
+    const NON_DEFAULT_ETH_MAINNET_SERVICES: &'static [EthMainnetService] = &[
+        EthMainnetService::Alchemy,
+        EthMainnetService::BlockPi,
+        EthMainnetService::Cloudflare,
+        EthMainnetService::Llama,
+    ];
+
+    const DEFAULT_ETH_SEPOLIA_SERVICES: &'static [EthSepoliaService] = &[
+        EthSepoliaService::Ankr,
+        EthSepoliaService::BlockPi,
+        EthSepoliaService::PublicNode,
+    ];
+    const NON_DEFAULT_ETH_SEPOLIA_SERVICES: &'static [EthSepoliaService] = &[
+        EthSepoliaService::Alchemy,
+        EthSepoliaService::BlockPi,
+        EthSepoliaService::Sepolia,
+    ];
+
+    const DEFAULT_L2_MAINNET_SERVICES: &'static [L2MainnetService] = &[
+        L2MainnetService::Ankr,
+        L2MainnetService::BlockPi,
+        L2MainnetService::PublicNode,
+    ];
+    const NON_DEFAULT_L2_MAINNET_SERVICES: &'static [L2MainnetService] =
+        &[L2MainnetService::Alchemy, L2MainnetService::Llama];
+
+    pub fn new(source: RpcServices, strategy: ConsensusStrategy) -> Result<Self, ProviderError> {
+        let (chain, providers): (_, BTreeSet<_>) = match source {
+            RpcServices::Custom { chain_id, services } => (
+                EthereumNetwork::from(chain_id),
+                choose_providers(Some(services), &[], &[], strategy)?
+                    .into_iter()
+                    .map(RpcService::Custom)
+                    .collect(),
+            ),
+            RpcServices::EthMainnet(services) => (
+                EthereumNetwork::MAINNET,
+                choose_providers(
+                    services,
+                    Self::DEFAULT_ETH_MAINNET_SERVICES,
+                    Self::NON_DEFAULT_ETH_MAINNET_SERVICES,
+                    strategy,
+                )?
+                .into_iter()
+                .map(RpcService::EthMainnet)
+                .collect(),
+            ),
+            RpcServices::EthSepolia(services) => (
+                EthereumNetwork::SEPOLIA,
+                choose_providers(
+                    services,
+                    Self::DEFAULT_ETH_SEPOLIA_SERVICES,
+                    Self::NON_DEFAULT_ETH_SEPOLIA_SERVICES,
+                    strategy,
+                )?
+                .into_iter()
+                .map(RpcService::EthSepolia)
+                .collect(),
+            ),
+            RpcServices::ArbitrumOne(services) => (
+                EthereumNetwork::ARBITRUM,
+                choose_providers(
+                    services,
+                    Self::DEFAULT_L2_MAINNET_SERVICES,
+                    Self::NON_DEFAULT_L2_MAINNET_SERVICES,
+                    strategy,
+                )?
+                .into_iter()
+                .map(RpcService::ArbitrumOne)
+                .collect(),
+            ),
+            RpcServices::BaseMainnet(services) => (
+                EthereumNetwork::BASE,
+                choose_providers(
+                    services,
+                    Self::DEFAULT_L2_MAINNET_SERVICES,
+                    Self::NON_DEFAULT_L2_MAINNET_SERVICES,
+                    strategy,
+                )?
+                .into_iter()
+                .map(RpcService::BaseMainnet)
+                .collect(),
+            ),
+            RpcServices::OptimismMainnet(services) => (
+                EthereumNetwork::OPTIMISM,
+                choose_providers(
+                    services,
+                    Self::DEFAULT_L2_MAINNET_SERVICES,
+                    Self::NON_DEFAULT_L2_MAINNET_SERVICES,
+                    strategy,
+                )?
+                .into_iter()
+                .map(RpcService::OptimismMainnet)
+                .collect(),
+            ),
+        };
+
+        if providers.is_empty() {
+            return Err(ProviderError::ProviderNotFound);
+        }
+
+        Ok(Self { chain, providers })
+    }
+}
+
+fn choose_providers<T>(
+    user_input: Option<Vec<T>>,
+    default_providers: &[T],
+    non_default_providers: &[T],
+    strategy: ConsensusStrategy,
+) -> Result<BTreeSet<T>, ProviderError>
+where
+    T: Clone + Ord,
+{
+    match strategy {
+        ConsensusStrategy::Equality => Ok(user_input
+            .unwrap_or_else(|| default_providers.to_vec())
+            .into_iter()
+            .collect()),
+        ConsensusStrategy::Threshold {
+            num_providers,
+            min_num_ok,
+        } => {
+            // Ensure that
+            // min_num_ok <= num_providers <= all_providers.len()
+            match user_input {
+                None => {
+                    let all_providers_len = default_providers.len() + non_default_providers.len();
+                    let num_providers = num_providers.ok_or_else(|| {
+                        ProviderError::InvalidRpcConfig(
+                            "num_providers must be specified when using default providers"
+                                .to_string(),
+                        )
+                    })?;
+
+                    if min_num_ok > num_providers {
+                        return Err(ProviderError::InvalidRpcConfig(format!(
+                            "min_num_ok {} is greater than num_providers {}",
+                            min_num_ok, num_providers
+                        )));
+                    }
+
+                    if num_providers > all_providers_len as u8 {
+                        return Err(ProviderError::InvalidRpcConfig(format!(
+                            "num_providers {} is greater than the number of all supported providers {}",
+                            num_providers,
+                            all_providers_len
+                        )));
+                    }
+                    let providers: BTreeSet<_> = default_providers
+                        .iter()
+                        .chain(non_default_providers.iter())
+                        .take(num_providers as usize)
+                        .cloned()
+                        .collect();
+                    assert_eq!(
+                        providers.len(),
+                        num_providers as usize,
+                        "BUG: duplicate providers"
+                    );
+                    Ok(providers)
+                }
+                Some(providers) => {
+                    if min_num_ok > providers.len() as u8 {
+                        return Err(ProviderError::InvalidRpcConfig(format!(
+                            "min_num_ok {} is greater than the number of specified providers {}",
+                            min_num_ok,
+                            providers.len()
+                        )));
+                    }
+                    if let Some(num_providers) = num_providers {
+                        if num_providers != providers.len() as u8 {
+                            return Err(ProviderError::InvalidRpcConfig(format!(
+                                "num_providers {} is different than the number of specified providers {}",
+                                num_providers,
+                                providers.len()
+                            )));
+                        }
+                    }
+                    Ok(providers.into_iter().collect())
+                }
+            }
+        }
     }
 }
 
@@ -68,9 +254,11 @@ pub struct EthRpcClient {
 
 impl EthRpcClient {
     pub fn new(source: RpcServices, config: Option<RpcConfig>) -> Result<Self, ProviderError> {
+        let config = config.unwrap_or_default();
+        let strategy = config.response_consensus.clone().unwrap_or_default();
         Ok(Self {
-            providers: Providers::new(source, config.as_ref())?,
-            config: config.unwrap_or_default(),
+            providers: Providers::new(source, strategy)?,
+            config,
         })
     }
 

@@ -77,6 +77,7 @@ pub enum ProviderError {
     TooFewCycles { expected: u128, received: u128 },
     ProviderNotFound,
     MissingRequiredProvider,
+    InvalidRpcConfig(String)
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize)]

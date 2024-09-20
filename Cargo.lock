@@ -1575,6 +1575,7 @@ dependencies = [
  "num-bigint 0.4.6",
  "proptest",
  "serde",
+ "strum 0.26.3",
 ]
 
 [[package]]

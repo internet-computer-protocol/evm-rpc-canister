@@ -2,6 +2,7 @@ pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
+use strum::VariantArray;
 
 #[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
 pub struct RpcConfig {
@@ -9,7 +10,7 @@ pub struct RpcConfig {
     pub response_size_estimate: Option<u64>,
 
     #[serde(rename = "responseConsensus")]
-    pub response_consensus: Option<ConsensusStrategy>
+    pub response_consensus: Option<ConsensusStrategy>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
@@ -23,7 +24,7 @@ pub enum ConsensusStrategy {
         num_providers: Option<u8>,
         /// Minimum number of providers that must return the same (non-error) result.
         min_num_ok: u8,
-    }
+    },
 }
 
 #[derive(Clone, CandidType, Deserialize)]
@@ -47,7 +48,18 @@ pub struct RpcApi {
 }
 
 #[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    Ord,
+    PartialOrd,
+    Hash,
+    Serialize,
+    Deserialize,
+    CandidType,
+    VariantArray,
 )]
 pub enum EthMainnetService {
     Alchemy,
@@ -58,8 +70,25 @@ pub enum EthMainnetService {
     Llama,
 }
 
+impl EthMainnetService {
+    pub const fn all() -> &'static [Self] {
+        EthMainnetService::VARIANTS
+    }
+}
+
 #[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    Ord,
+    PartialOrd,
+    Hash,
+    Serialize,
+    Deserialize,
+    CandidType,
+    VariantArray,
 )]
 pub enum EthSepoliaService {
     Alchemy,
@@ -69,8 +98,25 @@ pub enum EthSepoliaService {
     Sepolia,
 }
 
+impl EthSepoliaService {
+    pub const fn all() -> &'static [Self] {
+        EthSepoliaService::VARIANTS
+    }
+}
+
 #[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    Ord,
+    PartialOrd,
+    Hash,
+    Serialize,
+    Deserialize,
+    CandidType,
+    VariantArray,
 )]
 pub enum L2MainnetService {
     Alchemy,
@@ -78,6 +124,12 @@ pub enum L2MainnetService {
     BlockPi,
     PublicNode,
     Llama,
+}
+
+impl L2MainnetService {
+    pub const fn all() -> &'static [Self] {
+        L2MainnetService::VARIANTS
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize, CandidType)]
