@@ -21,8 +21,8 @@ pub use result::{
     ValidationError,
 };
 pub use rpc_client::{
-    EthMainnetService, EthSepoliaService, HttpHeader, L2MainnetService, RpcApi, RpcConfig,
-    RpcService, RpcServices,
+    ConsensusStrategy, EthMainnetService, EthSepoliaService, HttpHeader, L2MainnetService, RpcApi,
+    RpcConfig, RpcService, RpcServices,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]

@@ -4,8 +4,8 @@ use crate::rpc_client::eth_rpc::{
 };
 use crate::rpc_client::numeric::TransactionCount;
 use evm_rpc_types::{
-    EthMainnetService, EthSepoliaService, L2MainnetService, ProviderError, RpcConfig, RpcError,
-    RpcService, RpcServices,
+    ConsensusStrategy, EthMainnetService, EthSepoliaService, L2MainnetService, ProviderError,
+    RpcApi, RpcConfig, RpcError, RpcService, RpcServices,
 };
 use ic_canister_log::log;
 use json::requests::{
@@ -14,7 +14,7 @@ use json::requests::{
 use json::responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult, TransactionReceipt};
 use json::Hash;
 use serde::{de::DeserializeOwned, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 
 pub mod amount;
@@ -48,91 +48,38 @@ impl EthereumNetwork {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct EthRpcClient {
+pub struct Providers {
     chain: EthereumNetwork,
-    /// *Non-empty* list of providers to query.
-    providers: Vec<RpcService>,
+    /// *Non-empty* set of providers to query.
+    providers: BTreeSet<RpcService>,
+}
+
+impl Providers {
+    pub fn new(source: RpcServices, config: Option<&RpcConfig>) -> Result<Self, ProviderError> {
+        todo!()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EthRpcClient {
+    providers: Providers,
     config: RpcConfig,
 }
 
 impl EthRpcClient {
     pub fn new(source: RpcServices, config: Option<RpcConfig>) -> Result<Self, ProviderError> {
-        const DEFAULT_ETH_MAINNET_SERVICES: &[EthMainnetService] = &[
-            EthMainnetService::Ankr,
-            EthMainnetService::Cloudflare,
-            EthMainnetService::PublicNode,
-        ];
-        const DEFAULT_ETH_SEPOLIA_SERVICES: &[EthSepoliaService] = &[
-            EthSepoliaService::Ankr,
-            EthSepoliaService::BlockPi,
-            EthSepoliaService::PublicNode,
-        ];
-        const DEFAULT_L2_MAINNET_SERVICES: &[L2MainnetService] = &[
-            L2MainnetService::Ankr,
-            L2MainnetService::BlockPi,
-            L2MainnetService::PublicNode,
-        ];
-
-        let (chain, providers): (_, Vec<_>) = match source {
-            RpcServices::Custom { chain_id, services } => (
-                EthereumNetwork::from(chain_id),
-                services.into_iter().map(RpcService::Custom).collect(),
-            ),
-            RpcServices::EthMainnet(services) => (
-                EthereumNetwork::MAINNET,
-                services
-                    .unwrap_or_else(|| DEFAULT_ETH_MAINNET_SERVICES.to_vec())
-                    .into_iter()
-                    .map(RpcService::EthMainnet)
-                    .collect(),
-            ),
-            RpcServices::EthSepolia(services) => (
-                EthereumNetwork::SEPOLIA,
-                services
-                    .unwrap_or_else(|| DEFAULT_ETH_SEPOLIA_SERVICES.to_vec())
-                    .into_iter()
-                    .map(RpcService::EthSepolia)
-                    .collect(),
-            ),
-            RpcServices::ArbitrumOne(services) => (
-                EthereumNetwork::ARBITRUM,
-                services
-                    .unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec())
-                    .into_iter()
-                    .map(RpcService::ArbitrumOne)
-                    .collect(),
-            ),
-            RpcServices::BaseMainnet(services) => (
-                EthereumNetwork::BASE,
-                services
-                    .unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec())
-                    .into_iter()
-                    .map(RpcService::BaseMainnet)
-                    .collect(),
-            ),
-            RpcServices::OptimismMainnet(services) => (
-                EthereumNetwork::OPTIMISM,
-                services
-                    .unwrap_or_else(|| DEFAULT_L2_MAINNET_SERVICES.to_vec())
-                    .into_iter()
-                    .map(RpcService::OptimismMainnet)
-                    .collect(),
-            ),
-        };
-
-        if providers.is_empty() {
-            return Err(ProviderError::ProviderNotFound);
-        }
-
         Ok(Self {
-            chain,
-            providers,
+            providers: Providers::new(source, config.as_ref())?,
             config: config.unwrap_or_default(),
         })
     }
 
-    fn providers(&self) -> &[RpcService] {
-        &self.providers
+    fn chain(&self) -> EthereumNetwork {
+        self.providers.chain
+    }
+
+    fn providers(&self) -> &BTreeSet<RpcService> {
+        &self.providers.providers
     }
 
     fn response_size_estimate(&self, estimate: u64) -> ResponseSizeEstimate {
@@ -192,7 +139,7 @@ impl EthRpcClient {
         &self,
         block: BlockSpec,
     ) -> Result<Block, MultiCallError<Block>> {
-        let expected_block_size = match self.chain {
+        let expected_block_size = match self.chain() {
             EthereumNetwork::SEPOLIA => 12 * 1024,
             EthereumNetwork::MAINNET => 24 * 1024,
             _ => 24 * 1024, // Default for unknown networks

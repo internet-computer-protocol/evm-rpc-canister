@@ -1,6 +1,7 @@
 mod eth_rpc_client {
     use crate::rpc_client::EthRpcClient;
     use evm_rpc_types::{EthMainnetService, ProviderError, RpcService, RpcServices};
+    use maplit::btreeset;
 
     #[test]
     fn should_fail_when_providers_explicitly_set_to_empty() {
@@ -49,10 +50,10 @@ mod eth_rpc_client {
 
         assert_eq!(
             client.providers(),
-            &[
+            &btreeset! {
                 RpcService::EthMainnet(provider1),
                 RpcService::EthMainnet(provider2)
-            ]
+            }
         );
     }
 }
