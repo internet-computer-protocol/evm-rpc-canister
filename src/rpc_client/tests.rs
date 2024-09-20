@@ -420,7 +420,7 @@ mod multi_call_results {
 }
 
 mod eth_get_transaction_receipt {
-    use crate::rpc_client::eth_rpc::Hash;
+    use crate::rpc_client::json::Hash;
     use crate::rpc_client::json::responses::{TransactionReceipt, TransactionStatus};
     use crate::rpc_client::numeric::{BlockNumber, GasAmount, WeiPerGas};
     use assert_matches::assert_matches;

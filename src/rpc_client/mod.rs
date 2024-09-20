@@ -1,6 +1,6 @@
 use crate::logs::{DEBUG, INFO};
 use crate::rpc_client::eth_rpc::{
-    are_errors_consistent, Hash, HttpResponsePayload, ResponseSizeEstimate, HEADER_SIZE_LIMIT,
+    are_errors_consistent, HttpResponsePayload, ResponseSizeEstimate, HEADER_SIZE_LIMIT,
 };
 use crate::rpc_client::numeric::TransactionCount;
 use evm_rpc_types::{
@@ -15,6 +15,7 @@ use json::responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult, Tra
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Debug;
+use json::Hash;
 
 pub mod amount;
 pub(crate) mod eth_rpc;
