@@ -65,7 +65,7 @@ mod multi_call_results {
     const CLOUDFLARE: RpcService = RpcService::EthMainnet(EthMainnetService::Cloudflare);
 
     mod reduce_with_equality {
-        use crate::rpc_client::eth_rpc::JsonRpcResult;
+        use crate::rpc_client::json::responses::JsonRpcResult;
         use crate::rpc_client::tests::multi_call_results::{ANKR, PUBLIC_NODE};
         use crate::rpc_client::{MultiCallError, MultiCallResults};
         use evm_rpc_types::{HttpOutcallError, JsonRpcError, RpcError};
@@ -215,8 +215,8 @@ mod multi_call_results {
     }
 
     mod reduce_with_stable_majority_by_key {
-        use crate::rpc_client::eth_rpc::JsonRpcResult;
         use crate::rpc_client::json::responses::FeeHistory;
+        use crate::rpc_client::json::responses::JsonRpcResult;
         use crate::rpc_client::numeric::{BlockNumber, WeiPerGas};
         use crate::rpc_client::tests::multi_call_results::{ANKR, CLOUDFLARE, PUBLIC_NODE};
         use crate::rpc_client::{MultiCallError, MultiCallResults};
@@ -420,8 +420,8 @@ mod multi_call_results {
 }
 
 mod eth_get_transaction_receipt {
-    use crate::rpc_client::eth_rpc::Hash;
     use crate::rpc_client::json::responses::{TransactionReceipt, TransactionStatus};
+    use crate::rpc_client::json::Hash;
     use crate::rpc_client::numeric::{BlockNumber, GasAmount, WeiPerGas};
     use assert_matches::assert_matches;
     use proptest::proptest;

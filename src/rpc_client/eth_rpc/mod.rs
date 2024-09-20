@@ -6,11 +6,14 @@ use crate::logs::{DEBUG, TRACE_HTTP};
 use crate::memory::next_request_id;
 use crate::providers::resolve_rpc_service;
 use crate::rpc_client::eth_rpc_error::{sanitize_send_raw_transaction_result, Parser};
-use crate::rpc_client::json::responses::{Block, FeeHistory, LogEntry, TransactionReceipt};
+use crate::rpc_client::json::requests::JsonRpcRequest;
+use crate::rpc_client::json::responses::{
+    Block, FeeHistory, JsonRpcReply, JsonRpcResult, LogEntry, TransactionReceipt,
+};
 use crate::rpc_client::numeric::{TransactionCount, Wei};
 use crate::types::MetricRpcMethod;
 use candid::candid_method;
-use evm_rpc_types::{HttpOutcallError, JsonRpcError, ProviderError, RpcApi, RpcError, RpcService};
+use evm_rpc_types::{HttpOutcallError, ProviderError, RpcApi, RpcError, RpcService};
 use ic_canister_log::log;
 use ic_cdk::api::call::RejectionCode;
 use ic_cdk::api::management_canister::http_request::{
@@ -19,9 +22,9 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use ic_cdk_macros::query;
 use minicbor::{Decode, Encode};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
 use std::fmt;
-use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
+use std::fmt::Debug;
 
 #[cfg(test)]
 mod tests;
@@ -38,155 +41,6 @@ pub const HEADER_SIZE_LIMIT: u64 = 2 * 1024;
 const HTTP_MAX_SIZE: u64 = 2 * 1024 * 1024;
 
 pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(transparent)]
-pub struct Data(#[serde(with = "ic_ethereum_types::serde_data")] pub Vec<u8>);
-
-impl AsRef<[u8]> for Data {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
-}
-
-#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Hash)]
-#[serde(transparent)]
-pub struct FixedSizeData(#[serde(with = "ic_ethereum_types::serde_data")] pub [u8; 32]);
-
-impl AsRef<[u8]> for FixedSizeData {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
-}
-
-impl std::str::FromStr for FixedSizeData {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if !s.starts_with("0x") {
-            return Err("Ethereum hex string doesn't start with 0x".to_string());
-        }
-        let mut bytes = [0u8; 32];
-        hex::decode_to_slice(&s[2..], &mut bytes)
-            .map_err(|e| format!("failed to decode hash from hex: {}", e))?;
-        Ok(Self(bytes))
-    }
-}
-
-impl Debug for FixedSizeData {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:x}", self)
-    }
-}
-
-impl Display for FixedSizeData {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:x}", self)
-    }
-}
-
-impl LowerHex for FixedSizeData {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "0x{}", hex::encode(self.0))
-    }
-}
-
-impl UpperHex for FixedSizeData {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "0x{}", hex::encode_upper(self.0))
-    }
-}
-
-#[derive(Clone, Copy, Deserialize, Serialize, PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub struct Hash(#[serde(with = "ic_ethereum_types::serde_data")] pub [u8; 32]);
-
-impl Debug for Hash {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:x}", self)
-    }
-}
-
-impl Display for Hash {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:x}", self)
-    }
-}
-
-impl LowerHex for Hash {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "0x{}", hex::encode(self.0))
-    }
-}
-
-impl UpperHex for Hash {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "0x{}", hex::encode_upper(self.0))
-    }
-}
-
-impl std::str::FromStr for Hash {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if !s.starts_with("0x") {
-            return Err("Ethereum hash doesn't start with 0x".to_string());
-        }
-        let mut bytes = [0u8; 32];
-        hex::decode_to_slice(&s[2..], &mut bytes)
-            .map_err(|e| format!("failed to decode hash from hex: {}", e))?;
-        Ok(Self(bytes))
-    }
-}
-
-impl HttpResponsePayload for Hash {}
-
-impl HttpResponsePayload for Wei {}
-
-/// An envelope for all JSON-RPC requests.
-#[derive(Clone, Serialize, Deserialize)]
-pub struct JsonRpcRequest<T> {
-    jsonrpc: String,
-    method: String,
-    id: u64,
-    pub params: T,
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct JsonRpcReply<T> {
-    pub id: u64,
-    pub jsonrpc: String,
-    #[serde(flatten)]
-    pub result: JsonRpcResult<T>,
-}
-
-/// An envelope for all JSON-RPC replies.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum JsonRpcResult<T> {
-    #[serde(rename = "result")]
-    Result(T),
-    #[serde(rename = "error")]
-    Error { code: i64, message: String },
-}
-
-impl<T> JsonRpcResult<T> {
-    pub fn unwrap(self) -> T {
-        match self {
-            Self::Result(t) => t,
-            Self::Error { code, message } => panic!(
-                "expected JSON RPC call to succeed, got an error: error_code = {code}, message = {message}"
-            ),
-        }
-    }
-}
-
-impl<T> From<JsonRpcResult<T>> for Result<T, RpcError> {
-    fn from(result: JsonRpcResult<T>) -> Self {
-        match result {
-            JsonRpcResult::Result(r) => Ok(r),
-            JsonRpcResult::Error { code, message } => Err(JsonRpcError { code, message }.into()),
-        }
-    }
-}
 
 /// Describes a payload transformation to execute before passing the HTTP response to consensus.
 /// The purpose of these transformations is to ensure that the response encoding is deterministic
@@ -326,6 +180,8 @@ pub trait HttpResponsePayload {
 impl<T: HttpResponsePayload> HttpResponsePayload for Option<T> {}
 
 impl HttpResponsePayload for TransactionCount {}
+
+impl HttpResponsePayload for Wei {}
 
 /// Calls a JSON-RPC method on an Ethereum node at the specified URL.
 pub async fn call<I, O>(

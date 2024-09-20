@@ -2,8 +2,8 @@
 //! This module is meant to be temporary and should be removed once the dependency on ckETH is removed,
 //! see <https://github.com/internet-computer-protocol/evm-rpc-canister/issues/243>
 
-use crate::rpc_client::eth_rpc::Hash;
 use crate::rpc_client::json::requests::BlockSpec;
+use crate::rpc_client::json::Hash;
 use evm_rpc_types::{BlockTag, Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
 
 pub(super) fn into_block_spec(value: BlockTag) -> BlockSpec {
@@ -36,7 +36,7 @@ pub(super) fn into_get_logs_param(
             .map(|topic| {
                 topic
                     .into_iter()
-                    .map(|t| crate::rpc_client::eth_rpc::FixedSizeData(t.into()))
+                    .map(|t| crate::rpc_client::json::FixedSizeData(t.into()))
                     .collect()
             })
             .collect(),

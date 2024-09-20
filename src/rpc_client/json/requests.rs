@@ -1,4 +1,4 @@
-use crate::rpc_client::eth_rpc::FixedSizeData;
+use crate::rpc_client::json::FixedSizeData;
 use crate::rpc_client::numeric::{BlockNumber, NumBlocks};
 use candid::Deserialize;
 use ic_ethereum_types::Address;
@@ -141,4 +141,13 @@ impl From<GetBlockByNumberParams> for (BlockSpec, bool) {
     fn from(value: GetBlockByNumberParams) -> Self {
         (value.block, value.include_full_transactions)
     }
+}
+
+/// An envelope for all JSON-RPC requests.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct JsonRpcRequest<T> {
+    pub jsonrpc: String,
+    pub method: String,
+    pub id: u64,
+    pub params: T,
 }
