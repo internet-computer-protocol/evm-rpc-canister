@@ -539,3 +539,45 @@ mod eth_get_transaction_count {
         assert_eq!(count, TransactionCount::from(0x3d8_u32));
     }
 }
+
+mod providers {
+    use crate::rpc_client::Providers;
+    use evm_rpc_types::{EthMainnetService, EthSepoliaService, L2MainnetService};
+    use std::collections::BTreeSet;
+    use std::fmt::Debug;
+
+    #[test]
+    fn should_partition_providers_between_default_and_non_default() {
+        fn assert_is_partition<T: Debug + Ord>(left: &[T], right: &[T], all: &[T]) {
+            let left_set = left.iter().collect::<BTreeSet<_>>();
+            let right_set = right.iter().collect::<BTreeSet<_>>();
+            let all_set = all.iter().collect::<BTreeSet<_>>();
+
+            assert!(
+                left_set.is_disjoint(&right_set),
+                "Non-empty intersection {:?}",
+                left_set.intersection(&right_set).collect::<Vec<_>>()
+            );
+            assert_eq!(
+                left_set.union(&right_set).copied().collect::<BTreeSet<_>>(),
+                all_set
+            );
+        }
+
+        assert_is_partition(
+            &Providers::DEFAULT_ETH_MAINNET_SERVICES,
+            &Providers::NON_DEFAULT_ETH_MAINNET_SERVICES,
+            &EthMainnetService::all(),
+        );
+        assert_is_partition(
+            &Providers::DEFAULT_ETH_SEPOLIA_SERVICES,
+            &Providers::NON_DEFAULT_ETH_SEPOLIA_SERVICES,
+            &EthSepoliaService::all(),
+        );
+        assert_is_partition(
+            &Providers::DEFAULT_L2_MAINNET_SERVICES,
+            &Providers::NON_DEFAULT_L2_MAINNET_SERVICES,
+            &L2MainnetService::all(),
+        )
+    }
+}

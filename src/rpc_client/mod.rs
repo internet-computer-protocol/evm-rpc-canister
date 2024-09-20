@@ -63,7 +63,6 @@ impl Providers {
     const NON_DEFAULT_ETH_MAINNET_SERVICES: &'static [EthMainnetService] = &[
         EthMainnetService::Alchemy,
         EthMainnetService::BlockPi,
-        EthMainnetService::Cloudflare,
         EthMainnetService::Llama,
     ];
 
@@ -72,11 +71,8 @@ impl Providers {
         EthSepoliaService::BlockPi,
         EthSepoliaService::PublicNode,
     ];
-    const NON_DEFAULT_ETH_SEPOLIA_SERVICES: &'static [EthSepoliaService] = &[
-        EthSepoliaService::Alchemy,
-        EthSepoliaService::BlockPi,
-        EthSepoliaService::Sepolia,
-    ];
+    const NON_DEFAULT_ETH_SEPOLIA_SERVICES: &'static [EthSepoliaService] =
+        &[EthSepoliaService::Alchemy, EthSepoliaService::Sepolia];
 
     const DEFAULT_L2_MAINNET_SERVICES: &'static [L2MainnetService] = &[
         L2MainnetService::Ankr,
