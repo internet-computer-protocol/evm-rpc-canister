@@ -41,26 +41,6 @@ pub struct GetLogsParam {
     pub topics: Vec<Vec<FixedSizeData>>,
 }
 
-impl From<GetLogsArgs> for GetLogsParam {
-    fn from(value: GetLogsArgs) -> Self {
-        Self {
-            from_block: value.from_block.map(BlockSpec::from).unwrap_or_default(),
-            to_block: value.to_block.map(BlockSpec::from).unwrap_or_default(),
-            address: value
-                .addresses
-                .into_iter()
-                .map(|address| Address::new(address.into()))
-                .collect(),
-            topics: value
-                .topics
-                .unwrap_or_default()
-                .into_iter()
-                .map(|topic| topic.into_iter().map(FixedSizeData::from).collect())
-                .collect(),
-        }
-    }
-}
-
 /// Parameters of the [`eth_feeHistory`](https://ethereum.github.io/execution-apis/api-documentation/) call.
 #[derive(Debug, Serialize, Clone)]
 #[serde(into = "(NumBlocks, BlockSpec, Vec<u8>)")]

@@ -59,7 +59,7 @@ impl CandidRpcClient {
         &self,
         args: evm_rpc_types::GetLogsArgs,
     ) -> MultiRpcResult<Vec<evm_rpc_types::LogEntry>> {
-        use crate::candid_rpc::cketh_conversion::from_log_entries;
+        use crate::candid_rpc::cketh_conversion::{from_log_entries, into_get_logs_param};
 
         if let (
             Some(evm_rpc_types::BlockTag::Number(from)),
@@ -79,7 +79,7 @@ impl CandidRpcClient {
         }
         process_result(
             RpcMethod::EthGetLogs,
-            self.client.eth_get_logs(args.into()).await,
+            self.client.eth_get_logs(into_get_logs_param(args)).await,
         )
         .map(from_log_entries)
     }

@@ -13,7 +13,7 @@ use crate::rpc_client::json::responses::{
 use crate::rpc_client::numeric::{TransactionCount, Wei};
 use crate::types::MetricRpcMethod;
 use candid::candid_method;
-use evm_rpc_types::{HttpOutcallError, ProviderError, RpcApi, RpcError, RpcService};
+use evm_rpc_types::{HttpOutcallError, JsonRpcError, ProviderError, RpcApi, RpcError, RpcService};
 use ic_canister_log::log;
 use ic_cdk::api::call::RejectionCode;
 use ic_cdk::api::management_canister::http_request::{
@@ -22,9 +22,9 @@ use ic_cdk::api::management_canister::http_request::{
 };
 use ic_cdk_macros::query;
 use minicbor::{Decode, Encode};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
 
 #[cfg(test)]
 mod tests;
