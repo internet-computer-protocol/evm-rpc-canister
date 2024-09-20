@@ -731,7 +731,13 @@ mod providers {
                 num_providers: Some(4),
                 min_num_ok: 5,
             };
+            let providers = Providers::new(services.clone(), strategy.clone());
+            assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));
 
+             let strategy = ConsensusStrategy::Threshold {
+                num_providers: Some(4),
+                min_num_ok: 0,
+            };
             let providers = Providers::new(services, strategy.clone());
             assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));
         }

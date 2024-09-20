@@ -157,7 +157,10 @@ impl Providers {
             return Err(ProviderError::ProviderNotFound);
         }
 
-        Ok(Self { chain, services: providers })
+        Ok(Self {
+            chain,
+            services: providers,
+        })
     }
 }
 
@@ -180,7 +183,12 @@ where
             min_num_ok,
         } => {
             // Ensure that
-            // min_num_ok <= num_providers <= all_providers.len()
+            // 0 < min_num_ok <= num_providers <= all_providers.len()
+            if min_num_ok == 0 {
+                return Err(ProviderError::InvalidRpcConfig(
+                    "min_num_ok must be greater than 0".to_string(),
+                ));
+            }
             match user_input {
                 None => {
                     let all_providers_len = default_providers.len() + non_default_providers.len();
