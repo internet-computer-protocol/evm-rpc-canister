@@ -1,6 +1,6 @@
 use crate::rpc_client::amount::Amount;
 use crate::rpc_client::eth_rpc::{
-    Data, FixedSizeData, Hash, HttpResponsePayload, ResponseTransform,
+    FixedSizeData, Hash, HttpResponsePayload, ResponseTransform,
 };
 use crate::rpc_client::numeric::{
     BlockNonce, BlockNumber, Difficulty, GasAmount, LogIndex, NumBytes, Timestamp, Wei, WeiPerGas,
@@ -242,5 +242,15 @@ pub enum SendRawTransactionResult {
 impl HttpResponsePayload for SendRawTransactionResult {
     fn response_transform() -> Option<ResponseTransform> {
         Some(ResponseTransform::SendRawTransaction)
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(transparent)]
+pub struct Data(#[serde(with = "ic_ethereum_types::serde_data")] pub Vec<u8>);
+
+impl AsRef<[u8]> for Data {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
     }
 }

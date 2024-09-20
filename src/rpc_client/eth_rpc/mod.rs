@@ -39,16 +39,6 @@ const HTTP_MAX_SIZE: u64 = 2 * 1024 * 1024;
 
 pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(transparent)]
-pub struct Data(#[serde(with = "ic_ethereum_types::serde_data")] pub Vec<u8>);
-
-impl AsRef<[u8]> for Data {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
-}
-
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
 pub struct FixedSizeData(#[serde(with = "ic_ethereum_types::serde_data")] pub [u8; 32]);
