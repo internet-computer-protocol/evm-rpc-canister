@@ -6,6 +6,7 @@ use evm_rpc_types::{
     RpcConfig, RpcError, RpcResult, RpcService, RpcServices,
 };
 use ic_canister_log::log;
+use ic_crypto_sha3::Keccak256;
 use json::requests::{
     BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam, GetTransactionCountParams,
 };
@@ -524,15 +525,19 @@ impl<T: PartialEq> MultiCallResults<T> {
         if self.errors.is_empty() {
             return Ok(self.ok_results);
         }
+        Err(self.expect_error())
+    }
+
+    fn expect_error(self) -> MultiCallError<T> {
         let errors = self.group_errors();
         match errors.len() {
             0 => {
                 panic!("BUG: errors should be non-empty")
             }
-            1 if self.ok_results.is_empty() => Err(MultiCallError::ConsistentError(
-                errors.into_keys().next().unwrap().clone(),
-            )),
-            _ => Err(MultiCallError::InconsistentResults(self)),
+            1 if self.ok_results.is_empty() => {
+                MultiCallError::ConsistentError(errors.into_keys().next().unwrap().clone())
+            }
+            _ => MultiCallError::InconsistentResults(self),
         }
     }
 }
@@ -543,14 +548,14 @@ pub enum MultiCallError<T> {
     InconsistentResults(MultiCallResults<T>),
 }
 
-impl<T: Debug + PartialEq> MultiCallResults<T> {
+impl<T: Debug + PartialEq + Clone + Serialize> MultiCallResults<T> {
     pub fn reduce(self, strategy: ConsensusStrategy) -> Result<T, MultiCallError<T>> {
         match strategy {
             ConsensusStrategy::Equality => self.reduce_with_equality(),
             ConsensusStrategy::Threshold {
                 num_providers: _,
-                min_num_ok: _,
-            } => unimplemented!("TODO 284"),
+                min_num_ok,
+            } => self.reduce_with_threshold(min_num_ok),
         }
     }
 
@@ -576,6 +581,24 @@ impl<T: Debug + PartialEq> MultiCallResults<T> {
             return Err(error);
         }
         Ok(base_result)
+    }
+
+    fn reduce_with_threshold(self, min_num_ok: u8) -> Result<T, MultiCallError<T>> {
+        assert!(min_num_ok > 0, "BUG: min_num_ok must be greater than 0");
+        if self.ok_results.len() < min_num_ok as usize {
+            // At least num_providers >= min_num_ok were queried,
+            // so there is at least one error
+            return Err(self.expect_error());
+        }
+        let distribution = ResponseDistribution::from_non_empty_iter(self.ok_results.clone());
+        let (most_likely_response, providers) = distribution
+            .most_frequent()
+            .expect("BUG: distribution should be non-empty");
+        if providers.len() >= min_num_ok as usize {
+            Ok(most_likely_response.clone())
+        } else {
+            Err(MultiCallError::InconsistentResults(self))
+        }
     }
 
     pub fn reduce_with_strict_majority_by_key<F: Fn(&T) -> K, K: Ord>(
@@ -649,6 +672,79 @@ impl<T: Debug + PartialEq> MultiCallResults<T> {
                     );
                     Err(error)
                 }
+            }
+        }
+    }
+}
+
+/// Distribution of responses observed from different providers.
+///
+/// From the API point of view, it emulates a map from a response instance to a set of providers that returned it.
+/// At the implementation level, to avoid requiring `T` to have a total order (i.e., must implements `Ord` if it were to be used as keys in a `BTreeMap`) which might not always be meaningful,
+/// we use as key the hash of the serialized response instance.
+struct ResponseDistribution<T> {
+    hashes: BTreeMap<[u8; 32], T>,
+    responses: BTreeMap<[u8; 32], BTreeSet<RpcService>>,
+}
+
+impl<T> Default for ResponseDistribution<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T> ResponseDistribution<T> {
+    pub fn new() -> Self {
+        Self {
+            hashes: BTreeMap::new(),
+            responses: BTreeMap::new(),
+        }
+    }
+
+    /// Returns the most frequent response and the set of providers that returned it.
+    pub fn most_frequent(&self) -> Option<(&T, &BTreeSet<RpcService>)> {
+        self.responses
+            .iter()
+            .max_by_key(|(_hash, providers)| providers.len())
+            .map(|(hash, providers)| {
+                (
+                    self.hashes.get(hash).expect("BUG: hash should be present"),
+                    providers,
+                )
+            })
+    }
+}
+
+impl<T: Debug + PartialEq + Serialize> ResponseDistribution<T> {
+    pub fn from_non_empty_iter<I: IntoIterator<Item = (RpcService, T)>>(iter: I) -> Self {
+        let mut distribution = Self::new();
+        for (provider, result) in iter {
+            distribution.insert_once(provider, result);
+        }
+        distribution
+    }
+
+    pub fn insert_once(&mut self, provider: RpcService, result: T) {
+        let hash = Keccak256::hash(serde_json::to_vec(&result).expect("BUG: failed to serialize"));
+        match self.hashes.get(&hash) {
+            Some(existing_result) => {
+                assert_eq!(
+                    existing_result, &result,
+                    "BUG: different results once serialized have the same hash"
+                );
+                let providers = self
+                    .responses
+                    .get_mut(&hash)
+                    .expect("BUG: hash is guaranteed to be present");
+                assert!(
+                    providers.insert(provider),
+                    "BUG: provider is already present"
+                );
+            }
+            None => {
+                assert_eq!(self.hashes.insert(hash, result), None);
+                let providers = BTreeSet::from_iter(std::iter::once(provider));
+                assert_eq!(self.responses.insert(hash, providers), None);
             }
         }
     }
