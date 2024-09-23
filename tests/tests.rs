@@ -1196,7 +1196,6 @@ fn candid_rpc_should_return_3_out_of_4_transaction_count() {
             MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
         ],
     ] {
-
         let result = eth_get_transaction_count_with_3_out_of_4(&setup)
             .mock_http_once(error_mocks[0].clone())
             .mock_http_once(error_mocks[1].clone())
@@ -1204,7 +1203,7 @@ fn candid_rpc_should_return_3_out_of_4_transaction_count() {
             .mock_http_once(error_mocks[3].clone())
             .wait()
             .expect_inconsistent();
-        
+
         assert_eq!(result.len(), 4);
     }
 }
