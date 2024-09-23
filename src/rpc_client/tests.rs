@@ -219,6 +219,7 @@ mod multi_call_results {
     }
 
     mod reduce_with_threshold {
+        use crate::rpc_client::json::responses::FeeHistory;
         use crate::rpc_client::tests::multi_call_results::{
             fee_history, other_fee_history, ALCHEMY, ANKR, CLOUDFLARE, PUBLIC_NODE,
         };
@@ -325,12 +326,17 @@ mod multi_call_results {
 
         #[test]
         fn should_fail_when_too_many_errors() {
-            let error = Err(RpcError::JsonRpcError(JsonRpcError {
+            let error = RpcError::JsonRpcError(JsonRpcError {
                 code: 500,
                 message: "offline".to_string(),
-            }));
+            });
             for ok_index in 0..4_usize {
-                let mut fees = [error.clone(), error.clone(), error.clone(), error.clone()];
+                let mut fees = [
+                    Err(error.clone()),
+                    Err(error.clone()),
+                    Err(error.clone()),
+                    Err(error.clone()),
+                ];
                 fees[ok_index] = Ok(fee_history());
                 let [alchemy_fee_history, ankr_fee_history, cloudflare_fee_history, public_node_fee_history] =
                     fees;
@@ -349,20 +355,18 @@ mod multi_call_results {
                 assert_eq!(reduced, Err(MultiCallError::InconsistentResults(results)));
             }
 
-            let results = MultiCallResults::from_non_empty_iter(vec![
-                (ALCHEMY, error.clone()),
-                (ANKR, error.clone()),
-                (PUBLIC_NODE, error.clone()),
-                (CLOUDFLARE, error.clone()),
-            ]);
+            let results: MultiCallResults<FeeHistory> =
+                MultiCallResults::from_non_empty_iter(vec![
+                    (ALCHEMY, Err(error.clone())),
+                    (ANKR, Err(error.clone())),
+                    (PUBLIC_NODE, Err(error.clone())),
+                    (CLOUDFLARE, Err(error.clone())),
+                ]);
             let reduced = results.clone().reduce(ConsensusStrategy::Threshold {
                 num_providers: Some(4),
                 min_num_ok: 3,
             });
-            assert_eq!(
-                reduced,
-                Err(MultiCallError::ConsistentError(error.unwrap_err()))
-            );
+            assert_eq!(reduced, Err(MultiCallError::ConsistentError(error)));
         }
     }
 
