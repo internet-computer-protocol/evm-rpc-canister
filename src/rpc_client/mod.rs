@@ -1,11 +1,9 @@
 use crate::logs::{DEBUG, INFO};
-use crate::rpc_client::eth_rpc::{
-    are_errors_consistent, HttpResponsePayload, ResponseSizeEstimate, HEADER_SIZE_LIMIT,
-};
+use crate::rpc_client::eth_rpc::{HttpResponsePayload, ResponseSizeEstimate, HEADER_SIZE_LIMIT};
 use crate::rpc_client::numeric::TransactionCount;
 use evm_rpc_types::{
     ConsensusStrategy, EthMainnetService, EthSepoliaService, L2MainnetService, ProviderError,
-    RpcConfig, RpcError, RpcService, RpcServices,
+    RpcConfig, RpcError, RpcResult, RpcService, RpcServices,
 };
 use ic_canister_log::log;
 use json::requests::{
@@ -411,18 +409,52 @@ impl EthRpcClient {
 /// Guaranteed to be non-empty.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MultiCallResults<T> {
-    pub results: BTreeMap<RpcService, Result<T, RpcError>>,
+    ok_results: BTreeMap<RpcService, T>,
+    errors: BTreeMap<RpcService, RpcError>,
+}
+
+impl<T> Default for MultiCallResults<T> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<T> MultiCallResults<T> {
-    fn from_non_empty_iter<I: IntoIterator<Item = (RpcService, Result<T, RpcError>)>>(
+    pub fn new() -> Self {
+        Self {
+            ok_results: BTreeMap::new(),
+            errors: BTreeMap::new(),
+        }
+    }
+
+    pub fn from_non_empty_iter<I: IntoIterator<Item = (RpcService, RpcResult<T>)>>(
         iter: I,
     ) -> Self {
-        let results = BTreeMap::from_iter(iter);
+        let mut results = Self::new();
+        for (provider, result) in iter {
+            results.insert_once(provider, result);
+        }
         if results.is_empty() {
             panic!("BUG: MultiCallResults cannot be empty!")
         }
-        Self { results }
+        results
+    }
+
+    fn is_empty(&self) -> bool {
+        self.ok_results.is_empty() && self.errors.is_empty()
+    }
+
+    fn insert_once(&mut self, provider: RpcService, result: RpcResult<T>) {
+        match result {
+            Ok(value) => {
+                assert!(!self.errors.contains_key(&provider));
+                assert!(self.ok_results.insert(provider, value).is_none());
+            }
+            Err(error) => {
+                assert!(!self.ok_results.contains_key(&provider));
+                assert!(self.errors.insert(provider, error).is_none());
+            }
+        }
     }
 
     #[cfg(test)]
@@ -454,52 +486,48 @@ impl<T> MultiCallResults<T> {
             )
         }))
     }
+
+    pub fn into_vec(self) -> Vec<(RpcService, RpcResult<T>)> {
+        self.ok_results
+            .into_iter()
+            .map(|(provider, result)| (provider, Ok(result)))
+            .chain(
+                self.errors
+                    .into_iter()
+                    .map(|(provider, error)| (provider, Err(error))),
+            )
+            .collect()
+    }
+
+    fn group_errors(&self) -> BTreeMap<&RpcError, BTreeSet<&RpcService>> {
+        let mut errors: BTreeMap<_, _> = BTreeMap::new();
+        for (provider, error) in self.errors.iter() {
+            errors
+                .entry(error)
+                .or_insert_with(BTreeSet::new)
+                .insert(provider);
+        }
+        errors
+    }
 }
 
 impl<T: PartialEq> MultiCallResults<T> {
     /// Expects all results to be ok or return the following error:
-    /// * MultiCallError::ConsistentJsonRpcError: all errors are the same JSON-RPC error.
-    /// * MultiCallError::ConsistentHttpOutcallError: all errors are the same HTTP outcall error.
-    /// * MultiCallError::InconsistentResults if there are different errors.
+    /// * MultiCallError::ConsistentError: all errors are the same and there is no ok results.
+    /// * MultiCallError::InconsistentResults: in all other cases.
     fn all_ok(self) -> Result<BTreeMap<RpcService, T>, MultiCallError<T>> {
-        let mut has_ok = false;
-        let mut first_error: Option<(RpcService, &Result<T, RpcError>)> = None;
-        for (provider, result) in self.results.iter() {
-            match result {
-                Ok(_value) => {
-                    has_ok = true;
-                }
-                _ => match first_error {
-                    None => {
-                        first_error = Some((provider.clone(), result));
-                    }
-                    Some((first_error_provider, error)) => {
-                        if !are_errors_consistent(error, result) {
-                            return Err(MultiCallError::InconsistentResults(self));
-                        }
-                        first_error = Some((first_error_provider, error));
-                    }
-                },
-            }
+        if self.errors.is_empty() {
+            return Ok(self.ok_results);
         }
-        match first_error {
-            None => Ok(self
-                .results
-                .into_iter()
-                .map(|(provider, result)| {
-                    (provider, result.expect("BUG: all results should be ok"))
-                })
-                .collect()),
-            Some((_, Err(error))) => {
-                if has_ok {
-                    Err(MultiCallError::InconsistentResults(self))
-                } else {
-                    Err(MultiCallError::ConsistentError(error.clone()))
-                }
+        let errors = self.group_errors();
+        match errors.len() {
+            0 => {
+                panic!("BUG: errors should be non-empty")
             }
-            Some((_, Ok(_))) => {
-                panic!("BUG: first_error should be an error type")
-            }
+            1 if self.ok_results.is_empty() => Err(MultiCallError::ConsistentError(
+                errors.into_keys().next().unwrap().clone(),
+            )),
+            _ => Err(MultiCallError::InconsistentResults(self)),
         }
     }
 }

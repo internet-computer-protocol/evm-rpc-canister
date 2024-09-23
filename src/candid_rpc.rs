@@ -17,7 +17,8 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
         Err(err) => match err {
             MultiCallError::ConsistentError(err) => MultiRpcResult::Consistent(Err(err)),
             MultiCallError::InconsistentResults(multi_call_results) => {
-                multi_call_results.results.iter().for_each(|(service, _)| {
+                let results = multi_call_results.into_vec();
+                results.iter().for_each(|(service, _service_result)| {
                     if let Ok(ResolvedRpcService::Provider(provider)) =
                         resolve_rpc_service(service.clone())
                     {
@@ -35,7 +36,7 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
                         )
                     }
                 });
-                MultiRpcResult::Inconsistent(multi_call_results.results.into_iter().collect())
+                MultiRpcResult::Inconsistent(results)
             }
         },
     }
@@ -193,9 +194,7 @@ mod test {
             process_result(
                 method,
                 Err(MultiCallError::<()>::InconsistentResults(
-                    MultiCallResults {
-                        results: Default::default()
-                    }
+                    MultiCallResults::default()
                 ))
             ),
             MultiRpcResult::Inconsistent(vec![])
@@ -203,11 +202,12 @@ mod test {
         assert_eq!(
             process_result(
                 method,
-                Err(MultiCallError::InconsistentResults(MultiCallResults {
-                    results: vec![(RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5))]
-                        .into_iter()
-                        .collect(),
-                }))
+                Err(MultiCallError::InconsistentResults(
+                    MultiCallResults::from_non_empty_iter(vec![(
+                        RpcService::EthMainnet(EthMainnetService::Ankr),
+                        Ok(5)
+                    )])
+                ))
             ),
             MultiRpcResult::Inconsistent(vec![(
                 RpcService::EthMainnet(EthMainnetService::Ankr),
@@ -217,17 +217,15 @@ mod test {
         assert_eq!(
             process_result(
                 method,
-                Err(MultiCallError::InconsistentResults(MultiCallResults {
-                    results: vec![
+                Err(MultiCallError::InconsistentResults(
+                    MultiCallResults::from_non_empty_iter(vec![
                         (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
                         (
                             RpcService::EthMainnet(EthMainnetService::Cloudflare),
                             Err(RpcError::ProviderError(ProviderError::NoPermission))
                         )
-                    ]
-                    .into_iter()
-                    .collect(),
-                }))
+                    ])
+                ))
             ),
             MultiRpcResult::Inconsistent(vec![
                 (RpcService::EthMainnet(EthMainnetService::Ankr), Ok(5)),
