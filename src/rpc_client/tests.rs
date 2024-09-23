@@ -573,19 +573,19 @@ mod providers {
         }
 
         assert_is_partition(
-            &Providers::DEFAULT_ETH_MAINNET_SERVICES,
-            &Providers::NON_DEFAULT_ETH_MAINNET_SERVICES,
-            &EthMainnetService::all(),
+            Providers::DEFAULT_ETH_MAINNET_SERVICES,
+            Providers::NON_DEFAULT_ETH_MAINNET_SERVICES,
+            EthMainnetService::all(),
         );
         assert_is_partition(
-            &Providers::DEFAULT_ETH_SEPOLIA_SERVICES,
-            &Providers::NON_DEFAULT_ETH_SEPOLIA_SERVICES,
-            &EthSepoliaService::all(),
+            Providers::DEFAULT_ETH_SEPOLIA_SERVICES,
+            Providers::NON_DEFAULT_ETH_SEPOLIA_SERVICES,
+            EthSepoliaService::all(),
         );
         assert_is_partition(
-            &Providers::DEFAULT_L2_MAINNET_SERVICES,
-            &Providers::NON_DEFAULT_L2_MAINNET_SERVICES,
-            &L2MainnetService::all(),
+            Providers::DEFAULT_L2_MAINNET_SERVICES,
+            Providers::NON_DEFAULT_L2_MAINNET_SERVICES,
+            L2MainnetService::all(),
         )
     }
 
