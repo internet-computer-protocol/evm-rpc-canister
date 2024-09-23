@@ -20,9 +20,12 @@ pub enum ConsensusStrategy {
     #[default]
     Equality,
     Threshold {
-        /// Number of providers to be queried.
-        /// Can be omitted if the caller specifies the providers to be used manually.
+        /// Number of providers to be queried:
+        /// * If `None`, will be set to the number of providers manually specified in `RpcServices`.
+        /// * If `Some`, must correspond to the number of manually specified providers in `RpcServices`;
+        ///   or if they are none indicating that default providers should be used, select the corresponding number of providers.
         num_providers: Option<u8>,
+
         /// Minimum number of providers that must return the same (non-error) result.
         min_num_ok: u8,
     },
