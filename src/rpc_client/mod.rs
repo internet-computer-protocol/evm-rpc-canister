@@ -276,6 +276,14 @@ impl EthRpcClient {
         ResponseSizeEstimate::new(self.config.response_size_estimate.unwrap_or(estimate))
     }
 
+    fn consensus_strategy(&self) -> ConsensusStrategy {
+        self.config
+            .response_consensus
+            .as_ref()
+            .cloned()
+            .unwrap_or_default()
+    }
+
     /// Query all providers in parallel and return all results.
     /// It's up to the caller to decide how to handle the results, which could be inconsistent
     /// (e.g., if different providers gave different responses).
@@ -315,14 +323,13 @@ impl EthRpcClient {
         &self,
         params: GetLogsParam,
     ) -> Result<Vec<LogEntry>, MultiCallError<Vec<LogEntry>>> {
-        let results: MultiCallResults<Vec<LogEntry>> = self
-            .parallel_call(
-                "eth_getLogs",
-                vec![params],
-                self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
-            )
-            .await;
-        results.reduce_with_equality()
+        self.parallel_call(
+            "eth_getLogs",
+            vec![params],
+            self.response_size_estimate(1024 + HEADER_SIZE_LIMIT),
+        )
+        .await
+        .reduce(self.consensus_strategy())
     }
 
     pub async fn eth_get_block_by_number(
@@ -335,31 +342,29 @@ impl EthRpcClient {
             _ => 24 * 1024, // Default for unknown networks
         };
 
-        let results: MultiCallResults<Block> = self
-            .parallel_call(
-                "eth_getBlockByNumber",
-                GetBlockByNumberParams {
-                    block,
-                    include_full_transactions: false,
-                },
-                self.response_size_estimate(expected_block_size + HEADER_SIZE_LIMIT),
-            )
-            .await;
-        results.reduce_with_equality()
+        self.parallel_call(
+            "eth_getBlockByNumber",
+            GetBlockByNumberParams {
+                block,
+                include_full_transactions: false,
+            },
+            self.response_size_estimate(expected_block_size + HEADER_SIZE_LIMIT),
+        )
+        .await
+        .reduce(self.consensus_strategy())
     }
 
     pub async fn eth_get_transaction_receipt(
         &self,
         tx_hash: Hash,
     ) -> Result<Option<TransactionReceipt>, MultiCallError<Option<TransactionReceipt>>> {
-        let results: MultiCallResults<Option<TransactionReceipt>> = self
-            .parallel_call(
-                "eth_getTransactionReceipt",
-                vec![tx_hash],
-                self.response_size_estimate(700 + HEADER_SIZE_LIMIT),
-            )
-            .await;
-        results.reduce_with_equality()
+        self.parallel_call(
+            "eth_getTransactionReceipt",
+            vec![tx_hash],
+            self.response_size_estimate(700 + HEADER_SIZE_LIMIT),
+        )
+        .await
+        .reduce(self.consensus_strategy())
     }
 
     pub async fn eth_fee_history(
@@ -367,14 +372,13 @@ impl EthRpcClient {
         params: FeeHistoryParams,
     ) -> Result<FeeHistory, MultiCallError<FeeHistory>> {
         // A typical response is slightly above 300 bytes.
-        let results: MultiCallResults<FeeHistory> = self
-            .parallel_call(
-                "eth_feeHistory",
-                params,
-                self.response_size_estimate(512 + HEADER_SIZE_LIMIT),
-            )
-            .await;
-        results.reduce_with_strict_majority_by_key(|fee_history| fee_history.oldest_block)
+        self.parallel_call(
+            "eth_feeHistory",
+            params,
+            self.response_size_estimate(512 + HEADER_SIZE_LIMIT),
+        )
+        .await
+        .reduce(self.consensus_strategy())
     }
 
     pub async fn eth_send_raw_transaction(
@@ -389,19 +393,20 @@ impl EthRpcClient {
             self.response_size_estimate(256 + HEADER_SIZE_LIMIT),
         )
         .await
-        .reduce_with_equality()
+        .reduce(self.consensus_strategy())
     }
 
     pub async fn eth_get_transaction_count(
         &self,
         params: GetTransactionCountParams,
-    ) -> MultiCallResults<TransactionCount> {
+    ) -> Result<TransactionCount, MultiCallError<TransactionCount>> {
         self.parallel_call(
             "eth_getTransactionCount",
             params,
             self.response_size_estimate(50 + HEADER_SIZE_LIMIT),
         )
         .await
+        .reduce(self.consensus_strategy())
     }
 }
 
@@ -539,7 +544,17 @@ pub enum MultiCallError<T> {
 }
 
 impl<T: Debug + PartialEq> MultiCallResults<T> {
-    pub fn reduce_with_equality(self) -> Result<T, MultiCallError<T>> {
+    pub fn reduce(self, strategy: ConsensusStrategy) -> Result<T, MultiCallError<T>> {
+        match strategy {
+            ConsensusStrategy::Equality => self.reduce_with_equality(),
+            ConsensusStrategy::Threshold {
+                num_providers: _,
+                min_num_ok: _,
+            } => unimplemented!("TODO 284"),
+        }
+    }
+
+    fn reduce_with_equality(self) -> Result<T, MultiCallError<T>> {
         let mut results = self.all_ok()?.into_iter();
         let (base_node_provider, base_result) = results
             .next()

@@ -122,8 +122,7 @@ impl CandidRpcClient {
             RpcMethod::EthGetTransactionCount,
             self.client
                 .eth_get_transaction_count(into_get_transaction_count_params(args))
-                .await
-                .reduce_with_equality(),
+                .await,
         )
         .map(Nat256::from)
     }
