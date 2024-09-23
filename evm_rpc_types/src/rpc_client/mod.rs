@@ -21,7 +21,7 @@ pub enum ConsensusStrategy {
     Equality,
     Threshold {
         /// Number of providers to be queried.
-        /// Can be omitted, if caller specifies manually the providers to be used.
+        /// Can be omitted if the caller specifies the providers to be used manually.
         num_providers: Option<u8>,
         /// Minimum number of providers that must return the same (non-error) result.
         min_num_ok: u8,
