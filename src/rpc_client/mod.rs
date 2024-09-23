@@ -597,6 +597,10 @@ impl<T: Debug + PartialEq + Clone + Serialize> MultiCallResults<T> {
         if providers.len() >= min_num_ok as usize {
             Ok(most_likely_response.clone())
         } else {
+            log!(
+                INFO,
+                "[reduce_with_threshold]: too many inconsistent ok responses to reach threshold of {min_num_ok}, results: {self:?}"
+            );
             Err(MultiCallError::InconsistentResults(self))
         }
     }
