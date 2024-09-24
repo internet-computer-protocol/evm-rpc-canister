@@ -832,6 +832,76 @@ fn eth_get_transaction_receipt_should_succeed() {
 }
 
 #[test]
+fn eth_get_transaction_receipt_for_first_transaction_should_succeed() {
+    for source in RPC_SERVICES {
+        let setup = EvmRpcSetup::new().mock_api_keys();
+        let response = setup
+            .eth_get_transaction_receipt(
+                source.clone(),
+                None,
+                "0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060",
+            )
+            .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":1,"result":{"transactionHash":"0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060","blockHash":"0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1bdd","blockNumber":"0xb443","logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","gasUsed":"0x5208","root":"0x96a8e009d2b88b1483e6941e6812e32263b05683fac202abc622a3e31aed1957","contractAddress":null,"cumulativeGasUsed":"0x5208","transactionIndex":"0x0","from":"0xa1e4380a3b1f749673e270229993ee55f35663b4","to":"0x5df9b87991262f6ba471f09758cde1c0fc1de734","type":"0x0","effectiveGasPrice":"0x2d79883d2000","logs":[]}}"#))
+            .wait()
+            .expect_consistent()
+            .unwrap();
+        assert_eq!(
+            response,
+            Some(evm_rpc_types::TransactionReceipt {
+                status: 0x1_u8.into(),
+                transaction_hash: "0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060".parse().unwrap(),
+                contract_address: None,
+                block_number: 0x11a85ab_u64.into(),
+                block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be".parse().unwrap(),
+                effective_gas_price: 0x63c00ee76_u64.into(),
+                gas_used: 0x7d89_u32.into(),
+                from: "0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667".parse().unwrap(),
+                logs: vec![],
+                logs_bloom: "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".parse().unwrap(),
+                to: "0x356cfd6e6d0000400000003900b415f80669009e".parse().unwrap(),
+                transaction_index: 0xd9_u16.into(),
+                tx_type: "0x2".parse().unwrap(),
+            })
+        );
+    }
+}
+
+#[test]
+fn eth_get_transaction_receipt_for_contract_creation_should_succeed() {
+    for source in RPC_SERVICES {
+        let setup = EvmRpcSetup::new().mock_api_keys();
+        let response = setup
+            .eth_get_transaction_receipt(
+                source.clone(),
+                None,
+                "0x2b8e12d42a187ace19c64b47fae0955def8859bf966c345102c6d3a52f28308b",
+            )
+            .mock_http(MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":1,"result":{"transactionHash":"0x2b8e12d42a187ace19c64b47fae0955def8859bf966c345102c6d3a52f28308b","blockHash":"0xd050426a753a7cc4833ba15a5dfcef761fd983f5277230ea8dc700eadd307363","blockNumber":"0x12e64fd","logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","gasUsed":"0x69892","contractAddress":"0x6abda0438307733fc299e9c229fd3cc074bd8cc0","cumulativeGasUsed":"0x3009d2","transactionIndex":"0x17","from":"0xe12e9a6661aeaf57abf95fd060bebb223fbee7dd","to":null,"type":"0x2","effectiveGasPrice":"0x17c01a135","logs":[],"status":"0x1"}}"#))
+            .wait()
+            .expect_consistent()
+            .unwrap();
+        assert_eq!(
+            response,
+            Some(evm_rpc_types::TransactionReceipt {
+                status: 0x1_u8.into(),
+                transaction_hash: "0x2b8e12d42a187ace19c64b47fae0955def8859bf966c345102c6d3a52f28308b".parse().unwrap(),
+                contract_address: None,
+                block_number: 0x11a85ab_u64.into(),
+                block_hash: "0x5115c07eb1f20a9d6410db0916ed3df626cfdab161d3904f45c8c8b65c90d0be".parse().unwrap(),
+                effective_gas_price: 0x63c00ee76_u64.into(),
+                gas_used: 0x7d89_u32.into(),
+                from: "0x0aa8ebb6ad5a8e499e550ae2c461197624c6e667".parse().unwrap(),
+                logs: vec![],
+                logs_bloom: "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".parse().unwrap(),
+                to: "0x356cfd6e6d0000400000003900b415f80669009e".parse().unwrap(),
+                transaction_index: 0xd9_u16.into(),
+                tx_type: "0x2".parse().unwrap(),
+            })
+        );
+    }
+}
+
+#[test]
 fn eth_get_transaction_count_should_succeed() {
     for source in RPC_SERVICES {
         let setup = EvmRpcSetup::new().mock_api_keys();
