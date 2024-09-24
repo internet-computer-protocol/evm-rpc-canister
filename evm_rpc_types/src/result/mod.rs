@@ -63,7 +63,7 @@ impl<T> From<RpcResult<T>> for MultiRpcResult<T> {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize)]
 pub enum RpcError {
     ProviderError(ProviderError),
     HttpOutcallError(HttpOutcallError),
@@ -71,7 +71,7 @@ pub enum RpcError {
     ValidationError(ValidationError),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, CandidType, Deserialize)]
 pub enum ProviderError {
     NoPermission,
     TooFewCycles { expected: u128, received: u128 },
@@ -80,7 +80,7 @@ pub enum ProviderError {
     InvalidRpcConfig(String),
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, CandidType, Deserialize)]
 pub enum HttpOutcallError {
     /// Error from the IC system API.
     IcError {
@@ -98,13 +98,13 @@ pub enum HttpOutcallError {
     },
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, CandidType, Deserialize)]
 pub struct JsonRpcError {
     pub code: i64,
     pub message: String,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, CandidType, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, CandidType, Deserialize)]
 pub enum ValidationError {
     Custom(String),
     InvalidHex(String),

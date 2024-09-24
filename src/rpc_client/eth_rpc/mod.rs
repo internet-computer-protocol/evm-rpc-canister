@@ -133,16 +133,6 @@ pub fn is_response_too_large(code: &RejectionCode, message: &str) -> bool {
         && (message.contains("size limit") || message.contains("length limit"))
 }
 
-pub fn are_errors_consistent<T: PartialEq>(
-    left: &Result<T, RpcError>,
-    right: &Result<T, RpcError>,
-) -> bool {
-    match (left, right) {
-        (Ok(_), _) | (_, Ok(_)) => true,
-        _ => left == right,
-    }
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ResponseSizeEstimate(u64);
 

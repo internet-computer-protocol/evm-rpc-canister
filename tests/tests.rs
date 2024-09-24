@@ -9,8 +9,9 @@ use evm_rpc::{
     types::{InstallArgs, Metrics, ProviderId, RpcAccess, RpcMethod},
 };
 use evm_rpc_types::{
-    EthMainnetService, EthSepoliaService, Hex, Hex20, Hex32, HttpOutcallError, JsonRpcError,
-    MultiRpcResult, Nat256, ProviderError, RpcApi, RpcError, RpcResult, RpcService, RpcServices,
+    ConsensusStrategy, EthMainnetService, EthSepoliaService, Hex, Hex20, Hex32, HttpOutcallError,
+    JsonRpcError, MultiRpcResult, Nat256, ProviderError, RpcApi, RpcConfig, RpcError, RpcResult,
+    RpcService, RpcServices,
 };
 use ic_base_types::{CanisterId, PrincipalId};
 use ic_canisters_http_types::{HttpRequest, HttpResponse};
@@ -1116,6 +1117,95 @@ fn candid_rpc_should_return_inconsistent_results() {
             ..Default::default()
         }
     );
+}
+
+#[test]
+fn candid_rpc_should_return_3_out_of_4_transaction_count() {
+    let setup = EvmRpcSetup::new().mock_api_keys();
+
+    fn eth_get_transaction_count_with_3_out_of_4(
+        setup: &EvmRpcSetup,
+    ) -> CallFlow<MultiRpcResult<Nat256>> {
+        setup.eth_get_transaction_count(
+            RpcServices::EthMainnet(None),
+            Some(RpcConfig {
+                response_consensus: Some(ConsensusStrategy::Threshold {
+                    total: Some(4),
+                    min: 3,
+                }),
+                ..Default::default()
+            }),
+            evm_rpc_types::GetTransactionCountArgs {
+                address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+                    .parse()
+                    .unwrap(),
+                block: evm_rpc_types::BlockTag::Latest,
+            },
+        )
+    }
+
+    for successful_mocks in [
+        [
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+        ],
+        [
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+            MockOutcallBuilder::new(500, r#"OFFLINE"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+        ],
+        [
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x2"}"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+        ],
+    ] {
+        let result = eth_get_transaction_count_with_3_out_of_4(&setup)
+            .mock_http_once(successful_mocks[0].clone())
+            .mock_http_once(successful_mocks[1].clone())
+            .mock_http_once(successful_mocks[2].clone())
+            .mock_http_once(successful_mocks[3].clone())
+            .wait()
+            .expect_consistent()
+            .unwrap();
+
+        assert_eq!(result, 1_u8.into());
+    }
+
+    for error_mocks in [
+        [
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+            MockOutcallBuilder::new(500, r#"OFFLINE"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x2"}"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+        ],
+        [
+            MockOutcallBuilder::new(403, r#"FORBIDDEN"#),
+            MockOutcallBuilder::new(500, r#"OFFLINE"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+        ],
+        [
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x3"}"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x2"}"#),
+            MockOutcallBuilder::new(200, r#"{"jsonrpc":"2.0","id":0,"result":"0x1"}"#),
+        ],
+    ] {
+        let result = eth_get_transaction_count_with_3_out_of_4(&setup)
+            .mock_http_once(error_mocks[0].clone())
+            .mock_http_once(error_mocks[1].clone())
+            .mock_http_once(error_mocks[2].clone())
+            .mock_http_once(error_mocks[3].clone())
+            .wait()
+            .expect_inconsistent();
+
+        assert_eq!(result.len(), 4);
+    }
 }
 
 #[test]

@@ -59,8 +59,11 @@ mod eth_rpc_client {
 }
 
 mod multi_call_results {
+    use crate::rpc_client::json::responses::FeeHistory;
+    use crate::rpc_client::numeric::{BlockNumber, WeiPerGas};
     use evm_rpc_types::{EthMainnetService, RpcService};
 
+    const ALCHEMY: RpcService = RpcService::EthMainnet(EthMainnetService::Alchemy);
     const ANKR: RpcService = RpcService::EthMainnet(EthMainnetService::Ankr);
     const PUBLIC_NODE: RpcService = RpcService::EthMainnet(EthMainnetService::PublicNode);
     const CLOUDFLARE: RpcService = RpcService::EthMainnet(EthMainnetService::Cloudflare);
@@ -215,208 +218,192 @@ mod multi_call_results {
         }
     }
 
-    mod reduce_with_stable_majority_by_key {
+    mod reduce_with_threshold {
         use crate::rpc_client::json::responses::FeeHistory;
-        use crate::rpc_client::json::responses::JsonRpcResult;
-        use crate::rpc_client::numeric::{BlockNumber, WeiPerGas};
-        use crate::rpc_client::tests::multi_call_results::{ANKR, CLOUDFLARE, PUBLIC_NODE};
+        use crate::rpc_client::tests::multi_call_results::{
+            fee_history, other_fee_history, ALCHEMY, ANKR, CLOUDFLARE, PUBLIC_NODE,
+        };
         use crate::rpc_client::{MultiCallError, MultiCallResults};
+        use evm_rpc_types::{ConsensusStrategy, JsonRpcError, RpcError};
 
         #[test]
         fn should_get_unanimous_fee_history() {
-            let results: MultiCallResults<FeeHistory> =
-                MultiCallResults::from_json_rpc_result(vec![
-                    (ANKR, Ok(JsonRpcResult::Result(fee_history()))),
-                    (PUBLIC_NODE, Ok(JsonRpcResult::Result(fee_history()))),
-                    (CLOUDFLARE, Ok(JsonRpcResult::Result(fee_history()))),
-                ]);
+            let results = MultiCallResults::from_non_empty_iter(vec![
+                (ALCHEMY, Ok(fee_history())),
+                (ANKR, Ok(fee_history())),
+                (PUBLIC_NODE, Ok(fee_history())),
+                (CLOUDFLARE, Ok(fee_history())),
+            ]);
 
-            let reduced =
-                results.reduce_with_strict_majority_by_key(|fee_history| fee_history.oldest_block);
+            let reduced = results.reduce(ConsensusStrategy::Threshold {
+                total: Some(4),
+                min: 3,
+            });
 
             assert_eq!(reduced, Ok(fee_history()));
         }
 
         #[test]
-        fn should_get_fee_history_with_2_out_of_3() {
-            for index_non_majority in 0..3_usize {
-                let index_majority = (index_non_majority + 1) % 3;
-                let mut fees = [fee_history(), fee_history(), fee_history()];
-                fees[index_non_majority].oldest_block = BlockNumber::new(0x10f73fd);
-                assert_ne!(
-                    fees[index_non_majority].oldest_block,
-                    fees[index_majority].oldest_block
-                );
-                let majority_fee = fees[index_majority].clone();
-                let [ankr_fee_history, cloudflare_fee_history, public_node_fee_history] = fees;
-                let results: MultiCallResults<FeeHistory> =
-                    MultiCallResults::from_json_rpc_result(vec![
-                        (ANKR, Ok(JsonRpcResult::Result(ankr_fee_history))),
-                        (
-                            CLOUDFLARE,
-                            Ok(JsonRpcResult::Result(cloudflare_fee_history)),
-                        ),
-                        (
-                            PUBLIC_NODE,
-                            Ok(JsonRpcResult::Result(public_node_fee_history)),
-                        ),
+        fn should_get_fee_history_with_3_out_of_4() {
+            for inconsistent_result in [
+                Ok(other_fee_history()),
+                Err(RpcError::JsonRpcError(JsonRpcError {
+                    code: 500,
+                    message: "offline".to_string(),
+                })),
+            ] {
+                for index_inconsistent in 0..4_usize {
+                    let mut fees = [
+                        Ok(fee_history()),
+                        Ok(fee_history()),
+                        Ok(fee_history()),
+                        Ok(fee_history()),
+                    ];
+                    fees[index_inconsistent] = inconsistent_result.clone();
+                    let [alchemy_fee_history, ankr_fee_history, cloudflare_fee_history, public_node_fee_history] =
+                        fees;
+                    let results = MultiCallResults::from_non_empty_iter(vec![
+                        (ALCHEMY, alchemy_fee_history),
+                        (ANKR, ankr_fee_history),
+                        (PUBLIC_NODE, public_node_fee_history),
+                        (CLOUDFLARE, cloudflare_fee_history),
                     ]);
 
-                let reduced = results
-                    .reduce_with_strict_majority_by_key(|fee_history| fee_history.oldest_block);
+                    let reduced = results.reduce(ConsensusStrategy::Threshold {
+                        total: Some(4),
+                        min: 3,
+                    });
 
-                assert_eq!(reduced, Ok(majority_fee));
+                    assert_eq!(reduced, Ok(fee_history()));
+                }
             }
         }
 
         #[test]
-        fn should_fail_when_no_strict_majority() {
-            let ankr_fee_history = FeeHistory {
-                oldest_block: BlockNumber::new(0x10f73fd),
-                ..fee_history()
-            };
-            let cloudflare_fee_history = FeeHistory {
-                oldest_block: BlockNumber::new(0x10f73fc),
-                ..fee_history()
-            };
-            let public_node_fee_history = FeeHistory {
-                oldest_block: BlockNumber::new(0x10f73fe),
-                ..fee_history()
-            };
-            let three_distinct_results: MultiCallResults<FeeHistory> =
-                MultiCallResults::from_json_rpc_result(vec![
-                    (ANKR, Ok(JsonRpcResult::Result(ankr_fee_history.clone()))),
-                    (
-                        PUBLIC_NODE,
-                        Ok(JsonRpcResult::Result(public_node_fee_history.clone())),
-                    ),
-                ]);
+        fn should_fail_when_two_errors_or_inconsistencies() {
+            use itertools::Itertools;
 
-            let reduced = three_distinct_results
+            let inconsistent_results = [
+                Ok(other_fee_history()),
+                Err(RpcError::JsonRpcError(JsonRpcError {
+                    code: 500,
+                    message: "offline".to_string(),
+                })),
+            ];
+
+            for (inconsistent_res_1, inconsistent_res_2) in inconsistent_results
                 .clone()
-                .reduce_with_strict_majority_by_key(|fee_history| fee_history.oldest_block);
+                .iter()
+                .cartesian_product(inconsistent_results)
+            {
+                for indexes in (0..4_usize).permutations(2) {
+                    let mut fees = [
+                        Ok(fee_history()),
+                        Ok(fee_history()),
+                        Ok(fee_history()),
+                        Ok(fee_history()),
+                    ];
+                    fees[indexes[0]] = inconsistent_res_1.clone();
+                    fees[indexes[1]] = inconsistent_res_2.clone();
+                    let [alchemy_fee_history, ankr_fee_history, cloudflare_fee_history, public_node_fee_history] =
+                        fees;
+                    let results = MultiCallResults::from_non_empty_iter(vec![
+                        (ALCHEMY, alchemy_fee_history),
+                        (ANKR, ankr_fee_history),
+                        (PUBLIC_NODE, public_node_fee_history),
+                        (CLOUDFLARE, cloudflare_fee_history),
+                    ]);
 
-            assert_eq!(
-                reduced,
-                Err(MultiCallError::InconsistentResults(
-                    MultiCallResults::from_json_rpc_result(vec![
-                        (ANKR, Ok(JsonRpcResult::Result(ankr_fee_history.clone()))),
-                        (
-                            PUBLIC_NODE,
-                            Ok(JsonRpcResult::Result(public_node_fee_history))
-                        ),
-                    ])
-                ))
-            );
+                    let reduced = results.clone().reduce(ConsensusStrategy::Threshold {
+                        total: Some(4),
+                        min: 3,
+                    });
 
-            let two_distinct_results: MultiCallResults<FeeHistory> =
-                MultiCallResults::from_json_rpc_result(vec![
-                    (ANKR, Ok(JsonRpcResult::Result(ankr_fee_history.clone()))),
-                    (
-                        PUBLIC_NODE,
-                        Ok(JsonRpcResult::Result(cloudflare_fee_history.clone())),
-                    ),
-                ]);
-
-            let reduced = two_distinct_results
-                .clone()
-                .reduce_with_strict_majority_by_key(|fee_history| fee_history.oldest_block);
-
-            assert_eq!(
-                reduced,
-                Err(MultiCallError::InconsistentResults(
-                    MultiCallResults::from_json_rpc_result(vec![
-                        (ANKR, Ok(JsonRpcResult::Result(ankr_fee_history))),
-                        (
-                            PUBLIC_NODE,
-                            Ok(JsonRpcResult::Result(cloudflare_fee_history))
-                        ),
-                    ])
-                ))
-            );
-        }
-
-        #[test]
-        fn should_fail_when_fee_history_inconsistent_for_same_oldest_block() {
-            let (fee, inconsistent_fee) = {
-                let fee = fee_history();
-                let mut inconsistent_fee = fee.clone();
-                inconsistent_fee.base_fee_per_gas[0] = WeiPerGas::new(0x729d3f3b4);
-                assert_ne!(fee, inconsistent_fee);
-                (fee, inconsistent_fee)
-            };
-
-            let results: MultiCallResults<FeeHistory> =
-                MultiCallResults::from_json_rpc_result(vec![
-                    (ANKR, Ok(JsonRpcResult::Result(fee.clone()))),
-                    (
-                        PUBLIC_NODE,
-                        Ok(JsonRpcResult::Result(inconsistent_fee.clone())),
-                    ),
-                ]);
-
-            let reduced =
-                results.reduce_with_strict_majority_by_key(|fee_history| fee_history.oldest_block);
-
-            assert_eq!(
-                reduced,
-                Err(MultiCallError::InconsistentResults(
-                    MultiCallResults::from_json_rpc_result(vec![
-                        (ANKR, Ok(JsonRpcResult::Result(fee.clone()))),
-                        (PUBLIC_NODE, Ok(JsonRpcResult::Result(inconsistent_fee))),
-                    ])
-                ))
-            );
-        }
-
-        #[test]
-        fn should_fail_upon_any_error() {
-            let results: MultiCallResults<FeeHistory> =
-                MultiCallResults::from_json_rpc_result(vec![
-                    (ANKR, Ok(JsonRpcResult::Result(fee_history()))),
-                    (
-                        PUBLIC_NODE,
-                        Ok(JsonRpcResult::Error {
-                            code: -32700,
-                            message: "error".to_string(),
-                        }),
-                    ),
-                ]);
-
-            let reduced = results
-                .clone()
-                .reduce_with_strict_majority_by_key(|fee_history| fee_history.oldest_block);
-
-            assert_eq!(reduced, Err(MultiCallError::InconsistentResults(results)));
-        }
-
-        fn fee_history() -> FeeHistory {
-            FeeHistory {
-                oldest_block: BlockNumber::new(0x10f73fc),
-                base_fee_per_gas: vec![
-                    WeiPerGas::new(0x729d3f3b3),
-                    WeiPerGas::new(0x766e503ea),
-                    WeiPerGas::new(0x75b51b620),
-                    WeiPerGas::new(0x74094f2b4),
-                    WeiPerGas::new(0x716724f03),
-                    WeiPerGas::new(0x73b467f76),
-                ],
-                gas_used_ratio: vec![
-                    0.6332004,
-                    0.47556506666666665,
-                    0.4432122666666667,
-                    0.4092196,
-                    0.5811903,
-                ],
-                reward: vec![
-                    vec![WeiPerGas::new(0x5f5e100)],
-                    vec![WeiPerGas::new(0x55d4a80)],
-                    vec![WeiPerGas::new(0x5f5e100)],
-                    vec![WeiPerGas::new(0x5f5e100)],
-                    vec![WeiPerGas::new(0x5f5e100)],
-                ],
+                    assert_eq!(reduced, Err(MultiCallError::InconsistentResults(results)));
+                }
             }
         }
+
+        #[test]
+        fn should_fail_when_too_many_errors() {
+            let error = RpcError::JsonRpcError(JsonRpcError {
+                code: 500,
+                message: "offline".to_string(),
+            });
+            for ok_index in 0..4_usize {
+                let mut fees = [
+                    Err(error.clone()),
+                    Err(error.clone()),
+                    Err(error.clone()),
+                    Err(error.clone()),
+                ];
+                fees[ok_index] = Ok(fee_history());
+                let [alchemy_fee_history, ankr_fee_history, cloudflare_fee_history, public_node_fee_history] =
+                    fees;
+                let results = MultiCallResults::from_non_empty_iter(vec![
+                    (ALCHEMY, alchemy_fee_history),
+                    (ANKR, ankr_fee_history),
+                    (PUBLIC_NODE, public_node_fee_history),
+                    (CLOUDFLARE, cloudflare_fee_history),
+                ]);
+
+                let reduced = results.clone().reduce(ConsensusStrategy::Threshold {
+                    total: Some(4),
+                    min: 3,
+                });
+
+                assert_eq!(reduced, Err(MultiCallError::InconsistentResults(results)));
+            }
+
+            let results: MultiCallResults<FeeHistory> =
+                MultiCallResults::from_non_empty_iter(vec![
+                    (ALCHEMY, Err(error.clone())),
+                    (ANKR, Err(error.clone())),
+                    (PUBLIC_NODE, Err(error.clone())),
+                    (CLOUDFLARE, Err(error.clone())),
+                ]);
+            let reduced = results.clone().reduce(ConsensusStrategy::Threshold {
+                total: Some(4),
+                min: 3,
+            });
+            assert_eq!(reduced, Err(MultiCallError::ConsistentError(error)));
+        }
+    }
+
+    fn fee_history() -> FeeHistory {
+        FeeHistory {
+            oldest_block: BlockNumber::new(0x10f73fc),
+            base_fee_per_gas: vec![
+                WeiPerGas::new(0x729d3f3b3),
+                WeiPerGas::new(0x766e503ea),
+                WeiPerGas::new(0x75b51b620),
+                WeiPerGas::new(0x74094f2b4),
+                WeiPerGas::new(0x716724f03),
+                WeiPerGas::new(0x73b467f76),
+            ],
+            gas_used_ratio: vec![
+                0.6332004,
+                0.47556506666666665,
+                0.4432122666666667,
+                0.4092196,
+                0.5811903,
+            ],
+            reward: vec![
+                vec![WeiPerGas::new(0x5f5e100)],
+                vec![WeiPerGas::new(0x55d4a80)],
+                vec![WeiPerGas::new(0x5f5e100)],
+                vec![WeiPerGas::new(0x5f5e100)],
+                vec![WeiPerGas::new(0x5f5e100)],
+            ],
+        }
+    }
+
+    fn other_fee_history() -> FeeHistory {
+        let mut fee = fee_history();
+        let original_oldest_block = fee.oldest_block;
+        fee.oldest_block = BlockNumber::new(0x10f73fd);
+        assert_ne!(fee.oldest_block, original_oldest_block);
+        fee
     }
 }
 
@@ -597,8 +584,8 @@ mod providers {
             too_many_custom_providers in arb_custom_rpc_services(5..=10)
         ) {
             let strategy = ConsensusStrategy::Threshold {
-                num_providers: Some(4),
-                min_num_ok: 3,
+                total: Some(4),
+                min: 3,
             };
 
             let providers = Providers::new(
@@ -623,8 +610,8 @@ mod providers {
     #[test]
     fn should_choose_default_providers_first() {
         let strategy = ConsensusStrategy::Threshold {
-            num_providers: Some(4),
-            min_num_ok: 3,
+            total: Some(4),
+            min: 3,
         };
 
         let providers = Providers::new(RpcServices::EthMainnet(None), strategy.clone()).unwrap();
@@ -673,8 +660,8 @@ mod providers {
     #[test]
     fn should_fail_when_threshold_unspecified_with_default_providers() {
         let strategy = ConsensusStrategy::Threshold {
-            num_providers: None,
-            min_num_ok: 3,
+            total: None,
+            min: 3,
         };
 
         for default_services in [
@@ -691,8 +678,8 @@ mod providers {
 
     proptest! {
         #[test]
-        fn should_fail_when_threshold_larger_than_number_of_supported_providers(min_num_ok in any::<u8>()) {
-            for (default_services, max_num_providers) in [
+        fn should_fail_when_threshold_larger_than_number_of_supported_providers(min in any::<u8>()) {
+            for (default_services, max_total) in [
                 (
                     RpcServices::EthMainnet(None),
                     EthMainnetService::all().len(),
@@ -715,8 +702,8 @@ mod providers {
                 ),
             ] {
                 let strategy = ConsensusStrategy::Threshold {
-                    num_providers: Some((max_num_providers + 1) as u8),
-                    min_num_ok,
+                    total: Some((max_total + 1) as u8),
+                    min,
                 };
                 let providers = Providers::new(default_services, strategy);
                 assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));
@@ -728,15 +715,15 @@ mod providers {
         #[test]
         fn should_fail_when_threshold_invalid(services in arb_rpc_services()) {
             let strategy = ConsensusStrategy::Threshold {
-                num_providers: Some(4),
-                min_num_ok: 5,
+                total: Some(4),
+                min: 5,
             };
             let providers = Providers::new(services.clone(), strategy.clone());
             assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));
 
              let strategy = ConsensusStrategy::Threshold {
-                num_providers: Some(4),
-                min_num_ok: 0,
+                total: Some(4),
+                min: 0,
             };
             let providers = Providers::new(services, strategy.clone());
             assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));

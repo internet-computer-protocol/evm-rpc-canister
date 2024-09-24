@@ -182,7 +182,12 @@ type RequestCostResult = variant { Ok : nat; Err : RpcError };
 type RpcConfig = record { responseSizeEstimate : opt nat64; responseConsensus : opt ConsensusStrategy };
 type ConsensusStrategy = variant {
   Equality;
-  Threshold : record { num_providers : opt nat; min_num_ok : nat };
+  Threshold : record {
+    // Total number of providers to be queried. Can be omitted, if that number can be inferred (e.g., providers are specified in the request).
+    total : opt nat;
+    // Minimum number of providers that must return the same (non-error) result.
+    min : nat;
+  };
 };
 type RpcError = variant {
   JsonRpcError : JsonRpcError;
