@@ -29,7 +29,7 @@ pub struct TransactionReceipt {
     pub gas_used: GasAmount,
 
     /// Status of the transaction.
-    pub status: TransactionStatus,
+    pub status: Option<TransactionStatus>,
 
     /// The hash of the transaction
     #[serde(rename = "transactionHash")]
@@ -42,7 +42,7 @@ pub struct TransactionReceipt {
     pub logs: Vec<LogEntry>,
     #[serde(rename = "logsBloom")]
     pub logs_bloom: String,
-    pub to: String,
+    pub to: Option<String>,
     #[serde(rename = "transactionIndex")]
     pub transaction_index: Amount<()>,
     pub r#type: String,

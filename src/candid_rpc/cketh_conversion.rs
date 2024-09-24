@@ -109,10 +109,10 @@ pub(super) fn from_transaction_receipt(
         block_number: value.block_number.into(),
         effective_gas_price: value.effective_gas_price.into(),
         gas_used: value.gas_used.into(),
-        status: match value.status {
+        status: value.status.map(|v| match v {
             crate::rpc_client::json::responses::TransactionStatus::Success => Nat256::from(1_u8),
             crate::rpc_client::json::responses::TransactionStatus::Failure => Nat256::from(0_u8),
-        },
+        }),
         transaction_hash: Hex32::from(value.transaction_hash.0),
         // TODO 243: responses types from querying JSON-RPC providers should be strongly typed
         // for all the following fields: contract_address, from, logs_bloom, to, transaction_index, tx_type
@@ -122,7 +122,7 @@ pub(super) fn from_transaction_receipt(
         from: Hex20::try_from(value.from).unwrap(),
         logs: from_log_entries(value.logs),
         logs_bloom: Hex256::try_from(value.logs_bloom).unwrap(),
-        to: Hex20::try_from(value.to).unwrap(),
+        to: value.to.map(|v| Hex20::try_from(v).unwrap()),
         transaction_index: value.transaction_index.into(),
         tx_type: HexByte::try_from(value.r#type).unwrap(),
     }
