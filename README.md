@@ -154,6 +154,9 @@ npm run generate
 
 ## Related Projects
 
+* [`evm-rpc-canister-types`](https://crates.io/crates/evm-rpc-canister-types/3.0.0): Rust types for interacting with the EVM RPC canister.
+* [`ic-evm-utils`](https://crates.io/crates/ic-evm-utils): A convenience crate for interacting with the EVM RPC Canister from canisters written in Rust.
+* [chain-fusion-starter](https://github.com/letmejustputthishere/chain-fusion-starter): starter template leveraging chain fusion technology to build EVM coprocessors on the Internet Computer Protocol.
 * [Bitcoin canister](https://github.com/dfinity/bitcoin-canister): interact with the Bitcoin blockchain from the Internet Computer.
 * [ckETH](https://forum.dfinity.org/t/cketh-a-canister-issued-ether-twin-token-on-the-ic/22819): a canister-issued Ether twin token on the Internet Computer.
 * [ICP 🔗 ETH](https://github.com/dfinity/icp-eth-starter): a full-stack starter project for calling Ethereum smart contracts from an IC dapp.
