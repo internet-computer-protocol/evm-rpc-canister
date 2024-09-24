@@ -90,8 +90,7 @@ pub struct TransactionReceipt {
 
     /// Either 1 (success) or 0 (failure).
     /// Only specified for transactions included after the Byzantium upgrade.
-    // TODO 262: should be optional
-    pub status: Nat256,
+    pub status: Option<Nat256>,
 
     /// The hash of the transaction
     #[serde(rename = "transactionHash")]
@@ -112,8 +111,7 @@ pub struct TransactionReceipt {
     pub logs_bloom: Hex256,
 
     /// Address of the receiver or null in a contract creation transaction.
-    // TODO 262: should be optional
-    pub to: Hex20,
+    pub to: Option<Hex20>,
 
     /// Transaction's index position in the block
     #[serde(rename = "transactionIndex")]

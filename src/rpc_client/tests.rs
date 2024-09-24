@@ -446,7 +446,7 @@ mod eth_get_transaction_receipt {
                 block_number: BlockNumber::new(0x4132ec),
                 effective_gas_price: WeiPerGas::new(0xfefbee3e),
                 gas_used: GasAmount::new(0x5208),
-                status: TransactionStatus::Success,
+                status: Some(TransactionStatus::Success),
                 transaction_hash: Hash::from_str(
                     "0x0e59bd032b9b22aca5e2784e4cf114783512db00988c716cf17a1cc755a0a93d"
                 )
@@ -455,7 +455,7 @@ mod eth_get_transaction_receipt {
                 from: "0x1789f79e95324a47c5fd6693071188e82e9a3558".to_string(),
                 logs: vec![],
                 logs_bloom: "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string(),
-                to: "0xdd2851cdd40ae6536831558dd46db62fac7a844d".to_string(),
+                to: Some("0xdd2851cdd40ae6536831558dd46db62fac7a844d".to_string()),
                 transaction_index: 0x32_u32.into(),
                 r#type: "0x2".to_string(),
             }
