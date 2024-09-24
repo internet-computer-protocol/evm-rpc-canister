@@ -1344,6 +1344,7 @@ fn should_use_custom_response_size_estimate() {
             RpcServices::EthMainnet(Some(vec![EthMainnetService::Cloudflare])),
             Some(evm_rpc_types::RpcConfig {
                 response_size_estimate: Some(max_response_bytes),
+                response_consensus: None,
             }),
             evm_rpc_types::GetLogsArgs {
                 addresses: vec!["0xdAC17F958D2ee523a2206206994597C13D831ec7"

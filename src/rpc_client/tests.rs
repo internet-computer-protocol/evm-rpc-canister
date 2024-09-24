@@ -1,6 +1,7 @@
 mod eth_rpc_client {
     use crate::rpc_client::EthRpcClient;
     use evm_rpc_types::{EthMainnetService, ProviderError, RpcService, RpcServices};
+    use maplit::btreeset;
 
     #[test]
     fn should_fail_when_providers_explicitly_set_to_empty() {
@@ -49,10 +50,10 @@ mod eth_rpc_client {
 
         assert_eq!(
             client.providers(),
-            &[
+            &btreeset! {
                 RpcService::EthMainnet(provider1),
                 RpcService::EthMainnet(provider2)
-            ]
+            }
         );
     }
 }
@@ -536,5 +537,209 @@ mod eth_get_transaction_count {
     fn should_deserialize_transaction_count() {
         let count: TransactionCount = serde_json::from_str("\"0x3d8\"").unwrap();
         assert_eq!(count, TransactionCount::from(0x3d8_u32));
+    }
+}
+
+mod providers {
+    use crate::arbitrary::{arb_custom_rpc_services, arb_rpc_services};
+    use crate::rpc_client::Providers;
+    use assert_matches::assert_matches;
+    use evm_rpc_types::{
+        ConsensusStrategy, EthMainnetService, EthSepoliaService, L2MainnetService, ProviderError,
+        RpcService, RpcServices,
+    };
+    use maplit::btreeset;
+    use proptest::arbitrary::any;
+    use proptest::proptest;
+    use std::collections::BTreeSet;
+    use std::fmt::Debug;
+
+    #[test]
+    fn should_partition_providers_between_default_and_non_default() {
+        fn assert_is_partition<T: Debug + Ord>(left: &[T], right: &[T], all: &[T]) {
+            let left_set = left.iter().collect::<BTreeSet<_>>();
+            let right_set = right.iter().collect::<BTreeSet<_>>();
+            let all_set = all.iter().collect::<BTreeSet<_>>();
+
+            assert!(
+                left_set.is_disjoint(&right_set),
+                "Non-empty intersection {:?}",
+                left_set.intersection(&right_set).collect::<Vec<_>>()
+            );
+            assert_eq!(
+                left_set.union(&right_set).copied().collect::<BTreeSet<_>>(),
+                all_set
+            );
+        }
+
+        assert_is_partition(
+            Providers::DEFAULT_ETH_MAINNET_SERVICES,
+            Providers::NON_DEFAULT_ETH_MAINNET_SERVICES,
+            EthMainnetService::all(),
+        );
+        assert_is_partition(
+            Providers::DEFAULT_ETH_SEPOLIA_SERVICES,
+            Providers::NON_DEFAULT_ETH_SEPOLIA_SERVICES,
+            EthSepoliaService::all(),
+        );
+        assert_is_partition(
+            Providers::DEFAULT_L2_MAINNET_SERVICES,
+            Providers::NON_DEFAULT_L2_MAINNET_SERVICES,
+            L2MainnetService::all(),
+        )
+    }
+
+    proptest! {
+        #[test]
+        fn should_choose_custom_providers(
+            not_enough_custom_providers in arb_custom_rpc_services(0..=3),
+            custom_providers in arb_custom_rpc_services(4..=4),
+            too_many_custom_providers in arb_custom_rpc_services(5..=10)
+        ) {
+            let strategy = ConsensusStrategy::Threshold {
+                num_providers: Some(4),
+                min_num_ok: 3,
+            };
+
+            let providers = Providers::new(
+                not_enough_custom_providers,
+                strategy.clone(),
+            );
+            assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));
+
+             let providers = Providers::new(
+                too_many_custom_providers,
+                strategy.clone(),
+            );
+            assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));
+
+            let _providers = Providers::new(
+                custom_providers.clone(),
+                strategy,
+            ).unwrap();
+        }
+    }
+
+    #[test]
+    fn should_choose_default_providers_first() {
+        let strategy = ConsensusStrategy::Threshold {
+            num_providers: Some(4),
+            min_num_ok: 3,
+        };
+
+        let providers = Providers::new(RpcServices::EthMainnet(None), strategy.clone()).unwrap();
+        assert_eq!(
+            providers.services,
+            btreeset! {
+                Providers::DEFAULT_ETH_MAINNET_SERVICES[0],
+                Providers::DEFAULT_ETH_MAINNET_SERVICES[1],
+                Providers::DEFAULT_ETH_MAINNET_SERVICES[2],
+                EthMainnetService::Alchemy,
+            }
+            .into_iter()
+            .map(RpcService::EthMainnet)
+            .collect()
+        );
+
+        let providers = Providers::new(RpcServices::EthSepolia(None), strategy.clone()).unwrap();
+        assert_eq!(
+            providers.services,
+            btreeset! {
+                Providers::DEFAULT_ETH_SEPOLIA_SERVICES[0],
+                Providers::DEFAULT_ETH_SEPOLIA_SERVICES[1],
+                Providers::DEFAULT_ETH_SEPOLIA_SERVICES[2],
+                EthSepoliaService::Alchemy,
+            }
+            .into_iter()
+            .map(RpcService::EthSepolia)
+            .collect()
+        );
+
+        let providers = Providers::new(RpcServices::ArbitrumOne(None), strategy.clone()).unwrap();
+        assert_eq!(
+            providers.services,
+            btreeset! {
+                Providers::DEFAULT_L2_MAINNET_SERVICES[0],
+                Providers::DEFAULT_L2_MAINNET_SERVICES[1],
+                Providers::DEFAULT_L2_MAINNET_SERVICES[2],
+                L2MainnetService::Alchemy,
+            }
+            .into_iter()
+            .map(RpcService::ArbitrumOne)
+            .collect()
+        );
+    }
+
+    #[test]
+    fn should_fail_when_threshold_unspecified_with_default_providers() {
+        let strategy = ConsensusStrategy::Threshold {
+            num_providers: None,
+            min_num_ok: 3,
+        };
+
+        for default_services in [
+            RpcServices::EthMainnet(None),
+            RpcServices::EthSepolia(None),
+            RpcServices::ArbitrumOne(None),
+            RpcServices::BaseMainnet(None),
+            RpcServices::OptimismMainnet(None),
+        ] {
+            let providers = Providers::new(default_services, strategy.clone());
+            assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn should_fail_when_threshold_larger_than_number_of_supported_providers(min_num_ok in any::<u8>()) {
+            for (default_services, max_num_providers) in [
+                (
+                    RpcServices::EthMainnet(None),
+                    EthMainnetService::all().len(),
+                ),
+                (
+                    RpcServices::EthSepolia(None),
+                    EthSepoliaService::all().len(),
+                ),
+                (
+                    RpcServices::ArbitrumOne(None),
+                    L2MainnetService::all().len(),
+                ),
+                (
+                    RpcServices::BaseMainnet(None),
+                    L2MainnetService::all().len(),
+                ),
+                (
+                    RpcServices::OptimismMainnet(None),
+                    L2MainnetService::all().len(),
+                ),
+            ] {
+                let strategy = ConsensusStrategy::Threshold {
+                    num_providers: Some((max_num_providers + 1) as u8),
+                    min_num_ok,
+                };
+                let providers = Providers::new(default_services, strategy);
+                assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn should_fail_when_threshold_invalid(services in arb_rpc_services()) {
+            let strategy = ConsensusStrategy::Threshold {
+                num_providers: Some(4),
+                min_num_ok: 5,
+            };
+            let providers = Providers::new(services.clone(), strategy.clone());
+            assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));
+
+             let strategy = ConsensusStrategy::Threshold {
+                num_providers: Some(4),
+                min_num_ok: 0,
+            };
+            let providers = Providers::new(services, strategy.clone());
+            assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));
+        }
     }
 }
