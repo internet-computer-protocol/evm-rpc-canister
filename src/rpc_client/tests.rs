@@ -236,8 +236,8 @@ mod multi_call_results {
             ]);
 
             let reduced = results.reduce(ConsensusStrategy::Threshold {
-                num_providers: Some(4),
-                min_num_ok: 3,
+                total: Some(4),
+                min: 3,
             });
 
             assert_eq!(reduced, Ok(fee_history()));
@@ -270,8 +270,8 @@ mod multi_call_results {
                     ]);
 
                     let reduced = results.reduce(ConsensusStrategy::Threshold {
-                        num_providers: Some(4),
-                        min_num_ok: 3,
+                        total: Some(4),
+                        min: 3,
                     });
 
                     assert_eq!(reduced, Ok(fee_history()));
@@ -315,8 +315,8 @@ mod multi_call_results {
                     ]);
 
                     let reduced = results.clone().reduce(ConsensusStrategy::Threshold {
-                        num_providers: Some(4),
-                        min_num_ok: 3,
+                        total: Some(4),
+                        min: 3,
                     });
 
                     assert_eq!(reduced, Err(MultiCallError::InconsistentResults(results)));
@@ -348,8 +348,8 @@ mod multi_call_results {
                 ]);
 
                 let reduced = results.clone().reduce(ConsensusStrategy::Threshold {
-                    num_providers: Some(4),
-                    min_num_ok: 3,
+                    total: Some(4),
+                    min: 3,
                 });
 
                 assert_eq!(reduced, Err(MultiCallError::InconsistentResults(results)));
@@ -363,8 +363,8 @@ mod multi_call_results {
                     (CLOUDFLARE, Err(error.clone())),
                 ]);
             let reduced = results.clone().reduce(ConsensusStrategy::Threshold {
-                num_providers: Some(4),
-                min_num_ok: 3,
+                total: Some(4),
+                min: 3,
             });
             assert_eq!(reduced, Err(MultiCallError::ConsistentError(error)));
         }
@@ -584,8 +584,8 @@ mod providers {
             too_many_custom_providers in arb_custom_rpc_services(5..=10)
         ) {
             let strategy = ConsensusStrategy::Threshold {
-                num_providers: Some(4),
-                min_num_ok: 3,
+                total: Some(4),
+                min: 3,
             };
 
             let providers = Providers::new(
@@ -610,8 +610,8 @@ mod providers {
     #[test]
     fn should_choose_default_providers_first() {
         let strategy = ConsensusStrategy::Threshold {
-            num_providers: Some(4),
-            min_num_ok: 3,
+            total: Some(4),
+            min: 3,
         };
 
         let providers = Providers::new(RpcServices::EthMainnet(None), strategy.clone()).unwrap();
@@ -660,8 +660,8 @@ mod providers {
     #[test]
     fn should_fail_when_threshold_unspecified_with_default_providers() {
         let strategy = ConsensusStrategy::Threshold {
-            num_providers: None,
-            min_num_ok: 3,
+            total: None,
+            min: 3,
         };
 
         for default_services in [
@@ -678,8 +678,8 @@ mod providers {
 
     proptest! {
         #[test]
-        fn should_fail_when_threshold_larger_than_number_of_supported_providers(min_num_ok in any::<u8>()) {
-            for (default_services, max_num_providers) in [
+        fn should_fail_when_threshold_larger_than_number_of_supported_providers(min in any::<u8>()) {
+            for (default_services, max_total) in [
                 (
                     RpcServices::EthMainnet(None),
                     EthMainnetService::all().len(),
@@ -702,8 +702,8 @@ mod providers {
                 ),
             ] {
                 let strategy = ConsensusStrategy::Threshold {
-                    num_providers: Some((max_num_providers + 1) as u8),
-                    min_num_ok,
+                    total: Some((max_total + 1) as u8),
+                    min,
                 };
                 let providers = Providers::new(default_services, strategy);
                 assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));
@@ -715,15 +715,15 @@ mod providers {
         #[test]
         fn should_fail_when_threshold_invalid(services in arb_rpc_services()) {
             let strategy = ConsensusStrategy::Threshold {
-                num_providers: Some(4),
-                min_num_ok: 5,
+                total: Some(4),
+                min: 5,
             };
             let providers = Providers::new(services.clone(), strategy.clone());
             assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));
 
              let strategy = ConsensusStrategy::Threshold {
-                num_providers: Some(4),
-                min_num_ok: 0,
+                total: Some(4),
+                min: 0,
             };
             let providers = Providers::new(services, strategy.clone());
             assert_matches!(providers, Err(ProviderError::InvalidRpcConfig(_)));

@@ -1130,8 +1130,8 @@ fn candid_rpc_should_return_3_out_of_4_transaction_count() {
             RpcServices::EthMainnet(None),
             Some(RpcConfig {
                 response_consensus: Some(ConsensusStrategy::Threshold {
-                    num_providers: Some(4),
-                    min_num_ok: 3,
+                    total: Some(4),
+                    min: 3,
                 }),
                 ..Default::default()
             }),

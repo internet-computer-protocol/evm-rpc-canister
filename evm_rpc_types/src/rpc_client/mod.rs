@@ -20,16 +20,16 @@ pub enum ConsensusStrategy {
     #[default]
     Equality,
 
-    /// A subet of providers must return the same non-eror result.
+    /// A subset of providers must return the same non-error result.
     Threshold {
-        /// Number of providers to be queried:
+        /// Total number of providers to be queried:
         /// * If `None`, will be set to the number of providers manually specified in `RpcServices`.
         /// * If `Some`, must correspond to the number of manually specified providers in `RpcServices`;
         ///   or if they are none indicating that default providers should be used, select the corresponding number of providers.
-        num_providers: Option<u8>,
+        total: Option<u8>,
 
         /// Minimum number of providers that must return the same (non-error) result.
-        min_num_ok: u8,
+        min: u8,
     },
 }
 

@@ -177,67 +177,58 @@ where
             .unwrap_or_else(|| default_providers.to_vec())
             .into_iter()
             .collect()),
-        ConsensusStrategy::Threshold {
-            num_providers,
-            min_num_ok,
-        } => {
+        ConsensusStrategy::Threshold { total, min } => {
             // Ensure that
-            // 0 < min_num_ok <= num_providers <= all_providers.len()
-            if min_num_ok == 0 {
+            // 0 < min <= total <= all_providers.len()
+            if min == 0 {
                 return Err(ProviderError::InvalidRpcConfig(
-                    "min_num_ok must be greater than 0".to_string(),
+                    "min must be greater than 0".to_string(),
                 ));
             }
             match user_input {
                 None => {
                     let all_providers_len = default_providers.len() + non_default_providers.len();
-                    let num_providers = num_providers.ok_or_else(|| {
+                    let total = total.ok_or_else(|| {
                         ProviderError::InvalidRpcConfig(
-                            "num_providers must be specified when using default providers"
-                                .to_string(),
+                            "total must be specified when using default providers".to_string(),
                         )
                     })?;
 
-                    if min_num_ok > num_providers {
+                    if min > total {
                         return Err(ProviderError::InvalidRpcConfig(format!(
-                            "min_num_ok {} is greater than num_providers {}",
-                            min_num_ok, num_providers
+                            "min {} is greater than total {}",
+                            min, total
                         )));
                     }
 
-                    if num_providers > all_providers_len as u8 {
+                    if total > all_providers_len as u8 {
                         return Err(ProviderError::InvalidRpcConfig(format!(
-                            "num_providers {} is greater than the number of all supported providers {}",
-                            num_providers,
-                            all_providers_len
+                            "total {} is greater than the number of all supported providers {}",
+                            total, all_providers_len
                         )));
                     }
                     let providers: BTreeSet<_> = default_providers
                         .iter()
                         .chain(non_default_providers.iter())
-                        .take(num_providers as usize)
+                        .take(total as usize)
                         .cloned()
                         .collect();
-                    assert_eq!(
-                        providers.len(),
-                        num_providers as usize,
-                        "BUG: duplicate providers"
-                    );
+                    assert_eq!(providers.len(), total as usize, "BUG: duplicate providers");
                     Ok(providers)
                 }
                 Some(providers) => {
-                    if min_num_ok > providers.len() as u8 {
+                    if min > providers.len() as u8 {
                         return Err(ProviderError::InvalidRpcConfig(format!(
-                            "min_num_ok {} is greater than the number of specified providers {}",
-                            min_num_ok,
+                            "min {} is greater than the number of specified providers {}",
+                            min,
                             providers.len()
                         )));
                     }
-                    if let Some(num_providers) = num_providers {
-                        if num_providers != providers.len() as u8 {
+                    if let Some(total) = total {
+                        if total != providers.len() as u8 {
                             return Err(ProviderError::InvalidRpcConfig(format!(
-                                "num_providers {} is different than the number of specified providers {}",
-                                num_providers,
+                                "total {} is different than the number of specified providers {}",
+                                total,
                                 providers.len()
                             )));
                         }
@@ -552,10 +543,7 @@ impl<T: Debug + PartialEq + Clone + Serialize> MultiCallResults<T> {
     pub fn reduce(self, strategy: ConsensusStrategy) -> Result<T, MultiCallError<T>> {
         match strategy {
             ConsensusStrategy::Equality => self.reduce_with_equality(),
-            ConsensusStrategy::Threshold {
-                num_providers: _,
-                min_num_ok,
-            } => self.reduce_with_threshold(min_num_ok),
+            ConsensusStrategy::Threshold { total: _, min } => self.reduce_with_threshold(min),
         }
     }
 
@@ -583,10 +571,10 @@ impl<T: Debug + PartialEq + Clone + Serialize> MultiCallResults<T> {
         Ok(base_result)
     }
 
-    fn reduce_with_threshold(self, min_num_ok: u8) -> Result<T, MultiCallError<T>> {
-        assert!(min_num_ok > 0, "BUG: min_num_ok must be greater than 0");
-        if self.ok_results.len() < min_num_ok as usize {
-            // At least num_providers >= min_num_ok were queried,
+    fn reduce_with_threshold(self, min: u8) -> Result<T, MultiCallError<T>> {
+        assert!(min > 0, "BUG: min must be greater than 0");
+        if self.ok_results.len() < min as usize {
+            // At least total >= min were queried,
             // so there is at least one error
             return Err(self.expect_error());
         }
@@ -594,12 +582,12 @@ impl<T: Debug + PartialEq + Clone + Serialize> MultiCallResults<T> {
         let (most_likely_response, providers) = distribution
             .most_frequent()
             .expect("BUG: distribution should be non-empty");
-        if providers.len() >= min_num_ok as usize {
+        if providers.len() >= min as usize {
             Ok(most_likely_response.clone())
         } else {
             log!(
                 INFO,
-                "[reduce_with_threshold]: too many inconsistent ok responses to reach threshold of {min_num_ok}, results: {self:?}"
+                "[reduce_with_threshold]: too many inconsistent ok responses to reach threshold of {min}, results: {self:?}"
             );
             Err(MultiCallError::InconsistentResults(self))
         }
