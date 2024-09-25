@@ -5,7 +5,7 @@
 use crate::rpc_client::json::requests::BlockSpec;
 use crate::rpc_client::json::Hash;
 use evm_rpc_types::BlockTag;
-use evm_rpc_types::{Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
+use evm_rpc_types::{Hex, Hex256, Hex32, HexByte, Nat256};
 
 pub(super) fn into_block_spec(value: BlockTag) -> BlockSpec {
     use crate::rpc_client::json::requests;
@@ -134,31 +134,31 @@ pub(super) fn from_block(value: crate::rpc_client::json::responses::Block) -> ev
         base_fee_per_gas: value.base_fee_per_gas.map(Nat256::from),
         number: value.number.into(),
         difficulty: value.difficulty.map(Nat256::from),
-        extra_data: Hex::try_from(value.extra_data).unwrap(),
+        extra_data: Hex::from(value.extra_data.0),
         gas_limit: value.gas_limit.into(),
         gas_used: value.gas_used.into(),
-        hash: Hex32::try_from(value.hash).unwrap(),
-        logs_bloom: Hex256::try_from(value.logs_bloom).unwrap(),
-        miner: Hex20::try_from(value.miner).unwrap(),
-        mix_hash: Hex32::try_from(value.mix_hash).unwrap(),
+        hash: Hex32::from(value.hash.into_bytes()),
+        logs_bloom: Hex256::from(value.logs_bloom.into_bytes()),
+        miner: from_address(value.miner),
+        mix_hash: Hex32::from(value.mix_hash.into_bytes()),
         nonce: value.nonce.into(),
-        parent_hash: Hex32::try_from(value.parent_hash).unwrap(),
-        receipts_root: Hex32::try_from(value.receipts_root).unwrap(),
-        sha3_uncles: Hex32::try_from(value.sha3_uncles).unwrap(),
+        parent_hash: Hex32::from(value.parent_hash.into_bytes()),
+        receipts_root: Hex32::from(value.receipts_root.into_bytes()),
+        sha3_uncles: Hex32::from(value.sha3_uncles.into_bytes()),
         size: value.size.into(),
-        state_root: Hex32::try_from(value.state_root).unwrap(),
+        state_root: Hex32::from(value.state_root.into_bytes()),
         timestamp: value.timestamp.into(),
         total_difficulty: value.total_difficulty.map(Nat256::from),
         transactions: value
             .transactions
             .into_iter()
-            .map(|tx| Hex32::try_from(tx).unwrap())
+            .map(|tx| Hex32::from(tx.into_bytes()))
             .collect(),
-        transactions_root: value.transactions_root.map(|x| Hex32::try_from(x).unwrap()),
+        transactions_root: value.transactions_root.map(|x| Hex32::from(x.into_bytes())),
         uncles: value
             .uncles
             .into_iter()
-            .map(|tx| Hex32::try_from(tx).unwrap())
+            .map(|tx| Hex32::from(tx.into_bytes()))
             .collect(),
     }
 }
