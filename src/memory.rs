@@ -76,7 +76,7 @@ pub fn is_demo_active() -> bool {
 pub fn set_demo_active(is_active: bool) {
     IS_DEMO_ACTIVE.with_borrow_mut(|demo| {
         demo.set(BoolStorable(is_active))
-            .expect("Error while storing new demo status")
+            .expect("Error while updating new demo status")
     });
 }
 
@@ -87,7 +87,7 @@ pub fn get_log_message_filter() -> LogMessageFilter {
 pub fn set_log_message_filter(filter: LogMessageFilter) {
     LOG_MESSAGE_FILTER.with_borrow_mut(|demo| {
         demo.set(filter)
-            .expect("Error while storing new log message filter")
+            .expect("Error while updating log message filter")
     });
 }
 
