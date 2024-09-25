@@ -4,8 +4,8 @@
 
 use crate::rpc_client::json::requests::BlockSpec;
 use crate::rpc_client::json::Hash;
-use evm_rpc_types::{Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
 use evm_rpc_types::BlockTag;
+use evm_rpc_types::{Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
 
 pub(super) fn into_block_spec(value: BlockTag) -> BlockSpec {
     use crate::rpc_client::json::requests;
@@ -115,17 +115,15 @@ pub(super) fn from_transaction_receipt(
             crate::rpc_client::json::responses::TransactionStatus::Failure => Nat256::from(0_u8),
         }),
         transaction_hash: Hex32::from(value.transaction_hash.0),
-        // TODO 243: responses types from querying JSON-RPC providers should be strongly typed
-        // for all the following fields: contract_address, from, logs_bloom, to, transaction_index, tx_type
         contract_address: value
             .contract_address
             .map(|address| Hex20::try_from(address).unwrap()),
-        from: Hex20::try_from(value.from).unwrap(),
+        from: from_address(value.from),
         logs: from_log_entries(value.logs),
         logs_bloom: Hex256::try_from(value.logs_bloom).unwrap(),
-        to: value.to.map(|v| Hex20::try_from(v).unwrap()),
+        to: value.to.map(from_address),
         transaction_index: value.transaction_index.into(),
-        tx_type: HexByte::try_from(value.r#type).unwrap(),
+        tx_type: HexByte::try_from(value.tx_type).unwrap(),
     }
 }
 

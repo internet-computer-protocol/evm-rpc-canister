@@ -35,17 +35,30 @@ pub struct TransactionReceipt {
     #[serde(rename = "transactionHash")]
     pub transaction_hash: Hash,
 
+    /// The contract address created, if the transaction was a contract creation, otherwise null.
     #[serde(rename = "contractAddress")]
     pub contract_address: Option<String>,
 
-    pub from: String,
+    /// Address of the sender.
+    pub from: Address,
+
+    /// An array of log objects that generated this transaction
     pub logs: Vec<LogEntry>,
+
+    /// The bloom filter which is used to retrive related logs
     #[serde(rename = "logsBloom")]
     pub logs_bloom: String,
-    pub to: Option<String>,
+
+    /// Address of the receiver or null in a contract creation transaction.
+    pub to: Option<Address>,
+
+    /// The transactions index position in the block
     #[serde(rename = "transactionIndex")]
     pub transaction_index: Amount<()>,
-    pub r#type: String,
+
+    /// The type of the transaction (e.g. "0x0" for legacy transactions, "0x2" for EIP-1559 transactions)
+    #[serde(rename = "type")]
+    pub tx_type: String,
 }
 
 impl HttpResponsePayload for TransactionReceipt {
