@@ -1,6 +1,6 @@
 use crate::rpc_client::amount::Amount;
 use crate::rpc_client::eth_rpc::{HttpResponsePayload, ResponseTransform};
-use crate::rpc_client::json::{FixedSizeData, Hash};
+use crate::rpc_client::json::{FixedSizeData, Hash, JsonByte, LogsBloom};
 use crate::rpc_client::numeric::{
     BlockNonce, BlockNumber, Difficulty, GasAmount, LogIndex, NumBytes, Timestamp,
     TransactionIndex, Wei, WeiPerGas,
@@ -38,7 +38,7 @@ pub struct TransactionReceipt {
 
     /// The contract address created, if the transaction was a contract creation, otherwise null.
     #[serde(rename = "contractAddress")]
-    pub contract_address: Option<String>,
+    pub contract_address: Option<Address>,
 
     /// Address of the sender.
     pub from: Address,
@@ -48,7 +48,7 @@ pub struct TransactionReceipt {
 
     /// The bloom filter which is used to retrieve related logs
     #[serde(rename = "logsBloom")]
-    pub logs_bloom: String,
+    pub logs_bloom: LogsBloom,
 
     /// Address of the receiver or null in a contract creation transaction.
     pub to: Option<Address>,
@@ -59,7 +59,7 @@ pub struct TransactionReceipt {
 
     /// The type of the transaction (e.g. "0x0" for legacy transactions, "0x2" for EIP-1559 transactions)
     #[serde(rename = "type")]
-    pub tx_type: String,
+    pub tx_type: JsonByte,
 }
 
 impl HttpResponsePayload for TransactionReceipt {

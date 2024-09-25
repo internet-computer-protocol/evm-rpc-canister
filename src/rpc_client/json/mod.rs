@@ -1,7 +1,7 @@
 //! Types used for JSON-RPC requests and responses with Ethereum JSON-RPC providers.
 
-use crate::rpc_client::eth_rpc::HttpResponsePayload;
 use candid::Deserialize;
+use evm_rpc_types::Byte;
 use serde::Serialize;
 use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
 
@@ -12,6 +12,7 @@ macro_rules! bytes_array {
     ($name: ident, $size: expr) => {
         #[doc = concat!("Ethereum byte array (hex representation is prefixed by 0x) wrapping a `[u8; ", stringify!($size), "]`. ")]
         #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
+        #[serde(transparent)]
         pub struct $name(#[serde(with = "ic_ethereum_types::serde_data")] [u8; $size]);
 
         impl $name {
@@ -72,5 +73,19 @@ macro_rules! bytes_array {
 
 bytes_array!(FixedSizeData, 32);
 bytes_array!(Hash, 32);
+bytes_array!(LogsBloom, 256);
 
-impl HttpResponsePayload for Hash {}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct JsonByte(#[serde(with = "ic_ethereum_types::serde_data")] Byte);
+
+impl JsonByte {
+    pub fn new(value: u8) -> Self {
+        Self(Byte::from(value))
+    }
+
+    pub fn into_byte(self) -> u8 {
+        self.0.into_byte()
+    }
+}
+

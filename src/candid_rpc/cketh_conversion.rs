@@ -119,15 +119,13 @@ pub(super) fn from_transaction_receipt(
             crate::rpc_client::json::responses::TransactionStatus::Failure => Nat256::from(0_u8),
         }),
         transaction_hash: Hex32::from(value.transaction_hash.into_bytes()),
-        contract_address: value
-            .contract_address
-            .map(|address| Hex20::try_from(address).unwrap()),
+        contract_address: value.contract_address.map(from_address),
         from: from_address(value.from),
         logs: from_log_entries(value.logs),
-        logs_bloom: Hex256::try_from(value.logs_bloom).unwrap(),
+        logs_bloom: Hex256::from(value.logs_bloom.into_bytes()),
         to: value.to.map(from_address),
         transaction_index: value.transaction_index.into(),
-        tx_type: HexByte::try_from(value.tx_type).unwrap(),
+        tx_type: HexByte::from(value.tx_type.into_byte()),
     }
 }
 

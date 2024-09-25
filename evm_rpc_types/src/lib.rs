@@ -184,7 +184,13 @@ impl_hex_string!(Hex(Vec<u8>));
 /// `FromHex::from_hex` will return `Err(FromHexError::OddLength)`
 /// when trying to decode such strings.
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct Byte([u8; 1]);
+pub struct Byte([u8; 1]);
+
+impl Byte {
+    pub fn into_byte(self) -> u8 {
+        self.0[0]
+    }
+}
 
 impl AsRef<[u8]> for Byte {
     fn as_ref(&self) -> &[u8] {
