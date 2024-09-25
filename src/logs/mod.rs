@@ -26,12 +26,11 @@ pub struct PrintProxySink(&'static LogMessageType, &'static GlobalBuffer);
 
 impl Sink for PrintProxySink {
     fn append(&self, entry: ic_canister_log::LogEntry) {
-        let log_message_type = self.0;
-        let should_print = get_log_message_filter().should_print_log_message(*log_message_type);
-        if should_print {
+        let message_type = self.0;
+        if get_log_message_filter().should_print_log_message(*message_type) {
             ic_cdk::println!(
                 "{} {}:{} {}",
-                log_message_type.prefix_text(),
+                message_type.as_str_uppercase(),
                 entry.file,
                 entry.line,
                 entry.message,
@@ -49,7 +48,7 @@ pub enum LogMessageType {
 }
 
 impl LogMessageType {
-    pub fn prefix_text(self) -> &'static str {
+    pub fn as_str_uppercase(self) -> &'static str {
         match self {
             LogMessageType::Info => "INFO",
             LogMessageType::TraceHttp => "TRACE_HTTP",
