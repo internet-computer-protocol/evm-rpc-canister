@@ -88,4 +88,3 @@ impl JsonByte {
         self.0.into_byte()
     }
 }
-

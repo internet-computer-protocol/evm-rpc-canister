@@ -164,4 +164,3 @@ fn get_transaction_hash(raw_signed_transaction_hex: &Hex) -> Option<Hex32> {
     let transaction: Transaction = rlp::decode(raw_signed_transaction_hex.as_ref()).ok()?;
     Some(Hex32::from(transaction.hash.0))
 }
-
