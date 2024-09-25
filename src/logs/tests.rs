@@ -1,10 +1,10 @@
-use crate::logs::{Log, LogEntry, Priority, Sort};
+use crate::logs::{Log, LogEntry, LogMessageType, Sort};
 use proptest::{prop_assert, proptest};
 
 fn info_log_entry_with_timestamp(timestamp: u64) -> LogEntry {
     LogEntry {
         timestamp,
-        priority: Priority::Info,
+        priority: LogMessageType::Info,
         file: String::default(),
         line: 0,
         message: String::default(),
@@ -41,7 +41,7 @@ proptest! {
         for _ in 0..number_of_entries {
             entries.push(LogEntry {
                 timestamp: 0,
-                priority: Priority::Info,
+                priority: LogMessageType::Info,
                 file: String::default(),
                 line: 0,
                 message: "1".repeat(entry_size),
@@ -81,7 +81,7 @@ fn simple_logs_truncation() {
     for _ in 0..10 {
         entries.push(LogEntry {
             timestamp: 0,
-            priority: Priority::Info,
+            priority: LogMessageType::Info,
             file: String::default(),
             line: 0,
             message: String::default(),
@@ -95,7 +95,7 @@ fn simple_logs_truncation() {
 
     entries.push(LogEntry {
         timestamp: 0,
-        priority: Priority::Info,
+        priority: LogMessageType::Info,
         file: String::default(),
         line: 0,
         message: "1".repeat(MAX_BODY_SIZE),
@@ -117,7 +117,7 @@ fn one_entry_too_big() {
 
     entries.push(LogEntry {
         timestamp: 0,
-        priority: Priority::Info,
+        priority: LogMessageType::Info,
         file: String::default(),
         line: 0,
         message: "1".repeat(MAX_BODY_SIZE),

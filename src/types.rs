@@ -8,7 +8,8 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING};
+use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, LOG_MESSAGE_FILTER_MAX_SIZE};
+use crate::logs::LogMessageType;
 use crate::memory::get_api_key;
 use crate::util::hostname_from_url;
 use crate::validate::validate_api_key;
@@ -18,6 +19,8 @@ pub struct InstallArgs {
     pub demo: Option<bool>,
     #[serde(rename = "manageApiKeys")]
     pub manage_api_keys: Option<Vec<Principal>>,
+    #[serde(rename = "logMessageFilter")]
+    pub log_message_filter: Option<LogMessageFilter>,
 }
 
 pub enum ResolvedRpcService {
@@ -336,6 +339,45 @@ impl RpcAccess {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Serialize, Deserialize)]
+pub enum LogMessageFilter {
+    ShowAll,
+    ShowOnly(Vec<LogMessageType>),
+}
+
+impl LogMessageFilter {
+    pub fn should_print_log_message(&self, log_level: LogMessageType) -> bool {
+        match self {
+            Self::ShowAll => true,
+            Self::ShowOnly(message_types) => message_types
+                .iter()
+                .any(|message_type| *message_type == log_level),
+        }
+    }
+}
+
+impl Default for LogMessageFilter {
+    fn default() -> Self {
+        LogMessageFilter::ShowAll
+    }
+}
+
+impl Storable for LogMessageFilter {
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        serde_json::from_slice(&bytes).expect("Error while deserializing `LogMessageType`")
+    }
+    fn to_bytes(&self) -> Cow<[u8]> {
+        serde_json::to_vec(self)
+            .expect("Error while serializing `LogMessageType`")
+            .into()
+    }
+}
+
+impl BoundedStorable for LogMessageFilter {
+    const IS_FIXED_SIZE: bool = true;
+    const MAX_SIZE: u32 = LOG_MESSAGE_FILTER_MAX_SIZE;
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
 pub enum RpcAuth {
     /// API key will be used in an Authorization header as Bearer token, e.g.,
@@ -352,7 +394,7 @@ mod test {
     use candid::Principal;
     use ic_stable_structures::Storable;
 
-    use crate::types::{ApiKey, BoolStorable, PrincipalStorable};
+    use crate::types::{ApiKey, BoolStorable, LogMessageFilter, LogMessageType, PrincipalStorable};
 
     #[test]
     fn test_api_key_debug_output() {
@@ -380,6 +422,42 @@ mod test {
                 storable.0,
                 PrincipalStorable::from_bytes(storable.to_bytes()).0
             );
+        }
+    }
+
+    #[test]
+    fn test_log_message_filter_storable() {
+        for (filter, expected_json) in [
+            (LogMessageFilter::ShowAll, r#""ShowAll""#),
+            (LogMessageFilter::ShowOnly(vec![]), r#"{"ShowOnly":[]}"#),
+            (
+                LogMessageFilter::ShowOnly(vec![LogMessageType::Debug]),
+                r#"{"ShowOnly":["Debug"]}"#,
+            ),
+            (
+                LogMessageFilter::ShowOnly(vec![LogMessageType::Info]),
+                r#"{"ShowOnly":["Info"]}"#,
+            ),
+            (
+                LogMessageFilter::ShowOnly(vec![LogMessageType::TraceHttp]),
+                r#"{"ShowOnly":["TraceHttp"]}"#,
+            ),
+            (
+                LogMessageFilter::ShowOnly(vec![LogMessageType::Debug, LogMessageType::Info]),
+                r#"{"ShowOnly":["Debug","Info"]}"#,
+            ),
+            (
+                LogMessageFilter::ShowOnly(vec![
+                    LogMessageType::Debug,
+                    LogMessageType::Info,
+                    LogMessageType::TraceHttp,
+                ]),
+                r#"{"ShowOnly":["Debug","Info","TraceHttp"]}"#,
+            ),
+        ] {
+            let bytes = filter.to_bytes();
+            assert_eq!(String::from_utf8(bytes.to_vec()).unwrap(), expected_json);
+            assert_eq!(filter, LogMessageFilter::from_bytes(bytes));
         }
     }
 }

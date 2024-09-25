@@ -81,6 +81,16 @@ type HttpOutcallError = variant {
 type InstallArgs = record {
   demo : opt bool;
   manageApiKeys : opt vec principal;
+  logMessageFilter : opt LogMessageFilter;
+};
+type LogMessageFilter = variant {
+  ShowAll;
+  ShowOnly : vec LogMessageType;
+};
+type LogMessageType = variant {
+  Debug;
+  Info;
+  TraceHttp;
 };
 type JsonRpcError = record { code : int64; message : text };
 type LogEntry = record {
