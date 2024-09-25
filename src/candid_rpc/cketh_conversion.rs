@@ -4,7 +4,8 @@
 
 use crate::rpc_client::json::requests::BlockSpec;
 use crate::rpc_client::json::Hash;
-use evm_rpc_types::{BlockTag, Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
+use evm_rpc_types::{Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
+use evm_rpc_types::BlockTag;
 
 pub(super) fn into_block_spec(value: BlockTag) -> BlockSpec {
     use crate::rpc_client::json::requests;
