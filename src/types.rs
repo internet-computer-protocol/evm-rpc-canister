@@ -339,8 +339,9 @@ impl RpcAccess {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, CandidType, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Serialize, Deserialize, Default)]
 pub enum LogMessageFilter {
+    #[default]
     ShowAll,
     ShowOnly(Vec<LogMessageType>),
 }
@@ -353,12 +354,6 @@ impl LogMessageFilter {
                 .iter()
                 .any(|message_type| *message_type == log_level),
         }
-    }
-}
-
-impl Default for LogMessageFilter {
-    fn default() -> Self {
-        LogMessageFilter::ShowAll
     }
 }
 
