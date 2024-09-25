@@ -108,7 +108,8 @@ impl ResponseTransform {
 #[candid_method(query)]
 fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
     args.response.headers.clear();
-    ic_cdk::println!(
+    log!(
+        DEBUG,
         "RAW RESPONSE BEFORE TRANSFORM:\nstatus: {:?}\nbody:{:?}",
         args.response.status,
         String::from_utf8_lossy(&args.response.body).to_string()
@@ -120,7 +121,8 @@ fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
             transform.apply(&mut args.response.body);
         }
     }
-    ic_cdk::println!(
+    log!(
+        DEBUG,
         "RAW RESPONSE AFTER TRANSFORM:\nstatus: {:?}\nbody:{:?}",
         args.response.status,
         String::from_utf8_lossy(&args.response.body).to_string()
