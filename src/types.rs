@@ -343,16 +343,22 @@ impl RpcAccess {
 pub enum LogMessageFilter {
     #[default]
     ShowAll,
+    HideAll,
     ShowOnly(Vec<LogMessageType>),
+    HideOnly(Vec<LogMessageType>),
 }
 
 impl LogMessageFilter {
     pub fn should_print_log_message(&self, log_level: LogMessageType) -> bool {
         match self {
             Self::ShowAll => true,
+            Self::HideAll => false,
             Self::ShowOnly(message_types) => message_types
                 .iter()
                 .any(|message_type| *message_type == log_level),
+            Self::HideOnly(message_types) => message_types
+                .iter()
+                .all(|message_type| *message_type != log_level),
         }
     }
 }

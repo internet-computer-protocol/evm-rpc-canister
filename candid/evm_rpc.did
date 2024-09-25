@@ -85,7 +85,9 @@ type InstallArgs = record {
 };
 type LogMessageFilter = variant {
   ShowAll;
+  HideAll;
   ShowOnly : vec LogMessageType;
+  HideOnly : vec LogMessageType;
 };
 type LogMessageType = variant {
   Debug;
