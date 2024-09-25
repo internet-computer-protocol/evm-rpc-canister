@@ -2,7 +2,8 @@ use crate::rpc_client::amount::Amount;
 use crate::rpc_client::eth_rpc::{HttpResponsePayload, ResponseTransform};
 use crate::rpc_client::json::{FixedSizeData, Hash};
 use crate::rpc_client::numeric::{
-    BlockNonce, BlockNumber, Difficulty, GasAmount, LogIndex, NumBytes, Timestamp, Wei, WeiPerGas,
+    BlockNonce, BlockNumber, Difficulty, GasAmount, LogIndex, NumBytes, Timestamp,
+    TransactionIndex, Wei, WeiPerGas,
 };
 use candid::Deserialize;
 use evm_rpc_types::{JsonRpcError, RpcError};
@@ -45,7 +46,7 @@ pub struct TransactionReceipt {
     /// An array of log objects that generated this transaction
     pub logs: Vec<LogEntry>,
 
-    /// The bloom filter which is used to retrive related logs
+    /// The bloom filter which is used to retrieve related logs
     #[serde(rename = "logsBloom")]
     pub logs_bloom: String,
 
@@ -54,7 +55,7 @@ pub struct TransactionReceipt {
 
     /// The transactions index position in the block
     #[serde(rename = "transactionIndex")]
-    pub transaction_index: Amount<()>,
+    pub transaction_index: TransactionIndex,
 
     /// The type of the transaction (e.g. "0x0" for legacy transactions, "0x2" for EIP-1559 transactions)
     #[serde(rename = "type")]
