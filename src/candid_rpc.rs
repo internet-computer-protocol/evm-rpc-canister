@@ -42,6 +42,7 @@ fn process_result<T>(method: RpcMethod, result: Result<T, MultiCallError<T>>) ->
     }
 }
 
+/// Adapt the `EthRpcClient` to the `Candid` interface used by the EVM-RPC canister.
 pub struct CandidRpcClient {
     client: EthRpcClient,
 }

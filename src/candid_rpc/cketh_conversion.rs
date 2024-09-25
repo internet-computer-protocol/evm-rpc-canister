@@ -1,6 +1,4 @@
-//! Conversion between ckETH types and EVM RPC types.
-//! This module is meant to be temporary and should be removed once the dependency on ckETH is removed,
-//! see <https://github.com/internet-computer-protocol/evm-rpc-canister/issues/243>
+//! Conversion between JSON types and Candid EVM RPC types.
 
 use crate::rpc_client::json::requests::BlockSpec;
 use crate::rpc_client::json::Hash;
