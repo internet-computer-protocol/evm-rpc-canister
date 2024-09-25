@@ -37,7 +37,7 @@ pub(super) fn into_get_logs_param(
             .map(|topic| {
                 topic
                     .into_iter()
-                    .map(|t| crate::rpc_client::json::FixedSizeData(t.into()))
+                    .map(|t| crate::rpc_client::json::FixedSizeData::new(t.into()))
                     .collect()
             })
             .collect(),
@@ -53,11 +53,15 @@ pub(super) fn from_log_entries(
 fn from_log_entry(value: crate::rpc_client::json::responses::LogEntry) -> evm_rpc_types::LogEntry {
     evm_rpc_types::LogEntry {
         address: from_address(value.address),
-        topics: value.topics.into_iter().map(|t| t.0.into()).collect(),
+        topics: value
+            .topics
+            .into_iter()
+            .map(|t| t.into_bytes().into())
+            .collect(),
         data: value.data.0.into(),
-        block_hash: value.block_hash.map(|x| x.0.into()),
+        block_hash: value.block_hash.map(|x| x.into_bytes().into()),
         block_number: value.block_number.map(Nat256::from),
-        transaction_hash: value.transaction_hash.map(|x| x.0.into()),
+        transaction_hash: value.transaction_hash.map(|x| x.into_bytes().into()),
         transaction_index: value.transaction_index.map(Nat256::from),
         log_index: value.log_index.map(Nat256::from),
         removed: value.removed,
@@ -106,7 +110,7 @@ pub(super) fn from_transaction_receipt(
     value: crate::rpc_client::json::responses::TransactionReceipt,
 ) -> evm_rpc_types::TransactionReceipt {
     evm_rpc_types::TransactionReceipt {
-        block_hash: Hex32::from(value.block_hash.0),
+        block_hash: Hex32::from(value.block_hash.into_bytes()),
         block_number: value.block_number.into(),
         effective_gas_price: value.effective_gas_price.into(),
         gas_used: value.gas_used.into(),
@@ -114,7 +118,7 @@ pub(super) fn from_transaction_receipt(
             crate::rpc_client::json::responses::TransactionStatus::Success => Nat256::from(1_u8),
             crate::rpc_client::json::responses::TransactionStatus::Failure => Nat256::from(0_u8),
         }),
-        transaction_hash: Hex32::from(value.transaction_hash.0),
+        transaction_hash: Hex32::from(value.transaction_hash.into_bytes()),
         contract_address: value
             .contract_address
             .map(|address| Hex20::try_from(address).unwrap()),
@@ -182,7 +186,7 @@ pub(super) fn from_send_raw_transaction_result(
 }
 
 pub(super) fn into_hash(value: Hex32) -> Hash {
-    Hash(value.into())
+    Hash::new(value.into())
 }
 
 fn from_address(value: ic_ethereum_types::Address) -> evm_rpc_types::Hex20 {
