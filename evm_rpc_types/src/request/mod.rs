@@ -1,6 +1,17 @@
-use crate::{BlockTag, Hex20, Hex32, Nat256};
+use crate::{Hex20, Hex32, Nat256};
 use candid::CandidType;
 use serde::Deserialize;
+
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
+pub enum BlockTag {
+    #[default]
+    Latest,
+    Finalized,
+    Safe,
+    Earliest,
+    Pending,
+    Number(Nat256),
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
 pub struct FeeHistoryArgs {

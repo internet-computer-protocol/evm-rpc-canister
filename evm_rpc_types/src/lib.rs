@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 use std::str::FromStr;
 
-pub use request::{FeeHistoryArgs, GetLogsArgs, GetTransactionCountArgs};
+pub use request::{BlockTag, FeeHistoryArgs, GetLogsArgs, GetTransactionCountArgs};
 pub use response::{Block, FeeHistory, LogEntry, SendRawTransactionStatus, TransactionReceipt};
 pub use result::{
     HttpOutcallError, JsonRpcError, MultiRpcResult, ProviderError, RpcError, RpcResult,
@@ -24,17 +24,6 @@ pub use rpc_client::{
     ConsensusStrategy, EthMainnetService, EthSepoliaService, HttpHeader, L2MainnetService, RpcApi,
     RpcConfig, RpcService, RpcServices,
 };
-
-#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize, Default)]
-pub enum BlockTag {
-    #[default]
-    Latest,
-    Finalized,
-    Safe,
-    Earliest,
-    Pending,
-    Number(Nat256),
-}
 
 /// A `Nat` that is guaranteed to fit in 256 bits.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -195,7 +184,13 @@ impl_hex_string!(Hex(Vec<u8>));
 /// `FromHex::from_hex` will return `Err(FromHexError::OddLength)`
 /// when trying to decode such strings.
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct Byte([u8; 1]);
+pub struct Byte([u8; 1]);
+
+impl Byte {
+    pub fn into_byte(self) -> u8 {
+        self.0[0]
+    }
+}
 
 impl AsRef<[u8]> for Byte {
     fn as_ref(&self) -> &[u8] {
