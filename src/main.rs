@@ -6,7 +6,7 @@ use evm_rpc::http::get_http_response_body;
 use evm_rpc::logs::INFO;
 use evm_rpc::memory::{
     insert_api_key, is_api_key_principal, is_demo_active, remove_api_key, set_api_key_principals,
-    set_demo_active, set_log_message_filter,
+    set_demo_active, set_console_message_filter,
 };
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
@@ -228,8 +228,8 @@ fn post_upgrade(args: InstallArgs) {
     if let Some(principals) = args.manage_api_keys {
         set_api_key_principals(principals);
     }
-    if let Some(filter) = args.log_message_filter {
-        set_log_message_filter(filter)
+    if let Some(filter) = args.console_message_filter {
+        set_console_message_filter(filter)
     }
 }
 
@@ -238,7 +238,7 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
     match request.path() {
         "/metrics" => serve_metrics(encode_metrics),
         "/logs" => {
-            use evm_rpc::logs::{Log, LogMessageType, Sort};
+            use evm_rpc::logs::{Log, Priority, Sort};
             use std::str::FromStr;
 
             let max_skip_timestamp = match request.raw_query_param("time") {
@@ -257,16 +257,16 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
 
             match request
                 .raw_query_param("priority")
-                .map(LogMessageType::from_str)
+                .map(Priority::from_str)
             {
                 Some(Ok(priority)) => match priority {
-                    LogMessageType::Info => log.push_logs(LogMessageType::Info),
-                    LogMessageType::Debug => log.push_logs(LogMessageType::Debug),
-                    LogMessageType::TraceHttp => {}
+                    Priority::Info => log.push_logs(Priority::Info),
+                    Priority::Debug => log.push_logs(Priority::Debug),
+                    Priority::TraceHttp => {}
                 },
                 _ => {
-                    log.push_logs(LogMessageType::Info);
-                    log.push_logs(LogMessageType::Debug);
+                    log.push_logs(Priority::Info);
+                    log.push_logs(Priority::Debug);
                 }
             }
 

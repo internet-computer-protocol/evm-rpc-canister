@@ -8,13 +8,13 @@ use ic_stable_structures::{Cell, StableBTreeMap};
 use std::cell::RefCell;
 
 use crate::types::{
-    ApiKey, BoolStorable, LogMessageFilter, Metrics, PrincipalStorable, ProviderId,
+    ApiKey, BoolStorable, MessageFilter, Metrics, PrincipalStorable, ProviderId,
 };
 
 const IS_DEMO_ACTIVE_MEMORY_ID: MemoryId = MemoryId::new(4);
 const API_KEY_MAP_MEMORY_ID: MemoryId = MemoryId::new(5);
 const MANAGE_API_KEYS_MEMORY_ID: MemoryId = MemoryId::new(6);
-const LOG_MESSAGE_FILTER_MEMORY_ID: MemoryId = MemoryId::new(7);
+const CONSOLE_MESSAGE_FILTER_MEMORY_ID: MemoryId = MemoryId::new(7);
 
 type StableMemory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -32,8 +32,8 @@ thread_local! {
         RefCell::new(StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(API_KEY_MAP_MEMORY_ID))));
     static MANAGE_API_KEYS: RefCell<ic_stable_structures::Vec<PrincipalStorable, StableMemory>> =
         RefCell::new(ic_stable_structures::Vec::init(MEMORY_MANAGER.with_borrow(|m| m.get(MANAGE_API_KEYS_MEMORY_ID))).expect("Unable to read API key principals from stable memory"));
-    static LOG_MESSAGE_FILTER: RefCell<Cell<LogMessageFilter, StableMemory>> =
-        RefCell::new(ic_stable_structures::Cell::init(MEMORY_MANAGER.with_borrow(|m| m.get(LOG_MESSAGE_FILTER_MEMORY_ID)), LogMessageFilter::default()).expect("Unable to read log message filter from stable memory"));
+    static CONSOLE_MESSAGE_FILTER: RefCell<Cell<MessageFilter, StableMemory>> =
+        RefCell::new(ic_stable_structures::Cell::init(MEMORY_MANAGER.with_borrow(|m| m.get(CONSOLE_MESSAGE_FILTER_MEMORY_ID)), MessageFilter::default()).expect("Unable to read log message filter from stable memory"));
 }
 
 pub fn get_api_key(provider_id: ProviderId) -> Option<ApiKey> {
@@ -74,19 +74,21 @@ pub fn is_demo_active() -> bool {
 }
 
 pub fn set_demo_active(is_active: bool) {
-    IS_DEMO_ACTIVE.with_borrow_mut(|demo| {
-        demo.set(BoolStorable(is_active))
+    IS_DEMO_ACTIVE.with_borrow_mut(|state| {
+        state
+            .set(BoolStorable(is_active))
             .expect("Error while updating new demo status")
     });
 }
 
-pub fn get_log_message_filter() -> LogMessageFilter {
-    LOG_MESSAGE_FILTER.with_borrow(|filter| filter.get().clone())
+pub fn get_console_message_filter() -> MessageFilter {
+    CONSOLE_MESSAGE_FILTER.with_borrow(|filter| filter.get().clone())
 }
 
-pub fn set_log_message_filter(filter: LogMessageFilter) {
-    LOG_MESSAGE_FILTER.with_borrow_mut(|demo| {
-        demo.set(filter)
+pub fn set_console_message_filter(filter: MessageFilter) {
+    CONSOLE_MESSAGE_FILTER.with_borrow_mut(|state| {
+        state
+            .set(filter)
             .expect("Error while updating log message filter")
     });
 }

@@ -6,7 +6,7 @@ use ic_canister_log::{declare_log_buffer, export as export_logs, GlobalBuffer, S
 use serde::Deserialize;
 use std::str::FromStr;
 
-use crate::memory::get_log_message_filter;
+use crate::memory::get_console_message_filter;
 
 // High-priority messages.
 declare_log_buffer!(name = INFO_BUF, capacity = 1000);
@@ -17,19 +17,17 @@ declare_log_buffer!(name = DEBUG_BUF, capacity = 1000);
 // Trace of HTTP requests and responses.
 declare_log_buffer!(name = TRACE_HTTP_BUF, capacity = 1000);
 
-pub const INFO: PrintProxySink = PrintProxySink(&LogMessageType::Info, &INFO_BUF);
-pub const DEBUG: PrintProxySink = PrintProxySink(&LogMessageType::Debug, &DEBUG_BUF);
-pub const TRACE_HTTP: PrintProxySink = PrintProxySink(&LogMessageType::TraceHttp, &TRACE_HTTP_BUF);
+pub const INFO: PrintProxySink = PrintProxySink(&Priority::Info, &INFO_BUF);
+pub const DEBUG: PrintProxySink = PrintProxySink(&Priority::Debug, &DEBUG_BUF);
+pub const TRACE_HTTP: PrintProxySink = PrintProxySink(&Priority::TraceHttp, &TRACE_HTTP_BUF);
+
+#[cfg(test)]
+thread_local! {
+    pub static DISPLAYED_LOG_ENTRIES: std::cell::RefCell<Vec<ic_canister_log::LogEntry>> = std::cell::RefCell::new(vec![]);
+}
 
 #[derive(Debug)]
-pub struct PrintProxySink(&'static LogMessageType, &'static GlobalBuffer);
-
-impl PrintProxySink {
-    pub fn log_entries(&self) -> Vec<ic_canister_log::LogEntry> {
-        self.1
-            .with_borrow(|buffer| buffer.iter().cloned().collect())
-    }
-}
+pub struct PrintProxySink(&'static Priority, &'static GlobalBuffer);
 
 impl Sink for PrintProxySink {
     fn append(&self, entry: ic_canister_log::LogEntry) {
@@ -40,38 +38,40 @@ impl Sink for PrintProxySink {
             entry.line,
             entry.message,
         );
-        if get_log_message_filter().should_print_log_message(&message) {
-            ic_cdk::println!("{}", message)
+        if get_console_message_filter().is_match(&message) {
+            ic_cdk::println!("{}", message);
+            #[cfg(test)]
+            DISPLAYED_LOG_ENTRIES.with_borrow_mut(|entries| entries.push(entry.clone()));
         }
         self.1.append(entry)
     }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, CandidType, Deserialize, serde::Serialize)]
-pub enum LogMessageType {
+pub enum Priority {
     Info,
     TraceHttp,
     Debug,
 }
 
-impl LogMessageType {
+impl Priority {
     pub fn as_str_uppercase(self) -> &'static str {
         match self {
-            LogMessageType::Info => "INFO",
-            LogMessageType::TraceHttp => "TRACE_HTTP",
-            LogMessageType::Debug => "DEBUG",
+            Priority::Info => "INFO",
+            Priority::TraceHttp => "TRACE_HTTP",
+            Priority::Debug => "DEBUG",
         }
     }
 }
 
-impl FromStr for LogMessageType {
+impl FromStr for Priority {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "info" => Ok(LogMessageType::Info),
-            "trace_http" => Ok(LogMessageType::TraceHttp),
-            "debug" => Ok(LogMessageType::Debug),
+            "info" => Ok(Priority::Info),
+            "trace_http" => Ok(Priority::TraceHttp),
+            "debug" => Ok(Priority::Debug),
             _ => Err("could not recognize priority".to_string()),
         }
     }
@@ -98,7 +98,7 @@ impl FromStr for Sort {
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, serde::Serialize)]
 pub struct LogEntry {
     pub timestamp: u64,
-    pub priority: LogMessageType,
+    pub priority: Priority,
     pub file: String,
     pub line: u32,
     pub message: String,
@@ -111,11 +111,11 @@ pub struct Log {
 }
 
 impl Log {
-    pub fn push_logs(&mut self, priority: LogMessageType) {
+    pub fn push_logs(&mut self, priority: Priority) {
         let logs = match priority {
-            LogMessageType::Info => export_logs(&INFO_BUF),
-            LogMessageType::TraceHttp => export_logs(&TRACE_HTTP_BUF),
-            LogMessageType::Debug => export_logs(&DEBUG_BUF),
+            Priority::Info => export_logs(&INFO_BUF),
+            Priority::TraceHttp => export_logs(&TRACE_HTTP_BUF),
+            Priority::Debug => export_logs(&DEBUG_BUF),
         };
         for entry in logs {
             self.entries.push(LogEntry {
@@ -130,9 +130,9 @@ impl Log {
     }
 
     pub fn push_all(&mut self) {
-        self.push_logs(LogMessageType::Info);
-        self.push_logs(LogMessageType::TraceHttp);
-        self.push_logs(LogMessageType::Debug);
+        self.push_logs(Priority::Info);
+        self.push_logs(Priority::TraceHttp);
+        self.push_logs(Priority::Debug);
     }
 
     pub fn serialize_logs(&self, max_body_size: usize) -> String {

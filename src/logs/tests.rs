@@ -1,7 +1,7 @@
 use crate::{
-    logs::{Log, LogEntry, LogMessageType, Sort, INFO},
-    memory::set_log_message_filter,
-    types::LogMessageFilter,
+    logs::{Log, LogEntry, Priority, Sort, INFO},
+    memory::set_console_message_filter,
+    types::MessageFilter,
 };
 use ic_canister_log::log;
 use proptest::{prop_assert, proptest};
@@ -9,10 +9,10 @@ use proptest::{prop_assert, proptest};
 fn info_log_entry_with_timestamp(timestamp: u64) -> LogEntry {
     LogEntry {
         timestamp,
-        priority: LogMessageType::Info,
+        priority: Priority::Info,
         file: String::default(),
         line: 0,
-        message: format!("Timestamp: {timestamp}"),
+        message: String::default(),
         counter: 0,
     }
 }
@@ -35,6 +35,11 @@ fn is_descending(log: &Log) -> bool {
     true
 }
 
+fn get_messages() -> Vec<String> {
+    super::DISPLAYED_LOG_ENTRIES
+        .with_borrow(|buffer| buffer.iter().map(|entry| entry.message.clone()).collect())
+}
+
 proptest! {
     #[test]
     fn logs_always_fit_in_message(
@@ -46,7 +51,7 @@ proptest! {
         for _ in 0..number_of_entries {
             entries.push(LogEntry {
                 timestamp: 0,
-                priority: LogMessageType::Info,
+                priority: Priority::Info,
                 file: String::default(),
                 line: 0,
                 message: "1".repeat(entry_size),
@@ -86,7 +91,7 @@ fn simple_logs_truncation() {
     for _ in 0..10 {
         entries.push(LogEntry {
             timestamp: 0,
-            priority: LogMessageType::Info,
+            priority: Priority::Info,
             file: String::default(),
             line: 0,
             message: String::default(),
@@ -100,7 +105,7 @@ fn simple_logs_truncation() {
 
     entries.push(LogEntry {
         timestamp: 0,
-        priority: LogMessageType::Info,
+        priority: Priority::Info,
         file: String::default(),
         line: 0,
         message: "1".repeat(MAX_BODY_SIZE),
@@ -122,7 +127,7 @@ fn one_entry_too_big() {
 
     entries.push(LogEntry {
         timestamp: 0,
-        priority: LogMessageType::Info,
+        priority: Priority::Info,
         file: String::default(),
         line: 0,
         message: "1".repeat(MAX_BODY_SIZE),
@@ -161,62 +166,47 @@ fn should_truncate_last_entry() {
 
 #[test]
 fn should_show_all() {
-    set_log_message_filter(LogMessageFilter::ShowAll);
+    set_console_message_filter(MessageFilter::ShowAll);
     log!(INFO, "ABC");
     log!(INFO, "123");
     log!(INFO, "!@#");
-    assert!(INFO
-        .log_entries()
-        .iter()
-        .map(|entry| &entry.message)
-        .eq(["ABC", "123", "!@#"].into_iter()));
+    assert_eq!(get_messages(), vec!["ABC", "123", "!@#"]);
 }
 
 #[test]
 fn should_hide_all() {
-    set_log_message_filter(LogMessageFilter::HideAll);
+    set_console_message_filter(MessageFilter::HideAll);
     log!(INFO, "ABC");
     log!(INFO, "123");
     log!(INFO, "!@#");
-    assert_eq!(INFO.log_entries(), vec![]);
+    assert_eq!(get_messages().len(), 0);
 }
 
 #[test]
 fn should_show_pattern() {
-    set_log_message_filter(LogMessageFilter::ShowPattern("end$".into()));
+    set_console_message_filter(MessageFilter::ShowPattern("end$".into()));
     log!(INFO, "message");
     log!(INFO, "message end");
     log!(INFO, "end message");
-    assert!(INFO
-        .log_entries()
-        .iter()
-        .map(|entry| &entry.message)
-        .eq(["message end"].into_iter()));
+    assert_eq!(get_messages(), vec!["message end"]);
 }
 
 #[test]
 fn should_hide_pattern_including_message_type() {
-    set_log_message_filter(LogMessageFilter::ShowPattern("^INFO 123".into()));
+    set_console_message_filter(MessageFilter::ShowPattern("^INFO [^ ]* 123".into()));
     log!(INFO, "123");
     log!(INFO, "INFO 123");
     log!(INFO, "");
     log!(INFO, "123456");
-    assert!(INFO
-        .log_entries()
-        .iter()
-        .map(|entry| &entry.message)
-        .eq(["123", "123456"].into_iter()));
+    assert_eq!(get_messages(), vec!["123", "123456"]);
 }
 
 #[test]
 fn should_hide_pattern() {
-    set_log_message_filter(LogMessageFilter::HidePattern("[ABC]".into()));
-    log!(INFO, "message");
+    set_console_message_filter(MessageFilter::HidePattern("[ABC]".into()));
     log!(INFO, "remove A");
     log!(INFO, "...B...");
-    assert!(INFO
-        .log_entries()
-        .iter()
-        .map(|entry| &entry.message)
-        .eq(["message"].into_iter()));
+    log!(INFO, "C");
+    log!(INFO, "message");
+    assert_eq!(get_messages(), vec!["message"]);
 }

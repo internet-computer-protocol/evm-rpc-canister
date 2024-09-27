@@ -9,7 +9,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, LOG_MESSAGE_FILTER_MAX_SIZE};
+use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, MESSAGE_FILTER_MAX_SIZE};
 
 use crate::memory::get_api_key;
 use crate::util::hostname_from_url;
@@ -21,7 +21,7 @@ pub struct InstallArgs {
     #[serde(rename = "manageApiKeys")]
     pub manage_api_keys: Option<Vec<Principal>>,
     #[serde(rename = "logMessageFilter")]
-    pub log_message_filter: Option<LogMessageFilter>,
+    pub console_message_filter: Option<MessageFilter>,
 }
 
 pub enum ResolvedRpcService {
@@ -341,7 +341,7 @@ impl RpcAccess {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Serialize, Deserialize, Default)]
-pub enum LogMessageFilter {
+pub enum MessageFilter {
     #[default]
     ShowAll,
     HideAll,
@@ -369,31 +369,31 @@ where
     }
 }
 
-impl LogMessageFilter {
-    pub fn should_print_log_message(&self, message: &str) -> bool {
+impl MessageFilter {
+    pub fn is_match(&self, message: &str) -> bool {
         match self {
             Self::ShowAll => true,
             Self::HideAll => false,
             Self::ShowPattern(regex) => regex.is_match(message),
-            Self::HidePattern(regex) => regex.is_match(message),
+            Self::HidePattern(regex) => !regex.is_match(message),
         }
     }
 }
 
-impl Storable for LogMessageFilter {
+impl Storable for MessageFilter {
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        serde_json::from_slice(&bytes).expect("Error while deserializing `LogMessageType`")
+        serde_json::from_slice(&bytes).expect("Error while deserializing `MessageFilter`")
     }
     fn to_bytes(&self) -> Cow<[u8]> {
         serde_json::to_vec(self)
-            .expect("Error while serializing `LogMessageType`")
+            .expect("Error while serializing `MessageFilter`")
             .into()
     }
 }
 
-impl BoundedStorable for LogMessageFilter {
+impl BoundedStorable for MessageFilter {
     const IS_FIXED_SIZE: bool = true;
-    const MAX_SIZE: u32 = LOG_MESSAGE_FILTER_MAX_SIZE;
+    const MAX_SIZE: u32 = MESSAGE_FILTER_MAX_SIZE;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
@@ -412,7 +412,7 @@ mod test {
     use candid::Principal;
     use ic_stable_structures::Storable;
 
-    use super::{ApiKey, BoolStorable, LogMessageFilter, PrincipalStorable, RegexString};
+    use super::{ApiKey, BoolStorable, MessageFilter, PrincipalStorable, RegexString};
 
     #[test]
     fn test_api_key_debug_output() {
@@ -444,19 +444,19 @@ mod test {
     }
 
     #[test]
-    fn test_log_message_filter_storable() {
+    fn test_message_filter_storable() {
         let patterns: &[RegexString] =
             &["[.]", "^DEBUG ", "(.*)?", "\\?"].map(|regex| regex.into());
         let cases = [
             vec![
-                (LogMessageFilter::ShowAll, r#""ShowAll""#.to_string()),
-                (LogMessageFilter::HideAll, r#""HideAll""#.to_string()),
+                (MessageFilter::ShowAll, r#""ShowAll""#.to_string()),
+                (MessageFilter::HideAll, r#""HideAll""#.to_string()),
             ],
             patterns
                 .iter()
                 .map(|regex| {
                     (
-                        LogMessageFilter::ShowPattern(regex.clone()),
+                        MessageFilter::ShowPattern(regex.clone()),
                         format!(r#"{{"ShowPattern":{:?}}}"#, regex.0),
                     )
                 })
@@ -465,7 +465,7 @@ mod test {
                 .iter()
                 .map(|regex| {
                     (
-                        LogMessageFilter::HidePattern(regex.clone()),
+                        MessageFilter::HidePattern(regex.clone()),
                         format!(r#"{{"HidePattern":{:?}}}"#, regex.0),
                     )
                 })
@@ -475,7 +475,7 @@ mod test {
         for (filter, expected_json) in cases {
             let bytes = filter.to_bytes();
             assert_eq!(String::from_utf8(bytes.to_vec()).unwrap(), expected_json);
-            assert_eq!(filter, LogMessageFilter::from_bytes(bytes));
+            assert_eq!(filter, MessageFilter::from_bytes(bytes));
         }
     }
 }

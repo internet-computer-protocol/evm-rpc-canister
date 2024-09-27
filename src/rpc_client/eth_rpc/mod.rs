@@ -108,6 +108,7 @@ impl ResponseTransform {
 #[candid_method(query)]
 fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
     args.response.headers.clear();
+    // Note: this will not be recorded in the canister logs due to occurring in a query call
     log!(
         DEBUG,
         "RAW RESPONSE BEFORE TRANSFORM:\nstatus: {:?}\nbody:{:?}",
@@ -121,6 +122,7 @@ fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
             transform.apply(&mut args.response.body);
         }
     }
+    // Note: this will not be recorded in the canister logs due to occurring in a query call
     log!(
         DEBUG,
         "RAW RESPONSE AFTER TRANSFORM:\nstatus: {:?}\nbody:{:?}",
