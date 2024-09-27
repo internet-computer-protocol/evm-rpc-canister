@@ -108,13 +108,6 @@ impl ResponseTransform {
 #[candid_method(query)]
 fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
     args.response.headers.clear();
-    // Note: this will not be recorded in the canister logs due to occurring in a query call
-    log!(
-        DEBUG,
-        "RAW RESPONSE BEFORE TRANSFORM:\nstatus: {:?}\nbody:{:?}",
-        args.response.status,
-        String::from_utf8_lossy(&args.response.body).to_string()
-    );
     let status_ok = args.response.status >= 200u16 && args.response.status < 300u16;
     if status_ok && !args.context.is_empty() {
         let maybe_transform: Result<ResponseTransform, _> = minicbor::decode(&args.context[..]);
@@ -122,13 +115,6 @@ fn cleanup_response(mut args: TransformArgs) -> HttpResponse {
             transform.apply(&mut args.response.body);
         }
     }
-    // Note: this will not be recorded in the canister logs due to occurring in a query call
-    log!(
-        DEBUG,
-        "RAW RESPONSE AFTER TRANSFORM:\nstatus: {:?}\nbody:{:?}",
-        args.response.status,
-        String::from_utf8_lossy(&args.response.body).to_string()
-    );
     args.response
 }
 
