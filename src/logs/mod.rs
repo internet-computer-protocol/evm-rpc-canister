@@ -6,7 +6,7 @@ use ic_canister_log::{declare_log_buffer, export as export_logs, GlobalBuffer, S
 use serde::Deserialize;
 use std::str::FromStr;
 
-use crate::memory::get_console_message_filter;
+use crate::memory::get_console_filter;
 
 // High-priority messages.
 declare_log_buffer!(name = INFO_BUF, capacity = 1000);
@@ -38,7 +38,7 @@ impl Sink for PrintProxySink {
             entry.line,
             entry.message,
         );
-        if get_console_message_filter().is_match(&message) {
+        if get_console_filter().is_match(&message) {
             ic_cdk::println!("{}", message);
             #[cfg(test)]
             DISPLAYED_LOG_ENTRIES.with_borrow_mut(|entries| entries.push(entry.clone()));

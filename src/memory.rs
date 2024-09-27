@@ -7,14 +7,12 @@ use ic_stable_structures::{
 use ic_stable_structures::{Cell, StableBTreeMap};
 use std::cell::RefCell;
 
-use crate::types::{
-    ApiKey, BoolStorable, ConsoleFilter, Metrics, PrincipalStorable, ProviderId,
-};
+use crate::types::{ApiKey, BoolStorable, ConsoleFilter, Metrics, PrincipalStorable, ProviderId};
 
 const IS_DEMO_ACTIVE_MEMORY_ID: MemoryId = MemoryId::new(4);
 const API_KEY_MAP_MEMORY_ID: MemoryId = MemoryId::new(5);
 const MANAGE_API_KEYS_MEMORY_ID: MemoryId = MemoryId::new(6);
-const CONSOLE_MESSAGE_FILTER_MEMORY_ID: MemoryId = MemoryId::new(7);
+const CONSOLE_FILTER_MEMORY_ID: MemoryId = MemoryId::new(7);
 
 type StableMemory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -32,8 +30,8 @@ thread_local! {
         RefCell::new(StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(API_KEY_MAP_MEMORY_ID))));
     static MANAGE_API_KEYS: RefCell<ic_stable_structures::Vec<PrincipalStorable, StableMemory>> =
         RefCell::new(ic_stable_structures::Vec::init(MEMORY_MANAGER.with_borrow(|m| m.get(MANAGE_API_KEYS_MEMORY_ID))).expect("Unable to read API key principals from stable memory"));
-    static CONSOLE_MESSAGE_FILTER: RefCell<Cell<ConsoleFilter, StableMemory>> =
-        RefCell::new(ic_stable_structures::Cell::init(MEMORY_MANAGER.with_borrow(|m| m.get(CONSOLE_MESSAGE_FILTER_MEMORY_ID)), ConsoleFilter::default()).expect("Unable to read log message filter from stable memory"));
+    static CONSOLE_FILTER: RefCell<Cell<ConsoleFilter, StableMemory>> =
+        RefCell::new(ic_stable_structures::Cell::init(MEMORY_MANAGER.with_borrow(|m| m.get(CONSOLE_FILTER_MEMORY_ID)), ConsoleFilter::default()).expect("Unable to read log message filter from stable memory"));
 }
 
 pub fn get_api_key(provider_id: ProviderId) -> Option<ApiKey> {
@@ -81,12 +79,12 @@ pub fn set_demo_active(is_active: bool) {
     });
 }
 
-pub fn get_console_message_filter() -> ConsoleFilter {
-    CONSOLE_MESSAGE_FILTER.with_borrow(|filter| filter.get().clone())
+pub fn get_console_filter() -> ConsoleFilter {
+    CONSOLE_FILTER.with_borrow(|filter| filter.get().clone())
 }
 
-pub fn set_console_message_filter(filter: ConsoleFilter) {
-    CONSOLE_MESSAGE_FILTER.with_borrow_mut(|state| {
+pub fn set_console_filter(filter: ConsoleFilter) {
+    CONSOLE_FILTER.with_borrow_mut(|state| {
         state
             .set(filter)
             .expect("Error while updating log message filter")
