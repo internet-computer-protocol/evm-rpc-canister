@@ -6,7 +6,7 @@ use evm_rpc::http::get_http_response_body;
 use evm_rpc::logs::INFO;
 use evm_rpc::memory::{
     insert_api_key, is_api_key_principal, is_demo_active, remove_api_key, set_api_key_principals,
-    set_demo_active, set_console_filter,
+    set_console_filter, set_demo_active,
 };
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
@@ -255,10 +255,7 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
 
             let mut log: Log = Default::default();
 
-            match request
-                .raw_query_param("priority")
-                .map(Priority::from_str)
-            {
+            match request.raw_query_param("priority").map(Priority::from_str) {
                 Some(Ok(priority)) => match priority {
                     Priority::Info => log.push_logs(Priority::Info),
                     Priority::Debug => log.push_logs(Priority::Debug),
