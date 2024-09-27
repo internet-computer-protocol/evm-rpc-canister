@@ -1533,7 +1533,7 @@ dependencies = [
  "getrandom 0.2.15",
  "hex",
  "ic-base-types",
- "ic-canister-log 0.2.0 (git+https://github.com/dfinity/ic?rev=b7b0e54832bbe6bf4b80a2f75f4252699f5878e0)",
+ "ic-canister-log 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ic-canisters-http-types",
  "ic-cdk",
  "ic-cdk-macros",
@@ -1558,6 +1558,7 @@ dependencies = [
  "num-traits",
  "proptest",
  "rand",
+ "regex",
  "serde",
  "serde_bytes",
  "serde_json",
@@ -2234,7 +2235,8 @@ dependencies = [
 [[package]]
 name = "ic-canister-log"
 version = "0.2.0"
-source = "git+https://github.com/dfinity/ic?rev=b7b0e54832bbe6bf4b80a2f75f4252699f5878e0#b7b0e54832bbe6bf4b80a2f75f4252699f5878e0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb82c4f617ecff6e452fe65af0489626ec7330ffe3eedd9ea14e6178eea48d1a"
 dependencies = [
  "serde",
 ]

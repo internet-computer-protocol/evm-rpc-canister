@@ -1,4 +1,9 @@
-use crate::logs::{Log, LogEntry, LogMessageType, Sort};
+use crate::{
+    logs::{Log, LogEntry, LogMessageType, Sort, INFO},
+    memory::set_log_message_filter,
+    types::LogMessageFilter,
+};
+use ic_canister_log::log;
 use proptest::{prop_assert, proptest};
 
 fn info_log_entry_with_timestamp(timestamp: u64) -> LogEntry {
@@ -7,7 +12,7 @@ fn info_log_entry_with_timestamp(timestamp: u64) -> LogEntry {
         priority: LogMessageType::Info,
         file: String::default(),
         line: 0,
-        message: String::default(),
+        message: format!("Timestamp: {timestamp}"),
         counter: 0,
     }
 }
@@ -152,4 +157,66 @@ fn should_truncate_last_entry() {
         log_with_3_entries.serialize_logs(serialized_log_with_2_entries.len());
 
     assert_eq!(serialized_log_with_3_entries, serialized_log_with_2_entries);
+}
+
+#[test]
+fn should_show_all() {
+    set_log_message_filter(LogMessageFilter::ShowAll);
+    log!(INFO, "ABC");
+    log!(INFO, "123");
+    log!(INFO, "!@#");
+    assert!(INFO
+        .log_entries()
+        .iter()
+        .map(|entry| &entry.message)
+        .eq(["ABC", "123", "!@#"].into_iter()));
+}
+
+#[test]
+fn should_hide_all() {
+    set_log_message_filter(LogMessageFilter::HideAll);
+    log!(INFO, "ABC");
+    log!(INFO, "123");
+    log!(INFO, "!@#");
+    assert_eq!(INFO.log_entries(), vec![]);
+}
+
+#[test]
+fn should_show_pattern() {
+    set_log_message_filter(LogMessageFilter::ShowPattern("end$".into()));
+    log!(INFO, "message");
+    log!(INFO, "message end");
+    log!(INFO, "end message");
+    assert!(INFO
+        .log_entries()
+        .iter()
+        .map(|entry| &entry.message)
+        .eq(["message end"].into_iter()));
+}
+
+#[test]
+fn should_hide_pattern_including_message_type() {
+    set_log_message_filter(LogMessageFilter::ShowPattern("^INFO 123".into()));
+    log!(INFO, "123");
+    log!(INFO, "INFO 123");
+    log!(INFO, "");
+    log!(INFO, "123456");
+    assert!(INFO
+        .log_entries()
+        .iter()
+        .map(|entry| &entry.message)
+        .eq(["123", "123456"].into_iter()));
+}
+
+#[test]
+fn should_hide_pattern() {
+    set_log_message_filter(LogMessageFilter::HidePattern("[ABC]".into()));
+    log!(INFO, "message");
+    log!(INFO, "remove A");
+    log!(INFO, "...B...");
+    assert!(INFO
+        .log_entries()
+        .iter()
+        .map(|entry| &entry.message)
+        .eq(["message"].into_iter()));
 }

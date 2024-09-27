@@ -1,6 +1,7 @@
 use candid::{CandidType, Principal};
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_stable_structures::{BoundedStorable, Storable};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
@@ -9,7 +10,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, LOG_MESSAGE_FILTER_MAX_SIZE};
-use crate::logs::LogMessageType;
+
 use crate::memory::get_api_key;
 use crate::util::hostname_from_url;
 use crate::validate::validate_api_key;
@@ -344,21 +345,37 @@ pub enum LogMessageFilter {
     #[default]
     ShowAll,
     HideAll,
-    ShowOnly(Vec<LogMessageType>),
-    HideOnly(Vec<LogMessageType>),
+    ShowPattern(RegexString),
+    HidePattern(RegexString),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Serialize, Deserialize, Default)]
+pub struct RegexString(String);
+
+impl RegexString {
+    pub fn is_match(&self, value: &str) -> bool {
+        Regex::new(&self.0)
+            .map(|regex| regex.is_match(value))
+            .unwrap_or(false)
+    }
+}
+
+impl<T> From<T> for RegexString
+where
+    T: Into<String>,
+{
+    fn from(value: T) -> Self {
+        RegexString(value.into())
+    }
 }
 
 impl LogMessageFilter {
-    pub fn should_print_log_message(&self, log_level: LogMessageType) -> bool {
+    pub fn should_print_log_message(&self, message: &str) -> bool {
         match self {
             Self::ShowAll => true,
             Self::HideAll => false,
-            Self::ShowOnly(message_types) => message_types
-                .iter()
-                .any(|message_type| *message_type == log_level),
-            Self::HideOnly(message_types) => message_types
-                .iter()
-                .all(|message_type| *message_type != log_level),
+            Self::ShowPattern(regex) => regex.is_match(message),
+            Self::HidePattern(regex) => regex.is_match(message),
         }
     }
 }
@@ -395,7 +412,7 @@ mod test {
     use candid::Principal;
     use ic_stable_structures::Storable;
 
-    use crate::types::{ApiKey, BoolStorable, LogMessageFilter, LogMessageType, PrincipalStorable};
+    use super::{ApiKey, BoolStorable, LogMessageFilter, PrincipalStorable, RegexString};
 
     #[test]
     fn test_api_key_debug_output() {
@@ -428,34 +445,34 @@ mod test {
 
     #[test]
     fn test_log_message_filter_storable() {
-        for (filter, expected_json) in [
-            (LogMessageFilter::ShowAll, r#""ShowAll""#),
-            (LogMessageFilter::ShowOnly(vec![]), r#"{"ShowOnly":[]}"#),
-            (
-                LogMessageFilter::ShowOnly(vec![LogMessageType::Debug]),
-                r#"{"ShowOnly":["Debug"]}"#,
-            ),
-            (
-                LogMessageFilter::ShowOnly(vec![LogMessageType::Info]),
-                r#"{"ShowOnly":["Info"]}"#,
-            ),
-            (
-                LogMessageFilter::ShowOnly(vec![LogMessageType::TraceHttp]),
-                r#"{"ShowOnly":["TraceHttp"]}"#,
-            ),
-            (
-                LogMessageFilter::ShowOnly(vec![LogMessageType::Debug, LogMessageType::Info]),
-                r#"{"ShowOnly":["Debug","Info"]}"#,
-            ),
-            (
-                LogMessageFilter::ShowOnly(vec![
-                    LogMessageType::Debug,
-                    LogMessageType::Info,
-                    LogMessageType::TraceHttp,
-                ]),
-                r#"{"ShowOnly":["Debug","Info","TraceHttp"]}"#,
-            ),
-        ] {
+        let patterns: &[RegexString] =
+            &["[.]", "^DEBUG ", "(.*)?", "\\?"].map(|regex| regex.into());
+        let cases = [
+            vec![
+                (LogMessageFilter::ShowAll, r#""ShowAll""#.to_string()),
+                (LogMessageFilter::HideAll, r#""HideAll""#.to_string()),
+            ],
+            patterns
+                .iter()
+                .map(|regex| {
+                    (
+                        LogMessageFilter::ShowPattern(regex.clone()),
+                        format!(r#"{{"ShowPattern":{:?}}}"#, regex.0),
+                    )
+                })
+                .collect(),
+            patterns
+                .iter()
+                .map(|regex| {
+                    (
+                        LogMessageFilter::HidePattern(regex.clone()),
+                        format!(r#"{{"HidePattern":{:?}}}"#, regex.0),
+                    )
+                })
+                .collect(),
+        ]
+        .concat();
+        for (filter, expected_json) in cases {
             let bytes = filter.to_bytes();
             assert_eq!(String::from_utf8(bytes.to_vec()).unwrap(), expected_json);
             assert_eq!(filter, LogMessageFilter::from_bytes(bytes));

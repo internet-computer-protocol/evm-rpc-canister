@@ -83,11 +83,12 @@ type InstallArgs = record {
   manageApiKeys : opt vec principal;
   logMessageFilter : opt LogMessageFilter;
 };
+type Regex = text;
 type LogMessageFilter = variant {
   ShowAll;
   HideAll;
-  ShowOnly : vec LogMessageType;
-  HideOnly : vec LogMessageType;
+  ShowPattern : Regex;
+  HidePattern : Regex;
 };
 type LogMessageType = variant {
   Debug;

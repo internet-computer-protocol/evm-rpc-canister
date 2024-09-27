@@ -24,17 +24,24 @@ pub const TRACE_HTTP: PrintProxySink = PrintProxySink(&LogMessageType::TraceHttp
 #[derive(Debug)]
 pub struct PrintProxySink(&'static LogMessageType, &'static GlobalBuffer);
 
+impl PrintProxySink {
+    pub fn log_entries(&self) -> Vec<ic_canister_log::LogEntry> {
+        self.1
+            .with_borrow(|buffer| buffer.iter().cloned().collect())
+    }
+}
+
 impl Sink for PrintProxySink {
     fn append(&self, entry: ic_canister_log::LogEntry) {
-        let message_type = self.0;
-        if get_log_message_filter().should_print_log_message(*message_type) {
-            ic_cdk::println!(
-                "{} {}:{} {}",
-                message_type.as_str_uppercase(),
-                entry.file,
-                entry.line,
-                entry.message,
-            )
+        let message = format!(
+            "{} {}:{} {}",
+            self.0.as_str_uppercase(),
+            entry.file,
+            entry.line,
+            entry.message,
+        );
+        if get_log_message_filter().should_print_log_message(&message) {
+            ic_cdk::println!("{}", message)
         }
         self.1.append(entry)
     }
