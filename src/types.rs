@@ -20,8 +20,8 @@ pub struct InstallArgs {
     pub demo: Option<bool>,
     #[serde(rename = "manageApiKeys")]
     pub manage_api_keys: Option<Vec<Principal>>,
-    #[serde(rename = "logMessageFilter")]
-    pub console_message_filter: Option<MessageFilter>,
+    #[serde(rename = "consoleFilter")]
+    pub console_filter: Option<ConsoleFilter>,
 }
 
 pub enum ResolvedRpcService {
@@ -341,7 +341,7 @@ impl RpcAccess {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Serialize, Deserialize, Default)]
-pub enum MessageFilter {
+pub enum ConsoleFilter {
     #[default]
     ShowAll,
     HideAll,
@@ -369,7 +369,7 @@ where
     }
 }
 
-impl MessageFilter {
+impl ConsoleFilter {
     pub fn is_match(&self, message: &str) -> bool {
         match self {
             Self::ShowAll => true,
@@ -380,7 +380,7 @@ impl MessageFilter {
     }
 }
 
-impl Storable for MessageFilter {
+impl Storable for ConsoleFilter {
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
         serde_json::from_slice(&bytes).expect("Error while deserializing `MessageFilter`")
     }
@@ -391,7 +391,7 @@ impl Storable for MessageFilter {
     }
 }
 
-impl BoundedStorable for MessageFilter {
+impl BoundedStorable for ConsoleFilter {
     const IS_FIXED_SIZE: bool = true;
     const MAX_SIZE: u32 = MESSAGE_FILTER_MAX_SIZE;
 }
@@ -412,7 +412,7 @@ mod test {
     use candid::Principal;
     use ic_stable_structures::Storable;
 
-    use super::{ApiKey, BoolStorable, MessageFilter, PrincipalStorable, RegexString};
+    use super::{ApiKey, BoolStorable, ConsoleFilter, PrincipalStorable, RegexString};
 
     #[test]
     fn test_api_key_debug_output() {
@@ -449,14 +449,14 @@ mod test {
             &["[.]", "^DEBUG ", "(.*)?", "\\?"].map(|regex| regex.into());
         let cases = [
             vec![
-                (MessageFilter::ShowAll, r#""ShowAll""#.to_string()),
-                (MessageFilter::HideAll, r#""HideAll""#.to_string()),
+                (ConsoleFilter::ShowAll, r#""ShowAll""#.to_string()),
+                (ConsoleFilter::HideAll, r#""HideAll""#.to_string()),
             ],
             patterns
                 .iter()
                 .map(|regex| {
                     (
-                        MessageFilter::ShowPattern(regex.clone()),
+                        ConsoleFilter::ShowPattern(regex.clone()),
                         format!(r#"{{"ShowPattern":{:?}}}"#, regex.0),
                     )
                 })
@@ -465,7 +465,7 @@ mod test {
                 .iter()
                 .map(|regex| {
                     (
-                        MessageFilter::HidePattern(regex.clone()),
+                        ConsoleFilter::HidePattern(regex.clone()),
                         format!(r#"{{"HidePattern":{:?}}}"#, regex.0),
                     )
                 })
@@ -475,7 +475,7 @@ mod test {
         for (filter, expected_json) in cases {
             let bytes = filter.to_bytes();
             assert_eq!(String::from_utf8(bytes.to_vec()).unwrap(), expected_json);
-            assert_eq!(filter, MessageFilter::from_bytes(bytes));
+            assert_eq!(filter, ConsoleFilter::from_bytes(bytes));
         }
     }
 }

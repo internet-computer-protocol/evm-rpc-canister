@@ -81,10 +81,10 @@ type HttpOutcallError = variant {
 type InstallArgs = record {
   demo : opt bool;
   manageApiKeys : opt vec principal;
-  consoleMessageFilter : opt MessageFilter;
+  consoleFilter : opt ConsoleFilter;
 };
 type Regex = text;
-type MessageFilter = variant {
+type ConsoleFilter = variant {
   ShowAll;
   HideAll;
   ShowPattern : Regex;

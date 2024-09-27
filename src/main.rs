@@ -228,7 +228,7 @@ fn post_upgrade(args: InstallArgs) {
     if let Some(principals) = args.manage_api_keys {
         set_api_key_principals(principals);
     }
-    if let Some(filter) = args.console_message_filter {
+    if let Some(filter) = args.console_filter {
         set_console_message_filter(filter)
     }
 }

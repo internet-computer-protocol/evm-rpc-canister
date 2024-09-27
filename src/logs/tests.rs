@@ -1,7 +1,7 @@
 use crate::{
     logs::{Log, LogEntry, Priority, Sort, INFO},
     memory::set_console_message_filter,
-    types::MessageFilter,
+    types::ConsoleFilter,
 };
 use ic_canister_log::log;
 use proptest::{prop_assert, proptest};
@@ -166,7 +166,7 @@ fn should_truncate_last_entry() {
 
 #[test]
 fn should_show_all() {
-    set_console_message_filter(MessageFilter::ShowAll);
+    set_console_message_filter(ConsoleFilter::ShowAll);
     log!(INFO, "ABC");
     log!(INFO, "123");
     log!(INFO, "!@#");
@@ -175,7 +175,7 @@ fn should_show_all() {
 
 #[test]
 fn should_hide_all() {
-    set_console_message_filter(MessageFilter::HideAll);
+    set_console_message_filter(ConsoleFilter::HideAll);
     log!(INFO, "ABC");
     log!(INFO, "123");
     log!(INFO, "!@#");
@@ -184,7 +184,7 @@ fn should_hide_all() {
 
 #[test]
 fn should_show_pattern() {
-    set_console_message_filter(MessageFilter::ShowPattern("end$".into()));
+    set_console_message_filter(ConsoleFilter::ShowPattern("end$".into()));
     log!(INFO, "message");
     log!(INFO, "message end");
     log!(INFO, "end message");
@@ -193,7 +193,7 @@ fn should_show_pattern() {
 
 #[test]
 fn should_hide_pattern_including_message_type() {
-    set_console_message_filter(MessageFilter::ShowPattern("^INFO [^ ]* 123".into()));
+    set_console_message_filter(ConsoleFilter::ShowPattern("^INFO [^ ]* 123".into()));
     log!(INFO, "123");
     log!(INFO, "INFO 123");
     log!(INFO, "");
@@ -203,7 +203,7 @@ fn should_hide_pattern_including_message_type() {
 
 #[test]
 fn should_hide_pattern() {
-    set_console_message_filter(MessageFilter::HidePattern("[ABC]".into()));
+    set_console_message_filter(ConsoleFilter::HidePattern("[ABC]".into()));
     log!(INFO, "remove A");
     log!(INFO, "...B...");
     log!(INFO, "C");
