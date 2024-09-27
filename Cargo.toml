@@ -28,7 +28,7 @@ ic-ethereum-types = { git = "https://github.com/dfinity/ic", rev = "release-2024
 ic-nervous-system-common = { workspace = true }
 ic-metrics-encoder = { workspace = true }
 ic-stable-structures = { workspace = true }
-ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "b7b0e54832bbe6bf4b80a2f75f4252699f5878e0", package = "ic-canister-log" }
+ic-canister-log = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-certified-map = { workspace = true }
@@ -68,6 +68,7 @@ futures = "0.3.30"
 getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4.3"
 ic-canisters-http-types = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
+ic-canister-log = "0.2.0"
 ic-cdk = "0.10"
 ic-cdk-bindgen = "0.1"
 ic-cdk-macros = "0.7"
