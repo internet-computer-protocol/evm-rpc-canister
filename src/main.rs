@@ -11,16 +11,9 @@ use evm_rpc::memory::{
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
 use evm_rpc::types::{InstallArgs, Provider, ProviderId, RpcAccess};
-use evm_rpc::{
-    http::{json_rpc_request, transform_http_request},
-    memory::UNSTABLE_METRICS,
-    types::{MetricRpcMethod, Metrics},
-};
+use evm_rpc::{http::{json_rpc_request, transform_http_request}, http_types, memory::UNSTABLE_METRICS, types::{MetricRpcMethod, Metrics}};
 use evm_rpc_types::{Hex32, MultiRpcResult, RpcResult};
 use ic_canister_log::log;
-use ic_canisters_http_types::{
-    HttpRequest as AssetHttpRequest, HttpResponse as AssetHttpResponse, HttpResponseBuilder,
-};
 use ic_cdk::api::is_controller;
 use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
@@ -231,20 +224,21 @@ fn post_upgrade(args: InstallArgs) {
 }
 
 #[query]
-fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
+fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     match request.path() {
         "/metrics" => {
             let mut writer = MetricsEncoder::new(vec![], ic_cdk::api::time() as i64 / 1_000_000);
 
             match encode_metrics(&mut writer) {
-                Ok(()) => HttpResponseBuilder::ok()
+                Ok(()) => http_types::HttpResponseBuilder::ok()
                     .header("Content-Type", "text/plain; version=0.0.4")
                     .with_body_and_content_length(writer.into_inner())
                     .build(),
-                Err(err) => {
-                    HttpResponseBuilder::server_error(format!("Failed to encode metrics: {}", err))
-                        .build()
-                }
+                Err(err) => http_types::HttpResponseBuilder::server_error(format!(
+                    "Failed to encode metrics: {}",
+                    err
+                ))
+                .build(),
             }
         }
         "/logs" => {
@@ -255,7 +249,7 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
                 Some(arg) => match u64::from_str(arg) {
                     Ok(value) => value,
                     Err(_) => {
-                        return HttpResponseBuilder::bad_request()
+                        return http_types::HttpResponseBuilder::bad_request()
                             .with_body_and_content_length("failed to parse the 'time' parameter")
                             .build()
                     }
@@ -308,12 +302,12 @@ fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
             ));
 
             const MAX_BODY_SIZE: usize = 2_000_000;
-            HttpResponseBuilder::ok()
+            http_types::HttpResponseBuilder::ok()
                 .header("Content-Type", "application/json; charset=utf-8")
                 .with_body_and_content_length(log.serialize_logs(MAX_BODY_SIZE))
                 .build()
         }
-        _ => HttpResponseBuilder::not_found().build(),
+        _ => http_types::HttpResponseBuilder::not_found().build(),
     }
 }
 

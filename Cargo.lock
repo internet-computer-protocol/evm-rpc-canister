@@ -1355,7 +1355,6 @@ dependencies = [
  "hex",
  "ic-base-types",
  "ic-canister-log",
- "ic-canisters-http-types",
  "ic-cdk",
  "ic-cdk-macros",
  "ic-certified-map",
@@ -2105,16 +2104,6 @@ dependencies = [
  "serde_json",
  "slog",
  "which",
-]
-
-[[package]]
-name = "ic-canisters-http-types"
-version = "0.8.0"
-source = "git+https://github.com/dfinity/ic?rev=release-2023-09-27_23-01#ca5e5052886de781021506814d2c6502e375da48"
-dependencies = [
- "candid",
- "serde",
- "serde_bytes",
 ]
 
 [[package]]
