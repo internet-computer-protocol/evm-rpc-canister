@@ -25,7 +25,6 @@ getrandom = { workspace = true }
 ic-canisters-http-types = { workspace = true }
 ic-sha3 = "1.0.0"
 ic-ethereum-types = "1.0.0"
-ic-nervous-system-common = { workspace = true }
 ic-metrics-encoder = { workspace = true }
 ic-stable-structures = { workspace = true }
 ic-canister-log = { git = "https://github.com/dfinity/ic", rev = "b7b0e54832bbe6bf4b80a2f75f4252699f5878e0", package = "ic-canister-log" }
@@ -72,7 +71,6 @@ ic-cdk = "0.10"
 ic-cdk-bindgen = "0.1"
 ic-cdk-macros = "0.7"
 ic-certified-map = "0.4"
-ic-nervous-system-common = { git = "https://github.com/dfinity/ic", rev = "release-2023-09-27_23-01" }
 ic-metrics-encoder = "1.1"
 ic-stable-structures = "0.5"
 minicbor = { version = "0.19.1", features = ["alloc", "derive"] }

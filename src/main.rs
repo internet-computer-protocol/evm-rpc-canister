@@ -24,7 +24,7 @@ use ic_canisters_http_types::{
 use ic_cdk::api::is_controller;
 use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
 use ic_cdk::{query, update};
-use ic_nervous_system_common::serve_metrics;
+use ic_metrics_encoder::MetricsEncoder;
 
 pub fn require_api_key_principal_or_controller() -> Result<(), String> {
     let caller = ic_cdk::caller();
@@ -233,7 +233,20 @@ fn post_upgrade(args: InstallArgs) {
 #[query]
 fn http_request(request: AssetHttpRequest) -> AssetHttpResponse {
     match request.path() {
-        "/metrics" => serve_metrics(encode_metrics),
+        "/metrics" => {
+            let mut writer = MetricsEncoder::new(vec![], ic_cdk::api::time() as i64 / 1_000_000);
+
+            match encode_metrics(&mut writer) {
+                Ok(()) => HttpResponseBuilder::ok()
+                    .header("Content-Type", "text/plain; version=0.0.4")
+                    .with_body_and_content_length(writer.into_inner())
+                    .build(),
+                Err(err) => {
+                    HttpResponseBuilder::server_error(format!("Failed to encode metrics: {}", err))
+                        .build()
+                }
+            }
+        }
         "/logs" => {
             use evm_rpc::logs::{Log, Priority, Sort};
             use std::str::FromStr;
