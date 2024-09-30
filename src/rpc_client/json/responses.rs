@@ -1,8 +1,8 @@
-use crate::rpc_client::amount::Amount;
 use crate::rpc_client::eth_rpc::{HttpResponsePayload, ResponseTransform};
-use crate::rpc_client::json::{FixedSizeData, Hash};
+use crate::rpc_client::json::{FixedSizeData, Hash, JsonByte, LogsBloom};
 use crate::rpc_client::numeric::{
-    BlockNonce, BlockNumber, Difficulty, GasAmount, LogIndex, NumBytes, Timestamp, Wei, WeiPerGas,
+    BlockNonce, BlockNumber, Difficulty, GasAmount, LogIndex, NumBytes, Timestamp,
+    TransactionIndex, Wei, WeiPerGas,
 };
 use candid::Deserialize;
 use evm_rpc_types::{JsonRpcError, RpcError};
@@ -35,17 +35,30 @@ pub struct TransactionReceipt {
     #[serde(rename = "transactionHash")]
     pub transaction_hash: Hash,
 
+    /// The contract address created, if the transaction was a contract creation, otherwise null.
     #[serde(rename = "contractAddress")]
-    pub contract_address: Option<String>,
+    pub contract_address: Option<Address>,
 
-    pub from: String,
+    /// Address of the sender.
+    pub from: Address,
+
+    /// An array of log objects that generated this transaction
     pub logs: Vec<LogEntry>,
+
+    /// The bloom filter which is used to retrieve related logs
     #[serde(rename = "logsBloom")]
-    pub logs_bloom: String,
-    pub to: Option<String>,
+    pub logs_bloom: LogsBloom,
+
+    /// Address of the receiver or null in a contract creation transaction.
+    pub to: Option<Address>,
+
+    /// The transactions index position in the block
     #[serde(rename = "transactionIndex")]
-    pub transaction_index: Amount<()>,
-    pub r#type: String,
+    pub transaction_index: TransactionIndex,
+
+    /// The type of the transaction (e.g. "0x0" for legacy transactions, "0x2" for EIP-1559 transactions)
+    #[serde(rename = "type")]
+    pub tx_type: JsonByte,
 }
 
 impl HttpResponsePayload for TransactionReceipt {
@@ -130,14 +143,14 @@ pub struct LogEntry {
     /// None if the block is pending.
     #[serde(rename = "blockNumber")]
     pub block_number: Option<BlockNumber>,
-    // 32 Bytes - hash of the transactions from which this log was created.
-    // None when its pending log.
+    /// 32 Bytes - hash of the transactions from which this log was created.
+    /// None when its pending log.
     #[serde(rename = "transactionHash")]
     pub transaction_hash: Option<Hash>,
-    // Integer of the transactions position within the block the log was created from.
-    // None if the log is pending.
+    /// Integer of the transactions position within the block the log was created from.
+    /// None if the log is pending.
     #[serde(rename = "transactionIndex")]
-    pub transaction_index: Option<Amount<()>>,
+    pub transaction_index: Option<TransactionIndex>,
     /// 32 Bytes - hash of the block in which this log appeared.
     /// None if the block is pending.
     #[serde(rename = "blockHash")]
@@ -160,42 +173,89 @@ impl HttpResponsePayload for Vec<LogEntry> {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Block {
+    /// Base fee per gas
+    /// Only included for blocks after the London Upgrade / EIP-1559.
     #[serde(rename = "baseFeePerGas")]
     pub base_fee_per_gas: Option<Wei>,
+
+    /// Block number
     pub number: BlockNumber,
+
+    /// Difficulty
     pub difficulty: Option<Difficulty>,
+
+    /// Extra data
     #[serde(rename = "extraData")]
-    pub extra_data: String,
+    pub extra_data: Data,
+
+    /// Maximum gas allowed in this block
     #[serde(rename = "gasLimit")]
     pub gas_limit: GasAmount,
+
+    /// Gas used by all transactions in this block
     #[serde(rename = "gasUsed")]
     pub gas_used: GasAmount,
-    pub hash: String,
+
+    /// Block hash
+    pub hash: Hash,
+
+    /// Bloom filter for the logs.
     #[serde(rename = "logsBloom")]
-    pub logs_bloom: String,
-    pub miner: String,
+    pub logs_bloom: LogsBloom,
+
+    /// Miner
+    pub miner: Address,
+
+    /// Mix hash
     #[serde(rename = "mixHash")]
-    pub mix_hash: String,
+    pub mix_hash: Hash,
+
+    /// Nonce
     pub nonce: BlockNonce,
+
+    /// Parent block hash
     #[serde(rename = "parentHash")]
-    pub parent_hash: String,
+    pub parent_hash: Hash,
+
+    /// Receipts root
     #[serde(rename = "receiptsRoot")]
-    pub receipts_root: String,
+    pub receipts_root: Hash,
+
+    /// Ommers hash
     #[serde(rename = "sha3Uncles")]
-    pub sha3_uncles: String,
+    pub sha3_uncles: Hash,
+
+    /// Block size
     pub size: NumBytes,
+
+    /// State root
     #[serde(rename = "stateRoot")]
-    pub state_root: String,
+    pub state_root: Hash,
+
+    /// Timestamp
     #[serde(rename = "timestamp")]
     pub timestamp: Timestamp,
+
+    /// Total difficulty is the sum of all difficulty values up to and including this block.
+    ///
+    /// Note: this field was removed from the official JSON-RPC specification in
+    /// https://github.com/ethereum/execution-apis/pull/570 and may no longer be served by providers.
     #[serde(rename = "totalDifficulty")]
     pub total_difficulty: Option<Difficulty>,
+
+    /// List of transactions in the block.
+    /// Note that since `eth_get_block_by_number` sets `include_full_transactions` to false,
+    /// this field only contains the transaction hashes and not the full transactions.
     #[serde(default)]
-    pub transactions: Vec<String>,
+    pub transactions: Vec<Hash>,
+
+    /// Transactions root
     #[serde(rename = "transactionsRoot")]
-    pub transactions_root: Option<String>,
+    pub transactions_root: Option<Hash>,
+
+    /// Uncles
     #[serde(default)]
-    pub uncles: Vec<String>,
+    pub uncles: Vec<Hash>,
 }
 
 impl HttpResponsePayload for Block {

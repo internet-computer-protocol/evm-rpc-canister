@@ -5,6 +5,7 @@ use candid::{CandidType, Decode, Encode, Nat};
 use evm_rpc::logs::{Log, LogEntry};
 use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
+    http_types::{HttpRequest, HttpResponse},
     providers::PROVIDERS,
     types::{InstallArgs, Metrics, ProviderId, RpcAccess, RpcMethod},
 };
@@ -14,7 +15,6 @@ use evm_rpc_types::{
     RpcService, RpcServices,
 };
 use ic_base_types::{CanisterId, PrincipalId};
-use ic_canisters_http_types::{HttpRequest, HttpResponse};
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse as OutCallHttpResponse,
     TransformArgs, TransformContext, TransformFunc,

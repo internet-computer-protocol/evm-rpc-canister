@@ -355,7 +355,7 @@ pub struct RegexString(String);
 impl RegexString {
     pub fn try_is_valid(&self, value: &str) -> Result<bool, regex::Error> {
         // Currently only used in the local replica. This can be optimized if eventually used in production.
-        Regex::new(&self.0).map(|regex| regex.is_match(value))
+        Ok(Regex::new(&self.0)?.is_match(value))
     }
 }
 
