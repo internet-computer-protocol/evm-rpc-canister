@@ -354,6 +354,7 @@ pub struct RegexString(String);
 
 impl RegexString {
     pub fn is_match(&self, value: &str) -> bool {
+        // Currently only used in the local replica. This can be optimized if eventually used in production.
         Regex::new(&self.0)
             .map(|regex| regex.is_match(value))
             .unwrap_or(false)
