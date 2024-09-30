@@ -2,7 +2,7 @@
 
 use crate::rpc_client::json::requests::BlockSpec;
 use crate::rpc_client::json::Hash;
-use evm_rpc_types::BlockTag;
+use evm_rpc_types::{BlockTag, Hex20};
 use evm_rpc_types::{Hex, Hex256, Hex32, HexByte, Nat256};
 
 pub(super) fn into_block_spec(value: BlockTag) -> BlockSpec {
@@ -49,8 +49,9 @@ pub(super) fn from_log_entries(
 }
 
 fn from_log_entry(value: crate::rpc_client::json::responses::LogEntry) -> evm_rpc_types::LogEntry {
+    let value1 = value.address;
     evm_rpc_types::LogEntry {
-        address: from_address(value.address),
+        address: evm_rpc_types::Hex20::from(value1.into_bytes()),
         topics: value
             .topics
             .into_iter()
@@ -107,6 +108,7 @@ pub(super) fn into_get_transaction_count_params(
 pub(super) fn from_transaction_receipt(
     value: crate::rpc_client::json::responses::TransactionReceipt,
 ) -> evm_rpc_types::TransactionReceipt {
+    let value1 = value.from;
     evm_rpc_types::TransactionReceipt {
         block_hash: Hex32::from(value.block_hash.into_bytes()),
         block_number: value.block_number.into(),
@@ -117,17 +119,20 @@ pub(super) fn from_transaction_receipt(
             crate::rpc_client::json::responses::TransactionStatus::Failure => Nat256::from(0_u8),
         }),
         transaction_hash: Hex32::from(value.transaction_hash.into_bytes()),
-        contract_address: value.contract_address.map(from_address),
-        from: from_address(value.from),
+        contract_address: value
+            .contract_address
+            .map(|address| Hex20::from(address.into_bytes())),
+        from: evm_rpc_types::Hex20::from(value1.into_bytes()),
         logs: from_log_entries(value.logs),
         logs_bloom: Hex256::from(value.logs_bloom.into_bytes()),
-        to: value.to.map(from_address),
+        to: value.to.map(|address| Hex20::from(address.into_bytes())),
         transaction_index: value.transaction_index.into(),
         tx_type: HexByte::from(value.tx_type.into_byte()),
     }
 }
 
 pub(super) fn from_block(value: crate::rpc_client::json::responses::Block) -> evm_rpc_types::Block {
+    let value1 = value.miner;
     evm_rpc_types::Block {
         base_fee_per_gas: value.base_fee_per_gas.map(Nat256::from),
         number: value.number.into(),
@@ -137,7 +142,7 @@ pub(super) fn from_block(value: crate::rpc_client::json::responses::Block) -> ev
         gas_used: value.gas_used.into(),
         hash: Hex32::from(value.hash.into_bytes()),
         logs_bloom: Hex256::from(value.logs_bloom.into_bytes()),
-        miner: from_address(value.miner),
+        miner: evm_rpc_types::Hex20::from(value1.into_bytes()),
         mix_hash: Hex32::from(value.mix_hash.into_bytes()),
         nonce: value.nonce.into(),
         parent_hash: Hex32::from(value.parent_hash.into_bytes()),
@@ -183,13 +188,4 @@ pub(super) fn from_send_raw_transaction_result(
 
 pub(super) fn into_hash(value: Hex32) -> Hash {
     Hash::new(value.into())
-}
-
-fn from_address(value: ic_ethereum_types::Address) -> evm_rpc_types::Hex20 {
-    // TODO 243: ic_ethereum_types::Address should expose the underlying [u8; 20]
-    // so that there is no artificial error handling here.
-    value
-        .to_string()
-        .parse()
-        .expect("BUG: Ethereum address cannot be parsed")
 }

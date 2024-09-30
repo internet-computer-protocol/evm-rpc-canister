@@ -6,7 +6,6 @@ use evm_rpc_types::{
     RpcConfig, RpcError, RpcResult, RpcService, RpcServices,
 };
 use ic_canister_log::log;
-use ic_crypto_sha3::Keccak256;
 use json::requests::{
     BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam, GetTransactionCountParams,
 };
@@ -642,6 +641,7 @@ impl<T: Debug + PartialEq + Serialize> ResponseDistribution<T> {
     }
 
     pub fn insert_once(&mut self, provider: RpcService, result: T) {
+        use ic_sha3::Keccak256;
         let hash = Keccak256::hash(serde_json::to_vec(&result).expect("BUG: failed to serialize"));
         match self.hashes.get(&hash) {
             Some(existing_result) => {
