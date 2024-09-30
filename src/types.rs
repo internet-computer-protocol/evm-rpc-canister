@@ -353,11 +353,9 @@ pub enum ConsoleFilter {
 pub struct RegexString(String);
 
 impl RegexString {
-    pub fn is_match(&self, value: &str) -> bool {
+    pub fn try_is_valid(&self, value: &str) -> Result<bool, regex::Error> {
         // Currently only used in the local replica. This can be optimized if eventually used in production.
-        Regex::new(&self.0)
-            .map(|regex| regex.is_match(value))
-            .unwrap_or(false)
+        Regex::new(&self.0).map(|regex| regex.is_match(value))
     }
 }
 
@@ -375,8 +373,12 @@ impl ConsoleFilter {
         match self {
             Self::ShowAll => true,
             Self::HideAll => false,
-            Self::ShowPattern(regex) => regex.is_match(message),
-            Self::HidePattern(regex) => !regex.is_match(message),
+            Self::ShowPattern(regex) => regex
+                .try_is_valid(message)
+                .expect("Invalid regex in ShowPattern console filter"),
+            Self::HidePattern(regex) => !regex
+                .try_is_valid(message)
+                .expect("Invalid regex in HidePattern console filter"),
         }
     }
 }
