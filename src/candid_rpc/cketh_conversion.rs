@@ -186,10 +186,5 @@ pub(super) fn into_hash(value: Hex32) -> Hash {
 }
 
 fn from_address(value: ic_ethereum_types::Address) -> evm_rpc_types::Hex20 {
-    // TODO 243: ic_ethereum_types::Address should expose the underlying [u8; 20]
-    // so that there is no artificial error handling here.
-    value
-        .to_string()
-        .parse()
-        .expect("BUG: Ethereum address cannot be parsed")
+    evm_rpc_types::Hex20::from(value.into_bytes())
 }
