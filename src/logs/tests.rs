@@ -1,10 +1,15 @@
 use crate::{
-    logs::{Log, LogEntry, Priority, Sort, INFO},
+    logs::{Log, LogEntry, Priority, Sort},
     memory::set_console_filter,
     types::ConsoleFilter,
 };
-use ic_canister_log::log;
+use ic_canister_log::{declare_log_buffer, export, log};
 use proptest::{prop_assert, proptest};
+
+use super::PrintProxySink;
+
+declare_log_buffer!(name = TEST_BUF, capacity = 1000);
+const TEST: PrintProxySink = PrintProxySink(&Priority::Info, &TEST_BUF);
 
 fn info_log_entry_with_timestamp(timestamp: u64) -> LogEntry {
     LogEntry {
@@ -36,8 +41,10 @@ fn is_descending(log: &Log) -> bool {
 }
 
 fn get_messages() -> Vec<String> {
-    super::DISPLAYED_LOG_ENTRIES
-        .with_borrow(|buffer| buffer.iter().map(|entry| entry.message.clone()).collect())
+    export(&TEST_BUF)
+        .into_iter()
+        .map(|entry| entry.message)
+        .collect()
 }
 
 proptest! {
@@ -167,46 +174,46 @@ fn should_truncate_last_entry() {
 #[test]
 fn should_show_all() {
     set_console_filter(ConsoleFilter::ShowAll);
-    log!(INFO, "ABC");
-    log!(INFO, "123");
-    log!(INFO, "!@#");
+    log!(TEST, "ABC");
+    log!(TEST, "123");
+    log!(TEST, "!@#");
     assert_eq!(get_messages(), vec!["ABC", "123", "!@#"]);
 }
 
 #[test]
 fn should_hide_all() {
     set_console_filter(ConsoleFilter::HideAll);
-    log!(INFO, "ABC");
-    log!(INFO, "123");
-    log!(INFO, "!@#");
+    log!(TEST, "ABC");
+    log!(TEST, "123");
+    log!(TEST, "!@#");
     assert_eq!(get_messages().len(), 0);
 }
 
 #[test]
 fn should_show_pattern() {
     set_console_filter(ConsoleFilter::ShowPattern("end$".into()));
-    log!(INFO, "message");
-    log!(INFO, "message end");
-    log!(INFO, "end message");
+    log!(TEST, "message");
+    log!(TEST, "message end");
+    log!(TEST, "end message");
     assert_eq!(get_messages(), vec!["message end"]);
 }
 
 #[test]
 fn should_hide_pattern_including_message_type() {
     set_console_filter(ConsoleFilter::ShowPattern("^INFO [^ ]* 123".into()));
-    log!(INFO, "123");
-    log!(INFO, "INFO 123");
-    log!(INFO, "");
-    log!(INFO, "123456");
+    log!(TEST, "123");
+    log!(TEST, "INFO 123");
+    log!(TEST, "");
+    log!(TEST, "123456");
     assert_eq!(get_messages(), vec!["123", "123456"]);
 }
 
 #[test]
 fn should_hide_pattern() {
     set_console_filter(ConsoleFilter::HidePattern("[ABC]".into()));
-    log!(INFO, "remove A");
-    log!(INFO, "...B...");
-    log!(INFO, "C");
-    log!(INFO, "message");
+    log!(TEST, "remove A");
+    log!(TEST, "...B...");
+    log!(TEST, "C");
+    log!(TEST, "message");
     assert_eq!(get_messages(), vec!["message"]);
 }

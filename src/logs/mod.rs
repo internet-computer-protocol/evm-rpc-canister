@@ -21,11 +21,6 @@ pub const INFO: PrintProxySink = PrintProxySink(&Priority::Info, &INFO_BUF);
 pub const DEBUG: PrintProxySink = PrintProxySink(&Priority::Debug, &DEBUG_BUF);
 pub const TRACE_HTTP: PrintProxySink = PrintProxySink(&Priority::TraceHttp, &TRACE_HTTP_BUF);
 
-#[cfg(test)]
-thread_local! {
-    pub static DISPLAYED_LOG_ENTRIES: std::cell::RefCell<Vec<ic_canister_log::LogEntry>> = std::cell::RefCell::new(vec![]);
-}
-
 #[derive(Debug)]
 pub struct PrintProxySink(&'static Priority, &'static GlobalBuffer);
 
@@ -40,8 +35,6 @@ impl Sink for PrintProxySink {
         );
         if get_console_filter().is_match(&message) {
             ic_cdk::println!("{}", message);
-            #[cfg(test)]
-            DISPLAYED_LOG_ENTRIES.with_borrow_mut(|entries| entries.push(entry.clone()));
         }
         self.1.append(entry)
     }
