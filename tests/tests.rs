@@ -14,20 +14,19 @@ use evm_rpc_types::{
     JsonRpcError, MultiRpcResult, Nat256, ProviderError, RpcApi, RpcConfig, RpcError, RpcResult,
     RpcService, RpcServices,
 };
-use ic_base_types::{CanisterId, PrincipalId};
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse as OutCallHttpResponse,
     TransformArgs, TransformContext, TransformFunc,
 };
+use ic_management_canister_types::CanisterSettingsArgsBuilder;
 use ic_state_machine_tests::{
-    CanisterHttpResponsePayload, CanisterSettingsArgsBuilder, Cycles, IngressState, IngressStatus,
-    MessageId, PayloadBuilder, StateMachine, StateMachineBuilder, WasmResult,
+    CanisterHttpResponsePayload, CanisterId, Cycles, IngressState, IngressStatus, MessageId,
+    PayloadBuilder, PrincipalId, StateMachine, StateMachineBuilder, WasmResult,
 };
 use ic_test_utilities_load_wasm::load_wasm;
 use maplit::hashmap;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-
 use mock::{MockOutcall, MockOutcallBuilder};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
 
 const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
@@ -452,7 +451,7 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
             headers: response
                 .headers
                 .into_iter()
-                .map(|h| ic_ic00_types::HttpHeader {
+                .map(|h| ic_state_machine_tests::HttpHeader {
                     name: h.name,
                     value: h.value,
                 })
@@ -1727,7 +1726,7 @@ fn upgrade_should_keep_demo() {
                 1000
             )
             .unwrap(),
-        0
+        0_u32
     );
     setup.upgrade_canister(InstallArgs::default());
     assert_eq!(
@@ -1738,7 +1737,7 @@ fn upgrade_should_keep_demo() {
                 1000
             )
             .unwrap(),
-        0
+        0_u32
     );
 }
 
@@ -1756,7 +1755,7 @@ fn upgrade_should_change_demo() {
                 1000
             )
             .unwrap(),
-        0
+        0_u32
     );
     setup.upgrade_canister(InstallArgs {
         demo: Some(false),
@@ -1770,7 +1769,7 @@ fn upgrade_should_change_demo() {
                 1000
             )
             .unwrap(),
-        0
+        0_u32
     );
 }
 
