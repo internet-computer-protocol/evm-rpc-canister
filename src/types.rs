@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use ic_cdk::api::management_canister::http_request::HttpHeader;
-use ic_stable_structures::{BoundedStorable, Storable};
+use ic_stable_structures::Storable;
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
@@ -180,24 +180,6 @@ impl Storable for BoolStorable {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PrincipalStorable(pub Principal);
-
-impl Storable for PrincipalStorable {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::from(self.0.as_slice())
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Self(Principal::from_slice(&bytes))
-    }
-}
-
-impl BoundedStorable for PrincipalStorable {
-    const MAX_SIZE: u32 = 29;
-    const IS_FIXED_SIZE: bool = false;
-}
-
 #[derive(Zeroize, ZeroizeOnDrop)]
 pub struct ApiKey(String);
 
@@ -349,10 +331,9 @@ pub enum RpcAuth {
 
 #[cfg(test)]
 mod test {
-    use candid::Principal;
     use ic_stable_structures::Storable;
 
-    use crate::types::{ApiKey, BoolStorable, PrincipalStorable};
+    use crate::types::{ApiKey, BoolStorable};
 
     #[test]
     fn test_api_key_debug_output() {
@@ -365,21 +346,6 @@ mod test {
         for value in [true, false] {
             let storable = BoolStorable(value);
             assert_eq!(storable.0, BoolStorable::from_bytes(storable.to_bytes()).0);
-        }
-    }
-
-    #[test]
-    fn test_principal_storable() {
-        for value in [
-            Principal::anonymous(),
-            Principal::management_canister(),
-            Principal::from_text("7hfb6-caaaa-aaaar-qadga-cai").unwrap(),
-        ] {
-            let storable = PrincipalStorable(value);
-            assert_eq!(
-                storable.0,
-                PrincipalStorable::from_bytes(storable.to_bytes()).0
-            );
         }
     }
 }
