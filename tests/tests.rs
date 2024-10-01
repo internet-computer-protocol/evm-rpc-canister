@@ -95,7 +95,7 @@ impl EvmRpcSetup {
         Self::with_args(InstallArgs {
             manage_api_keys: None,
             demo: Some(true),
-            console_filter: None,
+            log_filter: None,
         })
     }
 

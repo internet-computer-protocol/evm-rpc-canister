@@ -1,7 +1,7 @@
 use crate::{
     logs::{Log, LogEntry, Priority, Sort},
-    memory::set_console_filter,
-    types::ConsoleFilter,
+    memory::set_log_filter,
+    types::LogFilter,
 };
 use ic_canister_log::{declare_log_buffer, export, log};
 use proptest::{prop_assert, proptest};
@@ -173,7 +173,7 @@ fn should_truncate_last_entry() {
 
 #[test]
 fn should_show_all() {
-    set_console_filter(ConsoleFilter::ShowAll);
+    set_log_filter(LogFilter::ShowAll);
     log!(TEST, "ABC");
     log!(TEST, "123");
     log!(TEST, "!@#");
@@ -182,7 +182,7 @@ fn should_show_all() {
 
 #[test]
 fn should_hide_all() {
-    set_console_filter(ConsoleFilter::HideAll);
+    set_log_filter(LogFilter::HideAll);
     log!(TEST, "ABC");
     log!(TEST, "123");
     log!(TEST, "!@#");
@@ -191,7 +191,7 @@ fn should_hide_all() {
 
 #[test]
 fn should_show_pattern() {
-    set_console_filter(ConsoleFilter::ShowPattern("end$".into()));
+    set_log_filter(LogFilter::ShowPattern("end$".into()));
     log!(TEST, "message");
     log!(TEST, "message end");
     log!(TEST, "end message");
@@ -200,9 +200,9 @@ fn should_show_pattern() {
 
 #[test]
 fn should_hide_pattern_including_message_type() {
-    set_console_filter(ConsoleFilter::ShowPattern("^INFO [^ ]* 123".into()));
+    set_log_filter(LogFilter::ShowPattern("^TEST [^ ]* 123".into()));
     log!(TEST, "123");
-    log!(TEST, "INFO 123");
+    log!(TEST, "TEST 123");
     log!(TEST, "");
     log!(TEST, "123456");
     assert_eq!(get_messages(), vec!["123", "123456"]);
@@ -210,7 +210,7 @@ fn should_hide_pattern_including_message_type() {
 
 #[test]
 fn should_hide_pattern() {
-    set_console_filter(ConsoleFilter::HidePattern("[ABC]".into()));
+    set_log_filter(LogFilter::HidePattern("[ABC]".into()));
     log!(TEST, "remove A");
     log!(TEST, "...B...");
     log!(TEST, "C");
