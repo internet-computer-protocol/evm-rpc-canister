@@ -19,10 +19,9 @@ use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse as OutCallHttpResponse,
     TransformArgs, TransformContext, TransformFunc,
 };
-use ic_ic00_types::CanisterSettingsArgsBuilder;
 use ic_state_machine_tests::{
-    CanisterHttpResponsePayload, Cycles, IngressState, IngressStatus, MessageId, PayloadBuilder,
-    StateMachine, StateMachineBuilder, WasmResult,
+    CanisterHttpResponsePayload, CanisterSettingsArgsBuilder, Cycles, IngressState, IngressStatus,
+    MessageId, PayloadBuilder, StateMachine, StateMachineBuilder, WasmResult,
 };
 use ic_test_utilities_load_wasm::load_wasm;
 use maplit::hashmap;
