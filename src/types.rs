@@ -163,23 +163,6 @@ impl RpcMethod {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
-pub struct BoolStorable(pub bool);
-
-impl Storable for BoolStorable {
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        assert!(
-            bytes.len() == 1,
-            "Unexpected byte length for `BoolStorable`"
-        );
-        BoolStorable(bytes[0] != 0)
-    }
-
-    fn to_bytes(&self) -> Cow<[u8]> {
-        vec![self.0 as u8].into()
-    }
-}
-
 #[derive(Zeroize, ZeroizeOnDrop)]
 pub struct ApiKey(String);
 
@@ -327,25 +310,4 @@ pub enum RpcAuth {
         #[serde(rename = "urlPattern")]
         url_pattern: &'static str,
     },
-}
-
-#[cfg(test)]
-mod test {
-    use ic_stable_structures::Storable;
-
-    use crate::types::{ApiKey, BoolStorable};
-
-    #[test]
-    fn test_api_key_debug_output() {
-        let api_key = ApiKey("55555".to_string());
-        assert!(format!("{api_key:?}") == "{API_KEY}");
-    }
-
-    #[test]
-    fn test_bool_storable() {
-        for value in [true, false] {
-            let storable = BoolStorable(value);
-            assert_eq!(storable.0, BoolStorable::from_bytes(storable.to_bytes()).0);
-        }
-    }
 }

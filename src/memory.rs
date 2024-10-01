@@ -7,7 +7,7 @@ use ic_stable_structures::{
 use ic_stable_structures::{Cell, StableBTreeMap};
 use std::cell::RefCell;
 
-use crate::types::{ApiKey, BoolStorable, Metrics, ProviderId};
+use crate::types::{ApiKey, Metrics, ProviderId};
 
 const IS_DEMO_ACTIVE_ID: MemoryId = MemoryId::new(4);
 const API_KEY_MAP_MEMORY_ID: MemoryId = MemoryId::new(5);
@@ -23,8 +23,8 @@ thread_local! {
     // Stable static data: these are preserved when the canister is upgraded.
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-    static IS_DEMO_ACTIVE: RefCell<Cell<BoolStorable, StableMemory>> =
-        RefCell::new(Cell::init(MEMORY_MANAGER.with_borrow(|m| m.get(IS_DEMO_ACTIVE_ID)), BoolStorable(false)).expect("Unable to read demo status from stable memory"));
+    static IS_DEMO_ACTIVE: RefCell<Cell<bool, StableMemory>> =
+        RefCell::new(Cell::init(MEMORY_MANAGER.with_borrow(|m| m.get(IS_DEMO_ACTIVE_ID)), false).expect("Unable to read demo status from stable memory"));
     static API_KEY_MAP: RefCell<StableBTreeMap<ProviderId, ApiKey, StableMemory>> =
         RefCell::new(StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(API_KEY_MAP_MEMORY_ID))));
     static MANAGE_API_KEYS: RefCell<ic_stable_structures::Vec<Principal, StableMemory>> =
@@ -61,12 +61,12 @@ pub fn set_api_key_principals(new_principals: Vec<Principal>) {
 }
 
 pub fn is_demo_active() -> bool {
-    IS_DEMO_ACTIVE.with_borrow(|demo| demo.get().0)
+    IS_DEMO_ACTIVE.with_borrow(|demo| *demo.get())
 }
 
 pub fn set_demo_active(is_active: bool) {
     IS_DEMO_ACTIVE.with_borrow_mut(|demo| {
-        demo.set(BoolStorable(is_active))
+        demo.set(is_active)
             .expect("Error while storing new demo status")
     });
 }
