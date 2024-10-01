@@ -4,14 +4,14 @@ use ic_stable_structures::Storable;
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-use std::borrow::Cow;
-use std::collections::HashMap;
-use std::fmt;
-
 use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING};
 use crate::memory::get_api_key;
 use crate::util::hostname_from_url;
 use crate::validate::validate_api_key;
+use ic_stable_structures::storable::Bound;
+use std::borrow::Cow;
+use std::collections::HashMap;
+use std::fmt;
 
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct InstallArgs {
@@ -213,11 +213,11 @@ impl Storable for ApiKey {
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
         Self(String::from_bytes(bytes))
     }
-}
 
-impl BoundedStorable for ApiKey {
-    const MAX_SIZE: u32 = API_KEY_MAX_SIZE;
-    const IS_FIXED_SIZE: bool = false;
+    const BOUND: Bound = Bound::Bounded {
+        max_size: API_KEY_MAX_SIZE,
+        is_fixed_size: false,
+    };
 }
 
 pub type ProviderId = u64;
