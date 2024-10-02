@@ -6,7 +6,7 @@ use evm_rpc::http::get_http_response_body;
 use evm_rpc::logs::INFO;
 use evm_rpc::memory::{
     insert_api_key, is_api_key_principal, is_demo_active, remove_api_key, set_api_key_principals,
-    set_demo_active,
+    set_demo_active, set_log_filter,
 };
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
@@ -225,6 +225,9 @@ fn post_upgrade(args: InstallArgs) {
     }
     if let Some(principals) = args.manage_api_keys {
         set_api_key_principals(principals);
+    }
+    if let Some(filter) = args.log_filter {
+        set_log_filter(filter)
     }
 }
 

@@ -81,6 +81,14 @@ type HttpOutcallError = variant {
 type InstallArgs = record {
   demo : opt bool;
   manageApiKeys : opt vec principal;
+  logFilter : opt LogFilter;
+};
+type Regex = text;
+type LogFilter = variant {
+  ShowAll;
+  HideAll;
+  ShowPattern : Regex;
+  HidePattern : Regex;
 };
 type JsonRpcError = record { code : int64; message : text };
 type LogEntry = record {
