@@ -13,8 +13,8 @@ jobs:
   cargo-clippy:
     runs-on: ubuntu-latest
     steps:
-      - name: Install libunwind8
-        run: sudo apt-get install -y libunwind8
+      - name: Install dependencies
+        run: sudo apt-get install -y libunwind-dev
 
       - name: Checkout
         uses: actions/checkout@master
