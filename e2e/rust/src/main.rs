@@ -1,4 +1,4 @@
-use std::{env, str::FromStr};
+use std::str::FromStr;
 
 use candid::{candid_method, Principal};
 use ic_cdk_macros::update;
@@ -11,17 +11,20 @@ use evm_rpc_types::{
 fn main() {}
 
 #[cfg(target_arch = "wasm32")]
-const CANISTER_ID: &str = &env!("CANISTER_ID_EVM_RPC_STAGING");
+const CANISTER_ID: Option<&str> = Some(std::env!(
+    "CANISTER_ID_EVM_RPC_STAGING",
+    "Unspecified canister ID environment variable"
+));
 #[cfg(not(target_arch = "wasm32"))]
-const CANISTER_ID: &str = "";
+const CANISTER_ID: Option<&str> = None;
 
 #[update]
 #[candid_method(update)]
 pub async fn test() {
     assert!(ic_cdk::api::is_controller(&ic_cdk::caller()));
 
-    let canister_id =
-        Principal::from_str(CANISTER_ID).expect("Error parsing canister ID environment variable");
+    let canister_id = Principal::from_str(CANISTER_ID.unwrap())
+        .expect("Error parsing canister ID environment variable");
 
     // Define request parameters
     let params = (
