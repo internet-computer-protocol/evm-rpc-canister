@@ -101,7 +101,7 @@ impl EvmRpcSetup {
         let canister_id = env.create_canister_with_settings(
             None,
             Some(CanisterSettings {
-                controllers: Some(vec![controller.into()]),
+                controllers: Some(vec![controller]),
                 ..CanisterSettings::default()
             }),
         );

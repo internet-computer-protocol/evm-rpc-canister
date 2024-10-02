@@ -11,7 +11,7 @@ ic-certified-map = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 serde = { workspace = true }
-serde_bytes = "0.11"
+serde_bytes = { workspace = true }
 
 [build-dependencies]
 ic-cdk-bindgen = { workspace = true }
