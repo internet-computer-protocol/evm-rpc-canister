@@ -13,11 +13,11 @@ jobs:
   cargo-clippy:
     runs-on: ubuntu-latest
     steps:
-      - name: Install dependencies
-        run: sudo apt-get install -y libunwind-dev
-
       - name: Checkout
         uses: actions/checkout@master
+
+      - name: Provision
+        run: bash .github/workflows/provision.sh
 
       - uses: Swatinem/rust-cache@v2
 
@@ -40,6 +40,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
+      - name: Provision
+        run: bash .github/workflows/provision.sh
+
       - uses: Swatinem/rust-cache@v2
 
       - name: Install Protoc
@@ -53,6 +56,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@master
+
+      - name: Provision
+        run: bash .github/workflows/provision.sh
 
       - uses: Swatinem/rust-cache@v2
 
