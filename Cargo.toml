@@ -49,10 +49,8 @@ zeroize = { version = "1.8", features = ["zeroize_derive"] }
 [dev-dependencies]
 assert_matches = "1.5"
 candid_parser = { workspace = true }
-ic-crypto-test-utils-reproducible-rng = { git = "https://github.com/dfinity/ic", rev = "release-2024-06-26_23-01-base" }
-ic-management-canister-types = { git = "https://github.com/dfinity/ic", rev = "release-2024-06-26_23-01-base" }
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "release-2024-06-26_23-01-base" }
-ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2024-06-26_23-01-base" }
+ic-crypto-test-utils-reproducible-rng = { git = "https://github.com/dfinity/ic", rev = "release-2024-09-26_01-31-base" }
+ic-test-utilities-load-wasm = { git = "https://github.com/dfinity/ic", rev = "release-2024-09-26_01-31-base" }
 pocket-ic = "5.0.0"
 itertools = "0.13"
 maplit = "1"

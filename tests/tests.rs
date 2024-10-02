@@ -16,7 +16,6 @@ use evm_rpc_types::{
 };
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_cdk::api::management_canister::main::CanisterId;
-use ic_state_machine_tests::PrincipalId;
 use ic_test_utilities_load_wasm::load_wasm;
 use maplit::hashmap;
 use mock::{MockOutcall, MockOutcallBuilder};
@@ -28,9 +27,9 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::sync::Arc;
 use std::{marker::PhantomData, str::FromStr, time::Duration};
 
-const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
-const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
-const ADDITIONAL_TEST_ID: u64 = 10352387;
+const DEFAULT_CALLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x01]);
+const DEFAULT_CONTROLLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x02]);
+const ADDITIONAL_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x03]);
 
 const INITIAL_CYCLES: u128 = 100_000_000_000_000_000;
 
@@ -98,7 +97,7 @@ impl EvmRpcSetup {
     pub fn with_args(args: InstallArgs) -> Self {
         let env = Arc::new(PocketIc::new());
 
-        let controller = Principal::from(PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID));
+        let controller = DEFAULT_CONTROLLER_TEST_ID;
         let canister_id = env.create_canister_with_settings(
             None,
             Some(CanisterSettings {
@@ -114,7 +113,7 @@ impl EvmRpcSetup {
             Some(controller),
         );
 
-        let caller = Principal::from(PrincipalId::new_user_test_id(DEFAULT_CALLER_TEST_ID));
+        let caller = DEFAULT_CALLER_TEST_ID;
 
         Self {
             env,
@@ -1431,10 +1430,10 @@ fn should_use_custom_response_size_estimate() {
 
 #[test]
 fn should_use_fallback_public_url() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let authorized_caller = ADDITIONAL_TEST_ID;
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
-        manage_api_keys: Some(vec![authorized_caller.0]),
+        manage_api_keys: Some(vec![authorized_caller]),
     });
     let response = setup
         .eth_get_transaction_count(
@@ -1457,10 +1456,10 @@ fn should_use_fallback_public_url() {
 
 #[test]
 fn should_insert_api_keys() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let authorized_caller = ADDITIONAL_TEST_ID;
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
-        manage_api_keys: Some(vec![authorized_caller.0]),
+        manage_api_keys: Some(vec![authorized_caller]),
     });
     let provider_id = 1;
     setup
@@ -1490,10 +1489,10 @@ fn should_insert_api_keys() {
 
 #[test]
 fn should_update_api_key() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let authorized_caller = ADDITIONAL_TEST_ID;
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
-        manage_api_keys: Some(vec![authorized_caller.0]),
+        manage_api_keys: Some(vec![authorized_caller]),
     })
     .as_caller(authorized_caller);
     let provider_id = 1; // Ankr / mainnet
@@ -1539,10 +1538,10 @@ fn should_update_api_key() {
 
 #[test]
 fn should_update_bearer_token() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let authorized_caller = ADDITIONAL_TEST_ID;
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
-        manage_api_keys: Some(vec![authorized_caller.0]),
+        manage_api_keys: Some(vec![authorized_caller]),
     });
     let provider_id = 8; // Alchemy / mainnet
     let api_key = "test-api-key";
@@ -1710,9 +1709,9 @@ fn upgrade_should_change_demo() {
 
 #[test]
 fn upgrade_should_keep_manage_api_key_principals() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let authorized_caller = ADDITIONAL_TEST_ID;
     let setup = EvmRpcSetup::with_args(InstallArgs {
-        manage_api_keys: Some(vec![authorized_caller.0]),
+        manage_api_keys: Some(vec![authorized_caller]),
         ..Default::default()
     });
     setup.upgrade_canister(InstallArgs {
@@ -1727,9 +1726,9 @@ fn upgrade_should_keep_manage_api_key_principals() {
 #[test]
 #[should_panic(expected = "You are not authorized")]
 fn upgrade_should_change_manage_api_key_principals() {
-    let deauthorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let deauthorized_caller = ADDITIONAL_TEST_ID;
     let setup = EvmRpcSetup::with_args(InstallArgs {
-        manage_api_keys: Some(vec![deauthorized_caller.0]),
+        manage_api_keys: Some(vec![deauthorized_caller]),
         ..Default::default()
     });
     setup.upgrade_canister(InstallArgs {
