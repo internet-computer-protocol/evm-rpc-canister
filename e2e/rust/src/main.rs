@@ -10,15 +10,18 @@ use evm_rpc_types::{
 
 fn main() {}
 
+#[cfg(target_arch = "wasm32")]
+const CANISTER_ID: &str = &env!("CANISTER_ID_EVM_RPC_STAGING");
+#[cfg(not(target_arch = "wasm32"))]
+const CANISTER_ID: &str = "";
+
 #[update]
 #[candid_method(update)]
 pub async fn test() {
     assert!(ic_cdk::api::is_controller(&ic_cdk::caller()));
 
-    let canister_id = Principal::from_str(
-        &env::var("CANISTER_ID_EVM_RPC_STAGING").expect("Missing canister ID environment variable"),
-    )
-    .expect("Error parsing canister ID environment variable");
+    let canister_id =
+        Principal::from_str(CANISTER_ID).expect("Error parsing canister ID environment variable");
 
     // Define request parameters
     let params = (
