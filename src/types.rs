@@ -1,4 +1,4 @@
-use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING};
+use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, MESSAGE_FILTER_MAX_SIZE};
 use crate::memory::get_api_key;
 use crate::util::hostname_from_url;
 use crate::validate::validate_api_key;
@@ -355,11 +355,11 @@ impl Storable for LogFilter {
             .expect("Error while serializing `MessageFilter`")
             .into()
     }
-}
 
-impl BoundedStorable for LogFilter {
-    const IS_FIXED_SIZE: bool = true;
-    const MAX_SIZE: u32 = MESSAGE_FILTER_MAX_SIZE;
+    const BOUND: Bound = Bound::Bounded {
+        max_size: MESSAGE_FILTER_MAX_SIZE,
+        is_fixed_size: true,
+    };
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
@@ -375,8 +375,7 @@ pub enum RpcAuth {
 
 #[cfg(test)]
 mod test {
-    use super::{ApiKey, LogFilter, RegexString};
-    use candid::Principal;
+    use super::{LogFilter, RegexString};
     use ic_stable_structures::Storable;
 
     #[test]
