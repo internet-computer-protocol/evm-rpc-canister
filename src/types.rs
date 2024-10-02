@@ -1,23 +1,25 @@
-use candid::{CandidType, Principal};
-use ic_cdk::api::management_canister::http_request::HttpHeader;
-use ic_stable_structures::Storable;
-use serde::{Deserialize, Serialize};
-use zeroize::{Zeroize, ZeroizeOnDrop};
-
 use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING};
 use crate::memory::get_api_key;
 use crate::util::hostname_from_url;
 use crate::validate::validate_api_key;
+use candid::{CandidType, Principal};
+use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_stable_structures::storable::Bound;
+use ic_stable_structures::Storable;
+use regex::Regex;
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct InstallArgs {
     pub demo: Option<bool>,
     #[serde(rename = "manageApiKeys")]
     pub manage_api_keys: Option<Vec<Principal>>,
+    #[serde(rename = "logFilter")]
+    pub log_filter: Option<LogFilter>,
 }
 
 pub enum ResolvedRpcService {
@@ -301,6 +303,65 @@ impl RpcAccess {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Serialize, Deserialize, Default)]
+pub enum LogFilter {
+    #[default]
+    ShowAll,
+    HideAll,
+    ShowPattern(RegexString),
+    HidePattern(RegexString),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Serialize, Deserialize, Default)]
+pub struct RegexString(String);
+
+impl RegexString {
+    pub fn try_is_valid(&self, value: &str) -> Result<bool, regex::Error> {
+        // Currently only used in the local replica. This can be optimized if eventually used in production.
+        Ok(Regex::new(&self.0)?.is_match(value))
+    }
+}
+
+impl<T> From<T> for RegexString
+where
+    T: Into<String>,
+{
+    fn from(value: T) -> Self {
+        RegexString(value.into())
+    }
+}
+
+impl LogFilter {
+    pub fn is_match(&self, message: &str) -> bool {
+        match self {
+            Self::ShowAll => true,
+            Self::HideAll => false,
+            Self::ShowPattern(regex) => regex
+                .try_is_valid(message)
+                .expect("Invalid regex in ShowPattern log filter"),
+            Self::HidePattern(regex) => !regex
+                .try_is_valid(message)
+                .expect("Invalid regex in HidePattern log filter"),
+        }
+    }
+}
+
+impl Storable for LogFilter {
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        serde_json::from_slice(&bytes).expect("Error while deserializing `MessageFilter`")
+    }
+    fn to_bytes(&self) -> Cow<[u8]> {
+        serde_json::to_vec(self)
+            .expect("Error while serializing `MessageFilter`")
+            .into()
+    }
+}
+
+impl BoundedStorable for LogFilter {
+    const IS_FIXED_SIZE: bool = true;
+    const MAX_SIZE: u32 = MESSAGE_FILTER_MAX_SIZE;
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
 pub enum RpcAuth {
     /// API key will be used in an Authorization header as Bearer token, e.g.,
@@ -310,4 +371,47 @@ pub enum RpcAuth {
         #[serde(rename = "urlPattern")]
         url_pattern: &'static str,
     },
+}
+
+#[cfg(test)]
+mod test {
+    use super::{ApiKey, LogFilter, RegexString};
+    use candid::Principal;
+    use ic_stable_structures::Storable;
+
+    #[test]
+    fn test_message_filter_storable() {
+        let patterns: &[RegexString] =
+            &["[.]", "^DEBUG ", "(.*)?", "\\?"].map(|regex| regex.into());
+        let cases = [
+            vec![
+                (LogFilter::ShowAll, r#""ShowAll""#.to_string()),
+                (LogFilter::HideAll, r#""HideAll""#.to_string()),
+            ],
+            patterns
+                .iter()
+                .map(|regex| {
+                    (
+                        LogFilter::ShowPattern(regex.clone()),
+                        format!(r#"{{"ShowPattern":{:?}}}"#, regex.0),
+                    )
+                })
+                .collect(),
+            patterns
+                .iter()
+                .map(|regex| {
+                    (
+                        LogFilter::HidePattern(regex.clone()),
+                        format!(r#"{{"HidePattern":{:?}}}"#, regex.0),
+                    )
+                })
+                .collect(),
+        ]
+        .concat();
+        for (filter, expected_json) in cases {
+            let bytes = filter.to_bytes();
+            assert_eq!(String::from_utf8(bytes.to_vec()).unwrap(), expected_json);
+            assert_eq!(filter, LogFilter::from_bytes(bytes));
+        }
+    }
 }

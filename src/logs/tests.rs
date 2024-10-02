@@ -1,5 +1,15 @@
-use crate::logs::{Log, LogEntry, Priority, Sort};
+use crate::{
+    logs::{Log, LogEntry, Priority, Sort},
+    memory::set_log_filter,
+    types::LogFilter,
+};
+use ic_canister_log::{declare_log_buffer, export, log};
 use proptest::{prop_assert, proptest};
+
+use super::PrintProxySink;
+
+declare_log_buffer!(name = INFO_TEST_BUF, capacity = 1000);
+const INFO_TEST: PrintProxySink = PrintProxySink(&Priority::Info, &INFO_TEST_BUF);
 
 fn info_log_entry_with_timestamp(timestamp: u64) -> LogEntry {
     LogEntry {
@@ -28,6 +38,13 @@ fn is_descending(log: &Log) -> bool {
         }
     }
     true
+}
+
+fn get_messages() -> Vec<String> {
+    export(&INFO_TEST_BUF)
+        .into_iter()
+        .map(|entry| entry.message)
+        .collect()
 }
 
 proptest! {
@@ -152,4 +169,51 @@ fn should_truncate_last_entry() {
         log_with_3_entries.serialize_logs(serialized_log_with_2_entries.len());
 
     assert_eq!(serialized_log_with_3_entries, serialized_log_with_2_entries);
+}
+
+#[test]
+fn should_show_all() {
+    set_log_filter(LogFilter::ShowAll);
+    log!(INFO_TEST, "ABC");
+    log!(INFO_TEST, "123");
+    log!(INFO_TEST, "!@#");
+    assert_eq!(get_messages(), vec!["ABC", "123", "!@#"]);
+}
+
+#[test]
+fn should_hide_all() {
+    set_log_filter(LogFilter::HideAll);
+    log!(INFO_TEST, "ABC");
+    log!(INFO_TEST, "123");
+    log!(INFO_TEST, "!@#");
+    assert_eq!(get_messages().len(), 0);
+}
+
+#[test]
+fn should_show_pattern() {
+    set_log_filter(LogFilter::ShowPattern("end$".into()));
+    log!(INFO_TEST, "message");
+    log!(INFO_TEST, "message end");
+    log!(INFO_TEST, "end message");
+    assert_eq!(get_messages(), vec!["message end"]);
+}
+
+#[test]
+fn should_hide_pattern_including_message_type() {
+    set_log_filter(LogFilter::ShowPattern("^INFO [^ ]* 123".into()));
+    log!(INFO_TEST, "123");
+    log!(INFO_TEST, "INFO 123");
+    log!(INFO_TEST, "");
+    log!(INFO_TEST, "123456");
+    assert_eq!(get_messages(), vec!["123", "123456"]);
+}
+
+#[test]
+fn should_hide_pattern() {
+    set_log_filter(LogFilter::HidePattern("[ABC]".into()));
+    log!(INFO_TEST, "remove A");
+    log!(INFO_TEST, "...B...");
+    log!(INFO_TEST, "C");
+    log!(INFO_TEST, "message");
+    assert_eq!(get_messages(), vec!["message"]);
 }

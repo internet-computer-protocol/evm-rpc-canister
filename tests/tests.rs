@@ -91,6 +91,7 @@ impl EvmRpcSetup {
         Self::with_args(InstallArgs {
             manage_api_keys: None,
             demo: Some(true),
+            log_filter: None,
         })
     }
 
@@ -915,7 +916,7 @@ fn candid_rpc_should_allow_unexpected_response_fields() {
 fn candid_rpc_should_err_without_cycles() {
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: None,
-        manage_api_keys: None,
+        ..Default::default()
     })
     .mock_api_keys();
     let result = setup
@@ -1434,6 +1435,7 @@ fn should_use_fallback_public_url() {
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
         manage_api_keys: Some(vec![authorized_caller]),
+        ..Default::default()
     });
     let response = setup
         .eth_get_transaction_count(
@@ -1460,6 +1462,7 @@ fn should_insert_api_keys() {
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
         manage_api_keys: Some(vec![authorized_caller]),
+        ..Default::default()
     });
     let provider_id = 1;
     setup
@@ -1493,6 +1496,7 @@ fn should_update_api_key() {
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
         manage_api_keys: Some(vec![authorized_caller]),
+        ..Default::default()
     })
     .as_caller(authorized_caller);
     let provider_id = 1; // Ankr / mainnet
@@ -1542,6 +1546,7 @@ fn should_update_bearer_token() {
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
         manage_api_keys: Some(vec![authorized_caller]),
+        ..Default::default()
     });
     let provider_id = 8; // Alchemy / mainnet
     let api_key = "test-api-key";
@@ -1745,6 +1750,7 @@ fn should_retrieve_logs() {
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: None,
         manage_api_keys: None,
+        ..Default::default()
     });
     assert_eq!(setup.http_get_logs("DEBUG"), vec![]);
     assert_eq!(setup.http_get_logs("INFO"), vec![]);

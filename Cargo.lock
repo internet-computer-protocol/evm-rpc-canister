@@ -740,6 +740,7 @@ dependencies = [
  "pocket-ic",
  "proptest",
  "rand",
+ "regex",
  "serde",
  "serde_bytes",
  "serde_json",
