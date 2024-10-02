@@ -16,9 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
-      - name: Provision
-        run: bash .github/workflows/provision.sh
-
       - uses: Swatinem/rust-cache@v2
 
       - name: Install Protoc
@@ -40,8 +37,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
-      - name: Provision
-        run: bash .github/workflows/provision.sh
+      - name: Provision Pocket IC
+        run: bash .github/workflows/provision-pocket-ic-server.sh
 
       - uses: Swatinem/rust-cache@v2
 
@@ -56,9 +53,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@master
-
-      - name: Provision
-        run: bash .github/workflows/provision.sh
 
       - uses: Swatinem/rust-cache@v2
 
