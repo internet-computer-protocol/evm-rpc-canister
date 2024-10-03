@@ -37,8 +37,8 @@ mod tests;
 pub const HEADER_SIZE_LIMIT: u64 = 2 * 1024;
 
 // This constant comes from the IC specification:
-// > If provided, the value must not exceed 2MiB
-const HTTP_MAX_SIZE: u64 = 2 * 1024 * 1024;
+// > If provided, the value must not exceed 2MB
+const HTTP_MAX_SIZE: u64 = 2_000_000;
 
 pub const MAX_PAYLOAD_SIZE: u64 = HTTP_MAX_SIZE - HEADER_SIZE_LIMIT;
 
