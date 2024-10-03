@@ -37,8 +37,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
-      - name: Provision Pocket IC
-        run: bash .github/workflows/provision-pocket-ic-server.sh
+      - name: Install PocketIC server
+        uses: dfinity/pocketic@mraszyk/github-action
+        with:
+          pocket-ic-server-version: "6.0.0"
 
       - uses: Swatinem/rust-cache@v2
 
