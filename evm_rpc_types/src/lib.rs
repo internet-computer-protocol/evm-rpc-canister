@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+mod lifecycle;
 mod request;
 mod response;
 mod result;
@@ -14,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 use std::str::FromStr;
 
+pub use lifecycle::{InstallArgs, LogFilter, RegexString};
 pub use request::{BlockTag, FeeHistoryArgs, GetLogsArgs, GetTransactionCountArgs};
 pub use response::{Block, FeeHistory, LogEntry, SendRawTransactionStatus, TransactionReceipt};
 pub use result::{

@@ -10,14 +10,14 @@ use evm_rpc::memory::{
 };
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
-use evm_rpc::types::{InstallArgs, Provider, ProviderId, RpcAccess};
+use evm_rpc::types::{LogFilter, Provider, ProviderId, RpcAccess};
 use evm_rpc::{
     http::{json_rpc_request, transform_http_request},
     http_types,
     memory::UNSTABLE_METRICS,
     types::{MetricRpcMethod, Metrics},
 };
-use evm_rpc_types::{Hex32, MultiRpcResult, RpcResult};
+use evm_rpc_types::{Hex32, InstallArgs, MultiRpcResult, RpcResult};
 use ic_canister_log::log;
 use ic_cdk::api::is_controller;
 use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
@@ -227,7 +227,7 @@ fn post_upgrade(args: InstallArgs) {
         set_api_key_principals(principals);
     }
     if let Some(filter) = args.log_filter {
-        set_log_filter(filter)
+        set_log_filter(LogFilter::from(filter))
     }
 }
 
