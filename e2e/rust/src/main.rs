@@ -72,7 +72,7 @@ pub async fn test() {
                 EthMainnetService::PublicNode,
             ])),
             (),
-            BlockTag::Number(19709434.into()),
+            BlockTag::Number(19709434_u32.into()),
         ),
         10000000000,
     )

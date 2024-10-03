@@ -7,7 +7,7 @@ use ic_stable_structures::{
 use ic_stable_structures::{Cell, StableBTreeMap};
 use std::cell::RefCell;
 
-use crate::types::{ApiKey, BoolStorable, LogFilter, Metrics, PrincipalStorable, ProviderId};
+use crate::types::{ApiKey, LogFilter, Metrics, ProviderId};
 
 const IS_DEMO_ACTIVE_MEMORY_ID: MemoryId = MemoryId::new(4);
 const API_KEY_MAP_MEMORY_ID: MemoryId = MemoryId::new(5);
@@ -19,16 +19,16 @@ type StableMemory = VirtualMemory<DefaultMemoryImpl>;
 thread_local! {
     // Unstable static data: these are reset when the canister is upgraded.
     pub static UNSTABLE_METRICS: RefCell<Metrics> = RefCell::new(Metrics::default());
-    static UNSTABLE_HTTP_REQUEST_COUNTER: RefCell<u64> = RefCell::new(0);
+    static UNSTABLE_HTTP_REQUEST_COUNTER: RefCell<u64> = const {RefCell::new(0)};
 
     // Stable static data: these are preserved when the canister is upgraded.
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-    static IS_DEMO_ACTIVE: RefCell<Cell<BoolStorable, StableMemory>> =
-        RefCell::new(Cell::init(MEMORY_MANAGER.with_borrow(|m| m.get(IS_DEMO_ACTIVE_MEMORY_ID)), BoolStorable(false)).expect("Unable to read demo status from stable memory"));
+    static IS_DEMO_ACTIVE: RefCell<Cell<bool, StableMemory>> =
+        RefCell::new(Cell::init(MEMORY_MANAGER.with_borrow(|m| m.get(IS_DEMO_ACTIVE_MEMORY_ID)), false).expect("Unable to read demo status from stable memory"));
     static API_KEY_MAP: RefCell<StableBTreeMap<ProviderId, ApiKey, StableMemory>> =
         RefCell::new(StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(API_KEY_MAP_MEMORY_ID))));
-    static MANAGE_API_KEYS: RefCell<ic_stable_structures::Vec<PrincipalStorable, StableMemory>> =
+    static MANAGE_API_KEYS: RefCell<ic_stable_structures::Vec<Principal, StableMemory>> =
         RefCell::new(ic_stable_structures::Vec::init(MEMORY_MANAGER.with_borrow(|m| m.get(MANAGE_API_KEYS_MEMORY_ID))).expect("Unable to read API key principals from stable memory"));
     static LOG_FILTER: RefCell<Cell<LogFilter, StableMemory>> =
         RefCell::new(ic_stable_structures::Cell::init(MEMORY_MANAGER.with_borrow(|m| m.get(LOG_FILTER_MEMORY_ID)), LogFilter::default()).expect("Unable to read log message filter from stable memory"));
@@ -47,11 +47,7 @@ pub fn remove_api_key(provider_id: ProviderId) {
 }
 
 pub fn is_api_key_principal(principal: &Principal) -> bool {
-    MANAGE_API_KEYS.with_borrow(|principals| {
-        principals
-            .iter()
-            .any(|PrincipalStorable(other)| &other == principal)
-    })
+    MANAGE_API_KEYS.with_borrow(|principals| principals.iter().any(|other| &other == principal))
 }
 
 pub fn set_api_key_principals(new_principals: Vec<Principal>) {
@@ -61,21 +57,20 @@ pub fn set_api_key_principals(new_principals: Vec<Principal>) {
         }
         for principal in new_principals {
             principals
-                .push(&PrincipalStorable(principal))
+                .push(&principal)
                 .expect("Error while adding API key principal");
         }
     });
 }
 
 pub fn is_demo_active() -> bool {
-    IS_DEMO_ACTIVE.with_borrow(|demo| demo.get().0)
+    IS_DEMO_ACTIVE.with_borrow(|demo| *demo.get())
 }
 
 pub fn set_demo_active(is_active: bool) {
-    IS_DEMO_ACTIVE.with_borrow_mut(|state| {
-        state
-            .set(BoolStorable(is_active))
-            .expect("Error while updating new demo status")
+    IS_DEMO_ACTIVE.with_borrow_mut(|demo| {
+        demo.set(is_active)
+            .expect("Error while storing new demo status")
     });
 }
 

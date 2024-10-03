@@ -7,3 +7,4 @@ target/
 *.generated.did
 *.wasm
 *.wasm.gz
+pocket-ic

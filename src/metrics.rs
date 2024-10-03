@@ -67,7 +67,7 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
         )?;
         w.encode_gauge(
             "evmrpc_stable_memory_pages",
-            ic_cdk::api::stable::stable64_size().metric_value(),
+            ic_cdk::api::stable::stable_size().metric_value(),
             "Size of the stable memory allocated by this canister measured in 64-bit Wasm pages",
         )?;
         w.counter_entries(

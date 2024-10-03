@@ -1,7 +1,7 @@
 mod mock;
 
 use assert_matches::assert_matches;
-use candid::{CandidType, Decode, Encode, Nat};
+use candid::{CandidType, Decode, Encode, Nat, Principal};
 use evm_rpc::logs::{Log, LogEntry};
 use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
@@ -14,26 +14,22 @@ use evm_rpc_types::{
     JsonRpcError, MultiRpcResult, Nat256, ProviderError, RpcApi, RpcConfig, RpcError, RpcResult,
     RpcService, RpcServices,
 };
-use ic_base_types::{CanisterId, PrincipalId};
-use ic_cdk::api::management_canister::http_request::{
-    CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse as OutCallHttpResponse,
-    TransformArgs, TransformContext, TransformFunc,
-};
-use ic_ic00_types::CanisterSettingsArgsBuilder;
-use ic_state_machine_tests::{
-    CanisterHttpResponsePayload, Cycles, IngressState, IngressStatus, MessageId, PayloadBuilder,
-    StateMachine, StateMachineBuilder, WasmResult,
-};
+use ic_cdk::api::management_canister::http_request::HttpHeader;
+use ic_cdk::api::management_canister::main::CanisterId;
 use ic_test_utilities_load_wasm::load_wasm;
 use maplit::hashmap;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-
 use mock::{MockOutcall, MockOutcallBuilder};
-use std::{marker::PhantomData, rc::Rc, str::FromStr, time::Duration};
+use pocket_ic::common::rest::{
+    CanisterHttpMethod, CanisterHttpResponse, MockCanisterHttpResponse, RawMessageId,
+};
+use pocket_ic::{CanisterSettings, PocketIc, WasmResult};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use std::sync::Arc;
+use std::{marker::PhantomData, str::FromStr, time::Duration};
 
-const DEFAULT_CALLER_TEST_ID: u64 = 10352385;
-const DEFAULT_CONTROLLER_TEST_ID: u64 = 10352386;
-const ADDITIONAL_TEST_ID: u64 = 10352387;
+const DEFAULT_CALLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x01]);
+const DEFAULT_CONTROLLER_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x02]);
+const ADDITIONAL_TEST_ID: Principal = Principal::from_slice(&[0x9d, 0xf7, 0x03]);
 
 const INITIAL_CYCLES: u128 = 100_000_000_000_000_000;
 
@@ -71,16 +67,16 @@ fn assert_reply(result: WasmResult) -> Vec<u8> {
     match result {
         WasmResult::Reply(bytes) => bytes,
         result => {
-            panic!("Expected a successful reply, got {}", result)
+            panic!("Expected a successful reply, got {:?}", result)
         }
     }
 }
 
 #[derive(Clone)]
 pub struct EvmRpcSetup {
-    pub env: Rc<StateMachine>,
-    pub caller: PrincipalId,
-    pub controller: PrincipalId,
+    pub env: Arc<PocketIc>,
+    pub caller: Principal,
+    pub controller: Principal,
     pub canister_id: CanisterId,
 }
 
@@ -100,26 +96,25 @@ impl EvmRpcSetup {
     }
 
     pub fn with_args(args: InstallArgs) -> Self {
-        let env = Rc::new(
-            StateMachineBuilder::new()
-                .with_default_canister_range()
-                .build(),
-        );
+        let env = Arc::new(PocketIc::new());
 
-        let controller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);
-        let canister_id = env.create_canister_with_cycles(
+        let controller = DEFAULT_CONTROLLER_TEST_ID;
+        let canister_id = env.create_canister_with_settings(
             None,
-            Cycles::new(INITIAL_CYCLES),
-            Some(
-                CanisterSettingsArgsBuilder::default()
-                    .with_controller(controller)
-                    .build(),
-            ),
+            Some(CanisterSettings {
+                controllers: Some(vec![controller]),
+                ..CanisterSettings::default()
+            }),
         );
-        env.install_existing_canister(canister_id, evm_rpc_wasm(), Encode!(&args).unwrap())
-            .unwrap();
+        env.add_cycles(canister_id, INITIAL_CYCLES);
+        env.install_canister(
+            canister_id,
+            evm_rpc_wasm(),
+            Encode!(&args).unwrap(),
+            Some(controller),
+        );
 
-        let caller = PrincipalId::new_user_test_id(DEFAULT_CALLER_TEST_ID);
+        let caller = DEFAULT_CALLER_TEST_ID;
 
         Self {
             env,
@@ -130,8 +125,17 @@ impl EvmRpcSetup {
     }
 
     pub fn upgrade_canister(&self, args: InstallArgs) {
+        self.env.tick();
+        // Avoid `CanisterInstallCodeRateLimited` error
+        self.env.advance_time(Duration::from_secs(600));
+        self.env.tick();
         self.env
-            .upgrade_canister(self.canister_id, evm_rpc_wasm(), Encode!(&args).unwrap())
+            .upgrade_canister(
+                self.canister_id,
+                evm_rpc_wasm(),
+                Encode!(&args).unwrap(),
+                Some(self.controller),
+            )
             .expect("Error while upgrading canister");
     }
 
@@ -141,21 +145,9 @@ impl EvmRpcSetup {
         self
     }
 
-    /// Shorthand for deriving an `EvmRpcSetup` with an anonymous caller.
-    pub fn as_anonymous(mut self) -> Self {
-        self.caller = PrincipalId::new_anonymous();
-        self
-    }
-
-    /// Shorthand for deriving an `EvmRpcSetup` with a third-party caller.
-    pub fn as_user(mut self) -> Self {
-        self.caller = PrincipalId::new_user_test_id(DEFAULT_CONTROLLER_TEST_ID);
-        self
-    }
-
     /// Shorthand for deriving an `EvmRpcSetup` with an arbitrary caller.
-    pub fn as_caller(mut self, id: PrincipalId) -> Self {
-        self.caller = id;
+    pub fn as_caller<T: Into<Principal>>(mut self, id: T) -> Self {
+        self.caller = id.into();
         self
     }
 
@@ -170,7 +162,7 @@ impl EvmRpcSetup {
     fn call_query<R: CandidType + DeserializeOwned>(&self, method: &str, input: Vec<u8>) -> R {
         let candid = &assert_reply(
             self.env
-                .query_as(self.caller, self.canister_id, method, input)
+                .query_call(self.canister_id, self.caller, method, input)
                 .unwrap_or_else(|err| panic!("error during query call to `{}()`: {}", method, err)),
         );
         Decode!(candid, R).expect("error while decoding Candid response from query call")
@@ -178,7 +170,7 @@ impl EvmRpcSetup {
 
     pub fn tick_until_http_request(&self) {
         for _ in 0..MAX_TICKS {
-            if !self.env.canister_http_request_contexts().is_empty() {
+            if !self.env.get_canister_http().is_empty() {
                 break;
             }
             self.env.tick();
@@ -317,7 +309,12 @@ impl EvmRpcSetup {
         let response = Decode!(
             &assert_reply(
                 self.env
-                    .query(self.canister_id, "http_request", Encode!(&request).unwrap(),)
+                    .query_call(
+                        self.canister_id,
+                        Principal::anonymous(),
+                        "http_request",
+                        Encode!(&request).unwrap()
+                    )
                     .expect("failed to get minter info")
             ),
             HttpResponse
@@ -332,7 +329,7 @@ impl EvmRpcSetup {
 pub struct CallFlow<R> {
     setup: EvmRpcSetup,
     method: String,
-    message_id: MessageId,
+    message_id: RawMessageId,
     phantom: PhantomData<R>,
 }
 
@@ -340,11 +337,12 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
     pub fn from_update(setup: EvmRpcSetup, method: &str, input: Vec<u8>) -> Self {
         let message_id = setup
             .env
-            .send_ingress(setup.caller, setup.canister_id, method, input);
+            .submit_call(setup.canister_id, setup.caller, method, input)
+            .expect("failed to submit call");
         CallFlow::new(setup, method, message_id)
     }
 
-    pub fn new(setup: EvmRpcSetup, method: impl ToString, message_id: MessageId) -> Self {
+    pub fn new(setup: EvmRpcSetup, method: impl ToString, message_id: RawMessageId) -> Self {
         Self {
             setup,
             method: method.to_string(),
@@ -385,96 +383,30 @@ impl<R: CandidType + DeserializeOwned> CallFlow<R> {
     }
 
     fn try_mock_http_inner(&self, mock: &MockOutcall) -> bool {
-        if self.setup.env.canister_http_request_contexts().is_empty() {
+        if self.setup.env.get_canister_http().is_empty() {
             self.setup.tick_until_http_request();
         }
-        match self.setup.env.ingress_status(&self.message_id) {
-            IngressStatus::Known { state, .. } if state != IngressState::Processing => {
-                return false
-            }
-            _ => (),
-        }
-        let contexts = self.setup.env.canister_http_request_contexts();
-        let (id, context) = match contexts.first_key_value() {
-            Some(kv) => kv,
+        let http_requests = self.setup.env.get_canister_http();
+        let request = match http_requests.first() {
+            Some(request) => request,
             None => return false,
         };
+        mock.assert_matches(request);
 
-        mock.assert_matches(&CanisterHttpRequestArgument {
-            url: context.url.clone(),
-            max_response_bytes: context.max_response_bytes.map(|n| n.get()),
-            // Convert HTTP method type by name
-            method: serde_json::from_str(
-                &serde_json::to_string(&context.http_method)
-                    .unwrap()
-                    .to_lowercase(),
-            )
-            .unwrap(),
-            headers: context
-                .headers
-                .iter()
-                .map(|h| HttpHeader {
-                    name: h.name.clone(),
-                    value: h.value.clone(),
-                })
-                .collect(),
-            body: context.body.clone(),
-            transform: context.transform.clone().map(|t| TransformContext {
-                context: t.context,
-                function: TransformFunc::new(self.setup.canister_id.get().0, t.method_name),
-            }),
-        });
-        let mut response = OutCallHttpResponse {
-            status: mock.response.status.clone(),
-            headers: mock.response.headers.clone(),
-            body: mock.response.body.clone(),
+        let response = MockCanisterHttpResponse {
+            subnet_id: request.subnet_id,
+            request_id: request.request_id,
+            response: CanisterHttpResponse::CanisterHttpReply(mock.response.clone()),
+            additional_responses: vec![],
         };
-        if let Some(transform) = &context.transform {
-            let transform_args = TransformArgs {
-                response,
-                context: transform.context.to_vec(),
-            };
-            response = Decode!(
-                &assert_reply(
-                    self.setup
-                        .env
-                        .execute_ingress(
-                            self.setup.canister_id,
-                            transform.method_name.clone(),
-                            Encode!(&transform_args).unwrap(),
-                        )
-                        .expect("failed to query transform HTTP response")
-                ),
-                OutCallHttpResponse
-            )
-            .unwrap();
-        }
-        let http_response = CanisterHttpResponsePayload {
-            status: response.status.0.try_into().unwrap(),
-            headers: response
-                .headers
-                .into_iter()
-                .map(|h| ic_ic00_types::HttpHeader {
-                    name: h.name,
-                    value: h.value,
-                })
-                .collect(),
-            body: response.body,
-        };
-        let payload = PayloadBuilder::new().http_response(*id, &http_response);
-        self.setup.env.execute_payload(payload);
+        self.setup.env.mock_canister_http_response(response);
         true
     }
 
     pub fn wait(self) -> R {
-        let candid = &assert_reply(
-            self.setup
-                .env
-                .await_ingress(self.message_id, MAX_TICKS)
-                .unwrap_or_else(|err| {
-                    panic!("error during update call to `{}()`: {}", self.method, err)
-                }),
-        );
+        let candid = &assert_reply(self.setup.env.await_call(self.message_id).unwrap_or_else(
+            |err| panic!("error during update call to `{}()`: {}", self.method, err),
+        ));
         Decode!(candid, R).expect("error while decoding Candid response from update call")
     }
 }
@@ -515,7 +447,7 @@ fn mock_request_should_succeed_with_url() {
 
 #[test]
 fn mock_request_should_succeed_with_method() {
-    mock_request(|builder| builder.with_method(HttpMethod::POST))
+    mock_request(|builder| builder.with_method(CanisterHttpMethod::POST))
 }
 
 #[test]
@@ -543,7 +475,7 @@ fn mock_request_should_succeed_with_all() {
     mock_request(|builder| {
         builder
             .with_url(MOCK_REQUEST_URL)
-            .with_method(HttpMethod::POST)
+            .with_method(CanisterHttpMethod::POST)
             .with_request_headers(vec![
                 (CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE),
                 ("Custom", "Value"),
@@ -561,7 +493,7 @@ fn mock_request_should_fail_with_url() {
 #[test]
 #[should_panic(expected = "assertion `left == right` failed")]
 fn mock_request_should_fail_with_method() {
-    mock_request(|builder| builder.with_method(HttpMethod::GET))
+    mock_request(|builder| builder.with_method(CanisterHttpMethod::GET))
 }
 
 #[test]
@@ -1499,10 +1431,10 @@ fn should_use_custom_response_size_estimate() {
 
 #[test]
 fn should_use_fallback_public_url() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let authorized_caller = ADDITIONAL_TEST_ID;
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
-        manage_api_keys: Some(vec![authorized_caller.0]),
+        manage_api_keys: Some(vec![authorized_caller]),
         ..Default::default()
     });
     let response = setup
@@ -1526,10 +1458,10 @@ fn should_use_fallback_public_url() {
 
 #[test]
 fn should_insert_api_keys() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let authorized_caller = ADDITIONAL_TEST_ID;
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
-        manage_api_keys: Some(vec![authorized_caller.0]),
+        manage_api_keys: Some(vec![authorized_caller]),
         ..Default::default()
     });
     let provider_id = 1;
@@ -1560,10 +1492,10 @@ fn should_insert_api_keys() {
 
 #[test]
 fn should_update_api_key() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let authorized_caller = ADDITIONAL_TEST_ID;
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
-        manage_api_keys: Some(vec![authorized_caller.0]),
+        manage_api_keys: Some(vec![authorized_caller]),
         ..Default::default()
     })
     .as_caller(authorized_caller);
@@ -1610,10 +1542,10 @@ fn should_update_api_key() {
 
 #[test]
 fn should_update_bearer_token() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let authorized_caller = ADDITIONAL_TEST_ID;
     let setup = EvmRpcSetup::with_args(InstallArgs {
         demo: Some(true),
-        manage_api_keys: Some(vec![authorized_caller.0]),
+        manage_api_keys: Some(vec![authorized_caller]),
         ..Default::default()
     });
     let provider_id = 8; // Alchemy / mainnet
@@ -1733,7 +1665,7 @@ fn upgrade_should_keep_demo() {
                 1000
             )
             .unwrap(),
-        0
+        0_u32
     );
     setup.upgrade_canister(InstallArgs::default());
     assert_eq!(
@@ -1744,7 +1676,7 @@ fn upgrade_should_keep_demo() {
                 1000
             )
             .unwrap(),
-        0
+        0_u32
     );
 }
 
@@ -1762,7 +1694,7 @@ fn upgrade_should_change_demo() {
                 1000
             )
             .unwrap(),
-        0
+        0_u32
     );
     setup.upgrade_canister(InstallArgs {
         demo: Some(false),
@@ -1776,15 +1708,15 @@ fn upgrade_should_change_demo() {
                 1000
             )
             .unwrap(),
-        0
+        0_u32
     );
 }
 
 #[test]
 fn upgrade_should_keep_manage_api_key_principals() {
-    let authorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let authorized_caller = ADDITIONAL_TEST_ID;
     let setup = EvmRpcSetup::with_args(InstallArgs {
-        manage_api_keys: Some(vec![authorized_caller.0]),
+        manage_api_keys: Some(vec![authorized_caller]),
         ..Default::default()
     });
     setup.upgrade_canister(InstallArgs {
@@ -1799,9 +1731,9 @@ fn upgrade_should_keep_manage_api_key_principals() {
 #[test]
 #[should_panic(expected = "You are not authorized")]
 fn upgrade_should_change_manage_api_key_principals() {
-    let deauthorized_caller = PrincipalId::new_user_test_id(ADDITIONAL_TEST_ID);
+    let deauthorized_caller = ADDITIONAL_TEST_ID;
     let setup = EvmRpcSetup::with_args(InstallArgs {
-        manage_api_keys: Some(vec![deauthorized_caller.0]),
+        manage_api_keys: Some(vec![deauthorized_caller]),
         ..Default::default()
     });
     setup.upgrade_canister(InstallArgs {

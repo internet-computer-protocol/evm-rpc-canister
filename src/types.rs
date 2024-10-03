@@ -1,19 +1,17 @@
-use candid::{CandidType, Principal};
-use ic_cdk::api::management_canister::http_request::HttpHeader;
-use ic_stable_structures::{BoundedStorable, Storable};
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-use zeroize::{Zeroize, ZeroizeOnDrop};
-
-use std::borrow::Cow;
-use std::collections::HashMap;
-use std::fmt;
-
 use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, MESSAGE_FILTER_MAX_SIZE};
-
 use crate::memory::get_api_key;
 use crate::util::hostname_from_url;
 use crate::validate::validate_api_key;
+use candid::{CandidType, Principal};
+use ic_cdk::api::management_canister::http_request::HttpHeader;
+use ic_stable_structures::storable::Bound;
+use ic_stable_structures::Storable;
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
+use std::collections::HashMap;
+use std::fmt;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[derive(Clone, Debug, Default, CandidType, Deserialize)]
 pub struct InstallArgs {
@@ -167,41 +165,6 @@ impl RpcMethod {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
-pub struct BoolStorable(pub bool);
-
-impl Storable for BoolStorable {
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        assert!(
-            bytes.len() == 1,
-            "Unexpected byte length for `BoolStorable`"
-        );
-        BoolStorable(bytes[0] != 0)
-    }
-
-    fn to_bytes(&self) -> Cow<[u8]> {
-        vec![self.0 as u8].into()
-    }
-}
-
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PrincipalStorable(pub Principal);
-
-impl Storable for PrincipalStorable {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::from(self.0.as_slice())
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Self(Principal::from_slice(&bytes))
-    }
-}
-
-impl BoundedStorable for PrincipalStorable {
-    const MAX_SIZE: u32 = 29;
-    const IS_FIXED_SIZE: bool = false;
-}
-
 #[derive(Zeroize, ZeroizeOnDrop)]
 pub struct ApiKey(String);
 
@@ -235,11 +198,11 @@ impl Storable for ApiKey {
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
         Self(String::from_bytes(bytes))
     }
-}
 
-impl BoundedStorable for ApiKey {
-    const MAX_SIZE: u32 = API_KEY_MAX_SIZE;
-    const IS_FIXED_SIZE: bool = false;
+    const BOUND: Bound = Bound::Bounded {
+        max_size: API_KEY_MAX_SIZE,
+        is_fixed_size: false,
+    };
 }
 
 pub type ProviderId = u64;
@@ -392,11 +355,11 @@ impl Storable for LogFilter {
             .expect("Error while serializing `MessageFilter`")
             .into()
     }
-}
 
-impl BoundedStorable for LogFilter {
-    const IS_FIXED_SIZE: bool = true;
-    const MAX_SIZE: u32 = MESSAGE_FILTER_MAX_SIZE;
+    const BOUND: Bound = Bound::Bounded {
+        max_size: MESSAGE_FILTER_MAX_SIZE,
+        is_fixed_size: true,
+    };
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
@@ -412,39 +375,8 @@ pub enum RpcAuth {
 
 #[cfg(test)]
 mod test {
-    use candid::Principal;
+    use super::{LogFilter, RegexString};
     use ic_stable_structures::Storable;
-
-    use super::{ApiKey, BoolStorable, LogFilter, PrincipalStorable, RegexString};
-
-    #[test]
-    fn test_api_key_debug_output() {
-        let api_key = ApiKey("55555".to_string());
-        assert!(format!("{api_key:?}") == "{API_KEY}");
-    }
-
-    #[test]
-    fn test_bool_storable() {
-        for value in [true, false] {
-            let storable = BoolStorable(value);
-            assert_eq!(storable.0, BoolStorable::from_bytes(storable.to_bytes()).0);
-        }
-    }
-
-    #[test]
-    fn test_principal_storable() {
-        for value in [
-            Principal::anonymous(),
-            Principal::management_canister(),
-            Principal::from_text("7hfb6-caaaa-aaaar-qadga-cai").unwrap(),
-        ] {
-            let storable = PrincipalStorable(value);
-            assert_eq!(
-                storable.0,
-                PrincipalStorable::from_bytes(storable.to_bytes()).0
-            );
-        }
-    }
 
     #[test]
     fn test_message_filter_storable() {

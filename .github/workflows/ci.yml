@@ -37,6 +37,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
+      - name: Provision Pocket IC
+        run: bash .github/workflows/provision-pocket-ic-server.sh
+
       - uses: Swatinem/rust-cache@v2
 
       - name: Install Protoc

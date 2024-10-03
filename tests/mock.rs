@@ -1,8 +1,7 @@
-use std::collections::HashSet;
-
-use ic_cdk::api::management_canister::http_request::{
-    CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse,
+use pocket_ic::common::rest::{
+    CanisterHttpHeader, CanisterHttpMethod, CanisterHttpReply, CanisterHttpRequest,
 };
+use std::collections::BTreeSet;
 
 pub struct MockOutcallBody(pub Vec<u8>);
 
@@ -33,15 +32,15 @@ impl MockOutcallBuilder {
             request_headers: None,
             request_body: None,
             max_response_bytes: None,
-            response: HttpResponse {
-                status: status.into(),
+            response: CanisterHttpReply {
+                status,
                 headers: vec![],
                 body: body.into().0,
             },
         })
     }
 
-    pub fn with_method(mut self, method: HttpMethod) -> Self {
+    pub fn with_method(mut self, method: CanisterHttpMethod) -> Self {
         self.0.method = Some(method);
         self
     }
@@ -55,7 +54,7 @@ impl MockOutcallBuilder {
         self.0.request_headers = Some(
             headers
                 .into_iter()
-                .map(|(name, value)| HttpHeader {
+                .map(|(name, value)| CanisterHttpHeader {
                     name: name.to_string(),
                     value: value.to_string(),
                 })
@@ -75,7 +74,10 @@ impl MockOutcallBuilder {
     }
 
     pub fn with_response_header(mut self, name: String, value: String) -> Self {
-        self.0.response.headers.push(HttpHeader { name, value });
+        self.0
+            .response
+            .headers
+            .push(CanisterHttpHeader { name, value });
         self
     }
 
@@ -92,46 +94,33 @@ impl From<MockOutcallBuilder> for MockOutcall {
 
 #[derive(Clone, Debug)]
 pub struct MockOutcall {
-    pub method: Option<HttpMethod>,
+    pub method: Option<CanisterHttpMethod>,
     pub url: Option<String>,
-    pub request_headers: Option<Vec<HttpHeader>>,
+    pub request_headers: Option<Vec<CanisterHttpHeader>>,
     pub request_body: Option<Vec<u8>>,
     pub max_response_bytes: Option<u64>,
-    pub response: HttpResponse,
+    pub response: CanisterHttpReply,
 }
 
 impl MockOutcall {
-    pub fn assert_matches(&self, request: &CanisterHttpRequestArgument) {
+    pub fn assert_matches(&self, request: &CanisterHttpRequest) {
         if let Some(ref url) = self.url {
             assert_eq!(url, &request.url);
         }
         if let Some(ref method) = self.method {
-            assert_eq!(method, &request.method);
+            assert_eq!(method, &request.http_method);
         }
         if let Some(ref headers) = self.request_headers {
             assert_eq!(
-                headers.iter().collect::<HashSet<_>>(),
-                request.headers.iter().collect::<HashSet<_>>()
+                headers.iter().collect::<BTreeSet<_>>(),
+                request.headers.iter().collect::<BTreeSet<_>>()
             );
         }
         if let Some(ref body) = self.request_body {
-            assert_eq!(body, &request.body.as_deref().unwrap_or_default());
+            assert_eq!(body, &request.body);
         }
         if let Some(max_response_bytes) = self.max_response_bytes {
             assert_eq!(Some(max_response_bytes), request.max_response_bytes);
-        }
-    }
-}
-
-impl From<HttpResponse> for MockOutcall {
-    fn from(response: HttpResponse) -> Self {
-        Self {
-            method: None,
-            url: None,
-            request_headers: None,
-            request_body: None,
-            max_response_bytes: None,
-            response,
         }
     }
 }
