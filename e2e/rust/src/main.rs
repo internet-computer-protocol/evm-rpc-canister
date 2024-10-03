@@ -1,19 +1,30 @@
-use candid::candid_method;
+use std::str::FromStr;
+
+use candid::{candid_method, Principal};
 use ic_cdk_macros::update;
 
-mod declarations;
-
-use declarations::EVM_RPC_STAGING::{
-    BlockTag, EthMainnetService, GetBlockByNumberResult, MultiGetBlockByNumberResult,
-    ProviderError, RpcError, RpcService, RpcServices, EVM_RPC_STAGING as evm_rpc,
+use evm_rpc_types::{
+    Block, BlockTag, EthMainnetService, Hex32, MultiRpcResult, ProviderError, RpcError, RpcService,
+    RpcServices,
 };
 
 fn main() {}
+
+#[cfg(target_arch = "wasm32")]
+const CANISTER_ID: Option<&str> = Some(std::env!(
+    "CANISTER_ID_EVM_RPC_STAGING",
+    "Unspecified canister ID environment variable"
+));
+#[cfg(not(target_arch = "wasm32"))]
+const CANISTER_ID: Option<&str> = None;
 
 #[update]
 #[candid_method(update)]
 pub async fn test() {
     assert!(ic_cdk::api::is_controller(&ic_cdk::caller()));
+
+    let canister_id = Principal::from_str(CANISTER_ID.unwrap())
+        .expect("Error parsing canister ID environment variable");
 
     // Define request parameters
     let params = (
@@ -24,7 +35,7 @@ pub async fn test() {
 
     // Get cycles cost
     let (cycles_result,): (Result<u128, RpcError>,) =
-        ic_cdk::api::call::call(evm_rpc.0, "requestCost", params.clone())
+        ic_cdk::api::call::call(canister_id, "requestCost", params.clone())
             .await
             .unwrap();
     let cycles = cycles_result
@@ -32,7 +43,7 @@ pub async fn test() {
 
     // Call without sending cycles
     let (result_without_cycles,): (Result<String, RpcError>,) =
-        ic_cdk::api::call::call(evm_rpc.0, "request", params.clone())
+        ic_cdk::api::call::call(canister_id, "request", params.clone())
             .await
             .unwrap();
     match result_without_cycles {
@@ -45,7 +56,7 @@ pub async fn test() {
 
     // Call with expected number of cycles
     let (result,): (Result<String, RpcError>,) =
-        ic_cdk::api::call::call_with_payment128(evm_rpc.0, "request", params, cycles)
+        ic_cdk::api::call::call_with_payment128(canister_id, "request", params, cycles)
             .await
             .unwrap();
     match result {
@@ -61,8 +72,8 @@ pub async fn test() {
     }
 
     // Call a Candid-RPC method
-    let (results,): (MultiGetBlockByNumberResult,) = ic_cdk::api::call::call_with_payment128(
-        evm_rpc.0,
+    let (results,): (MultiRpcResult<Block>,) = ic_cdk::api::call::call_with_payment128(
+        canister_id,
         "eth_getBlockByNumber",
         (
             RpcServices::EthMainnet(Some(vec![
@@ -79,18 +90,19 @@ pub async fn test() {
     .await
     .unwrap();
     match results {
-        MultiGetBlockByNumberResult::Consistent(result) => match result {
-            GetBlockByNumberResult::Ok(block) => {
+        MultiRpcResult::Consistent(result) => match result {
+            Ok(block) => {
                 assert_eq!(
                     block.hash,
-                    "0x114755458f57fe1a81e7b03e038ad00f9a675681c8b94cf102c30a84c5545c76"
+                    Hex32::from_str(
+                        "0x114755458f57fe1a81e7b03e038ad00f9a675681c8b94cf102c30a84c5545c76"
+                    )
+                    .unwrap()
                 );
             }
-            GetBlockByNumberResult::Err(err) => {
-                ic_cdk::trap(&format!("error in `eth_getBlockByNumber`: {:?}", err))
-            }
+            Err(err) => ic_cdk::trap(&format!("error in `eth_getBlockByNumber`: {:?}", err)),
         },
-        MultiGetBlockByNumberResult::Inconsistent(results) => ic_cdk::trap(&format!(
+        MultiRpcResult::Inconsistent(results) => ic_cdk::trap(&format!(
             "inconsistent results in `eth_getBlockByNumber`: {:?}",
             results
         )),
