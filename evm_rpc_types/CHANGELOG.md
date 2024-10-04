@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - v1.0.0 Move `InstallArgs` and associated types to this crate.
+- v1.0.0 Move `Provider` and associated types to this crate.
 - v1.0.0 `Nat256`: transparent wrapper around a `Nat` to guarantee that it fits in 256 bits.
 - v1.0.0 `HexByte`, `Hex20`, `Hex32`, `Hex256` and `Hex` : Candid types wrapping an amount of bytes (`u8` for `HexByte`,
   `[u8; N]` for `HexN`, and `Vec<u8>` for `Hex`) that can be represented as an hexadecimal string (prefixed by `0x`)

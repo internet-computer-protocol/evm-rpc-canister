@@ -214,11 +214,9 @@ impl<'a> From<&'a ConstHeader> for HttpHeader {
 }
 
 /// Internal RPC provider representation.
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Provider {
-    #[serde(rename = "providerId")]
     pub provider_id: ProviderId,
-    #[serde(rename = "chainId")]
     pub chain_id: u64,
     pub access: RpcAccess,
     pub alias: Option<evm_rpc_types::RpcService>,
@@ -271,16 +269,14 @@ impl Provider {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RpcAccess {
     Authenticated {
         auth: RpcAuth,
         /// Public URL to use when the API key is not available.
-        #[serde(rename = "publicUrl")]
         public_url: Option<&'static str>,
     },
     Unauthenticated {
-        #[serde(rename = "publicUrl")]
         public_url: &'static str,
     },
 }
@@ -352,13 +348,13 @@ impl LogFilter {
 }
 
 impl Storable for LogFilter {
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        serde_json::from_slice(&bytes).expect("Error while deserializing `LogFilter`")
-    }
     fn to_bytes(&self) -> Cow<[u8]> {
         serde_json::to_vec(self)
             .expect("Error while serializing `LogFilter`")
             .into()
+    }
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        serde_json::from_slice(&bytes).expect("Error while deserializing `LogFilter`")
     }
 
     const BOUND: Bound = Bound::Bounded {
@@ -367,13 +363,14 @@ impl Storable for LogFilter {
     };
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RpcAuth {
     /// API key will be used in an Authorization header as Bearer token, e.g.,
     /// `Authorization: Bearer API_KEY`
-    BearerToken { url: &'static str },
+    BearerToken {
+        url: &'static str,
+    },
     UrlParameter {
-        #[serde(rename = "urlPattern")]
         url_pattern: &'static str,
     },
 }

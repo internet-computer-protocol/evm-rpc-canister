@@ -155,7 +155,7 @@ pub enum RpcService {
     OptimismMainnet(L2MainnetService),
 }
 
-impl std::fmt::Debug for RpcService {
+impl Debug for RpcService {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             RpcService::Provider(provider_id) => write!(f, "Provider({})", provider_id),
@@ -167,4 +167,39 @@ impl std::fmt::Debug for RpcService {
             | RpcService::OptimismMainnet(service) => write!(f, "{:?}", service),
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+pub struct Provider {
+    #[serde(rename = "providerId")]
+    pub provider_id: u64,
+    #[serde(rename = "chainId")]
+    pub chain_id: u64,
+    pub access: RpcAccess,
+    pub alias: Option<RpcService>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+pub enum RpcAccess {
+    Authenticated {
+        auth: RpcAuth,
+        /// Public URL to use when the API key is not available.
+        #[serde(rename = "publicUrl")]
+        public_url: Option<String>,
+    },
+    Unauthenticated {
+        #[serde(rename = "publicUrl")]
+        public_url: String,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+pub enum RpcAuth {
+    /// API key will be used in an Authorization header as Bearer token, e.g.,
+    /// `Authorization: Bearer API_KEY`
+    BearerToken { url: String },
+    UrlParameter {
+        #[serde(rename = "urlPattern")]
+        url_pattern: String,
+    },
 }

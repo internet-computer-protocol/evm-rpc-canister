@@ -10,14 +10,14 @@ use evm_rpc::memory::{
 };
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
-use evm_rpc::types::{LogFilter, Provider, ProviderId, RpcAccess};
+use evm_rpc::types::{LogFilter, Provider, ProviderId, RpcAccess, RpcAuth};
 use evm_rpc::{
     http::{json_rpc_request, transform_http_request},
     http_types,
     memory::UNSTABLE_METRICS,
     types::{MetricRpcMethod, Metrics},
 };
-use evm_rpc_types::{Hex32, InstallArgs, MultiRpcResult, RpcResult};
+use evm_rpc_types::{Hex32, MultiRpcResult, RpcResult};
 use ic_canister_log::log;
 use ic_cdk::api::is_controller;
 use ic_cdk::api::management_canister::http_request::{HttpResponse, TransformArgs};
@@ -151,8 +151,37 @@ fn request_cost(
 
 #[query(name = "getProviders")]
 #[candid_method(query, rename = "getProviders")]
-fn get_providers() -> Vec<Provider> {
-    PROVIDERS.to_vec()
+fn get_providers() -> Vec<evm_rpc_types::Provider> {
+    fn into_provider(provider: Provider) -> evm_rpc_types::Provider {
+        evm_rpc_types::Provider {
+            provider_id: provider.provider_id,
+            chain_id: provider.chain_id,
+            access: match provider.access {
+                RpcAccess::Authenticated { auth, public_url } => {
+                    evm_rpc_types::RpcAccess::Authenticated {
+                        auth: match auth {
+                            RpcAuth::BearerToken { url } => evm_rpc_types::RpcAuth::BearerToken {
+                                url: url.to_string(),
+                            },
+                            RpcAuth::UrlParameter { url_pattern } => {
+                                evm_rpc_types::RpcAuth::UrlParameter {
+                                    url_pattern: url_pattern.to_string(),
+                                }
+                            }
+                        },
+                        public_url: public_url.map(|s| s.to_string()),
+                    }
+                }
+                RpcAccess::Unauthenticated { public_url } => {
+                    evm_rpc_types::RpcAccess::Unauthenticated {
+                        public_url: public_url.to_string(),
+                    }
+                }
+            },
+            alias: provider.alias,
+        }
+    }
+    PROVIDERS.iter().cloned().map(into_provider).collect()
 }
 
 #[query(name = "getServiceProviderMap")]
@@ -214,12 +243,12 @@ fn transform(args: TransformArgs) -> HttpResponse {
 }
 
 #[ic_cdk::init]
-fn init(args: InstallArgs) {
+fn init(args: evm_rpc_types::InstallArgs) {
     post_upgrade(args);
 }
 
 #[ic_cdk::post_upgrade]
-fn post_upgrade(args: InstallArgs) {
+fn post_upgrade(args: evm_rpc_types::InstallArgs) {
     if let Some(demo) = args.demo {
         set_demo_active(demo);
     }
