@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+mod lifecycle;
 mod request;
 mod response;
 mod result;
@@ -14,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 use std::str::FromStr;
 
+pub use lifecycle::{InstallArgs, LogFilter, RegexString};
 pub use request::{BlockTag, FeeHistoryArgs, GetLogsArgs, GetTransactionCountArgs};
 pub use response::{Block, FeeHistory, LogEntry, SendRawTransactionStatus, TransactionReceipt};
 pub use result::{
@@ -21,8 +23,8 @@ pub use result::{
     ValidationError,
 };
 pub use rpc_client::{
-    ConsensusStrategy, EthMainnetService, EthSepoliaService, HttpHeader, L2MainnetService, RpcApi,
-    RpcConfig, RpcService, RpcServices,
+    ConsensusStrategy, EthMainnetService, EthSepoliaService, HttpHeader, L2MainnetService,
+    Provider, RpcAccess, RpcApi, RpcAuth, RpcConfig, RpcService, RpcServices,
 };
 
 /// A `Nat` that is guaranteed to fit in 256 bits.

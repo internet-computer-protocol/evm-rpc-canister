@@ -7,12 +7,12 @@ use evm_rpc::{
     constants::{CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE},
     http_types::{HttpRequest, HttpResponse},
     providers::PROVIDERS,
-    types::{InstallArgs, Metrics, ProviderId, RpcAccess, RpcMethod},
+    types::{Metrics, ProviderId, RpcAccess, RpcMethod},
 };
 use evm_rpc_types::{
     ConsensusStrategy, EthMainnetService, EthSepoliaService, Hex, Hex20, Hex32, HttpOutcallError,
-    JsonRpcError, MultiRpcResult, Nat256, ProviderError, RpcApi, RpcConfig, RpcError, RpcResult,
-    RpcService, RpcServices,
+    InstallArgs, JsonRpcError, MultiRpcResult, Nat256, ProviderError, RpcApi, RpcConfig, RpcError,
+    RpcResult, RpcService, RpcServices,
 };
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_cdk::api::management_canister::main::CanisterId;
