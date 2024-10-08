@@ -48,6 +48,17 @@ jobs:
       - name: Cargo test
         run: unset CI && cargo test
 
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Docker build
+        run: |
+          ./scripts/docker-build
+
+
   e2e:
     runs-on: ubuntu-latest
     steps:
