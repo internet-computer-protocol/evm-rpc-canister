@@ -61,13 +61,13 @@ jobs:
       - name: Archive Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: evm-rpc-wasm
+          name: evm_rpc.wasm.gz
           path: evm_rpc.wasm.gz
 
       - name: Add summary
         run: |
-          hash=`sha256sum ./evm_rpc.wasm.gz | cut -d ' ' -f 1`
-          echo "SHA-256:hash: ${hash}" >> $GITHUB_STEP_SUMMARY
+          hash=`sha256sum evm_rpc.wasm.gz`
+          echo "SHA-256 :hash: ${hash}" >> $GITHUB_STEP_SUMMARY
           
           
 
