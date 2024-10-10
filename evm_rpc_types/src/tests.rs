@@ -40,6 +40,14 @@ mod nat256 {
         }
     }
 
+    #[test]
+    fn should_have_transparent_debug_and_display_representation() {
+        let number = Nat256::from(0x68802B_u32);
+
+        assert_eq!(format!("{:?}", number), "6848555");
+        assert_eq!(format!("{}", number), "6848555");
+    }
+
     fn encode_decode_roundtrip(value: BigUint) {
         let nat = Nat::from(value);
         let encoded_nat = Encode!(&nat).unwrap();
@@ -104,6 +112,20 @@ mod hex_string {
             expect_decoding_error::<Hex256>(&short_hex256)?;
             expect_decoding_error::<Hex256>(&long_hex256)?;
         }
+    }
+
+    #[test]
+    fn should_have_ethereum_style_debug_format() {
+        let hex = Hex32::from([
+            115, 166, 64, 150, 180, 39, 93, 36, 71, 160, 156, 224, 104, 32, 54, 11, 239, 30, 208,
+            187, 226, 23, 212, 37, 216, 38, 46, 98, 221, 154, 234, 158,
+        ]);
+        let hex_debug = format!("{:?}", hex);
+
+        assert_eq!(
+            hex_debug,
+            "0x73a64096b4275d2447a09ce06820360bef1ed0bbe217d425d8262e62dd9aea9e"
+        )
     }
 
     #[test]
