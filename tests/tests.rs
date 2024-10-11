@@ -56,6 +56,7 @@ const RPC_SERVICES: &[RpcServices] = &[
 const ANKR_HOSTNAME: &str = "rpc.ankr.com";
 const ALCHEMY_ETH_MAINNET_HOSTNAME: &str = "eth-mainnet.g.alchemy.com";
 const CLOUDFLARE_HOSTNAME: &str = "cloudflare-eth.com";
+const BLOCKPI_ETH_HOSTNAME: &str = "ethereum.blockpi.network";
 const BLOCKPI_ETH_SEPOLIA_HOSTNAME: &str = "ethereum-sepolia.blockpi.network";
 const PUBLICNODE_ETH_MAINNET_HOSTNAME: &str = "ethereum-rpc.publicnode.com";
 
@@ -963,12 +964,12 @@ fn candid_rpc_should_err_when_service_unavailable() {
         setup.get_metrics(),
         Metrics {
             requests: hashmap! {
-                (rpc_method(), ANKR_HOSTNAME.into()) => 1,
+                (rpc_method(), BLOCKPI_ETH_HOSTNAME.into()) => 1,
                 (rpc_method(), CLOUDFLARE_HOSTNAME.into()) => 1,
                 (rpc_method(), PUBLICNODE_ETH_MAINNET_HOSTNAME.into()) => 1,
             },
             responses: hashmap! {
-                (rpc_method(), ANKR_HOSTNAME.into(), 503.into()) => 1,
+                (rpc_method(), BLOCKPI_ETH_HOSTNAME.into(), 503.into()) => 1,
                 (rpc_method(), CLOUDFLARE_HOSTNAME.into(), 503.into()) => 1,
                 (rpc_method(), PUBLICNODE_ETH_MAINNET_HOSTNAME.into(), 503.into()) => 1,
             },
