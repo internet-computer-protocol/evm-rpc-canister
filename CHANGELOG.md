@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* chore: changelog file
+* v2.1.0 chore: changelog file
+
+### Changed
+
+* v2.1.0 refactor: Remove Ankr as a default provider 
+
 
 ## [2.0.0] - 2024-10-08
 
