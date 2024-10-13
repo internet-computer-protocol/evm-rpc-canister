@@ -17,9 +17,9 @@ SHA-256 hash: `5c49768f03f075ffd87f0f20d849897e03db58d05fb0d12f1a340b2a5f1e4f65`
 
 ### Summary
 
-This release bring the main following changes (see details below)
+This release brings the following main changes (see details below)
 
-1. RPC providers are immutable (#244). The following [post](https://forum.dfinity.org/t/evm-rpc-canister/23313/53) explains in more details the motivation behind this change.
+1. RPC providers are immutable (#244). The following [post](https://forum.dfinity.org/t/evm-rpc-canister/23313/53) explains in more detail the motivation behind this change.
 2. Caller can now choose between equality or a threshold consensus strategy to aggregate responses from multiple providers (#284).
 3. Optional canister logs (#201).
 4. All (productive) dependencies on the IC repository were removed (mainly #243).
