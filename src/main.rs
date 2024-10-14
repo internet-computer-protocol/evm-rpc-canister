@@ -237,7 +237,7 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
     }
 }
 
-#[query(name = "__transform_json_rpc")]
+#[query(name = "__transform_json_rpc", hidden = true)]
 fn transform(args: TransformArgs) -> HttpResponse {
     transform_http_request(args)
 }
@@ -260,7 +260,7 @@ fn post_upgrade(args: evm_rpc_types::InstallArgs) {
     }
 }
 
-#[query]
+#[query(hidden = true)]
 fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     match request.path() {
         "/metrics" => {
@@ -378,7 +378,7 @@ mod test {
             }
         }
 
-        fn check_service_compatible(
+        fn check_service_equal(
             new_name: &str,
             new: candid_parser::utils::CandidSource,
             old_name: &str,
@@ -386,11 +386,11 @@ mod test {
         ) {
             let new_str = source_to_str(&new);
             let old_str = source_to_str(&old);
-            match candid_parser::utils::service_compatible(new, old) {
+            match candid_parser::utils::service_equal(new, old) {
                 Ok(_) => {}
                 Err(e) => {
                     eprintln!(
-                        "{} is not compatible with {}!\n\n\
+                        "{} is not equal with {}!\n\n\
             {}:\n\
             {}\n\n\
             {}:\n\
@@ -409,7 +409,7 @@ mod test {
         let old_interface = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
             .join("candid/evm_rpc.did");
 
-        check_service_compatible(
+        check_service_equal(
             "actual ledger candid interface",
             candid_parser::utils::CandidSource::Text(&new_interface),
             "declared candid interface in evm_rpc.did file",
