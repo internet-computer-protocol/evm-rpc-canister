@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use std::fmt::Debug;
 
@@ -53,9 +56,18 @@ pub struct RpcApi {
     pub headers: Option<Vec<HttpHeader>>,
 }
 
+impl RpcApi {
+    pub fn host_str(&self) -> Option<String> {
+        url::Url::parse(&self.url)
+            .ok()
+            .and_then(|u| u.host_str().map(|host| host.to_string()))
+    }
+}
+
 impl Debug for RpcApi {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "RpcApi {{ url: ***, headers: *** }}",) //URL or header value could contain API keys
+        let host = self.host_str().unwrap_or("N/A".to_string());
+        write!(f, "RpcApi {{ host: {}, url/headers: *** }}", host) //URL or header value could contain API keys
     }
 }
 
