@@ -278,6 +278,15 @@ impl EvmRpcSetup {
         )
     }
 
+    pub fn eth_call(
+        &self,
+        source: RpcServices,
+        config: Option<evm_rpc_types::RpcConfig>,
+        args: evm_rpc_types::CallArgs,
+    ) -> CallFlow<MultiRpcResult<evm_rpc_types::Hex>> {
+        self.call_update("eth_call", Encode!(&source, &config, &args).unwrap())
+    }
+
     pub fn update_api_keys(&self, api_keys: &[(ProviderId, Option<String>)]) {
         self.call_update("updateApiKeys", Encode!(&api_keys).unwrap())
             .wait()
@@ -887,6 +896,43 @@ fn eth_send_raw_transaction_should_succeed() {
             evm_rpc_types::SendRawTransactionStatus::Ok(Some(
                 Hex32::from_str(MOCK_TRANSACTION_HASH).unwrap()
             ))
+        );
+    }
+}
+
+#[test]
+fn eth_call_should_succeed() {
+    let call_args = evm_rpc_types::CallArgs {
+        transaction: evm_rpc_types::TransactionRequest {
+            to: Some(
+                "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+                    .parse()
+                    .unwrap(),
+            ),
+            input: Some(
+                "0x70a08231000000000000000000000000b25eA1D493B49a1DeD42aC5B1208cC618f9A9B80"
+                    .parse()
+                    .unwrap(),
+            ),
+            ..evm_rpc_types::TransactionRequest::default()
+        },
+        block: Some(evm_rpc_types::BlockTag::Latest),
+    };
+    for source in RPC_SERVICES {
+        let setup = EvmRpcSetup::new().mock_api_keys();
+        let response = setup
+            .eth_call(source.clone(), None, call_args.clone())
+            .mock_http(MockOutcallBuilder::new(
+                200,
+                r#"{"jsonrpc":"2.0","result":"0x0000000000000000000000000000000000000000000000000000013c3ee36e89","id":1}"#,
+            ))
+            .wait()
+            .expect_consistent()
+            .unwrap();
+        assert_eq!(
+            response,
+            Hex::from_str("0x0000000000000000000000000000000000000000000000000000013c3ee36e89")
+                .unwrap()
         );
     }
 }
