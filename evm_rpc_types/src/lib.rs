@@ -16,7 +16,10 @@ use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
 pub use lifecycle::{InstallArgs, LogFilter, RegexString};
-pub use request::{BlockTag, FeeHistoryArgs, GetLogsArgs, GetTransactionCountArgs};
+pub use request::{
+    AccessList, AccessListEntry, BlockTag, CallArgs, FeeHistoryArgs, GetLogsArgs,
+    GetTransactionCountArgs, TransactionRequest,
+};
 pub use response::{Block, FeeHistory, LogEntry, SendRawTransactionStatus, TransactionReceipt};
 pub use result::{
     HttpOutcallError, JsonRpcError, MultiRpcResult, ProviderError, RpcError, RpcResult,

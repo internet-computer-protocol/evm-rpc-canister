@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * v2.1.0 chore: changelog file
+* v2.1.0 feat: Support for `eth_call` method
 
 ### Changed
 

@@ -158,6 +158,13 @@ impl CandidRpcClient {
         )
         .map(|result| from_send_raw_transaction_result(transaction_hash.clone(), result))
     }
+
+    pub async fn eth_call(
+        &self,
+        args: evm_rpc_types::CallArgs,
+    ) -> MultiRpcResult<evm_rpc_types::Hex> {
+        todo!("eth_call")
+    }
 }
 
 fn get_transaction_hash(raw_signed_transaction_hex: &Hex) -> Option<Hex32> {

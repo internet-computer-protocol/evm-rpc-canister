@@ -1,4 +1,4 @@
-use crate::{Hex20, Hex32, Nat256};
+use crate::{Hex, Hex20, Hex32, HexByte, Nat256};
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -56,4 +56,80 @@ pub struct GetLogsArgs {
 pub struct GetTransactionCountArgs {
     pub address: Hex20,
     pub block: BlockTag,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
+pub struct CallArgs {
+    pub transaction: TransactionRequest,
+    pub block: Option<BlockTag>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, CandidType, Deserialize)]
+pub struct TransactionRequest {
+    /// The type of the transaction:
+    /// - "0x0" for legacy transactions (pre- EIP-2718)
+    /// - "0x1" for access list transactions (EIP-2930)
+    /// - "0x2" for EIP-1559 transactions
+    #[serde(rename = "type")]
+    pub tx_type: Option<HexByte>,
+
+    /// Transaction nonce
+    pub nonce: Option<Nat256>,
+
+    /// Address of the receiver or `None` in a contract creation transaction.
+    pub to: Option<Hex20>,
+
+    /// The address of the sender.
+    pub from: Option<Hex20>,
+
+    /// Gas limit for the transaction.
+    pub gas: Option<Nat256>,
+
+    /// Amount of ETH sent with this transaction.
+    pub value: Option<Nat256>,
+
+    /// Transaction input data
+    pub input: Option<Hex>,
+
+    /// The legacy gas price willing to be paid by the sender in wei.
+    #[serde(rename = "gasPrice")]
+    pub gas_price: Option<Nat256>,
+
+    /// Maximum fee per gas the sender is willing to pay to miners in wei.
+    #[serde(rename = "maxPriorityFeePerGas")]
+    pub max_priority_fee_per_gas: Option<Nat256>,
+
+    /// The maximum total fee per gas the sender is willing to pay (includes the network / base fee and miner / priority fee) in wei.
+    #[serde(rename = "maxFeePerGas")]
+    pub max_fee_per_gas: Option<Nat256>,
+
+    /// The maximum total fee per gas the sender is willing to pay for blob gas in wei.
+    #[serde(rename = "maxFeePerBlobGas")]
+    pub max_fee_per_blob_gas: Option<Nat256>,
+
+    /// EIP-2930 access list
+    #[serde(rename = "accessList")]
+    pub access_list: Option<AccessList>,
+
+    /// List of versioned blob hashes associated with the transaction's EIP-4844 data blobs.
+    #[serde(rename = "blobVersionedHashes")]
+    pub blob_versioned_hashes: Option<Vec<Hex32>>,
+
+    /// Raw blob data.
+    pub blobs: Option<Vec<Hex>>,
+
+    /// Chain ID that this transaction is valid on.
+    #[serde(rename = "chainId")]
+    pub chain_id: Option<Nat256>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
+#[serde(transparent)]
+pub struct AccessList(Vec<AccessListEntry>);
+
+#[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
+pub struct AccessListEntry {
+    pub address: Hex20,
+    #[serde(rename = "storageKeys")]
+    pub storage_keys: Vec<Hex32>,
 }

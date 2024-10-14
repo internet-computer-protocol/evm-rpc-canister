@@ -115,6 +115,19 @@ pub async fn eth_send_raw_transaction(
     }
 }
 
+#[update(name = "eth_call")]
+#[candid_method(rename = "eth_call")]
+pub async fn eth_call(
+    source: evm_rpc_types::RpcServices,
+    config: Option<evm_rpc_types::RpcConfig>,
+    args: evm_rpc_types::CallArgs,
+) -> MultiRpcResult<evm_rpc_types::Hex> {
+    match CandidRpcClient::new(source, config) {
+        Ok(source) => source.eth_call(args).await,
+        Err(err) => Err(err).into(),
+    }
+}
+
 #[update]
 #[candid_method]
 async fn request(
