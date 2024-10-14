@@ -54,31 +54,31 @@ pub struct Providers {
 
 impl Providers {
     const DEFAULT_ETH_MAINNET_SERVICES: &'static [EthMainnetService] = &[
-        EthMainnetService::Ankr,
+        EthMainnetService::BlockPi,
         EthMainnetService::Cloudflare,
         EthMainnetService::PublicNode,
     ];
     const NON_DEFAULT_ETH_MAINNET_SERVICES: &'static [EthMainnetService] = &[
         EthMainnetService::Alchemy,
-        EthMainnetService::BlockPi,
         EthMainnetService::Llama,
+        EthMainnetService::Ankr,
     ];
 
     const DEFAULT_ETH_SEPOLIA_SERVICES: &'static [EthSepoliaService] = &[
-        EthSepoliaService::Ankr,
+        EthSepoliaService::Sepolia,
         EthSepoliaService::BlockPi,
         EthSepoliaService::PublicNode,
     ];
     const NON_DEFAULT_ETH_SEPOLIA_SERVICES: &'static [EthSepoliaService] =
-        &[EthSepoliaService::Alchemy, EthSepoliaService::Sepolia];
+        &[EthSepoliaService::Alchemy, EthSepoliaService::Ankr];
 
     const DEFAULT_L2_MAINNET_SERVICES: &'static [L2MainnetService] = &[
-        L2MainnetService::Ankr,
+        L2MainnetService::Llama,
         L2MainnetService::BlockPi,
         L2MainnetService::PublicNode,
     ];
     const NON_DEFAULT_L2_MAINNET_SERVICES: &'static [L2MainnetService] =
-        &[L2MainnetService::Alchemy, L2MainnetService::Llama];
+        &[L2MainnetService::Alchemy, L2MainnetService::Ankr];
 
     pub fn new(source: RpcServices, strategy: ConsensusStrategy) -> Result<Self, ProviderError> {
         let (chain, providers): (_, BTreeSet<_>) = match source {
