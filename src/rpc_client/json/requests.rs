@@ -162,56 +162,69 @@ impl From<EthCallParams> for (TransactionRequest, BlockSpec) {
 #[derive(Debug, Serialize, Clone)]
 pub struct TransactionRequest {
     /// The type of the transaction (e.g. "0x0" for legacy transactions, "0x2" for EIP-1559 transactions)
-    #[serde(rename = "type")]
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
     pub tx_type: Option<JsonByte>,
 
     /// Transaction nonce
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub nonce: Option<TransactionNonce>,
 
     /// Address of the receiver or `None` in a contract creation transaction.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub to: Option<Address>,
 
     /// The address of the sender.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub from: Option<Address>,
 
     /// Gas limit for the transaction.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub gas: Option<GasAmount>,
 
     /// Amount of ETH sent with this transaction.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<Wei>,
 
     /// Transaction input data
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub input: Option<Data>,
 
     /// The legacy gas price willing to be paid by the sender in wei.
-    #[serde(rename = "gasPrice")]
+    #[serde(rename = "gasPrice", skip_serializing_if = "Option::is_none")]
     pub gas_price: Option<WeiPerGas>,
 
     /// Maximum fee per gas the sender is willing to pay to miners in wei.
-    #[serde(rename = "maxPriorityFeePerGas")]
+    #[serde(
+        rename = "maxPriorityFeePerGas",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub max_priority_fee_per_gas: Option<WeiPerGas>,
 
     /// The maximum total fee per gas the sender is willing to pay (includes the network / base fee and miner / priority fee) in wei.
-    #[serde(rename = "maxFeePerGas")]
+    #[serde(rename = "maxFeePerGas", skip_serializing_if = "Option::is_none")]
     pub max_fee_per_gas: Option<WeiPerGas>,
 
     /// The maximum total fee per gas the sender is willing to pay for blob gas in wei.
-    #[serde(rename = "maxFeePerBlobGas")]
+    #[serde(rename = "maxFeePerBlobGas", skip_serializing_if = "Option::is_none")]
     pub max_fee_per_blob_gas: Option<WeiPerGas>,
 
     /// EIP-2930 access list
-    #[serde(rename = "accessList")]
+    #[serde(rename = "accessList", skip_serializing_if = "Option::is_none")]
     pub access_list: Option<AccessList>,
 
     /// List of versioned blob hashes associated with the transaction's EIP-4844 data blobs.
-    #[serde(rename = "blobVersionedHashes")]
+    #[serde(
+        rename = "blobVersionedHashes",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub blob_versioned_hashes: Option<Vec<Hash>>,
 
     /// Raw blob data.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub blobs: Option<Vec<Data>>,
 
     /// Chain ID that this transaction is valid on.
-    #[serde(rename = "chainId")]
+    #[serde(rename = "chainId", skip_serializing_if = "Option::is_none")]
     pub chain_id: Option<ChainId>,
 }
 
