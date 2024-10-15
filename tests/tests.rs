@@ -1,5 +1,6 @@
 mod mock;
 
+use crate::mock::MockJsonRequestBody;
 use assert_matches::assert_matches;
 use candid::{CandidType, Decode, Encode, Nat, Principal};
 use evm_rpc::logs::{Log, LogEntry};
@@ -24,6 +25,7 @@ use pocket_ic::common::rest::{
 };
 use pocket_ic::{CanisterSettings, PocketIc, WasmResult};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde_json::json;
 use std::sync::Arc;
 use std::{marker::PhantomData, str::FromStr, time::Duration};
 
@@ -472,7 +474,7 @@ fn mock_request_should_succeed_with_request_headers() {
 
 #[test]
 fn mock_request_should_succeed_with_request_body() {
-    mock_request(|builder| builder.with_request_body(MOCK_REQUEST_PAYLOAD))
+    mock_request(|builder| builder.with_raw_request_body(MOCK_REQUEST_PAYLOAD))
 }
 
 #[test]
@@ -490,7 +492,7 @@ fn mock_request_should_succeed_with_all() {
                 (CONTENT_TYPE_HEADER_LOWERCASE, CONTENT_TYPE_VALUE),
                 ("Custom", "Value"),
             ])
-            .with_request_body(MOCK_REQUEST_PAYLOAD)
+            .with_raw_request_body(MOCK_REQUEST_PAYLOAD)
     })
 }
 
@@ -515,7 +517,9 @@ fn mock_request_should_fail_with_request_headers() {
 #[test]
 #[should_panic(expected = "assertion `left == right` failed")]
 fn mock_request_should_fail_with_request_body() {
-    mock_request(|builder| builder.with_request_body(r#"{"different":"body"}"#))
+    mock_request(|builder| {
+        builder.with_raw_request_body(r#"{"id":1,"jsonrpc":"2.0","method":"unknown_method"}"#)
+    })
 }
 
 #[test]
