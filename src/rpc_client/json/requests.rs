@@ -3,9 +3,8 @@ use crate::rpc_client::json::{FixedSizeData, Hash, JsonByte, StorageKey};
 use crate::rpc_client::numeric::{
     BlockNumber, ChainId, GasAmount, NumBlocks, TransactionNonce, Wei, WeiPerGas,
 };
-use candid::Deserialize;
 use ic_ethereum_types::Address;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
@@ -159,7 +158,7 @@ impl From<EthCallParams> for (TransactionRequest, BlockSpec) {
     }
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TransactionRequest {
     /// The type of the transaction (e.g. "0x0" for legacy transactions, "0x2" for EIP-1559 transactions)
     #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
@@ -228,7 +227,7 @@ pub struct TransactionRequest {
     pub chain_id: Option<ChainId>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(transparent)]
 pub struct AccessList(pub Vec<AccessListItem>);
 
@@ -244,7 +243,7 @@ impl Default for AccessList {
     }
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AccessListItem {
     /// Accessed address
     pub address: Address,

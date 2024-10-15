@@ -7,6 +7,8 @@ use std::fmt::{Debug, Display, Formatter, LowerHex, UpperHex};
 
 pub mod requests;
 pub mod responses;
+#[cfg(test)]
+mod tests;
 
 macro_rules! bytes_array {
     ($name: ident, $size: expr) => {
