@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### Fixed
 
 * v2.1.1 fix: ensure Candid API is the same as the interface exposed by the canister
 
