@@ -61,6 +61,8 @@ pub struct GetTransactionCountArgs {
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
 pub struct CallArgs {
     pub transaction: TransactionRequest,
+    /// Integer block number, or "latest" for the last mined block or "pending", "earliest" for not yet mined transactions.
+    /// Default to "latest" if unspecified, see https://github.com/ethereum/execution-apis/issues/461.
     pub block: Option<BlockTag>,
 }
 
@@ -125,7 +127,7 @@ pub struct TransactionRequest {
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
 #[serde(transparent)]
-pub struct AccessList(Vec<AccessListEntry>);
+pub struct AccessList(pub Vec<AccessListEntry>);
 
 #[derive(Clone, Debug, PartialEq, Eq, CandidType, Deserialize)]
 pub struct AccessListEntry {

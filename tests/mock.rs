@@ -117,7 +117,13 @@ impl MockOutcall {
             );
         }
         if let Some(ref body) = self.request_body {
-            assert_eq!(body, &request.body);
+            assert_eq!(
+                body,
+                &request.body,
+                "request body mismatch: expected {}, got {}",
+                String::from_utf8_lossy(body),
+                String::from_utf8_lossy(&request.body)
+            );
         }
         if let Some(max_response_bytes) = self.max_response_bytes {
             assert_eq!(Some(max_response_bytes), request.max_response_bytes);

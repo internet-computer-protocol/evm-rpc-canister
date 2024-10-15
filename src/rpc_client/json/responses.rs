@@ -309,6 +309,14 @@ impl HttpResponsePayload for SendRawTransactionResult {
 #[serde(transparent)]
 pub struct Data(#[serde(with = "ic_ethereum_types::serde_data")] pub Vec<u8>);
 
+impl HttpResponsePayload for Data {}
+
+impl From<Vec<u8>> for Data {
+    fn from(data: Vec<u8>) -> Self {
+        Self(data)
+    }
+}
+
 impl AsRef<[u8]> for Data {
     fn as_ref(&self) -> &[u8] {
         &self.0

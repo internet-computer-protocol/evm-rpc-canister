@@ -245,3 +245,9 @@ impl From<u8> for HexByte {
         Self(Byte::from(value))
     }
 }
+
+impl From<HexByte> for u8 {
+    fn from(value: HexByte) -> Self {
+        value.0.into_byte()
+    }
+}

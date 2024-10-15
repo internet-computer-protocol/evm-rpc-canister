@@ -74,6 +74,7 @@ macro_rules! bytes_array {
 bytes_array!(FixedSizeData, 32);
 bytes_array!(Hash, 32);
 bytes_array!(LogsBloom, 256);
+bytes_array!(StorageKey, 32);
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]

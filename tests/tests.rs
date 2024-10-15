@@ -925,7 +925,8 @@ fn eth_call_should_succeed() {
             .mock_http(MockOutcallBuilder::new(
                 200,
                 r#"{"jsonrpc":"2.0","result":"0x0000000000000000000000000000000000000000000000000000013c3ee36e89","id":1}"#,
-            ))
+            )
+                .with_request_body(r#"{ "jsonrpc":"2.0", "method":"eth_call", "params":[{ "to": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", "input": "0x70a08231000000000000000000000000b25eA1D493B49a1DeD42aC5B1208cC618f9A9B80" }], "id":1 }"#))
             .wait()
             .expect_consistent()
             .unwrap();
