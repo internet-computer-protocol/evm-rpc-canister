@@ -906,8 +906,8 @@ fn eth_send_raw_transaction_should_succeed() {
 
 #[test]
 fn eth_call_should_succeed() {
-    const ADDRESS: &'static str = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-    const INPUT_DATA: &'static str =
+    const ADDRESS: &str = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+    const INPUT_DATA: &str =
         "0x70a08231000000000000000000000000b25eA1D493B49a1DeD42aC5B1208cC618f9A9B80";
 
     let setup = EvmRpcSetup::new().mock_api_keys();
