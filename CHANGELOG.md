@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * fix: ensure Candid API is the same as the interface exposed by the canister
+* fix: always deserialize `Block::totalDifficulty` to `None` to avoid inconsistencies between providers
 
 ## [2.1.0] - 2024-10-14
 

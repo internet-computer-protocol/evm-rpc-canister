@@ -7,15 +7,16 @@ use evm_rpc_types::{
 };
 use ic_canister_log::log;
 use json::requests::{
-    BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam, GetTransactionCountParams,
+    BlockSpec, EthCallParams, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam,
+    GetTransactionCountParams,
 };
-use json::responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult, TransactionReceipt};
+use json::responses::{
+    Block, Data, FeeHistory, LogEntry, SendRawTransactionResult, TransactionReceipt,
+};
 use json::Hash;
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
-use crate::rpc_client::json::requests::EthCallParams;
-use crate::rpc_client::json::responses::Data;
 
 pub mod amount;
 pub(crate) mod eth_rpc;
@@ -401,7 +402,7 @@ impl EthRpcClient {
         .await
         .reduce(self.consensus_strategy())
     }
-    
+
     pub async fn eth_call(&self, params: EthCallParams) -> Result<Data, MultiCallError<Data>> {
         self.parallel_call(
             "eth_call",
