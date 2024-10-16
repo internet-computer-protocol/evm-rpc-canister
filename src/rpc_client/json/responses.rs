@@ -236,13 +236,6 @@ pub struct Block {
     #[serde(rename = "timestamp")]
     pub timestamp: Timestamp,
 
-    /// Total difficulty is the sum of all difficulty values up to and including this block.
-    ///
-    /// Note: this field was removed from the official JSON-RPC specification in
-    /// https://github.com/ethereum/execution-apis/pull/570 and may no longer be served by providers.
-    #[serde(rename = "totalDifficulty")]
-    pub total_difficulty: Option<Difficulty>,
-
     /// List of transactions in the block.
     /// Note that since `eth_get_block_by_number` sets `include_full_transactions` to false,
     /// this field only contains the transaction hashes and not the full transactions.

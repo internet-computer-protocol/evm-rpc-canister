@@ -157,7 +157,10 @@ pub(super) fn from_block(value: crate::rpc_client::json::responses::Block) -> ev
         size: value.size.into(),
         state_root: Hex32::from(value.state_root.into_bytes()),
         timestamp: value.timestamp.into(),
-        total_difficulty: value.total_difficulty.map(Nat256::from),
+        // The field totalDifficulty was removed from the official Ethereum JSON RPC Block schema in
+        // https://github.com/ethereum/execution-apis/pull/570 and as a consequence is inconsistent between different providers.
+        // See https://github.com/internet-computer-protocol/evm-rpc-canister/issues/311.
+        total_difficulty: None,
         transactions: value
             .transactions
             .into_iter()
