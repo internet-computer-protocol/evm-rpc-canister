@@ -1,11 +1,14 @@
 //! Conversion between JSON types and Candid EVM RPC types.
 
-use crate::rpc_client::amount::Amount;
-use crate::rpc_client::json::requests::BlockSpec;
-use crate::rpc_client::json::responses::Data;
-use crate::rpc_client::json::{Hash, JsonByte, StorageKey};
-use evm_rpc_types::{BlockTag, Hex20};
-use evm_rpc_types::{Hex, Hex256, Hex32, HexByte, Nat256};
+use crate::rpc_client::{
+    amount::Amount,
+    json::{
+        requests::{AccessList, AccessListItem, BlockSpec, EthCallParams, TransactionRequest},
+        responses::Data,
+        Hash, JsonByte, StorageKey,
+    },
+};
+use evm_rpc_types::{BlockTag, Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
 use ic_ethereum_types::Address;
 
 pub(super) fn into_block_spec(value: BlockTag) -> BlockSpec {
@@ -189,10 +192,8 @@ pub(super) fn from_send_raw_transaction_result(
     }
 }
 
-pub(super) fn into_eth_call_params(
-    value: evm_rpc_types::CallArgs,
-) -> crate::rpc_client::json::requests::EthCallParams {
-    crate::rpc_client::json::requests::EthCallParams {
+pub(super) fn into_eth_call_params(value: evm_rpc_types::CallArgs) -> EthCallParams {
+    EthCallParams {
         transaction: into_transaction_request(value.transaction),
         block: into_block_spec(value.block.unwrap_or_default()),
     }
@@ -216,14 +217,12 @@ fn into_transaction_request(
         blobs,
         chain_id,
     }: evm_rpc_types::TransactionRequest,
-) -> crate::rpc_client::json::requests::TransactionRequest {
-    fn map_access_list(
-        list: evm_rpc_types::AccessList,
-    ) -> crate::rpc_client::json::requests::AccessList {
-        crate::rpc_client::json::requests::AccessList(
+) -> TransactionRequest {
+    fn map_access_list(list: evm_rpc_types::AccessList) -> AccessList {
+        AccessList(
             list.0
                 .into_iter()
-                .map(|entry| crate::rpc_client::json::requests::AccessListItem {
+                .map(|entry| AccessListItem {
                     address: Address::new(entry.address.into()),
                     storage_keys: entry
                         .storage_keys
@@ -234,7 +233,7 @@ fn into_transaction_request(
                 .collect(),
         )
     }
-    crate::rpc_client::json::requests::TransactionRequest {
+    TransactionRequest {
         tx_type: tx_type.map(|t| JsonByte::new(t.into())),
         nonce: nonce.map(Amount::from),
         to: to.map(|address| Address::new(address.into())),
