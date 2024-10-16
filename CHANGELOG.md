@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+* v2.2.0 feat: Support for `eth_call` method
+
 ### Fixed
 
-* v2.1.1 fix: ensure Candid API is the same as the interface exposed by the canister
+* fix: ensure Candid API is the same as the interface exposed by the canister
 
 ## [2.1.0] - 2024-10-14
 

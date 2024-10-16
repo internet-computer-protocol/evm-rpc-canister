@@ -16,7 +16,10 @@ use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
 pub use lifecycle::{InstallArgs, LogFilter, RegexString};
-pub use request::{BlockTag, FeeHistoryArgs, GetLogsArgs, GetTransactionCountArgs};
+pub use request::{
+    AccessList, AccessListEntry, BlockTag, CallArgs, FeeHistoryArgs, GetLogsArgs,
+    GetTransactionCountArgs, TransactionRequest,
+};
 pub use response::{Block, FeeHistory, LogEntry, SendRawTransactionStatus, TransactionReceipt};
 pub use result::{
     HttpOutcallError, JsonRpcError, MultiRpcResult, ProviderError, RpcError, RpcResult,
@@ -240,5 +243,11 @@ impl From<u8> for Byte {
 impl From<u8> for HexByte {
     fn from(value: u8) -> Self {
         Self(Byte::from(value))
+    }
+}
+
+impl From<HexByte> for u8 {
+    fn from(value: HexByte) -> Self {
+        value.0.into_byte()
     }
 }

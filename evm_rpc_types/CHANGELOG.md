@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- v1.2.0 Added types to support `eth_call.`
+
 ## [1.1.0] - 2024-10-14
 
 ### Changed

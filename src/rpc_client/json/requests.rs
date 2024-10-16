@@ -1,8 +1,10 @@
-use crate::rpc_client::json::FixedSizeData;
-use crate::rpc_client::numeric::{BlockNumber, NumBlocks};
-use candid::Deserialize;
+use crate::rpc_client::json::responses::Data;
+use crate::rpc_client::json::{FixedSizeData, Hash, JsonByte, StorageKey};
+use crate::rpc_client::numeric::{
+    BlockNumber, ChainId, GasAmount, NumBlocks, TransactionNonce, Wei, WeiPerGas,
+};
 use ic_ethereum_types::Address;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
@@ -141,6 +143,113 @@ impl From<GetBlockByNumberParams> for (BlockSpec, bool) {
     fn from(value: GetBlockByNumberParams) -> Self {
         (value.block, value.include_full_transactions)
     }
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(into = "(TransactionRequest, BlockSpec)")]
+pub struct EthCallParams {
+    pub transaction: TransactionRequest,
+    pub block: BlockSpec,
+}
+
+impl From<EthCallParams> for (TransactionRequest, BlockSpec) {
+    fn from(value: EthCallParams) -> Self {
+        (value.transaction, value.block)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TransactionRequest {
+    /// The type of the transaction (e.g. "0x0" for legacy transactions, "0x2" for EIP-1559 transactions)
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    pub tx_type: Option<JsonByte>,
+
+    /// Transaction nonce
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nonce: Option<TransactionNonce>,
+
+    /// Address of the receiver or `None` in a contract creation transaction.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub to: Option<Address>,
+
+    /// The address of the sender.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from: Option<Address>,
+
+    /// Gas limit for the transaction.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gas: Option<GasAmount>,
+
+    /// Amount of ETH sent with this transaction.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<Wei>,
+
+    /// Transaction input data
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input: Option<Data>,
+
+    /// The legacy gas price willing to be paid by the sender in wei.
+    #[serde(rename = "gasPrice", skip_serializing_if = "Option::is_none")]
+    pub gas_price: Option<WeiPerGas>,
+
+    /// Maximum fee per gas the sender is willing to pay to miners in wei.
+    #[serde(
+        rename = "maxPriorityFeePerGas",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub max_priority_fee_per_gas: Option<WeiPerGas>,
+
+    /// The maximum total fee per gas the sender is willing to pay (includes the network / base fee and miner / priority fee) in wei.
+    #[serde(rename = "maxFeePerGas", skip_serializing_if = "Option::is_none")]
+    pub max_fee_per_gas: Option<WeiPerGas>,
+
+    /// The maximum total fee per gas the sender is willing to pay for blob gas in wei.
+    #[serde(rename = "maxFeePerBlobGas", skip_serializing_if = "Option::is_none")]
+    pub max_fee_per_blob_gas: Option<WeiPerGas>,
+
+    /// EIP-2930 access list
+    #[serde(rename = "accessList", skip_serializing_if = "Option::is_none")]
+    pub access_list: Option<AccessList>,
+
+    /// List of versioned blob hashes associated with the transaction's EIP-4844 data blobs.
+    #[serde(
+        rename = "blobVersionedHashes",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub blob_versioned_hashes: Option<Vec<Hash>>,
+
+    /// Raw blob data.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub blobs: Option<Vec<Data>>,
+
+    /// Chain ID that this transaction is valid on.
+    #[serde(rename = "chainId", skip_serializing_if = "Option::is_none")]
+    pub chain_id: Option<ChainId>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(transparent)]
+pub struct AccessList(pub Vec<AccessListItem>);
+
+impl AccessList {
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+}
+
+impl Default for AccessList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AccessListItem {
+    /// Accessed address
+    pub address: Address,
+    /// Accessed storage keys
+    #[serde(rename = "storageKeys")]
+    pub storage_keys: Vec<StorageKey>,
 }
 
 /// An envelope for all JSON-RPC requests.

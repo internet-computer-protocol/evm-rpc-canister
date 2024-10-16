@@ -17,6 +17,9 @@ pub enum TransactionCountTag {}
 /// but depending on the block height the two may differ.
 pub type TransactionCount = Amount<TransactionCountTag>;
 
+pub enum TransactionNonceTag {}
+pub type TransactionNonce = Amount<TransactionNonceTag>;
+
 pub enum TransactionIndexTag {}
 pub type TransactionIndex = Amount<TransactionIndexTag>;
 
@@ -44,3 +47,6 @@ pub type NumBytes = Amount<NumBytesTag>;
 
 pub enum TimestampTag {}
 pub type Timestamp = Amount<TimestampTag>;
+
+pub enum ChainIdTag {}
+pub type ChainId = Amount<ChainIdTag>;

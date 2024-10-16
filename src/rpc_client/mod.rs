@@ -14,6 +14,8 @@ use json::Hash;
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
+use crate::rpc_client::json::requests::EthCallParams;
+use crate::rpc_client::json::responses::Data;
 
 pub mod amount;
 pub(crate) mod eth_rpc;
@@ -395,6 +397,16 @@ impl EthRpcClient {
             "eth_getTransactionCount",
             params,
             self.response_size_estimate(50 + HEADER_SIZE_LIMIT),
+        )
+        .await
+        .reduce(self.consensus_strategy())
+    }
+    
+    pub async fn eth_call(&self, params: EthCallParams) -> Result<Data, MultiCallError<Data>> {
+        self.parallel_call(
+            "eth_call",
+            params,
+            self.response_size_estimate(256 + HEADER_SIZE_LIMIT),
         )
         .await
         .reduce(self.consensus_strategy())
