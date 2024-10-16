@@ -4,8 +4,8 @@ mod tests;
 pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use std::fmt::Debug;
 
-use candid::{CandidType, Deserialize};
-use serde::Serialize;
+use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use strum::VariantArray;
 
 #[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
@@ -181,7 +181,7 @@ impl Debug for RpcService {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
 pub struct Provider {
     #[serde(rename = "providerId")]
     pub provider_id: u64,
@@ -191,7 +191,7 @@ pub struct Provider {
     pub alias: Option<RpcService>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
 pub enum RpcAccess {
     Authenticated {
         auth: RpcAuth,
@@ -205,7 +205,7 @@ pub enum RpcAccess {
     },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
 pub enum RpcAuth {
     /// API key will be used in an Authorization header as Bearer token, e.g.,
     /// `Authorization: Bearer API_KEY`
