@@ -10,7 +10,7 @@ use evm_rpc::memory::{
 };
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
-use evm_rpc::types::{InstallArgs, Provider, ProviderId, RpcAccess};
+use evm_rpc::types::{LogFilter, Provider, ProviderId, RpcAccess, RpcAuth};
 use evm_rpc::{
     http::{json_rpc_request, transform_http_request},
     http_types,
@@ -115,6 +115,19 @@ pub async fn eth_send_raw_transaction(
     }
 }
 
+#[update(name = "eth_call")]
+#[candid_method(rename = "eth_call")]
+pub async fn eth_call(
+    source: evm_rpc_types::RpcServices,
+    config: Option<evm_rpc_types::RpcConfig>,
+    args: evm_rpc_types::CallArgs,
+) -> MultiRpcResult<evm_rpc_types::Hex> {
+    match CandidRpcClient::new(source, config) {
+        Ok(source) => source.eth_call(args).await,
+        Err(err) => Err(err).into(),
+    }
+}
+
 #[update]
 #[candid_method]
 async fn request(
@@ -151,8 +164,37 @@ fn request_cost(
 
 #[query(name = "getProviders")]
 #[candid_method(query, rename = "getProviders")]
-fn get_providers() -> Vec<Provider> {
-    PROVIDERS.to_vec()
+fn get_providers() -> Vec<evm_rpc_types::Provider> {
+    fn into_provider(provider: Provider) -> evm_rpc_types::Provider {
+        evm_rpc_types::Provider {
+            provider_id: provider.provider_id,
+            chain_id: provider.chain_id,
+            access: match provider.access {
+                RpcAccess::Authenticated { auth, public_url } => {
+                    evm_rpc_types::RpcAccess::Authenticated {
+                        auth: match auth {
+                            RpcAuth::BearerToken { url } => evm_rpc_types::RpcAuth::BearerToken {
+                                url: url.to_string(),
+                            },
+                            RpcAuth::UrlParameter { url_pattern } => {
+                                evm_rpc_types::RpcAuth::UrlParameter {
+                                    url_pattern: url_pattern.to_string(),
+                                }
+                            }
+                        },
+                        public_url: public_url.map(|s| s.to_string()),
+                    }
+                }
+                RpcAccess::Unauthenticated { public_url } => {
+                    evm_rpc_types::RpcAccess::Unauthenticated {
+                        public_url: public_url.to_string(),
+                    }
+                }
+            },
+            alias: provider.alias,
+        }
+    }
+    PROVIDERS.iter().cloned().map(into_provider).collect()
 }
 
 #[query(name = "getServiceProviderMap")]
@@ -208,18 +250,18 @@ async fn update_api_keys(api_keys: Vec<(ProviderId, Option<String>)>) {
     }
 }
 
-#[query(name = "__transform_json_rpc")]
+#[query(name = "__transform_json_rpc", hidden = true)]
 fn transform(args: TransformArgs) -> HttpResponse {
     transform_http_request(args)
 }
 
 #[ic_cdk::init]
-fn init(args: InstallArgs) {
+fn init(args: evm_rpc_types::InstallArgs) {
     post_upgrade(args);
 }
 
 #[ic_cdk::post_upgrade]
-fn post_upgrade(args: InstallArgs) {
+fn post_upgrade(args: evm_rpc_types::InstallArgs) {
     if let Some(demo) = args.demo {
         set_demo_active(demo);
     }
@@ -227,11 +269,11 @@ fn post_upgrade(args: InstallArgs) {
         set_api_key_principals(principals);
     }
     if let Some(filter) = args.log_filter {
-        set_log_filter(filter)
+        set_log_filter(LogFilter::from(filter))
     }
 }
 
-#[query]
+#[query(hidden = true)]
 fn http_request(request: http_types::HttpRequest) -> http_types::HttpResponse {
     match request.path() {
         "/metrics" => {
@@ -349,7 +391,7 @@ mod test {
             }
         }
 
-        fn check_service_compatible(
+        fn check_service_equal(
             new_name: &str,
             new: candid_parser::utils::CandidSource,
             old_name: &str,
@@ -357,11 +399,11 @@ mod test {
         ) {
             let new_str = source_to_str(&new);
             let old_str = source_to_str(&old);
-            match candid_parser::utils::service_compatible(new, old) {
+            match candid_parser::utils::service_equal(new, old) {
                 Ok(_) => {}
                 Err(e) => {
                     eprintln!(
-                        "{} is not compatible with {}!\n\n\
+                        "{} is not equal with {}!\n\n\
             {}:\n\
             {}\n\n\
             {}:\n\
@@ -380,7 +422,7 @@ mod test {
         let old_interface = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
             .join("candid/evm_rpc.did");
 
-        check_service_compatible(
+        check_service_equal(
             "actual ledger candid interface",
             candid_parser::utils::CandidSource::Text(&new_interface),
             "declared candid interface in evm_rpc.did file",

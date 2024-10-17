@@ -1,9 +1,15 @@
 //! Conversion between JSON types and Candid EVM RPC types.
 
-use crate::rpc_client::json::requests::BlockSpec;
-use crate::rpc_client::json::Hash;
-use evm_rpc_types::{BlockTag, Hex20};
-use evm_rpc_types::{Hex, Hex256, Hex32, HexByte, Nat256};
+use crate::rpc_client::{
+    amount::Amount,
+    json::{
+        requests::{AccessList, AccessListItem, BlockSpec, EthCallParams, TransactionRequest},
+        responses::Data,
+        Hash, JsonByte, StorageKey,
+    },
+};
+use evm_rpc_types::{BlockTag, Hex, Hex20, Hex256, Hex32, HexByte, Nat256};
+use ic_ethereum_types::Address;
 
 pub(super) fn into_block_spec(value: BlockTag) -> BlockSpec {
     use crate::rpc_client::json::requests;
@@ -151,7 +157,10 @@ pub(super) fn from_block(value: crate::rpc_client::json::responses::Block) -> ev
         size: value.size.into(),
         state_root: Hex32::from(value.state_root.into_bytes()),
         timestamp: value.timestamp.into(),
-        total_difficulty: value.total_difficulty.map(Nat256::from),
+        // The field totalDifficulty was removed from the official Ethereum JSON RPC Block schema in
+        // https://github.com/ethereum/execution-apis/pull/570 and as a consequence is inconsistent between different providers.
+        // See https://github.com/internet-computer-protocol/evm-rpc-canister/issues/311.
+        total_difficulty: None,
         transactions: value
             .transactions
             .into_iter()
@@ -186,6 +195,75 @@ pub(super) fn from_send_raw_transaction_result(
     }
 }
 
+pub(super) fn into_eth_call_params(value: evm_rpc_types::CallArgs) -> EthCallParams {
+    EthCallParams {
+        transaction: into_transaction_request(value.transaction),
+        block: into_block_spec(value.block.unwrap_or_default()),
+    }
+}
+
+fn into_transaction_request(
+    evm_rpc_types::TransactionRequest {
+        tx_type,
+        nonce,
+        to,
+        from,
+        gas,
+        value,
+        input,
+        gas_price,
+        max_priority_fee_per_gas,
+        max_fee_per_gas,
+        max_fee_per_blob_gas,
+        access_list,
+        blob_versioned_hashes,
+        blobs,
+        chain_id,
+    }: evm_rpc_types::TransactionRequest,
+) -> TransactionRequest {
+    fn map_access_list(list: evm_rpc_types::AccessList) -> AccessList {
+        AccessList(
+            list.0
+                .into_iter()
+                .map(|entry| AccessListItem {
+                    address: Address::new(entry.address.into()),
+                    storage_keys: entry
+                        .storage_keys
+                        .into_iter()
+                        .map(|key| StorageKey::new(key.into()))
+                        .collect(),
+                })
+                .collect(),
+        )
+    }
+    TransactionRequest {
+        tx_type: tx_type.map(|t| JsonByte::new(t.into())),
+        nonce: nonce.map(Amount::from),
+        to: to.map(|address| Address::new(address.into())),
+        from: from.map(|address| Address::new(address.into())),
+        gas: gas.map(Amount::from),
+        value: value.map(Amount::from),
+        input: input.map(into_data),
+        gas_price: gas_price.map(Amount::from),
+        max_priority_fee_per_gas: max_priority_fee_per_gas.map(Amount::from),
+        max_fee_per_gas: max_fee_per_gas.map(Amount::from),
+        max_fee_per_blob_gas: max_fee_per_blob_gas.map(Amount::from),
+        access_list: access_list.map(map_access_list),
+        blob_versioned_hashes: blob_versioned_hashes
+            .map(|hashes| hashes.into_iter().map(into_hash).collect()),
+        blobs: blobs.map(|blobs| blobs.into_iter().map(into_data).collect()),
+        chain_id: chain_id.map(Amount::from),
+    }
+}
+
 pub(super) fn into_hash(value: Hex32) -> Hash {
     Hash::new(value.into())
+}
+
+pub(super) fn from_data(value: Data) -> Hex {
+    Hex::from(value.0)
+}
+
+fn into_data(value: Hex) -> Data {
+    Data::from(Vec::<u8>::from(value))
 }

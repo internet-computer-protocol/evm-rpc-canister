@@ -69,6 +69,31 @@ type GetLogsArgs = record {
   topics : opt vec Topic;
 };
 type GetTransactionCountArgs = record { address : text; block : BlockTag };
+type CallArgs = record {
+  transaction : TransactionRequest;
+  block : opt BlockTag;
+};
+type TransactionRequest = record {
+  "type" : opt text;
+  nonce : opt nat;
+  to : opt text;
+  from : opt text;
+  gas : opt nat;
+  value : opt nat;
+  input : opt text;
+  gasPrice : opt nat;
+  maxPriorityFeePerGas : opt nat;
+  maxFeePerGas : opt nat;
+  maxFeePerBlobGas : opt nat;
+  accessList: opt vec AccessListEntry;
+  blobVersionedHashes : opt vec text;
+  blobs : opt vec text;
+  chainId : opt nat;
+};
+type AccessListEntry = record {
+  address : text;
+  storageKeys : vec text;
+};
 type HttpHeader = record { value : text; name : text };
 type HttpOutcallError = variant {
   IcError : record { code : RejectionCode; message : text };
@@ -136,6 +161,10 @@ type MultiSendRawTransactionResult = variant {
   Consistent : SendRawTransactionResult;
   Inconsistent : vec record { RpcService; SendRawTransactionResult };
 };
+type MultiCallResult = variant {
+  Consistent : CallResult;
+  Inconsistent : vec record { RpcService; CallResult };
+};
 type ProviderError = variant {
   TooFewCycles : record { expected : nat; received : nat };
   MissingRequiredProvider;
@@ -185,6 +214,7 @@ type SendRawTransactionResult = variant {
   Ok : SendRawTransactionStatus;
   Err : RpcError;
 };
+type CallResult = variant { Ok : text; Err : RpcError };
 type RequestResult = variant { Ok : text; Err : RpcError };
 type RequestCostResult = variant { Ok : nat; Err : RpcError };
 type RpcConfig = record { responseSizeEstimate : opt nat64; responseConsensus : opt ConsensusStrategy };
@@ -192,9 +222,9 @@ type ConsensusStrategy = variant {
   Equality;
   Threshold : record {
     // Total number of providers to be queried. Can be omitted, if that number can be inferred (e.g., providers are specified in the request).
-    total : opt nat;
+    total : opt nat8;
     // Minimum number of providers that must return the same (non-error) result.
-    min : nat;
+    min : nat8;
   };
 };
 type RpcError = variant {
@@ -234,8 +264,8 @@ type SendRawTransactionStatus = variant {
 // See https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getlogs
 type Topic = vec text;
 type TransactionReceipt = record {
-  to : text;
-  status : nat;
+  to : opt text;
+  status : opt nat;
   transactionHash : text;
   blockNumber : nat;
   from : text;
@@ -250,11 +280,7 @@ type TransactionReceipt = record {
 };
 type ValidationError = variant {
   Custom : text;
-  HostNotAllowed : text;
-  UrlParseError : text;
   InvalidHex : text;
-  CredentialPathNotAllowed;
-  CredentialHeaderNotAllowed;
 };
 service : (InstallArgs) -> {
   eth_feeHistory : (RpcServices, opt RpcConfig, FeeHistoryArgs) -> (MultiFeeHistoryResult);
@@ -263,6 +289,7 @@ service : (InstallArgs) -> {
   eth_getTransactionCount : (RpcServices, opt RpcConfig, GetTransactionCountArgs) -> (MultiGetTransactionCountResult);
   eth_getTransactionReceipt : (RpcServices, opt RpcConfig, hash : text) -> (MultiGetTransactionReceiptResult);
   eth_sendRawTransaction : (RpcServices, opt RpcConfig, rawSignedTransactionHex : text) -> (MultiSendRawTransactionResult);
+  eth_call : (RpcServices, opt RpcConfig, CallArgs) -> (MultiCallResult);
   request : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestResult);
   requestCost : (RpcService, json : text, maxResponseBytes : nat64) -> (RequestCostResult) query;
   getMetrics : () -> (Metrics) query;

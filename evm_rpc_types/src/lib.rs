@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+mod lifecycle;
 mod request;
 mod response;
 mod result;
@@ -11,24 +12,40 @@ use candid::{CandidType, Nat};
 use hex::FromHexError;
 use num_bigint::BigUint;
 use serde::{Deserialize, Serialize};
-use std::fmt::Formatter;
+use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
-pub use request::{BlockTag, FeeHistoryArgs, GetLogsArgs, GetTransactionCountArgs};
+pub use lifecycle::{InstallArgs, LogFilter, RegexString};
+pub use request::{
+    AccessList, AccessListEntry, BlockTag, CallArgs, FeeHistoryArgs, GetLogsArgs,
+    GetTransactionCountArgs, TransactionRequest,
+};
 pub use response::{Block, FeeHistory, LogEntry, SendRawTransactionStatus, TransactionReceipt};
 pub use result::{
     HttpOutcallError, JsonRpcError, MultiRpcResult, ProviderError, RpcError, RpcResult,
     ValidationError,
 };
 pub use rpc_client::{
-    ConsensusStrategy, EthMainnetService, EthSepoliaService, HttpHeader, L2MainnetService, RpcApi,
-    RpcConfig, RpcService, RpcServices,
+    ConsensusStrategy, EthMainnetService, EthSepoliaService, HttpHeader, L2MainnetService,
+    Provider, RpcAccess, RpcApi, RpcAuth, RpcConfig, RpcService, RpcServices,
 };
 
 /// A `Nat` that is guaranteed to fit in 256 bits.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "candid::Nat", into = "candid::Nat")]
 pub struct Nat256(Nat);
+
+impl Display for Nat256 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0 .0)
+    }
+}
+
+impl Debug for Nat256 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0 .0)
+    }
+}
 
 impl Nat256 {
     pub const ZERO: Nat256 = Nat256(Nat(BigUint::ZERO));
@@ -102,7 +119,7 @@ impl_from_unchecked!( Nat256, usize u8 u16 u32 u64 u128 );
 macro_rules! impl_hex_string {
     ($name: ident($data: ty)) => {
         #[doc = concat!("Ethereum hex-string (String representation is prefixed by 0x) wrapping a `", stringify!($data), "`. ")]
-        #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+        #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
         #[serde(try_from = "String", into = "String")]
         pub struct $name($data);
 
@@ -112,6 +129,13 @@ macro_rules! impl_hex_string {
                 f.write_str(&hex::encode(&self.0))
             }
         }
+
+        impl std::fmt::Debug for $name {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self)
+            }
+        }
+
 
         impl From<$data> for $name {
             fn from(value: $data) -> Self {
@@ -219,5 +243,11 @@ impl From<u8> for Byte {
 impl From<u8> for HexByte {
     fn from(value: u8) -> Self {
         Self(Byte::from(value))
+    }
+}
+
+impl From<HexByte> for u8 {
+    fn from(value: HexByte) -> Self {
+        value.0.into_byte()
     }
 }

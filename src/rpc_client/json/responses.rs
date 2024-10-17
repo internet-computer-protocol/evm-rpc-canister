@@ -236,13 +236,6 @@ pub struct Block {
     #[serde(rename = "timestamp")]
     pub timestamp: Timestamp,
 
-    /// Total difficulty is the sum of all difficulty values up to and including this block.
-    ///
-    /// Note: this field was removed from the official JSON-RPC specification in
-    /// https://github.com/ethereum/execution-apis/pull/570 and may no longer be served by providers.
-    #[serde(rename = "totalDifficulty")]
-    pub total_difficulty: Option<Difficulty>,
-
     /// List of transactions in the block.
     /// Note that since `eth_get_block_by_number` sets `include_full_transactions` to false,
     /// this field only contains the transaction hashes and not the full transactions.
@@ -308,6 +301,14 @@ impl HttpResponsePayload for SendRawTransactionResult {
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(transparent)]
 pub struct Data(#[serde(with = "ic_ethereum_types::serde_data")] pub Vec<u8>);
+
+impl HttpResponsePayload for Data {}
+
+impl From<Vec<u8>> for Data {
+    fn from(data: Vec<u8>) -> Self {
+        Self(data)
+    }
+}
 
 impl AsRef<[u8]> for Data {
     fn as_ref(&self) -> &[u8] {

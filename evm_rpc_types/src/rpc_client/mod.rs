@@ -1,8 +1,11 @@
+#[cfg(test)]
+mod tests;
+
 pub use ic_cdk::api::management_canister::http_request::HttpHeader;
 use std::fmt::Debug;
 
-use candid::{CandidType, Deserialize};
-use serde::Serialize;
+use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use strum::VariantArray;
 
 #[derive(Clone, Debug, PartialEq, Eq, Default, CandidType, Deserialize)]
@@ -53,9 +56,18 @@ pub struct RpcApi {
     pub headers: Option<Vec<HttpHeader>>,
 }
 
+impl RpcApi {
+    pub fn host_str(&self) -> Option<String> {
+        url::Url::parse(&self.url)
+            .ok()
+            .and_then(|u| u.host_str().map(|host| host.to_string()))
+    }
+}
+
 impl Debug for RpcApi {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "RpcApi {{ url: ***, headers: *** }}",) //URL or header value could contain API keys
+        let host = self.host_str().unwrap_or("N/A".to_string());
+        write!(f, "RpcApi {{ host: {}, url/headers: *** }}", host) //URL or header value could contain API keys
     }
 }
 
@@ -155,7 +167,7 @@ pub enum RpcService {
     OptimismMainnet(L2MainnetService),
 }
 
-impl std::fmt::Debug for RpcService {
+impl Debug for RpcService {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             RpcService::Provider(provider_id) => write!(f, "Provider({})", provider_id),
@@ -167,4 +179,39 @@ impl std::fmt::Debug for RpcService {
             | RpcService::OptimismMainnet(service) => write!(f, "{:?}", service),
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
+pub struct Provider {
+    #[serde(rename = "providerId")]
+    pub provider_id: u64,
+    #[serde(rename = "chainId")]
+    pub chain_id: u64,
+    pub access: RpcAccess,
+    pub alias: Option<RpcService>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
+pub enum RpcAccess {
+    Authenticated {
+        auth: RpcAuth,
+        /// Public URL to use when the API key is not available.
+        #[serde(rename = "publicUrl")]
+        public_url: Option<String>,
+    },
+    Unauthenticated {
+        #[serde(rename = "publicUrl")]
+        public_url: String,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
+pub enum RpcAuth {
+    /// API key will be used in an Authorization header as Bearer token, e.g.,
+    /// `Authorization: Bearer API_KEY`
+    BearerToken { url: String },
+    UrlParameter {
+        #[serde(rename = "urlPattern")]
+        url_pattern: String,
+    },
 }

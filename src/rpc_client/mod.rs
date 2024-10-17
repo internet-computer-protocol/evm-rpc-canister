@@ -7,9 +7,12 @@ use evm_rpc_types::{
 };
 use ic_canister_log::log;
 use json::requests::{
-    BlockSpec, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam, GetTransactionCountParams,
+    BlockSpec, EthCallParams, FeeHistoryParams, GetBlockByNumberParams, GetLogsParam,
+    GetTransactionCountParams,
 };
-use json::responses::{Block, FeeHistory, LogEntry, SendRawTransactionResult, TransactionReceipt};
+use json::responses::{
+    Block, Data, FeeHistory, LogEntry, SendRawTransactionResult, TransactionReceipt,
+};
 use json::Hash;
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -54,31 +57,31 @@ pub struct Providers {
 
 impl Providers {
     const DEFAULT_ETH_MAINNET_SERVICES: &'static [EthMainnetService] = &[
-        EthMainnetService::Ankr,
+        EthMainnetService::BlockPi,
         EthMainnetService::Cloudflare,
         EthMainnetService::PublicNode,
     ];
     const NON_DEFAULT_ETH_MAINNET_SERVICES: &'static [EthMainnetService] = &[
         EthMainnetService::Alchemy,
-        EthMainnetService::BlockPi,
         EthMainnetService::Llama,
+        EthMainnetService::Ankr,
     ];
 
     const DEFAULT_ETH_SEPOLIA_SERVICES: &'static [EthSepoliaService] = &[
-        EthSepoliaService::Ankr,
+        EthSepoliaService::Sepolia,
         EthSepoliaService::BlockPi,
         EthSepoliaService::PublicNode,
     ];
     const NON_DEFAULT_ETH_SEPOLIA_SERVICES: &'static [EthSepoliaService] =
-        &[EthSepoliaService::Alchemy, EthSepoliaService::Sepolia];
+        &[EthSepoliaService::Alchemy, EthSepoliaService::Ankr];
 
     const DEFAULT_L2_MAINNET_SERVICES: &'static [L2MainnetService] = &[
-        L2MainnetService::Ankr,
+        L2MainnetService::Llama,
         L2MainnetService::BlockPi,
         L2MainnetService::PublicNode,
     ];
     const NON_DEFAULT_L2_MAINNET_SERVICES: &'static [L2MainnetService] =
-        &[L2MainnetService::Alchemy, L2MainnetService::Llama];
+        &[L2MainnetService::Alchemy, L2MainnetService::Ankr];
 
     pub fn new(source: RpcServices, strategy: ConsensusStrategy) -> Result<Self, ProviderError> {
         let (chain, providers): (_, BTreeSet<_>) = match source {
@@ -395,6 +398,16 @@ impl EthRpcClient {
             "eth_getTransactionCount",
             params,
             self.response_size_estimate(50 + HEADER_SIZE_LIMIT),
+        )
+        .await
+        .reduce(self.consensus_strategy())
+    }
+
+    pub async fn eth_call(&self, params: EthCallParams) -> Result<Data, MultiCallError<Data>> {
+        self.parallel_call(
+            "eth_call",
+            params,
+            self.response_size_estimate(256 + HEADER_SIZE_LIMIT),
         )
         .await
         .reduce(self.consensus_strategy())

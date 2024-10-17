@@ -7,11 +7,11 @@ SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPTS_DIR/.."
 
 function run() {
-    1>&2 echo "running $@"
+    1>&2 echo "running $*"
     rc=0 && "$@" || rc="$?"
     if ! [ "$rc" -eq 0 ]
     then
-        1>&2 echo "Bootstrap command failed: $@"
+        1>&2 echo "Bootstrap command failed: $*"
         exit "$rc"
     fi
 }
