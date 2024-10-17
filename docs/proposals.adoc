@@ -1,0 +1,3 @@
+= History of Proposals
+
+. https://dashboard.internetcomputer.org/proposal/TODO[TODO]: re-install EVM RPC canister
