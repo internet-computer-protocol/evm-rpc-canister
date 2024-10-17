@@ -56,14 +56,18 @@ pub struct Providers {
 }
 
 impl Providers {
+    // Order of providers matters!
+    // The threshold consensus strategy will consider the first `total` providers in the order
+    // they are specified (taking the default ones first, followed by the non default ones if necessary)
+    // if the providers are not explicitly specified by the caller.
     const DEFAULT_ETH_MAINNET_SERVICES: &'static [EthMainnetService] = &[
         EthMainnetService::BlockPi,
         EthMainnetService::Cloudflare,
         EthMainnetService::PublicNode,
     ];
     const NON_DEFAULT_ETH_MAINNET_SERVICES: &'static [EthMainnetService] = &[
-        EthMainnetService::Alchemy,
         EthMainnetService::Llama,
+        EthMainnetService::Alchemy,
         EthMainnetService::Ankr,
     ];
 
