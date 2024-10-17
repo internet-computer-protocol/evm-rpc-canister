@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * fix: ensure Candid API is the same as the interface exposed by the canister
 * fix: always deserialize `Block::totalDifficulty` to `None` to avoid inconsistencies between providers
+* fix: Switch order of Ethereum mainnet providers `Alchemy` and `LlamaNodes` to reduce the chance of automatically
+selecting `Alchemy` when no providers are specified by the caller due to its low rate limit.
 
 ## [2.1.0] - 2024-10-14
 

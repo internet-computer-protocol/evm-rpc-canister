@@ -635,7 +635,7 @@ mod providers {
                 Providers::DEFAULT_ETH_MAINNET_SERVICES[0],
                 Providers::DEFAULT_ETH_MAINNET_SERVICES[1],
                 Providers::DEFAULT_ETH_MAINNET_SERVICES[2],
-                EthMainnetService::Alchemy,
+                EthMainnetService::Llama,
             }
             .into_iter()
             .map(RpcService::EthMainnet)
