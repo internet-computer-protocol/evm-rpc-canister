@@ -2,7 +2,7 @@ use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, MESSAGE_FILTER_
 use crate::memory::get_api_key;
 use crate::util::hostname_from_url;
 use crate::validate::validate_api_key;
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_stable_structures::storable::Bound;
 use ic_stable_structures::Storable;
@@ -12,15 +12,6 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 use zeroize::{Zeroize, ZeroizeOnDrop};
-
-#[derive(Clone, Debug, Default, CandidType, Deserialize)]
-pub struct InstallArgs {
-    pub demo: Option<bool>,
-    #[serde(rename = "manageApiKeys")]
-    pub manage_api_keys: Option<Vec<Principal>>,
-    #[serde(rename = "logFilter")]
-    pub log_filter: Option<LogFilter>,
-}
 
 pub enum ResolvedRpcService {
     Api(evm_rpc_types::RpcApi),
@@ -223,11 +214,9 @@ impl<'a> From<&'a ConstHeader> for HttpHeader {
 }
 
 /// Internal RPC provider representation.
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Provider {
-    #[serde(rename = "providerId")]
     pub provider_id: ProviderId,
-    #[serde(rename = "chainId")]
     pub chain_id: u64,
     pub access: RpcAccess,
     pub alias: Option<evm_rpc_types::RpcService>,
@@ -280,16 +269,14 @@ impl Provider {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RpcAccess {
     Authenticated {
         auth: RpcAuth,
         /// Public URL to use when the API key is not available.
-        #[serde(rename = "publicUrl")]
         public_url: Option<&'static str>,
     },
     Unauthenticated {
-        #[serde(rename = "publicUrl")]
         public_url: &'static str,
     },
 }
@@ -303,7 +290,7 @@ impl RpcAccess {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, CandidType, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum LogFilter {
     #[default]
     ShowAll,
@@ -312,22 +299,36 @@ pub enum LogFilter {
     HidePattern(RegexString),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, CandidType, Serialize, Deserialize, Default)]
+impl From<evm_rpc_types::LogFilter> for LogFilter {
+    fn from(value: evm_rpc_types::LogFilter) -> Self {
+        match value {
+            evm_rpc_types::LogFilter::ShowAll => LogFilter::ShowAll,
+            evm_rpc_types::LogFilter::HideAll => LogFilter::HideAll,
+            evm_rpc_types::LogFilter::ShowPattern(regex) => LogFilter::ShowPattern(regex.into()),
+            evm_rpc_types::LogFilter::HidePattern(regex) => LogFilter::HidePattern(regex.into()),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct RegexString(String);
+
+impl From<evm_rpc_types::RegexString> for RegexString {
+    fn from(value: evm_rpc_types::RegexString) -> Self {
+        RegexString(value.0)
+    }
+}
+
+impl From<&str> for RegexString {
+    fn from(value: &str) -> Self {
+        RegexString(value.to_string())
+    }
+}
 
 impl RegexString {
     pub fn try_is_valid(&self, value: &str) -> Result<bool, regex::Error> {
         // Currently only used in the local replica. This can be optimized if eventually used in production.
         Ok(Regex::new(&self.0)?.is_match(value))
-    }
-}
-
-impl<T> From<T> for RegexString
-where
-    T: Into<String>,
-{
-    fn from(value: T) -> Self {
-        RegexString(value.into())
     }
 }
 
@@ -347,13 +348,13 @@ impl LogFilter {
 }
 
 impl Storable for LogFilter {
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        serde_json::from_slice(&bytes).expect("Error while deserializing `MessageFilter`")
-    }
     fn to_bytes(&self) -> Cow<[u8]> {
         serde_json::to_vec(self)
-            .expect("Error while serializing `MessageFilter`")
+            .expect("Error while serializing `LogFilter`")
             .into()
+    }
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        serde_json::from_slice(&bytes).expect("Error while deserializing `LogFilter`")
     }
 
     const BOUND: Bound = Bound::Bounded {
@@ -362,13 +363,14 @@ impl Storable for LogFilter {
     };
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, CandidType, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RpcAuth {
     /// API key will be used in an Authorization header as Bearer token, e.g.,
     /// `Authorization: Bearer API_KEY`
-    BearerToken { url: &'static str },
+    BearerToken {
+        url: &'static str,
+    },
     UrlParameter {
-        #[serde(rename = "urlPattern")]
         url_pattern: &'static str,
     },
 }

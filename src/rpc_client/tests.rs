@@ -576,6 +576,20 @@ mod providers {
         )
     }
 
+    // Note that changing the number of providers is a non-trivial operation
+    // that has consequences for all users of the EVM RPC canister:
+    // 1) Decreasing the number of providers is a breaking change:
+    //    - E.g. ConsensusStrategy::Threshold { total: Some(6), min: 3 } would fail
+    //      if the number of providers is decreased from 6 to 5.
+    // 2) Increasing the number of providers, while non-breaking, is a significant change
+    //    since that number can no longer be decreased afterwards without a breaking change.
+    #[test]
+    fn should_have_stable_number_of_providers() {
+        assert_eq!(EthMainnetService::all().len(), 6);
+        assert_eq!(EthSepoliaService::all().len(), 5);
+        assert_eq!(L2MainnetService::all().len(), 5);
+    }
+
     proptest! {
         #[test]
         fn should_choose_custom_providers(

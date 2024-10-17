@@ -110,7 +110,7 @@ pub struct TransactionReceipt {
     #[serde(rename = "logsBloom")]
     pub logs_bloom: Hex256,
 
-    /// Address of the receiver or null in a contract creation transaction.
+    /// Address of the receiver or `None` in a contract creation transaction.
     pub to: Option<Hex20>,
 
     /// Transaction's index position in the block

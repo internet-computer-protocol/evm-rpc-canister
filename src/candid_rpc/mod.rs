@@ -158,6 +158,18 @@ impl CandidRpcClient {
         )
         .map(|result| from_send_raw_transaction_result(transaction_hash.clone(), result))
     }
+
+    pub async fn eth_call(
+        &self,
+        args: evm_rpc_types::CallArgs,
+    ) -> MultiRpcResult<evm_rpc_types::Hex> {
+        use crate::candid_rpc::cketh_conversion::{from_data, into_eth_call_params};
+        process_result(
+            RpcMethod::EthFeeHistory,
+            self.client.eth_call(into_eth_call_params(args)).await,
+        )
+        .map(from_data)
+    }
 }
 
 fn get_transaction_hash(raw_signed_transaction_hex: &Hex) -> Option<Hex32> {

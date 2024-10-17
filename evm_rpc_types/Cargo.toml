@@ -1,10 +1,15 @@
 [package]
 name = "evm_rpc_types"
-version = "0.1.0"
+version = "1.1.0"
 description = "Candid types for interacting with the EVM RPC canister"
-authors = ["DFINITY Foundation"]
+license = "Apache-2.0"
 readme = "README.md"
+authors = ["DFINITY Foundation"]
 edition = "2021"
+include = ["src", "Cargo.toml", "CHANGELOG.md", "LICENSE", "README.md"]
+repository = "https://github.com/internet-computer-protocol/evm-rpc-canister"
+documentation = "https://docs.rs/evm_rpc_types"
+
 
 [dependencies]
 candid = { workspace = true }
@@ -13,6 +18,8 @@ ic-cdk = { workspace = true }
 num-bigint = { workspace = true }
 serde = { workspace = true }
 strum = { workspace = true }
+thiserror = { workspace = true }
+url = { workspace = true }
 
 [dev-dependencies]
 proptest = { workspace = true }
