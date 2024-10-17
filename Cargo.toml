@@ -45,7 +45,7 @@ url = { workspace = true }
 hex = "0.4"
 ethers-core = "2.0"
 zeroize = { version = "1.8", features = ["zeroize_derive"] }
-regex = "1.10"
+regex = "1.11"
 
 [dev-dependencies]
 assert_matches = "1.5"
