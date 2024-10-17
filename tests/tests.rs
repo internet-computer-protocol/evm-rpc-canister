@@ -12,8 +12,8 @@ use evm_rpc::{
 };
 use evm_rpc_types::{
     ConsensusStrategy, EthMainnetService, EthSepoliaService, Hex, Hex20, Hex32, HttpOutcallError,
-    InstallArgs, JsonRpcError, MultiRpcResult, Nat256, ProviderError, RpcApi, RpcConfig, RpcError,
-    RpcResult, RpcService, RpcServices,
+    InstallArgs, JsonRpcError, MultiRpcResult, Nat256, Provider, ProviderError, RpcApi, RpcConfig,
+    RpcError, RpcResult, RpcService, RpcServices,
 };
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 use ic_cdk::api::management_canister::main::CanisterId;
@@ -187,6 +187,14 @@ impl EvmRpcSetup {
 
     pub fn get_service_provider_map(&self) -> Vec<(RpcService, ProviderId)> {
         self.call_query("getServiceProviderMap", Encode!().unwrap())
+    }
+
+    pub fn get_providers(&self) -> Vec<Provider> {
+        self.call_query("getProviders", Encode!().unwrap())
+    }
+
+    pub fn get_nodes_in_subnet(&self) -> u32 {
+        self.call_query("getNodesInSubnet", Encode!().unwrap())
     }
 
     pub fn request_cost(
@@ -1691,6 +1699,29 @@ fn should_prevent_unknown_provider_update_api_keys() {
     setup
         .as_controller()
         .update_api_keys(&[(5555, Some("unknown-provider-api-key".to_string()))]);
+}
+
+#[test]
+fn should_get_notes_in_subnet() {
+    let setup = EvmRpcSetup::new();
+    let nodes_in_subnet = setup.get_nodes_in_subnet();
+    assert_eq!(nodes_in_subnet, 34);
+}
+
+#[test]
+fn should_get_providers_and_get_service_provider_map_be_consistent() {
+    let setup = EvmRpcSetup::new();
+    let providers = setup.get_providers();
+    let service_provider_map = setup.get_service_provider_map();
+    assert_eq!(providers.len(), service_provider_map.len());
+
+    for (service, provider_id) in service_provider_map {
+        let found_provider = providers
+            .iter()
+            .find(|p| p.provider_id == provider_id)
+            .unwrap();
+        assert_eq!(found_provider.alias, Some(service));
+    }
 }
 
 #[test]
