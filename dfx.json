@@ -31,6 +31,13 @@
       "gzip": true,
       "init_arg": "(record {})"
     },
+    "evm_rpc_playground": {
+      "candid": "candid/evm_rpc.did",
+      "type": "rust",
+      "package": "evm_rpc",
+      "gzip": true,
+      "init_arg": "(record {demo = opt false; manageApiKeys = opt vec {principal \"mf7xa-laaaa-aaaar-qaaaa-cai\"}; logFilter = null})"
+    },
     "e2e_rust": {
       "dependencies": ["evm_rpc_staging"],
       "candid": "e2e/rust/e2e_rust.did",

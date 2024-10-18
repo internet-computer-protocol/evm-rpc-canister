@@ -8,6 +8,9 @@
   "evm_rpc": {
     "ic": "7hfb6-caaaa-aaaar-qadga-cai"
   },
+  "evm_rpc_playground": {
+    "ic": "5smys-wiaaa-aaaar-qaiza-cai"
+  },
   "evm_rpc_staging": {
     "ic": "xhcuo-6yaaa-aaaar-qacqq-cai"
   }
