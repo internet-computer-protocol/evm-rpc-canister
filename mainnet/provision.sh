@@ -22,7 +22,7 @@ set -u # or set -o nounset
 NETWORK="ic"
 IDENTITY="hsm"
 WALLET=$(dfx identity get-wallet --network=$NETWORK --identity=$IDENTITY)
-CANISTER="evm_rpc_playground"
+CANISTER="evm_rpc"
 FLAGS="--network=$NETWORK --identity=$IDENTITY --wallet=$WALLET"
 
 CLOUDFLARE_ETHEREUM_MAINNET_PROVIDER_ID="0";
