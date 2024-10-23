@@ -94,20 +94,8 @@ dfx canister call evm_rpc request '(variant {Chain=0x1},"{\"jsonrpc\":\"2.0\",\"
 dfx canister call evm_rpc request '(variant {Custom=record {url="https://cloudflare-eth.com"}},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)' --wallet $(dfx identity get-wallet) --with-cycles 1000000000
 dfx canister call evm_rpc request '(variant {Custom=record {url="https://ethereum.publicnode.com"}},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)' --wallet $(dfx identity get-wallet) --with-cycles 1000000000
 
-# Register your own provider (requires `RegisterProvider` authorization)
-dfx canister call evm_rpc registerProvider '(record { chainId=1; hostname="cloudflare-eth.com"; credentialPath="/v1/mainnet"; cyclesPerCall=0; cyclesPerMessageByte=0; })'
-
 # Use a specific EVM chain
 dfx canister call evm_rpc request '(variant {Chain=0x1},"{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}",1000)' --wallet $(dfx identity get-wallet) --with-cycles 1000000000
-```
-
-### Authorization (local replica)
-
-```bash
-PRINCIPAL=$(dfx identity get-principal)
-dfx canister call evm_rpc authorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
-dfx canister call evm_rpc getAuthorized '(variant { RegisterProvider })'
-dfx canister call evm_rpc deauthorize "(principal \"$PRINCIPAL\", variant { RegisterProvider })"
 ```
 
 ## Reproducible Builds
