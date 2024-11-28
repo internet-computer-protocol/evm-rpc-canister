@@ -132,7 +132,7 @@ type Metrics = record {
   responses : vec record { record { text; text; text }; nat64 };
   inconsistentResponses : vec record { record { text; text }; nat64 };
   cyclesCharged : vec record { record { text; text }; nat };
-  errHttpOutcall : vec record { record { text; text }; nat64 };
+  errHttpOutcall : vec record { record { text; text; RejectionCode }; nat64 };
 };
 type MultiFeeHistoryResult = variant {
   Consistent : FeeHistoryResult;

@@ -94,7 +94,7 @@ pub async fn http_request(
             Ok(response)
         }
         Err((code, message)) => {
-            add_metric_entry!(err_http_outcall, (rpc_method, rpc_host), 1);
+            add_metric_entry!(err_http_outcall, (rpc_method, rpc_host, code), 1);
             Err(HttpOutcallError::IcError { code, message }.into())
         }
     }
