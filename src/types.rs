@@ -123,8 +123,6 @@ pub struct Metrics {
     pub inconsistent_responses: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
     #[serde(rename = "cyclesCharged")]
     pub cycles_charged: HashMap<(MetricRpcMethod, MetricRpcHost), u128>,
-    #[serde(rename = "errNoPermission")]
-    pub err_no_permission: u64,
     #[serde(rename = "errHttpOutcall")]
     pub err_http_outcall: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
 }

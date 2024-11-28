@@ -104,11 +104,6 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             &m.err_http_outcall,
             "Number of unsuccessful HTTP outcalls",
         );
-        w.encode_counter(
-            "evmrpc_err_no_permission",
-            m.err_no_permission.metric_value(),
-            "Number of NoPermission errors",
-        )?;
 
         Ok(())
     })
