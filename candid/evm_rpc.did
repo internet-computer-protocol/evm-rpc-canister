@@ -134,7 +134,6 @@ type Metrics = record {
   cyclesCharged : vec record { record { text; text }; nat };
   errNoPermission : nat64;
   errHttpOutcall : vec record { record { text; text }; nat64 };
-  errHostNotAllowed : vec record { text; nat64 };
 };
 type MultiFeeHistoryResult = variant {
   Consistent : FeeHistoryResult;

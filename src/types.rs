@@ -127,8 +127,6 @@ pub struct Metrics {
     pub err_no_permission: u64,
     #[serde(rename = "errHttpOutcall")]
     pub err_http_outcall: HashMap<(MetricRpcMethod, MetricRpcHost), u64>,
-    #[serde(rename = "errHostNotAllowed")]
-    pub err_host_not_allowed: HashMap<MetricRpcHost, u64>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
