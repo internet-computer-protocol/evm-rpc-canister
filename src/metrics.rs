@@ -84,11 +84,6 @@ pub fn encode_metrics(w: &mut ic_metrics_encoder::MetricsEncoder<Vec<u8>>) -> st
             &m.cycles_charged,
             "Number of cycles charged for RPC calls",
         );
-        w.encode_counter(
-            "evmrpc_cycles_withdrawn",
-            m.cycles_withdrawn.metric_value(),
-            "Number of accumulated cycles withdrawn by RPC providers",
-        )?;
         w.counter_entries(
             "evmrpc_requests",
             &m.requests,
