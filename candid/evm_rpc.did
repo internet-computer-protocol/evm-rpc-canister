@@ -107,6 +107,7 @@ type InstallArgs = record {
   demo : opt bool;
   manageApiKeys : opt vec principal;
   logFilter : opt LogFilter;
+  overrideProvider : opt OverrideProvider;
 };
 type Regex = text;
 type LogFilter = variant {
@@ -114,6 +115,11 @@ type LogFilter = variant {
   HideAll;
   ShowPattern : Regex;
   HidePattern : Regex;
+};
+// Override resolved provider.
+// Useful for testing with a local Ethereum developer environment such as foundry.
+type OverrideProvider = record {
+  overrideUrl : opt Regex
 };
 type JsonRpcError = record { code : int64; message : text };
 type LogEntry = record {
