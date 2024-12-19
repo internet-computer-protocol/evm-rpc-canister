@@ -4,13 +4,10 @@ use evm_rpc::candid_rpc::CandidRpcClient;
 use evm_rpc::constants::NODES_IN_SUBNET;
 use evm_rpc::http::get_http_response_body;
 use evm_rpc::logs::INFO;
-use evm_rpc::memory::{
-    insert_api_key, is_api_key_principal, is_demo_active, remove_api_key, set_api_key_principals,
-    set_demo_active, set_log_filter,
-};
+use evm_rpc::memory::{insert_api_key, is_api_key_principal, is_demo_active, remove_api_key, set_api_key_principals, set_demo_active, set_log_filter, set_override_provider};
 use evm_rpc::metrics::encode_metrics;
 use evm_rpc::providers::{find_provider, resolve_rpc_service, PROVIDERS, SERVICE_PROVIDER_MAP};
-use evm_rpc::types::{LogFilter, Provider, ProviderId, RpcAccess, RpcAuth};
+use evm_rpc::types::{LogFilter, OverrideProvider, Provider, ProviderId, RpcAccess, RpcAuth};
 use evm_rpc::{
     http::{json_rpc_request, transform_http_request},
     http_types,
@@ -270,6 +267,9 @@ fn post_upgrade(args: evm_rpc_types::InstallArgs) {
     }
     if let Some(filter) = args.log_filter {
         set_log_filter(LogFilter::from(filter))
+    }
+    if let Some(override_provider)  =args.override_provider {
+        set_override_provider(OverrideProvider::from(override_provider));
     }
 }
 

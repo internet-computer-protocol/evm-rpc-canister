@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use crate::constants::{API_KEY_MAX_SIZE, API_KEY_REPLACE_STRING, MESSAGE_FILTER_MAX_SIZE};
 use crate::memory::get_api_key;
 use crate::util::hostname_from_url;
@@ -374,6 +377,35 @@ impl Storable for LogFilter {
     };
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct OverrideProvider {
+    pub override_url: Option<RegexString>,
+}
+
+impl From<evm_rpc_types::OverrideProvider> for OverrideProvider {
+    fn from(
+        evm_rpc_types::OverrideProvider { override_url }: evm_rpc_types::OverrideProvider,
+    ) -> Self {
+        Self {
+            override_url: override_url.map(RegexString::from),
+        }
+    }
+}
+
+impl Storable for OverrideProvider {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        serde_json::to_vec(self)
+            .expect("Error while serializing `OverrideProvider`")
+            .into()
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        serde_json::from_slice(&bytes).expect("Error while deserializing `Storable`")
+    }
+
+    const BOUND: Bound = Bound::Unbounded;
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RpcAuth {
     /// API key will be used in an Authorization header as Bearer token, e.g.,
@@ -384,46 +416,4 @@ pub enum RpcAuth {
     UrlParameter {
         url_pattern: &'static str,
     },
-}
-
-#[cfg(test)]
-mod test {
-    use super::{LogFilter, RegexString};
-    use ic_stable_structures::Storable;
-
-    #[test]
-    fn test_message_filter_storable() {
-        let patterns: &[RegexString] =
-            &["[.]", "^DEBUG ", "(.*)?", "\\?"].map(|regex| regex.into());
-        let cases = [
-            vec![
-                (LogFilter::ShowAll, r#""ShowAll""#.to_string()),
-                (LogFilter::HideAll, r#""HideAll""#.to_string()),
-            ],
-            patterns
-                .iter()
-                .map(|regex| {
-                    (
-                        LogFilter::ShowPattern(regex.clone()),
-                        format!(r#"{{"ShowPattern":{:?}}}"#, regex.0),
-                    )
-                })
-                .collect(),
-            patterns
-                .iter()
-                .map(|regex| {
-                    (
-                        LogFilter::HidePattern(regex.clone()),
-                        format!(r#"{{"HidePattern":{:?}}}"#, regex.0),
-                    )
-                })
-                .collect(),
-        ]
-        .concat();
-        for (filter, expected_json) in cases {
-            let bytes = filter.to_bytes();
-            assert_eq!(String::from_utf8(bytes.to_vec()).unwrap(), expected_json);
-            assert_eq!(filter, LogFilter::from_bytes(bytes));
-        }
-    }
 }

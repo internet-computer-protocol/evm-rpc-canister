@@ -42,20 +42,19 @@ pub async fn json_rpc_request(
             vec![],
         )),
     };
-    http_request(rpc_method, service, request, cycles_cost).await
+    http_request(rpc_method, request, cycles_cost).await
 }
 
 pub async fn http_request(
     rpc_method: MetricRpcMethod,
-    service: ResolvedRpcService,
     request: CanisterHttpRequestArgument,
     cycles_cost: u128,
 ) -> RpcResult<HttpResponse> {
-    let api = service.api();
-    let parsed_url = match url::Url::parse(&api.url) {
+    let url = request.url.clone();
+    let parsed_url = match url::Url::parse(&url) {
         Ok(url) => url,
         Err(_) => {
-            return Err(ValidationError::Custom(format!("Error parsing URL: {}", api.url)).into())
+            return Err(ValidationError::Custom(format!("Error parsing URL: {}", url)).into())
         }
     };
     let host = match parsed_url.host_str() {
@@ -63,7 +62,7 @@ pub async fn http_request(
         None => {
             return Err(ValidationError::Custom(format!(
                 "Error parsing hostname from URL: {}",
-                api.url
+                url
             ))
             .into())
         }
