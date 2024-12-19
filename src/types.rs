@@ -382,6 +382,16 @@ pub struct OverrideProvider {
     pub override_url: Option<RegexString>,
 }
 
+impl From<evm_rpc_types::OverrideProvider> for OverrideProvider {
+    fn from(
+        evm_rpc_types::OverrideProvider { override_url }: evm_rpc_types::OverrideProvider,
+    ) -> Self {
+        Self {
+            override_url: override_url.map(RegexString::from),
+        }
+    }
+}
+
 impl Storable for OverrideProvider {
     fn to_bytes(&self) -> Cow<[u8]> {
         serde_json::to_vec(self)
