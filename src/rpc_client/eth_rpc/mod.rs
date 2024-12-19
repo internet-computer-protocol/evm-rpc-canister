@@ -221,9 +221,7 @@ where
             )),
         };
 
-        let response = match http_request(provider, &eth_method, request, effective_size_estimate)
-            .await
-        {
+        let response = match http_request(&eth_method, request, effective_size_estimate).await {
             Err(RpcError::HttpOutcallError(HttpOutcallError::IcError { code, message }))
                 if is_response_too_large(&code, &message) =>
             {
@@ -278,12 +276,10 @@ fn resolve_api(service: &RpcService) -> Result<RpcApi, ProviderError> {
 }
 
 async fn http_request(
-    service: &RpcService,
     method: &str,
     request: CanisterHttpRequestArgument,
     effective_response_size_estimate: u64,
 ) -> Result<HttpResponse, RpcError> {
-    let service = resolve_rpc_service(service.clone())?;
     let cycles_cost = get_http_request_cost(
         request
             .body
@@ -293,7 +289,7 @@ async fn http_request(
         effective_response_size_estimate,
     );
     let rpc_method = MetricRpcMethod(method.to_string());
-    crate::http::http_request(rpc_method, service, request, cycles_cost).await
+    crate::http::http_request(rpc_method, request, cycles_cost).await
 }
 
 fn http_status_code(response: &HttpResponse) -> u16 {
